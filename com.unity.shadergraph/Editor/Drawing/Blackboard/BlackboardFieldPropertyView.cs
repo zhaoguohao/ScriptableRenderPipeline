@@ -1,14 +1,23 @@
 using System;
 using System.Linq;
-using UnityEditor.Experimental.UIElements;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleSheets;
-using Toggle = UnityEngine.Experimental.UIElements.Toggle;
+
+
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+using Toggle = UnityEngine.UIElements.Toggle;
+using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
+#else
 #if UNITY_2018_3_OR_NEWER
 using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
+#endif
+using UnityEditor.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements;
+using Toggle = UnityEngine.Experimental.UIElements.Toggle;
 #endif
 
 namespace UnityEditor.ShaderGraph.Drawing

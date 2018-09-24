@@ -1,6 +1,15 @@
-using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine;
+
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEditor.Experimental.GraphView;
+using UnityEngine.UIElements.StyleSheets;
+#else
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine.Experimental.UIElements.StyleSheets;
+#endif
+
+
 
 namespace UnityEditor.ShaderGraph.Drawing
 {

@@ -1,18 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEditor.Graphing.Util;
 using UnityEngine;
 using UnityEditor.Graphing;
+using Object = UnityEngine.Object;
+using UnityEditor.Graphs;
+
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEditor.Experimental.GraphView;
+using UnityEngine.UIElements;
+using Edge = UnityEditor.Experimental.GraphView.Edge;
+using Node = UnityEditor.Experimental.GraphView.Node;
+using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
+#else
+using UnityEditor.Experimental.UIElements.GraphView;
 using UnityEngine.Experimental.UIElements;
 using Edge = UnityEditor.Experimental.UIElements.GraphView.Edge;
 using Node = UnityEditor.Experimental.UIElements.GraphView.Node;
-using Object = UnityEngine.Object;
-using UnityEditor.Graphs;
 #if UNITY_2018_3_OR_NEWER
 using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
 #endif
+#endif
+
 
 namespace UnityEditor.ShaderGraph.Drawing
 {

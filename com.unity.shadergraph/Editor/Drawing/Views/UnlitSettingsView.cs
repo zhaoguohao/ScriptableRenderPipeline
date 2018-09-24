@@ -1,11 +1,18 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
 using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph.Drawing.Controls;
+
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+#else
+using UnityEditor.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements;
+#endif
 
 namespace UnityEditor.ShaderGraph.Drawing
 {

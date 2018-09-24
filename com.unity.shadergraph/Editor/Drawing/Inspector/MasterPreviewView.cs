@@ -3,15 +3,26 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using UnityEditor.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
-using UnityEngine.Experimental.UIElements.StyleSheets;
 using Object = UnityEngine.Object;
-#if UNITY_2018_3_OR_NEWER
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+using UnityEngine.UIElements.StyleSheets;
+#else
+using UnityEditor.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements.StyleSheets;
+#endif
+
+#if UNITY_2019_1_OR_NEWER
+using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
+#elif UNITY_2018_3_OR_NEWER
 using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
 #endif
+
 
 namespace UnityEditor.ShaderGraph.Drawing.Inspector
 {

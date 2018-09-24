@@ -1,9 +1,17 @@
 using System;
 using System.Reflection;
-using UnityEditor.Experimental.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
 using Object = UnityEngine.Object;
+
+
+#if UNITY_2019_1_OR_NEWER
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+#else
+using UnityEditor.Experimental.UIElements;
+using UnityEngine.Experimental.UIElements;
+#endif
+
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
