@@ -1,15 +1,12 @@
 using System;
 using System.Linq;
-using UnityEditor.Experimental.UIElements;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleSheets;
-using Toggle = UnityEngine.Experimental.UIElements.Toggle;
-#if UNITY_2018_3_OR_NEWER
-using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
-#endif
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
+using Toggle = UnityEngine.UIElements.Toggle;
+using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -21,7 +18,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         Toggle m_ExposedToogle;
         TextField m_ReferenceNameField;
 
-        static Type s_ContextualMenuManipulator = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypesOrNothing()).FirstOrDefault(t => t.FullName == "UnityEngine.Experimental.UIElements.ContextualMenuManipulator");
+        static Type s_ContextualMenuManipulator = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypesOrNothing()).FirstOrDefault(t => t.FullName == "UnityEngine.UIElements.ContextualMenuManipulator");
 
         IManipulator m_ResetReferenceMenu;
 

@@ -1,8 +1,7 @@
 using System;
 using System.Reflection;
 using UnityEditor.Graphing;
-using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
@@ -46,7 +45,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         AbstractMaterialNode m_Node;
         PropertyInfo m_PropertyInfo;
 
-        UnityEngine.Experimental.UIElements.Toggle m_Toggle;
+        Toggle m_Toggle;
 
         public ToggleControlView(string label, AbstractMaterialNode node, PropertyInfo propertyInfo)
         {
