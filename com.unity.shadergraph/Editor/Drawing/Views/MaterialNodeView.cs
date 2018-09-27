@@ -47,7 +47,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             m_ConnectorListener = connectorListener;
             node = inNode;
-            persistenceKey = node.guid.ToString();
+            viewDataKey = node.guid.ToString();
             UpdateTitle();
 
             // Add controls container
