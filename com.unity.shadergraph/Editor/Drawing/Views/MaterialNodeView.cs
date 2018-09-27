@@ -8,8 +8,6 @@ using UnityEditor.ShaderGraph.Drawing.Controls;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
-
-#if UNITY_2019_1_OR_NEWER
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleEnums;
@@ -17,17 +15,6 @@ using UnityEngine.UIElements.StyleSheets;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
 using Node = UnityEditor.Experimental.GraphView.Node;
 using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
-#else
-using UnityEditor.Experimental.UIElements.GraphView;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
-using UnityEngine.Experimental.UIElements.StyleSheets;
-using Edge = UnityEditor.Experimental.UIElements.GraphView.Edge;
-using Node = UnityEditor.Experimental.UIElements.GraphView.Node;
-#if UNITY_2018_3_OR_NEWER
-using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
-#endif
-#endif
 
 namespace UnityEditor.ShaderGraph.Drawing
 {

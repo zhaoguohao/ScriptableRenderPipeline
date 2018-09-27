@@ -12,18 +12,10 @@ using Object = UnityEngine.Object;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
-#if UNITY_2019_1_OR_NEWER
 using UnityEditor.UIElements;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
-#else
-using UnityEditor.Experimental.UIElements;
-using Edge = UnityEditor.Experimental.UIElements.GraphView.Edge;
-using UnityEditor.Experimental.UIElements.GraphView;
-using UnityEngine.Experimental.UIElements;
-#endif
-
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -65,11 +57,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     m_GraphEditorView.convertToSubgraphRequested += ToSubGraph;
                     m_GraphEditorView.showInProjectRequested += PingAsset;
                     m_GraphEditorView.RegisterCallback<GeometryChangedEvent>(OnGeometryChanged);
-#if UNITY_2019_1_OR_NEWER
                     this.rootVisualElement.Add(graphEditorView);
-#else
-                    this.GetRootVisualContainer().Add(graphEditorView);
-#endif
                 }
             }
         }

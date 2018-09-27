@@ -6,14 +6,7 @@ using UnityEditor.Graphing.Util;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-
-
-#if UNITY_2019_1_OR_NEWER
 using UnityEngine.UIElements;
-#else
-using UnityEngine.Experimental.UIElements;
-#endif
-
 
 namespace UnityEditor.ShaderGraph
 {

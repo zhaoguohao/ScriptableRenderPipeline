@@ -7,19 +7,11 @@ using UnityEditor.ShaderGraph.Drawing.Inspector;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
-#if UNITY_2019_1_OR_NEWER
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
-#else
-using UnityEditor.Experimental.UIElements.GraphView;
-using UnityEngine.Experimental.UIElements;
-using UnityEngine.Experimental.UIElements.StyleEnums;
-using UnityEngine.Experimental.UIElements.StyleSheets;
-using Edge = UnityEditor.Experimental.UIElements.GraphView.Edge;
-#endif
 
 
 namespace UnityEditor.ShaderGraph.Drawing

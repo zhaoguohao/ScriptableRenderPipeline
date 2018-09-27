@@ -4,16 +4,9 @@ using System.Linq;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
 using UnityEngine;
-
-#if UNITY_2019_1_OR_NEWER
 using UnityEditor.UIElements;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
-#else
-using UnityEditor.Experimental.UIElements;
-using UnityEditor.Experimental.UIElements.GraphView;
-using UnityEngine.Experimental.UIElements;
-#endif
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -247,11 +240,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             var drawState = node.drawState;
 
 
-#if UNITY_2019_1_OR_NEWER
             var windowRoot = m_EditorWindow.rootVisualElement;
-#else
-            var windowRoot = m_EditorWindow.GetRootVisualContainer();
-#endif
             var windowMousePosition = windowRoot.ChangeCoordinatesTo(windowRoot.parent, context.screenMousePosition - m_EditorWindow.position.position);
             var graphMousePosition = m_GraphView.contentViewContainer.WorldToLocal(windowMousePosition);
             drawState.position = new Rect(graphMousePosition, Vector2.zero);

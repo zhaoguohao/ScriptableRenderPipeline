@@ -1,17 +1,8 @@
 using System;
 using UnityEngine;
 
-
-#if UNITY_2019_1_OR_NEWER
 using UnityEngine.UIElements;
 using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
-#else
-using UnityEngine.Experimental.UIElements;
-#if UNITY_2018_3_OR_NEWER
-using ContextualMenu = UnityEngine.Experimental.UIElements.DropdownMenu;
-#endif
-#endif
-
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
