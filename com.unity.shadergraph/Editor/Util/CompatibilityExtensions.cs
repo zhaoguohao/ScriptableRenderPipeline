@@ -8,14 +8,14 @@ namespace UnityEditor.ShaderGraph.Drawing
 {
     static class CompatibilityExtensions
     {
-        public static void AppendAction(this ContextualMenu contextualMenu, string actionName, Action action, Func<ContextualMenu.MenuAction.StatusFlags> actionStatusCallback)
+        public static void AppendAction(this ContextualMenu contextualMenu, string actionName, Action action, Func<ContextualMenu.MenuAction.Status> actionStatusCallback)
         {
             Debug.Assert(action != null);
             Debug.Assert(actionStatusCallback != null);
             contextualMenu.AppendAction(actionName, e => action(), e => actionStatusCallback());
         }
 
-        public static void AppendAction(this ContextualMenu contextualMenu, string actionName, Action action, ContextualMenu.MenuAction.StatusFlags statusFlags)
+        public static void AppendAction(this ContextualMenu contextualMenu, string actionName, Action action, ContextualMenu.MenuAction.Status statusFlags)
         {
             Debug.Assert(action != null);
             contextualMenu.AppendAction(actionName, e => action(), e => statusFlags);
