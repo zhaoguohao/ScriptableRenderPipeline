@@ -328,7 +328,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (m_SearchWindowProvider.nodeNeedsRepositioning && m_SearchWindowProvider.targetSlotReference.nodeGuid.Equals(node.guid))
             {
                 m_SearchWindowProvider.nodeNeedsRepositioning = false;
-                foreach (var element in nodeView.inputContainer.Union(nodeView.outputContainer))
+                foreach (var element in nodeView.inputContainer.Children().Union(nodeView.outputContainer.Children()))
                 {
                     var port = element as ShaderPort;
                     if (port == null)
