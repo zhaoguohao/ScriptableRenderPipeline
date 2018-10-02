@@ -11,7 +11,6 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
 using Node = UnityEditor.Experimental.GraphView.Node;
-using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -90,17 +89,17 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     evt.menu.AppendSeparator();
 
-                    evt.menu.AppendAction("Open Sub Graph", OpenSubGraph, ContextualMenu.MenuAction.Status.Normal);
+                    evt.menu.AppendAction("Open Sub Graph", OpenSubGraph, DropdownMenuAction.Status.Normal);
                 }
             }
             else if (evt.target is BlackboardField)
             {
-                evt.menu.AppendAction("Delete", (e) => DeleteSelectionImplementation("Delete", AskUser.DontAskUser), (e) => canDeleteSelection ? ContextualMenu.MenuAction.Status.Normal : ContextualMenu.MenuAction.Status.Disabled);
+                evt.menu.AppendAction("Delete", (e) => DeleteSelectionImplementation("Delete", AskUser.DontAskUser), (e) => canDeleteSelection ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Disabled);
             }
             if (evt.target is MaterialGraphView)
             {
-                evt.menu.AppendAction("Collapse Previews", CollapsePreviews, ContextualMenu.MenuAction.Status.Normal);
-                evt.menu.AppendAction("Expand Previews", ExpandPreviews, ContextualMenu.MenuAction.Status.Normal);
+                evt.menu.AppendAction("Collapse Previews", CollapsePreviews, DropdownMenuAction.Status.Normal);
+                evt.menu.AppendAction("Expand Previews", ExpandPreviews, DropdownMenuAction.Status.Normal);
                 evt.menu.AppendSeparator();
             }
         }
@@ -138,22 +137,22 @@ namespace UnityEditor.ShaderGraph.Drawing
             ShaderGraphImporterEditor.ShowGraphEditWindow(path);
         }
 
-        ContextualMenu.MenuAction.Status SeeDocumentationStatus()
+        DropdownMenuAction.Status SeeDocumentationStatus()
         {
             if (selection.OfType<MaterialNodeView>().First().node.documentationURL == null)
-                return ContextualMenu.MenuAction.Status.Disabled;
-            return ContextualMenu.MenuAction.Status.Normal;
+                return DropdownMenuAction.Status.Disabled;
+            return DropdownMenuAction.Status.Normal;
         }
 
-        ContextualMenu.MenuAction.Status ConvertToPropertyStatus()
+        DropdownMenuAction.Status ConvertToPropertyStatus()
         {
             if (selection.OfType<MaterialNodeView>().Any(v => v.node != null))
             {
                 if (selection.OfType<MaterialNodeView>().Any(v => v.node is IPropertyFromNode))
-                    return ContextualMenu.MenuAction.Status.Normal;
-                return ContextualMenu.MenuAction.Status.Disabled;
+                    return DropdownMenuAction.Status.Normal;
+                return DropdownMenuAction.Status.Disabled;
             }
-            return ContextualMenu.MenuAction.Status.Hidden;
+            return DropdownMenuAction.Status.Hidden;
         }
 
         void ConvertToProperty()
@@ -183,15 +182,15 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        ContextualMenu.MenuAction.Status ConvertToInlineNodeStatus()
+        DropdownMenuAction.Status ConvertToInlineNodeStatus()
         {
             if (selection.OfType<MaterialNodeView>().Any(v => v.node != null))
             {
                 if (selection.OfType<MaterialNodeView>().Any(v => v.node is PropertyNode))
-                    return ContextualMenu.MenuAction.Status.Normal;
-                return ContextualMenu.MenuAction.Status.Disabled;
+                    return DropdownMenuAction.Status.Normal;
+                return DropdownMenuAction.Status.Disabled;
             }
-            return ContextualMenu.MenuAction.Status.Hidden;
+            return DropdownMenuAction.Status.Hidden;
         }
 
         void ConvertToInlineNode()
@@ -204,10 +203,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                 ((AbstractMaterialGraph)propNode.owner).ReplacePropertyNodeWithConcreteNode(propNode);
         }
 
-        ContextualMenu.MenuAction.Status ConvertToSubgraphStatus()
+        DropdownMenuAction.Status ConvertToSubgraphStatus()
         {
-            if (onConvertToSubgraphClick == null) return ContextualMenu.MenuAction.Status.Hidden;
-            return selection.OfType<MaterialNodeView>().Any(v => v.node != null) ? ContextualMenu.MenuAction.Status.Normal : ContextualMenu.MenuAction.Status.Hidden;
+            if (onConvertToSubgraphClick == null) return DropdownMenuAction.Status.Hidden;
+            return selection.OfType<MaterialNodeView>().Any(v => v.node != null) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden;
         }
 
         void ConvertToSubgraph()

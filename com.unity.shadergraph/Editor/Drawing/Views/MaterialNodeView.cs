@@ -14,7 +14,6 @@ using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
 using Node = UnityEditor.Experimental.GraphView.Node;
-using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -244,8 +243,8 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             if (evt.target is Node)
             {
-                evt.menu.AppendAction("Copy Shader", CopyToClipboard, node.hasPreview ? ContextualMenu.MenuAction.Status.Normal : ContextualMenu.MenuAction.Status.Hidden);
-                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode, node.hasPreview ? ContextualMenu.MenuAction.Status.Normal : ContextualMenu.MenuAction.Status.Hidden);
+                evt.menu.AppendAction("Copy Shader", CopyToClipboard, node.hasPreview ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
+                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode, node.hasPreview ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
             }
 
             base.BuildContextualMenu(evt);

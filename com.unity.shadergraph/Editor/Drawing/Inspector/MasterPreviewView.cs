@@ -10,7 +10,6 @@ using Object = UnityEngine.Object;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleSheets;
-using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
 
 namespace UnityEditor.ShaderGraph.Drawing.Inspector
 {
@@ -179,10 +178,10 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
             {
                 if (m_DoNotShowPrimitives.Contains(primitiveTypeName))
                     continue;
-                evt.menu.AppendAction(primitiveTypeName, e => ChangePrimitiveMesh(primitiveTypeName), ContextualMenu.MenuAction.AlwaysEnabled);
+                evt.menu.AppendAction(primitiveTypeName, e => ChangePrimitiveMesh(primitiveTypeName), DropdownMenuAction.AlwaysEnabled);
             }
 
-            evt.menu.AppendAction("Custom Mesh", e => ChangeMeshCustom(), ContextualMenu.MenuAction.AlwaysEnabled);
+            evt.menu.AppendAction("Custom Mesh", e => ChangeMeshCustom(), DropdownMenuAction.AlwaysEnabled);
         }
 
         IMasterNode masterNode
