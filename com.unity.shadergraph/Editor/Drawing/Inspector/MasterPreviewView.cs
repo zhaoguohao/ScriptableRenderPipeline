@@ -73,7 +73,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
 
         public MasterPreviewView(PreviewManager previewManager, AbstractMaterialGraph graph)
         {
-            this.clippingOptions = ClippingOptions.ClipAndCacheContents;
+            this.clippingOption = ClippingOption.ClipAndCacheContents;
             m_PreviewManager = previewManager;
             m_Graph = graph;
 

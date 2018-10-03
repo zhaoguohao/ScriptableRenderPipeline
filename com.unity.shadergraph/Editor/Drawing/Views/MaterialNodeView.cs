@@ -72,7 +72,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PreviewContainer = new VisualElement
                 {
                     name = "previewContainer",
-                    clippingOptions = ClippingOptions.ClipAndCacheContents,
+                    clippingOption = ClippingOption.ClipAndCacheContents,
                     pickingMode = PickingMode.Ignore
                 };
                 m_PreviewImage = new Image
@@ -125,7 +125,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PortInputContainer = new VisualElement
             {
                 name = "portInputContainer",
-                clippingOptions = ClippingOptions.ClipAndCacheContents,
+                clippingOption = ClippingOption.ClipAndCacheContents,
                 pickingMode = PickingMode.Ignore
             };
             Add(m_PortInputContainer);
