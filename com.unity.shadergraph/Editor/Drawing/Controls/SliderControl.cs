@@ -54,8 +54,9 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             m_SliderPanel = new VisualElement { name = "SliderPanel" };
             if (!string.IsNullOrEmpty(label))
                 m_SliderPanel.Add(new Label(label));
-            Action<float> changedSlider = (s) => { OnChangeSlider(s); };
-            m_Slider = new Slider(m_Value.y, m_Value.z, changedSlider);
+            m_Slider = new Slider(m_Value.y, m_Value.z);
+            m_Slider.OnValueChanged((evt) => OnChangeSlider(evt.newValue));
+
             m_Slider.value = m_Value.x;
             m_SliderPanel.Add(m_Slider);
             m_SliderInput = AddField(m_SliderPanel, "", 0, m_Value);
@@ -147,8 +148,9 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             value.x = Mathf.Max(Mathf.Min(value.x, value.z), value.y);
             panel.Remove(m_Slider);
-            Action<float> changedSlider = (s) => { OnChangeSlider(s); };
-            m_Slider = new Slider(value.y, value.z, changedSlider);
+            m_Slider = new Slider(value.y, value.z);
+            m_Slider.OnValueChanged((evt) => OnChangeSlider(evt.newValue));
+
             m_Slider.lowValue = value.y;
             m_Slider.highValue = value.z;
             m_Slider.value = value.x;
