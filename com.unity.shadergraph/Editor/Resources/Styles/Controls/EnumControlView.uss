@@ -2,10 +2,14 @@ EnumControlView {
     flex-direction: row;
 }
 
-EnumControlView > EnumField {
+.unity-field {
     width: 80;
-    flex: 1;
-    margin-left: 0;
+	flex:1;
+}
+
+.unity-field__input {
+	flex:1;
+	margin-left: 0;
     margin-right: 8;
     margin-top: 4;
     margin-bottom: 4;

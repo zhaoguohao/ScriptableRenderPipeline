@@ -49,6 +49,8 @@ DielectricSpecularControlView > #sliderPanel > Slider {
 
 DielectricSpecularControlView > #sliderPanel > FloatField {
     width: 30;
+}
+DielectricSpecularControlView > #sliderPanel > FloatField > .unity-field__input{
     margin-left: 4;
     margin-right: 0;
 }

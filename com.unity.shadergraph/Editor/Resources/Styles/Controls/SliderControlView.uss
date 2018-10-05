@@ -16,7 +16,7 @@ SliderControlView > #SliderPanel {
     flex-grow: 1;
 }
 
-SliderControlView > #SliderPanel > Slider {
+.unity-slider {
     margin-left: 0;
     margin-right: 0;
     flex-direction: row;
@@ -24,7 +24,7 @@ SliderControlView > #SliderPanel > Slider {
     min-width: 164;
 }
 
-SliderControlView > #SliderPanel > FloatField {
+SliderControlView > #SliderPanel > .unity-float-field {
     margin-left: 4;
     margin-right: 0;
     flex-direction: row;

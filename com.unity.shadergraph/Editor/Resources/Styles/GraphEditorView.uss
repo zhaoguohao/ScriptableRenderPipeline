@@ -228,7 +228,7 @@ PropertyControlView {
 
 /* TEMP STUFF THAT SHOULD ACTUALLY STAY IN GRAPHVIEW */
 
-FloatField {
+.unity-Doublefield-input {
     min-height: 15;
     margin-left: 4;
     margin-top: 2;
@@ -249,6 +249,6 @@ FloatField {
     cursor-color:#B4B4B4;
 }
 
-FloatField:focus {
+.unity-Doublefield-input:focus {
     background-image: resource("Builtin Skins/DarkSkin/Images/TextField focused.png");
 }
