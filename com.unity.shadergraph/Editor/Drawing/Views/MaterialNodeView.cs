@@ -446,7 +446,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             var currentRect = new Rect(inputView.style.positionLeft, inputView.style.positionTop, inputView.style.width, inputView.style.height);
             var targetRect = new Rect(0.0f, 0.0f, port.layout.width, port.layout.height);
-            targetRect = port.ChangeCoordinatesTo(inputView.shadow.parent, targetRect);
+            targetRect = port.ChangeCoordinatesTo(inputView.hierarchy.parent, targetRect);
             var centerY = targetRect.center.y;
             var centerX = targetRect.xMax - currentRect.width;
             currentRect.center = new Vector2(centerX, centerY);

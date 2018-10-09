@@ -36,7 +36,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             container.Add(m_LabelContainer);
             container.Add(m_ContentContainer);
 
-            shadow.Add(container);
+            hierarchy.Add(container);
         }
     }
 }

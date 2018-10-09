@@ -62,13 +62,13 @@ namespace UnityEditor.ShaderGraph.Drawing
                 moveItemRequested = MoveItemRequested
             };
 
-            m_PathLabel = blackboard.shadow.ElementAt(0).Q<Label>("subTitleLabel");
+            m_PathLabel = blackboard.hierarchy.ElementAt(0).Q<Label>("subTitleLabel");
             m_PathLabel.RegisterCallback<MouseDownEvent>(OnMouseDownEvent);
 
             m_PathLabelTextField = new TextField { visible = false };
             m_PathLabelTextField.RegisterCallback<FocusOutEvent>(e => { OnEditPathTextFinished(); });
             m_PathLabelTextField.RegisterCallback<KeyDownEvent>(OnPathTextFieldKeyPressed);
-            blackboard.shadow.Add(m_PathLabelTextField);
+            blackboard.hierarchy.Add(m_PathLabelTextField);
 
             // m_WindowDraggable = new WindowDraggable(blackboard.shadow.Children().First().Q("header"));
             // blackboard.AddManipulator(m_WindowDraggable);
