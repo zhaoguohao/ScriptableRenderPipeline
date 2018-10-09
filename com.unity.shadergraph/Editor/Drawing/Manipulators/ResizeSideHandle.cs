@@ -52,7 +52,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public ResizeSideHandle(VisualElement resizeTarget, VisualElement container, ResizeHandleAnchor anchor)
         {
-            OnImmediateRepaint = Draw;
+            ImmediateRepaint = Draw;
             m_WindowDockingLayout = new WindowDockingLayout();
 
             m_ResizeTarget = resizeTarget;
