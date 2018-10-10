@@ -14,7 +14,6 @@ using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
 using Node = UnityEditor.Experimental.GraphView.Node;
-using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -73,7 +72,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PreviewContainer = new VisualElement
                 {
                     name = "previewContainer",
-                    clippingOptions = ClippingOptions.ClipAndCacheContents,
+                    clippingOption = ClippingOption.ClipAndCacheContents,
                     pickingMode = PickingMode.Ignore
                 };
                 m_PreviewImage = new Image
@@ -126,7 +125,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PortInputContainer = new VisualElement
             {
                 name = "portInputContainer",
-                clippingOptions = ClippingOptions.ClipAndCacheContents,
+                clippingOption = ClippingOption.ClipAndCacheContents,
                 pickingMode = PickingMode.Ignore
             };
             Add(m_PortInputContainer);
@@ -244,8 +243,8 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             if (evt.target is Node)
             {
-                evt.menu.AppendAction("Copy Shader", CopyToClipboard, node.hasPreview ? ContextualMenu.MenuAction.StatusFlags.Normal : ContextualMenu.MenuAction.StatusFlags.Hidden);
-                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode, node.hasPreview ? ContextualMenu.MenuAction.StatusFlags.Normal : ContextualMenu.MenuAction.StatusFlags.Hidden);
+                evt.menu.AppendAction("Copy Shader", CopyToClipboard, node.hasPreview ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
+                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode, node.hasPreview ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
             }
 
             base.BuildContextualMenu(evt);
