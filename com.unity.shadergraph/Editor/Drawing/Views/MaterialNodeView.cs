@@ -5,14 +5,12 @@ using System.Reflection;
 using UnityEngine;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Controls;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
-using Edge = UnityEditor.Experimental.GraphView.Edge;
 using Node = UnityEditor.Experimental.GraphView.Node;
 
 namespace UnityEditor.ShaderGraph.Drawing
@@ -72,7 +70,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PreviewContainer = new VisualElement
                 {
                     name = "previewContainer",
-                    clippingOption = ClippingOption.ClipAndCacheContents,
+                    cacheAsBitmap = true,
+                    style = { overflow = Overflow.Hidden },
                     pickingMode = PickingMode.Ignore
                 };
                 m_PreviewImage = new Image
@@ -125,7 +124,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PortInputContainer = new VisualElement
             {
                 name = "portInputContainer",
-                clippingOption = ClippingOption.ClipAndCacheContents,
+                cacheAsBitmap = true,
+                style = { overflow = Overflow.Hidden },
                 pickingMode = PickingMode.Ignore
             };
             Add(m_PortInputContainer);
