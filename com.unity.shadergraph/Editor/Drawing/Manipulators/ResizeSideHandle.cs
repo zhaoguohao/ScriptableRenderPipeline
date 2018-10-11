@@ -138,15 +138,15 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionTop = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionBottom = StyleValue<float>.Create(m_Container.parent.layout.height - m_Container.layout.yMax);
+            m_Container.style.top = float.NaN;
+            m_Container.style.bottom = m_Container.parent.layout.height - m_Container.layout.yMax;
 
             float newHeight = Mathf.Max(0f, m_ResizeBeginLayout.height - relativeMousePosition.y);
 
-            m_ResizeTarget.style.height = StyleValue<float>.Create(newHeight);
+            m_ResizeTarget.style.height = newHeight;
 
             if (maintainAspectRatio)
-                m_ResizeTarget.style.width = StyleValue<float>.Create(newHeight);
+                m_ResizeTarget.style.width = newHeight;
 
             mouseMoveEvent.StopImmediatePropagation();
         }
@@ -159,10 +159,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionTop = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionBottom = StyleValue<float>.Create(m_Container.parent.layout.height - m_Container.layout.yMax);
-            m_Container.style.positionLeft = StyleValue<float>.Create(m_Container.layout.xMin);
-            m_Container.style.positionRight = StyleValue<float>.Create(float.NaN);
+            m_Container.style.top = float.NaN;
+            m_Container.style.bottom = m_Container.parent.layout.height - m_Container.layout.yMax;
+            m_Container.style.left = m_Container.layout.xMin;
+            m_Container.style.right = float.NaN;
 
             float newWidth = Mathf.Max(0f, m_ResizeBeginLayout.width + relativeMousePosition.x);
             float newHeight = Mathf.Max(0f, m_ResizeBeginLayout.height - relativeMousePosition.y);
@@ -170,8 +170,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (maintainAspectRatio)
                 newWidth = newHeight = Mathf.Min(newWidth, newHeight);
 
-            m_ResizeTarget.style.width = StyleValue<float>.Create(newWidth);
-            m_ResizeTarget.style.height = StyleValue<float>.Create(newHeight);
+            m_ResizeTarget.style.width = newWidth;
+            m_ResizeTarget.style.height = newHeight;
 
             mouseMoveEvent.StopPropagation();
         }
@@ -184,16 +184,16 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionLeft = StyleValue<float>.Create(m_Container.layout.xMin);
-            m_Container.style.positionRight = StyleValue<float>.Create(float.NaN);
+            m_Container.style.left = m_Container.layout.xMin;
+            m_Container.style.right = float.NaN;
 
             float newWidth = Mathf.Max(0f, m_ResizeBeginLayout.width + relativeMousePosition.x);
 
-            m_ResizeTarget.style.width = StyleValue<float>.Create(newWidth);
+            m_ResizeTarget.style.width = newWidth;
 
             if (maintainAspectRatio)
             {
-                m_ResizeTarget.style.height = StyleValue<float>.Create(newWidth);
+                m_ResizeTarget.style.height = newWidth;
             }
 
             mouseMoveEvent.StopPropagation();
@@ -207,10 +207,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionTop = StyleValue<float>.Create(m_Container.layout.yMin);
-            m_Container.style.positionBottom = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionLeft = StyleValue<float>.Create(m_Container.layout.xMin);
-            m_Container.style.positionRight = StyleValue<float>.Create(float.NaN);
+            m_Container.style.top = m_Container.layout.yMin;
+            m_Container.style.bottom = float.NaN;
+            m_Container.style.left = m_Container.layout.xMin;
+            m_Container.style.right = float.NaN;
 
             float newWidth = Mathf.Max(0f, m_ResizeBeginLayout.width + relativeMousePosition.x);
             float newHeight = Mathf.Max(0f, m_ResizeBeginLayout.height + relativeMousePosition.y);
@@ -218,8 +218,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (maintainAspectRatio)
                 newWidth = newHeight = Mathf.Min(newWidth, newHeight);
 
-            m_ResizeTarget.style.width = StyleValue<float>.Create(newWidth);
-            m_ResizeTarget.style.height = StyleValue<float>.Create(newHeight);
+            m_ResizeTarget.style.width = newWidth;
+            m_ResizeTarget.style.height = newHeight;
 
             mouseMoveEvent.StopPropagation();
         }
@@ -232,15 +232,15 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionTop = StyleValue<float>.Create(m_Container.layout.yMin);
-            m_Container.style.positionBottom = StyleValue<float>.Create(float.NaN);
+            m_Container.style.top = m_Container.layout.yMin;
+            m_Container.style.bottom = float.NaN;
 
             float newHeight = Mathf.Max(0f, m_ResizeBeginLayout.height + relativeMousePosition.y);
 
-            m_ResizeTarget.style.height = StyleValue<float>.Create(newHeight);
+            m_ResizeTarget.style.height = newHeight;
 
             if (maintainAspectRatio)
-                m_ResizeTarget.style.width = StyleValue<float>.Create(newHeight);
+                m_ResizeTarget.style.width = newHeight;
 
             mouseMoveEvent.StopPropagation();
         }
@@ -253,10 +253,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionTop = StyleValue<float>.Create(m_Container.layout.yMin);
-            m_Container.style.positionBottom = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionLeft = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionRight = StyleValue<float>.Create(m_Container.parent.layout.width - m_Container.layout.xMax);
+            m_Container.style.top = m_Container.layout.yMin;
+            m_Container.style.bottom = float.NaN;
+            m_Container.style.left = float.NaN;
+            m_Container.style.right = m_Container.parent.layout.width - m_Container.layout.xMax;
 
             float newWidth = Mathf.Max(0f, m_ResizeBeginLayout.width - relativeMousePosition.x);
             float newHeight = Mathf.Max(0f, m_ResizeBeginLayout.height + relativeMousePosition.y);
@@ -264,8 +264,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (maintainAspectRatio)
                 newWidth = newHeight = Mathf.Min(newWidth, newHeight);
 
-            m_ResizeTarget.style.width = StyleValue<float>.Create(newWidth);
-            m_ResizeTarget.style.height = StyleValue<float>.Create(newHeight);
+            m_ResizeTarget.style.width = newWidth;
+            m_ResizeTarget.style.height = newHeight;
 
             mouseMoveEvent.StopPropagation();
         }
@@ -278,15 +278,15 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionLeft = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionRight = StyleValue<float>.Create(m_Container.parent.layout.width - m_Container.layout.xMax);
+            m_Container.style.left = float.NaN;
+            m_Container.style.right = m_Container.parent.layout.width - m_Container.layout.xMax;
 
             float newWidth = Mathf.Max(0f, m_ResizeBeginLayout.width - relativeMousePosition.x);
 
-            m_ResizeTarget.style.width = StyleValue<float>.Create(newWidth);
+            m_ResizeTarget.style.width = newWidth;
 
             if (maintainAspectRatio)
-                m_ResizeTarget.style.height = StyleValue<float>.Create(newWidth);
+                m_ResizeTarget.style.height = newWidth;
 
             mouseMoveEvent.StopPropagation();
         }
@@ -299,10 +299,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             Vector2 relativeMousePosition = mouseMoveEvent.mousePosition - m_ResizeBeginMousePosition;
 
             // Set anchor points for positioning
-            m_Container.style.positionTop = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionBottom = StyleValue<float>.Create(m_Container.parent.layout.height - m_Container.layout.yMax);
-            m_Container.style.positionLeft = StyleValue<float>.Create(float.NaN);
-            m_Container.style.positionRight = StyleValue<float>.Create(m_Container.parent.layout.width - m_Container.layout.xMax);
+            m_Container.style.top = float.NaN;
+            m_Container.style.bottom = m_Container.parent.layout.height - m_Container.layout.yMax;
+            m_Container.style.left = float.NaN;
+            m_Container.style.right = m_Container.parent.layout.width - m_Container.layout.xMax;
 
             float newWidth = Mathf.Max(0f, m_ResizeBeginLayout.width - relativeMousePosition.x);
             float newHeight = Mathf.Max(0f, m_ResizeBeginLayout.height - relativeMousePosition.y);
@@ -310,8 +310,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (maintainAspectRatio)
                 newWidth = newHeight = Mathf.Min(newWidth, newHeight);
 
-            m_ResizeTarget.style.width = StyleValue<float>.Create(newWidth);
-            m_ResizeTarget.style.height = StyleValue<float>.Create(newHeight);
+            m_ResizeTarget.style.width = newWidth;
+            m_ResizeTarget.style.height = newHeight;
 
             mouseMoveEvent.StopPropagation();
         }

@@ -472,8 +472,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 // Restore master preview layout
                 m_FloatingWindowsLayout.previewLayout.ApplyPosition(m_MasterPreviewView);
-                m_MasterPreviewView.previewTextureView.style.width = StyleValue<float>.Create(m_FloatingWindowsLayout.masterPreviewSize.x);
-                m_MasterPreviewView.previewTextureView.style.height = StyleValue<float>.Create(m_FloatingWindowsLayout.masterPreviewSize.y);
+                m_MasterPreviewView.previewTextureView.style.width = m_FloatingWindowsLayout.masterPreviewSize.x;
+                m_MasterPreviewView.previewTextureView.style.height = m_FloatingWindowsLayout.masterPreviewSize.y;
 
                 // Restore blackboard layout, and make sure that it remains in the view.
                 Rect blackboardRect = m_FloatingWindowsLayout.blackboardLayout.GetLayout(this.layout);

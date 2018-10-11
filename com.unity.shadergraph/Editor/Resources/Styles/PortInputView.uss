@@ -37,9 +37,9 @@ PortInputView > #container > #slot {
 }
 
 PortInputView > #edge {
-    position-type: absolute;
-    position-right: 0;
-    position-top: 10.5;
+    position: absolute;
+    right: 0;
+    top: 10.5;
     height: 2;
     width: 20;
     background-color: #ff0000;
