@@ -56,7 +56,7 @@ ShaderPort > #connector.portHighlight {
 }
 
 ShaderPort > #type {
-    text-color: #c1c1c1;
+    color: #c1c1c1;
     font-size:11;
     height:16;
     padding-left: 0;

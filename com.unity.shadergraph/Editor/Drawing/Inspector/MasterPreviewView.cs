@@ -137,26 +137,26 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
                 AddToClassList("expanded");
                 m_PreviewResizeBorderFrame.visible = true;
 
-                style.positionLeft = StyleValue<float>.Create(float.NaN);
-                style.positionBottom = StyleValue<float>.Create(float.NaN);
-                style.positionRight = StyleValue<float>.Create(parent.layout.width - layout.xMax);
-                style.positionTop = StyleValue<float>.Create(layout.yMin);
+                style.left = float.NaN;
+                style.bottom = float.NaN;
+                style.right = parent.layout.width - layout.xMax;
+                style.top = layout.yMin;
 
-                previewTextureView.style.width = StyleValue<float>.Create(m_ExpandedPreviewSize.x);
-                previewTextureView.style.height = StyleValue<float>.Create(m_ExpandedPreviewSize.y);
+                previewTextureView.style.width = m_ExpandedPreviewSize.x;
+                previewTextureView.style.height = m_ExpandedPreviewSize.y;
             }
             else
             {
                 m_ExpandedPreviewSize = previewTextureView.layout.size;
                 m_PreviewResizeBorderFrame.visible = false;
 
-                style.positionLeft = StyleValue<float>.Create(float.NaN);
-                style.positionBottom = StyleValue<float>.Create(float.NaN);
-                style.positionRight = StyleValue<float>.Create(parent.layout.width - layout.xMax);
-                style.positionTop = StyleValue<float>.Create(layout.yMin);
+                style.left = float.NaN;
+                style.bottom = float.NaN;
+                style.right = parent.layout.width - layout.xMax;
+                style.top = layout.yMin;
 
-                previewTextureView.style.width = StyleValue<float>.Create(0f);
-                previewTextureView.style.height = StyleValue<float>.Create(0f);
+                previewTextureView.style.width = 0f;
+                previewTextureView.style.height = 0f;
                 RemoveFromClassList("expanded");
                 AddToClassList("collapsed");
             }
