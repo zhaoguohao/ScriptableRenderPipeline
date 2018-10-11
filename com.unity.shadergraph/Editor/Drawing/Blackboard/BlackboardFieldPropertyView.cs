@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using Toggle = UnityEngine.UIElements.Toggle;
-using ContextualMenu = UnityEngine.UIElements.DropdownMenu;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
@@ -338,7 +337,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     m_ReferenceNameField.value = m_Property.referenceName;
                     m_ReferenceNameField.RemoveFromClassList("modified");
                     DirtyNodes(ModificationScope.Graph);
-                }, ContextualMenu.MenuAction.AlwaysEnabled);
+                }, DropdownMenuAction.AlwaysEnabled);
         }
 
         VisualElement AddRow(string labelText, VisualElement control)
