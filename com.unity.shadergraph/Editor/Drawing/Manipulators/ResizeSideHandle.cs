@@ -52,7 +52,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public ResizeSideHandle(VisualElement resizeTarget, VisualElement container, ResizeHandleAnchor anchor)
         {
-            ImmediateRepaint = Draw;
             m_WindowDockingLayout = new WindowDockingLayout();
 
             m_ResizeTarget = resizeTarget;
@@ -345,7 +344,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_WindowDockingLayout.CalculateDockingCornerAndOffset(m_Container.layout, m_Container.parent.layout);
             m_WindowDockingLayout.ApplyPosition(m_Container);
         }
-        private void Draw()
+        protected override void ImmediateRepaint()
         {
             if (m_StyleWidget == null)
             {
