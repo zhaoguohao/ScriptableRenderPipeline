@@ -15,12 +15,13 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public VisualElement label
         {
-            get { return m_LabelContainer.FirstOrDefault(); }
+            get { return (m_LabelContainer.childCount > 0)?m_LabelContainer[0]:null; }
             set
             {
-                var first = m_LabelContainer.FirstOrDefault();
-                if (first != null)
-                    first.RemoveFromHierarchy();
+                if(m_LabelContainer.childCount > 0)
+                {
+                    m_LabelContainer.Clear();
+                }
                 m_LabelContainer.Add(value);
             }
         }
