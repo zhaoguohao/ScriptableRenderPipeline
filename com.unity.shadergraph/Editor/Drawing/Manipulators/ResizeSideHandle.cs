@@ -24,7 +24,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         TopLeft
     }
 
-    public class ResizeSideHandle : VisualElement
+    public class ResizeSideHandle : ImmediateModeElement
     {
         VisualElement m_ResizeTarget;
         VisualElement m_Container;
@@ -344,12 +344,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_WindowDockingLayout.CalculateDockingCornerAndOffset(m_Container.layout, m_Container.parent.layout);
             m_WindowDockingLayout.ApplyPosition(m_Container);
         }
-
-#if UNITY_2018_3_OR_NEWER
-        protected override void DoRepaint(IStylePainter painter)
-#else
-        public override void DoRepaint()
-#endif
+        protected override void ImmediateRepaint()
         {
             if (m_StyleWidget == null)
             {
