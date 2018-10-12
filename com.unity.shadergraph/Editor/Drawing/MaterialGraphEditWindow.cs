@@ -130,7 +130,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     var asset = AssetDatabase.LoadAssetAtPath<Object>(AssetDatabase.GUIDToAssetPath(selectedGuid));
                     graphEditorView = new GraphEditorView(this, materialGraph)
                     {
-                        persistenceKey = selectedGuid,
+                        viewDataKey = selectedGuid,
                         assetName = asset.name.Split('/').Last()
                     };
                     m_ColorSpace = PlayerSettings.colorSpace;
@@ -507,7 +507,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 graphEditorView = new GraphEditorView(this, m_GraphObject.graph as AbstractMaterialGraph)
                 {
-                    persistenceKey = selectedGuid,
+                    viewDataKey = selectedGuid,
                     assetName = asset.name.Split('/').Last()
                 };
                 m_FrameAllAfterLayout = true;
