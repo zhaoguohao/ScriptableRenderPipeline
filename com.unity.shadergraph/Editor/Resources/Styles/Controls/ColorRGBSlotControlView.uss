@@ -7,7 +7,7 @@ ColorRGBSlotControlView {
     width: 41;
 }
 
-.unity-field__input
+.unity-field__input {
     margin-left: 0;
     margin-right: 0;
 }
