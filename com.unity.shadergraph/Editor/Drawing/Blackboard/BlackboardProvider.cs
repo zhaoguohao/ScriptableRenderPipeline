@@ -96,10 +96,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PathLabelTextField.visible = true;
 
             m_PathLabelTextField.value = m_PathLabel.text;
-            m_PathLabelTextField.style.positionType = PositionType.Absolute;
+            m_PathLabelTextField.style.position = Position.Absolute;
             var rect = m_PathLabel.ChangeCoordinatesTo(blackboard, new Rect(Vector2.zero, m_PathLabel.layout.size));
-            m_PathLabelTextField.style.positionLeft = rect.xMin;
-            m_PathLabelTextField.style.positionTop = rect.yMin;
+            m_PathLabelTextField.style.left = rect.xMin;
+            m_PathLabelTextField.style.top = rect.yMin;
             m_PathLabelTextField.style.width = rect.width;
             m_PathLabelTextField.style.fontSize = 11;
             m_PathLabelTextField.style.marginLeft = 0;

@@ -72,14 +72,14 @@ GraphEditorView > #content > #inspector {
 
 #resizeBorderFrame > .resize {
     background-color: rgba(0, 0, 0, 0);
-    position-type: absolute;
+    position: absolute;
 }
 
 #resizeBorderFrame > .resize.vertical {
     cursor: resize-vertical;
     height: 10;
-    position-left: 10;
-    position-right: 10;
+    left: 10;
+    right: 10;
     padding-top: 0;
     padding-bottom: 0;
     margin-top: 0;
@@ -89,8 +89,8 @@ GraphEditorView > #content > #inspector {
 #resizeBorderFrame > .resize.horizontal {
     cursor: resize-horizontal;
     width: 10;
-    position-top: 10;
-    position-bottom: 10;
+    top: 10;
+    bottom: 10;
     padding-left: 0;
     padding-right: 0;
     margin-left: 0;
@@ -104,50 +104,50 @@ GraphEditorView > #content > #inspector {
 
 #resizeBorderFrame > .resize.diagonal.top-left {
     cursor: resize-up-left;
-    position-top: 0;
-    position-left: 0;
+    top: 0;
+    left: 0;
 }
 
 #resizeBorderFrame > .resize.diagonal.top-right {
     cursor: resize-up-right;
-    position-top: 0;
-    position-right: 0;
+    top: 0;
+    right: 0;
 }
 
 #resizeBorderFrame > .resize.diagonal.bottom-left {
     cursor: resize-up-right;
-    position-bottom: 0;
-    position-left: 0;
+    bottom: 0;
+    left: 0;
 }
 
 #resizeBorderFrame > .resize.diagonal.bottom-right {
     cursor: resize-up-left;
-    position-bottom: 0;
-    position-right: 0;
+    bottom: 0;
+    right: 0;
 }
 
 #resizeBorderFrame > .resize.vertical.top {
-    position-top: 0;
+    top: 0;
 }
 
 #resizeBorderFrame > .resize.vertical.bottom {
-    position-bottom: 0;
+    bottom: 0;
 }
 
 #resizeBorderFrame > .resize.horzontal.left {
-    position-left: 0;
+    left: 0;
 }
 
 #resizeBorderFrame > .resize.horizontal.right {
-    position-right: 0;
+    right: 0;
 }
 
 .resizeBorderFrame {
-    position-type: absolute;
-    position-top: 0;
-    position-right: 0;
-    position-bottom: 0;
-    position-left: 0;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
 }
 
 .nodeEditor {
@@ -170,11 +170,11 @@ NodeEditorHeaderView > #preType {
 NodeEditorHeaderView > #preType,
 NodeEditorHeaderView > #postType,
 NodeEditorHeaderView > #type {
-    text-color: rgb(180, 180, 180);
+    color: rgb(180, 180, 180);
 }
 
 NodeEditorHeaderView > #title {
-    text-color: rgb(180, 180, 180);
+    color: rgb(180, 180, 180);
     font-style: bold;
 }
 
@@ -238,13 +238,13 @@ PropertyControlView {
     padding-top: 1;
     padding-right: 3;
     padding-bottom: 2;
-    slice-left: 3;
-    slice-top: 3;
-    slice-right: 3;
-    slice-bottom: 3;
+    -unity-slice-left: 3;
+    -unity-slice-top: 3;
+    -unity-slice-right: 3;
+    -unity-slice-bottom: 3;
     selection-color: rgba(61,128,223,166);
     cursor: text;
-    text-color: #B4B4B4;
+    color: #B4B4B4;
     background-image: resource("Builtin Skins/DarkSkin/Images/TextField.png");
     cursor-color:#B4B4B4;
 }
