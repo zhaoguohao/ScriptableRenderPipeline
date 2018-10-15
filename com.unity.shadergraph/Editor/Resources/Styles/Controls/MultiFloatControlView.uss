@@ -12,9 +12,13 @@ MultiFloatControlView > #dummy > Label {
     cursor: slide-arrow;
 }
 
-MultiFloatControlView > FloatField {
-    margin-left: 0;
-    margin-right: 0;
+
+.unity-field {
     min-width: 30;
     flex-grow: 1;
+}
+
+.unity-field__input{
+    margin-left: 0;
+    margin-right: 0;
 }
