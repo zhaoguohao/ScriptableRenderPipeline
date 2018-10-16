@@ -55,7 +55,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (!string.IsNullOrEmpty(label))
                 m_SliderPanel.Add(new Label(label));
             m_Slider = new Slider(m_Value.y, m_Value.z);
-            m_Slider.OnValueChanged((evt) => OnChangeSlider(evt.newValue));
+            m_Slider.RegisterValueChangedCallback((evt) => OnChangeSlider(evt.newValue));
 
             m_Slider.value = m_Value.x;
             m_SliderPanel.Add(m_Slider);
@@ -104,7 +104,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
             field.RegisterCallback<MouseDownEvent>(Repaint);
             field.RegisterCallback<MouseMoveEvent>(Repaint);
-            field.OnValueChanged(evt =>
+            field.RegisterValueChangedCallback(evt =>
                 {
                     var value = (Vector3)m_PropertyInfo.GetValue(m_Node, null);
                     value[index] = (float)evt.newValue;
@@ -149,7 +149,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             value.x = Mathf.Max(Mathf.Min(value.x, value.z), value.y);
             panel.Remove(m_Slider);
             m_Slider = new Slider(value.y, value.z);
-            m_Slider.OnValueChanged((evt) => OnChangeSlider(evt.newValue));
+            m_Slider.RegisterValueChangedCallback((evt) => OnChangeSlider(evt.newValue));
 
             m_Slider.lowValue = value.y;
             m_Slider.highValue = value.z;

@@ -86,7 +86,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             redSliderPanel.Add(new Label("R"));
             Action<float> changedRedIn = (s) => { OnChangeSlider(s, 0); };
             m_RedSlider = new Slider(m_Minimum, m_Maximum);
-            m_RedSlider.OnValueChanged((evt) => OnChangeSlider(evt.newValue, 0));
+            m_RedSlider.RegisterValueChangedCallback((evt) => OnChangeSlider(evt.newValue, 0));
 
             redSliderPanel.Add(m_RedSlider);
             m_RedInputField = new FloatField { value = m_ChannelMixer.outRed.x };
@@ -97,7 +97,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             var greenSliderPanel = new VisualElement { name = "sliderPanel" };
             greenSliderPanel.Add(new Label("G"));
             m_GreenSlider = new Slider(m_Minimum, m_Maximum);
-            m_GreenSlider.OnValueChanged((evt) => OnChangeSlider(evt.newValue, 1));
+            m_GreenSlider.RegisterValueChangedCallback((evt) => OnChangeSlider(evt.newValue, 1));
             greenSliderPanel.Add(m_GreenSlider);
             m_GreenInputField = new FloatField { value = m_ChannelMixer.outRed.y };
             m_GreenInputField.RegisterCallback<ChangeEvent<double>, int>(OnChangeInputField, 1);
@@ -107,7 +107,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             var blueSliderPanel = new VisualElement { name = "sliderPanel" };
             blueSliderPanel.Add(new Label("B"));
             m_BlueSlider = new Slider(m_Minimum, m_Maximum);
-            m_BlueSlider.OnValueChanged((evt) => OnChangeSlider(evt.newValue, 2));
+            m_BlueSlider.RegisterValueChangedCallback((evt) => OnChangeSlider(evt.newValue, 2));
             blueSliderPanel.Add(m_BlueSlider);
             m_BlueInputField = new FloatField { value = m_ChannelMixer.outRed.z };
             m_BlueInputField.RegisterCallback<ChangeEvent<double>, int>(OnChangeInputField, 2);

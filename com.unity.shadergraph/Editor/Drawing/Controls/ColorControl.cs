@@ -49,13 +49,13 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 Add(new Label(label));
 
             m_ColorField = new ColorField { value = m_Color.color, hdr = m_Color.mode == ColorMode.HDR, showEyeDropper = false };
-            m_ColorField.OnValueChanged(OnChange);
+            m_ColorField.RegisterValueChangedCallback(OnChange);
             Add(m_ColorField);
 
             VisualElement enumPanel = new VisualElement { name = "enumPanel" };
             enumPanel.Add(new Label("Mode"));
             var enumField = new EnumField(m_Color.mode);
-            enumField.OnValueChanged(OnModeChanged);
+            enumField.RegisterValueChangedCallback(OnModeChanged);
             enumPanel.Add(enumField);
             Add(enumPanel);
         }

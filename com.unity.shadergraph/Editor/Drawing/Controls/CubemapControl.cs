@@ -40,7 +40,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 Add(new Label(label));
 
             var cubemapField = new ObjectField { value = (Cubemap)m_PropertyInfo.GetValue(m_Node, null), objectType = typeof(Cubemap) };
-            cubemapField.OnValueChanged(OnChange);
+            cubemapField.RegisterValueChangedCallback(OnChange);
             Add(cubemapField);
         }
 

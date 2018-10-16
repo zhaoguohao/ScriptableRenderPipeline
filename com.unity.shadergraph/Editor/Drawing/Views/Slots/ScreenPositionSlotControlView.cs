@@ -14,7 +14,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
             AddStyleSheetPath("Styles/Controls/ScreenPositionSlotControlView");
             m_Slot = slot;
             var enumField = new EnumField(slot.screenSpaceType);
-            enumField.OnValueChanged(OnValueChanged);
+            enumField.RegisterValueChangedCallback(OnValueChanged);
             Add(enumField);
         }
 

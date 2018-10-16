@@ -50,14 +50,14 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             var enumPanel = new VisualElement { name = "enumPanel" };
             enumPanel.Add(new Label("Material"));
             var enumField = new EnumField(m_DielectricMaterial.type);
-            enumField.OnValueChanged(OnEnumChanged);
+            enumField.RegisterValueChangedCallback(OnEnumChanged);
             enumPanel.Add(enumField);
             Add(enumPanel);
 
             m_RangePanel = new VisualElement { name = "sliderPanel" };
             m_RangePanel.Add(new Label("Range"));
             m_RangeSlider = new Slider(0.01f, 1) { value = m_DielectricMaterial.range };
-            m_RangeSlider.OnValueChanged((evt) => OnChangeRangeSlider(evt.newValue));
+            m_RangeSlider.RegisterValueChangedCallback((evt) => OnChangeRangeSlider(evt.newValue));
 
             m_RangePanel.Add(m_RangeSlider);
             m_RangeField = AddField(m_RangePanel, m_RangeSlider, 0, m_DielectricMaterial);
@@ -67,7 +67,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             m_IORPanel = new VisualElement { name = "sliderPanel" };
             m_IORPanel.Add(new Label("IOR"));
             m_IORSlider = new Slider(1, 2.5f) { value = m_DielectricMaterial.indexOfRefraction };
-            m_IORSlider.OnValueChanged((evt) => OnChangeIORSlider(evt.newValue));
+            m_IORSlider.RegisterValueChangedCallback((evt) => OnChangeIORSlider(evt.newValue));
 
             m_IORPanel.Add(m_IORSlider);
             m_IORField = AddField(m_IORPanel, m_IORSlider, 1, m_DielectricMaterial);
@@ -133,7 +133,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
             field.RegisterCallback<MouseDownEvent>(Repaint);
             field.RegisterCallback<MouseMoveEvent>(Repaint);
-            field.OnValueChanged(evt =>
+            field.RegisterValueChangedCallback(evt =>
                 {
                     var value = (DielectricSpecularNode.DielectricMaterial)m_PropertyInfo.GetValue(m_Node, null);
                     var fieldValue = (float)evt.newValue;
@@ -193,7 +193,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             value = Mathf.Max(Mathf.Min(value, 1), 0.01f);
             m_RangePanel.Remove(m_RangeSlider);
             m_RangeSlider = new Slider(0.01f, 1) { value = value };
-            m_RangeSlider.OnValueChanged((evt) => OnChangeRangeSlider(evt.newValue));
+            m_RangeSlider.RegisterValueChangedCallback((evt) => OnChangeRangeSlider(evt.newValue));
             m_RangePanel.Add(m_RangeSlider);
             m_RangePanel.Remove(m_RangeField);
             m_RangeField.value = value;
@@ -205,7 +205,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             value = Mathf.Max(Mathf.Min(value, 5), 1);
             m_IORPanel.Remove(m_IORSlider);
             m_IORSlider = new Slider(1, 2.5f)  { value = value };
-            m_IORSlider.OnValueChanged((evt) => OnChangeIORSlider(evt.newValue));
+            m_IORSlider.RegisterValueChangedCallback((evt) => OnChangeIORSlider(evt.newValue));
 
             m_IORPanel.Add(m_IORSlider);
             m_IORPanel.Remove(m_IORField);

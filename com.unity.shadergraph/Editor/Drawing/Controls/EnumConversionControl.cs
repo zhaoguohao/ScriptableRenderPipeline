@@ -46,14 +46,14 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             propertyInfo.SetValue(m_Node, ec, null);
 
             var fromField = new EnumField(currentValue.from);
-            fromField.OnValueChanged(OnFromChanged);
+            fromField.RegisterValueChangedCallback(OnFromChanged);
             Add(fromField);
 
             var arrowLabel = new Label("➔");
             Add(arrowLabel);
 
             var toField = new EnumField(currentValue.to);
-            toField.OnValueChanged(OnToChanged);
+            toField.RegisterValueChangedCallback(OnToChanged);
             Add(toField);
         }
 
