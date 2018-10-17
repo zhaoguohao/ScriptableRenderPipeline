@@ -6,9 +6,16 @@ namespace UnityEngine.Experimental.Rendering
     public static class RTHandles
     {
         static RTHandleSystem s_DefaultInstance = new RTHandleSystem();
+        static RenderTextureDescriptor s_DefaultDescriptor = new RenderTextureDescriptor(); 
+
 
         public static int maxWidth { get { return s_DefaultInstance.GetMaxWidth(); } }
         public static int maxHeight { get { return s_DefaultInstance.GetMaxHeight(); } }
+
+        public static RTHandleSystem.RTHandle AllocFromDefault(int width, int height)
+        {
+            return s_DefaultInstance.AllocFromDefault(width, height);
+        }
 
         public static RTHandleSystem.RTHandle Alloc(
             int width,
@@ -160,6 +167,9 @@ namespace UnityEngine.Experimental.Rendering
                 scaledRTsupportsMSAA,
                 scaledRTMSAASamples
                 );
+
+            if (XRGraphics.enabled)
+                s_DefaultDescriptor = XRGraphics.eyeTextureDesc;
         }
 
         public static void Release(RTHandleSystem.RTHandle rth)
