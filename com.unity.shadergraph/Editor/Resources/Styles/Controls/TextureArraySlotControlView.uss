@@ -3,13 +3,17 @@ TextureArraySlotControlView {
     align-items: center;
 }
 
-.unity-field {
+.unity-base-field {
      width: 100;
 }
 
-.unity-field__input{
+.unity-base-field__input{
     margin-top: 0;
     margin-bottom: 0;
     margin-left: 0;
     margin-right: 0;
+}
+
+.unity-object-field__object{
+    overflow:hidden;
 }

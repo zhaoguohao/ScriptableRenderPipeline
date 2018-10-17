@@ -19,7 +19,7 @@ ToggleControlView > #togglePanel > Label {
     align-self: center;
 }
 
-.unity-toggle__input{
+.unity-toggle .unity-base-field__input{
     margin-right: 8;
     margin-top: 4;
     margin-bottom: 4;

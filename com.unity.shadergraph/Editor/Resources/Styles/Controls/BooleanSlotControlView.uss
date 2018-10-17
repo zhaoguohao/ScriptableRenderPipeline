@@ -3,6 +3,6 @@ BooleanSlotControlView {
     align-items: center;
 }
 
-.unity-field {
+.unity-base-field {
     width: 20;
 }

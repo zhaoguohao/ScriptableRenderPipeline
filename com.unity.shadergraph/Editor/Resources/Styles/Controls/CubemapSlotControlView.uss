@@ -3,11 +3,11 @@ CubemapSlotControlView {
     align-items: center;
 }
 
-.unity-field {
+.unity-base-field {
     width: 100;
 }
 
-.unity-object-field__input {
+.unity-object-field .unity-base-field__input {
      margin-top: 0;
     margin-bottom: 0;
     margin-left: 0;
