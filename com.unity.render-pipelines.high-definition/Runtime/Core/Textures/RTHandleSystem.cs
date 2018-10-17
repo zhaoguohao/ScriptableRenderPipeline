@@ -25,12 +25,16 @@ namespace UnityEngine.Experimental.Rendering
         int m_MaxWidths = 0;
         int m_MaxHeights = 0;
 
+        RenderTextureDescriptor s_DefaultDescriptor = new RenderTextureDescriptor();
+
         public RTHandleSystem()
         {
             m_AutoSizedRTs = new HashSet<RTHandle>();
             m_ResizeOnDemandRTs = new HashSet<RTHandle>();
             m_MaxWidths = 1;
             m_MaxHeights = 1;
+            if (XRGraphics.enabled)
+                s_DefaultDescriptor = XRGraphics.eyeTextureDesc;
         }
 
         public void Dispose()
@@ -48,6 +52,9 @@ namespace UnityEngine.Experimental.Rendering
 
             m_ScaledRTSupportsMSAA = scaledRTsupportsMSAA;
             m_ScaledRTCurrentMSAASamples = scaledRTMSAASamples;
+
+            if (XRGraphics.enabled)
+                s_DefaultDescriptor = XRGraphics.eyeTextureDesc;
         }
 
         public void Release(RTHandle rth)
@@ -417,6 +424,21 @@ namespace UnityEngine.Experimental.Rendering
             rth.referenceSize = new Vector2Int(width, height);
 
             rth.scaleFunc = scaleFunc;
+            return rth;
+        }
+
+        public RTHandle AllocFromDefault(int width, int height)
+        {
+            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
+            overrideTextureDescriptor.width = width;
+            overrideTextureDescriptor.height = height;
+            var rt = new RenderTexture(overrideTextureDescriptor);
+
+            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
+            var rth = new RTHandle(this);
+            rth.referenceSize = new Vector2Int(width, height);
+            rth.SetRenderTexture(rt, category);
+
             return rth;
         }
 
