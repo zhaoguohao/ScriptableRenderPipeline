@@ -9,6 +9,7 @@ using Object = UnityEngine.Object;
 
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
+using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
 
 namespace UnityEditor.ShaderGraph.Drawing.Inspector
@@ -73,7 +74,8 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
 
         public MasterPreviewView(PreviewManager previewManager, AbstractMaterialGraph graph)
         {
-            this.clippingOption = ClippingOption.ClipAndCacheContents;
+            cacheAsBitmap = true;
+            style.overflow = Overflow.Hidden;
             m_PreviewManager = previewManager;
             m_Graph = graph;
 
