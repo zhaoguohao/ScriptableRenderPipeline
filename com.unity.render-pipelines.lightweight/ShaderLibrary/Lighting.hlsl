@@ -112,7 +112,11 @@ Light GetMainLight()
 {
     Light light;
     light.direction = _MainLightPosition.xyz;
-    light.distanceAttenuation = unity_LightData.z;
+#if defined(_MIXED_LIGHTING_SUBTRACTIVE) && defined(LIGHTMAP_ON)
+	light.distanceAttenuation = unity_LightData.z;
+#else
+    light.distanceAttenuation = unity_ProbesOcclusion.x;
+#endif
     light.shadowAttenuation = 1.0;
     light.color = _MainLightColor.rgb;
 

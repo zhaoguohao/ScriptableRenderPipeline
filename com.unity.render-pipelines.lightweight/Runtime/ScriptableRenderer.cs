@@ -329,7 +329,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         public static PerObjectData GetPerObjectLightFlags(int mainLightIndex, int additionalLightsCount)
         {
-            var configuration = PerObjectData.ReflectionProbes | PerObjectData.Lightmaps | PerObjectData.LightProbe | PerObjectData.LightData;
+            var configuration = PerObjectData.ReflectionProbes | PerObjectData.Lightmaps | PerObjectData.LightProbe | PerObjectData.LightData | PerObjectData.OcclusionProbe;
             if (additionalLightsCount > 0 && !useStructuredBufferForLights)
             {
                 configuration |= PerObjectData.LightIndices;
