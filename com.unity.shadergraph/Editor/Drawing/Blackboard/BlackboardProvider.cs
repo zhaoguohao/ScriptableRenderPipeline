@@ -66,8 +66,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PathLabel.RegisterCallback<MouseDownEvent>(OnMouseDownEvent);
 
             m_PathLabelTextField = new TextField { visible = false };
-            m_PathLabelTextField.RegisterCallback<FocusOutEvent>(e => { OnEditPathTextFinished(); });
-            m_PathLabelTextField.RegisterCallback<KeyDownEvent>(OnPathTextFieldKeyPressed);
+            m_PathLabelTextField.Q("unity-text-input").RegisterCallback<FocusOutEvent>(e => { OnEditPathTextFinished(); });
+            m_PathLabelTextField.Q("unity-text-input").RegisterCallback<KeyDownEvent>(OnPathTextFieldKeyPressed);
             blackboard.shadow.Add(m_PathLabelTextField);
 
             // m_WindowDraggable = new WindowDraggable(blackboard.shadow.Children().First().Q("header"));
@@ -109,7 +109,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             m_PathLabel.visible = false;
 
-            m_PathLabelTextField.Focus();
+            m_PathLabelTextField.Q("unity-text-input").Focus();
             m_PathLabelTextField.SelectAll();
         }
 
@@ -119,11 +119,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 case KeyCode.Escape:
                     m_EditPathCancelled = true;
-                    m_PathLabelTextField.Blur();
+                    m_PathLabelTextField.Q("unity-text-input").Blur();
                     break;
                 case KeyCode.Return:
                 case KeyCode.KeypadEnter:
-                    m_PathLabelTextField.Blur();
+                    m_PathLabelTextField.Q("unity-text-input").Blur();
                     break;
                 default:
                     break;
