@@ -8,7 +8,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 {
     public class PortInputView : GraphElement, IDisposable
     {
-        readonly CustomProperty<Color> k_EdgeColorProperty = new CustomProperty<Color>("--edge-color");
+        readonly CustomStyleProperty<Color> k_EdgeColorProperty = new CustomStyleProperty<Color>("--edge-color");
 
         Color m_EdgeColor = Color.red;
 

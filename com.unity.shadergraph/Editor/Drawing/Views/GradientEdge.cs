@@ -6,8 +6,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 {
     public class GradientEdge : Edge
     {
-        readonly CustomProperty<Color> k_InputColorProperty = new CustomProperty<Color>("--edge-input-color");
-        readonly CustomProperty<Color> k_OutputColorProperty = new CustomProperty<Color>("--edge-output-color");
+        readonly CustomStyleProperty<Color> k_InputColorProperty = new CustomStyleProperty<Color>("--edge-input-color");
+        readonly CustomStyleProperty<Color> k_OutputColorProperty = new CustomStyleProperty<Color>("--edge-output-color");
 
         Color m_InputColor;
         Color m_OutputColor;
