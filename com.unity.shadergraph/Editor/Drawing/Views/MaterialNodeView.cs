@@ -34,7 +34,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener)
         {
-            AddStyleSheetPath("Styles/MaterialNodeView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/MaterialNodeView"));
             AddToClassList("MaterialNode");
 
             if (inNode == null)

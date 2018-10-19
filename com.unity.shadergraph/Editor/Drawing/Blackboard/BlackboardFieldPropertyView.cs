@@ -23,7 +23,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public BlackboardFieldPropertyView(AbstractMaterialGraph graph, IShaderProperty property)
         {
-            AddStyleSheetPath("Styles/ShaderGraphBlackboard");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/ShaderGraphBlackboard"));
             m_Graph = graph;
             m_Property = property;
 
@@ -37,7 +37,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             AddRow("Exposed", m_ExposedToogle);
 
             m_ReferenceNameField = new TextField(512, false, false, ' ');
-            m_ReferenceNameField.AddStyleSheetPath("Styles/PropertyNameReferenceField");
+            m_ReferenceNameField.styleSheets.Add(Resources.Load<StyleSheet>("Styles/PropertyNameReferenceField"));
             AddRow("Reference", m_ReferenceNameField);
             m_ReferenceNameField.value = property.referenceName;
             m_ReferenceNameField.isDelayed = true;

@@ -39,7 +39,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
         public PopupControlView(string label, AbstractMaterialNode node, PropertyInfo propertyInfo)
         {
-            AddStyleSheetPath("Styles/Controls/PopupControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/PopupControlView"));
             m_Node = node;
             m_PropertyInfo = propertyInfo;
 

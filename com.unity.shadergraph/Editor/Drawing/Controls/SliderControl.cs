@@ -43,7 +43,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/SliderControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/SliderControlView"));
             m_DisplayMinMax = displayMinMax;
 
             if (propertyInfo.PropertyType != typeof(Vector3))

@@ -12,7 +12,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
 
         public BooleanSlotControlView(BooleanMaterialSlot slot)
         {
-            AddStyleSheetPath("Styles/Controls/BooleanSlotControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/BooleanSlotControlView"));
             m_Slot = slot;
             var toggleField = new Toggle();
             toggleField.OnToggleChanged(OnChangeToggle);

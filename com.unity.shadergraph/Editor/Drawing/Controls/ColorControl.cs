@@ -38,7 +38,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/ColorControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/ColorControlView"));
             if (propertyInfo.PropertyType != typeof(Color))
                 throw new ArgumentException("Property must be of type Color.", "propertyInfo");
             label = label ?? ObjectNames.NicifyVariableName(propertyInfo.Name);

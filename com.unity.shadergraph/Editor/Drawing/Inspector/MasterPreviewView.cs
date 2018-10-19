@@ -79,7 +79,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
             m_PreviewManager = previewManager;
             m_Graph = graph;
 
-            AddStyleSheetPath("Styles/MasterPreviewView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/MasterPreviewView"));
 
             m_PreviewRenderHandle = previewManager.masterRenderData;
 
