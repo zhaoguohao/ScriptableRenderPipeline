@@ -12,7 +12,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
 
         public ColorRGBSlotControlView(ColorRGBMaterialSlot slot)
         {
-            AddStyleSheetPath("Styles/Controls/ColorRGBSlotControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/ColorRGBSlotControlView"));
             m_Slot = slot;
             var colorField = new ColorField
             {

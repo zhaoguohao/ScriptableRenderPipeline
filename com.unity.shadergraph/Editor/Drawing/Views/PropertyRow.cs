@@ -1,4 +1,5 @@
 using System.Linq;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing
@@ -28,7 +29,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public PropertyRow(VisualElement label = null)
         {
-            AddStyleSheetPath("Styles/PropertyRow");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/PropertyRow"));
             VisualElement container = new VisualElement {name = "container"};
             m_ContentContainer = new VisualElement { name = "content"  };
             m_LabelContainer = new VisualElement {name = "label" };

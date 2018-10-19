@@ -49,7 +49,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/ChannelMixerControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/ChannelMixerControlView"));
             m_ChannelMixer = (ChannelMixerNode.ChannelMixer)m_PropertyInfo.GetValue(m_Node, null);
             m_OutChannel = 0;
 

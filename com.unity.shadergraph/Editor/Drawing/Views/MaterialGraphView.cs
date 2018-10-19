@@ -18,7 +18,7 @@ namespace UnityEditor.ShaderGraph.Drawing
     {
         public MaterialGraphView()
         {
-            AddStyleSheetPath("Styles/MaterialGraphView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/MaterialGraphView"));
             serializeGraphElements = SerializeGraphElementsImplementation;
             canPasteSerializedData = CanPasteSerializedDataImplementation;
             unserializeAndPaste = UnserializeAndPasteImplementation;

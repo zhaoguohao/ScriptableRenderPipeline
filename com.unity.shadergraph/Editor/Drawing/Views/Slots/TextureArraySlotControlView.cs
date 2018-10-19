@@ -14,7 +14,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
         public TextureArraySlotControlView(Texture2DArrayInputMaterialSlot slot)
         {
             m_Slot = slot;
-            AddStyleSheetPath("Styles/Controls/TextureArraySlotControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/TextureArraySlotControlView"));
             var objectField = new ObjectField { objectType = typeof(Texture2DArray), value = m_Slot.textureArray };
             objectField.OnValueChanged(OnValueChanged);
             Add(objectField);

@@ -41,7 +41,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             m_Node = node;
             m_PropertyInfo = propertyInfo;
 
-            AddStyleSheetPath("Styles/Controls/DielectricSpecularControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/DielectricSpecularControlView"));
             m_DielectricMaterial = (DielectricSpecularNode.DielectricMaterial)m_PropertyInfo.GetValue(m_Node, null);
 
             if (propertyInfo.PropertyType != typeof(DielectricSpecularNode.DielectricMaterial))
