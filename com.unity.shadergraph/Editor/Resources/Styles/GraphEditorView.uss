@@ -22,52 +22,52 @@ GraphEditorView > #content > #inspector {
 }
 
 .edge.fromMatrix4, .edge.fromMatrix3, .edge.fromMatrix2 {
-    edge-output-color: #8FC1DF;
+    --edge-output-color: #8FC1DF;
 }
 .edge.toMatrix4, .edge.toMatrix3, .edge.toMatrix2 {
-    edge-input-color: #8FC1DF;
+    --edge-input-color: #8FC1DF;
 }
 
 .edge.fromTexture2D, .edge.fromCubemap {
-    edge-output-color: #FF8B8B;
+    --edge-output-color: #FF8B8B;
 }
 .edge.toTexture2D, .edge.toCubemap {
-    edge-input-color: #FF8B8B;
+    --edge-input-color: #FF8B8B;
 }
 
 .edge.fromVector4 {
-    edge-output-color: #FBCBF4;
+    --edge-output-color: #FBCBF4;
 }
 .edge.toVector4 {
-    edge-input-color: #FBCBF4;
+    --edge-input-color: #FBCBF4;
 }
 
 .edge.fromVector3 {
-    edge-output-color: #F6FF9A;
+    --edge-output-color: #F6FF9A;
 }
 .edge.toVector3 {
-    edge-input-color: #F6FF9A;
+    --edge-input-color: #F6FF9A;
 }
 
 .edge.fromVector2 {
-    edge-output-color: #9AEF92;
+    --edge-output-color: #9AEF92;
 }
 .edge.toVector2 {
-    edge-input-color: #9AEF92;
+    --edge-input-color: #9AEF92;
 }
 
 .edge.fromVector1 {
-    edge-output-color: #84E4E7;
+    --edge-output-color: #84E4E7;
 }
 .edge.toVector1 {
-    edge-input-color: #84E4E7;
+    --edge-input-color: #84E4E7;
 }
 
 .edge.fromBoolean {
-    edge-output-color: #9481E6;
+    --edge-output-color: #9481E6;
 }
 .edge.toBoolean {
-    edge-input-color: #9481E6;
+    --edge-input-color: #9481E6;
 }
 
 #resizeBorderFrame > .resize {
@@ -188,7 +188,7 @@ NodeEditorHeaderView > #title {
 }
 
 .nodeEditor > .section > .title {
-    text-color: rgb(180, 180, 180);
+    color: rgb(180, 180, 180);
     font-style: bold;
     padding-left: 16;
     padding-right: 16;
@@ -242,11 +242,11 @@ PropertyControlView {
     -unity-slice-top: 3;
     -unity-slice-right: 3;
     -unity-slice-bottom: 3;
-    selection-color: rgba(61,128,223,166);
+    --unity-selection-color: rgba(61,128,223,166);
     cursor: text;
     color: #B4B4B4;
     background-image: resource("Builtin Skins/DarkSkin/Images/TextField.png");
-    cursor-color:#B4B4B4;
+    --unity-cursor-color:#B4B4B4;
 }
 
 .unity-Doublefield-input:focus {

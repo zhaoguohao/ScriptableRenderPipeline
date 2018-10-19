@@ -1,26 +1,35 @@
 using UnityEngine;
 using UnityEditor.Experimental.GraphView;
-using UnityEngine.UIElements.StyleSheets;
+using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
     public class GradientEdge : Edge
     {
-        const string k_InputColorProperty = "edge-input-color";
-        const string k_OutputColorProperty = "edge-output-color";
+        readonly CustomProperty<Color> k_InputColorProperty = new CustomProperty<Color>("--edge-input-color");
+        readonly CustomProperty<Color> k_OutputColorProperty = new CustomProperty<Color>("--edge-output-color");
 
-        StyleValue<Color> m_InputColor;
-        StyleValue<Color> m_OutputColor;
+        Color m_InputColor;
+        Color m_OutputColor;
 
         public Color inputColor
         {
-            get { return m_InputColor.GetSpecifiedValueOrDefault(defaultColor); }
+            get { return m_InputColor; }
         }
 
         public Color outputColor
         {
-            get { return m_OutputColor.GetSpecifiedValueOrDefault(defaultColor); }
+            get { return m_OutputColor; }
         }
+
+        public GradientEdge()
+        {
+            m_InputColor = defaultColor;
+            m_OutputColor = defaultColor;
+
+            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
+        }
+
 
         public void UpdateClasses(ConcreteSlotValueType outputType, ConcreteSlotValueType inputType)
         {
@@ -30,11 +39,17 @@ namespace UnityEditor.ShaderGraph.Drawing
             AddToClassList("to" + inputType);
         }
 
-        protected override void OnStyleResolved(ICustomStyle styles)
+        private void OnCustomStyleResolved(CustomStyleResolvedEvent e)
         {
-            base.OnStyleResolved(styles);
-            styles.ApplyCustomProperty(k_InputColorProperty, ref m_InputColor);
-            styles.ApplyCustomProperty(k_OutputColorProperty, ref m_OutputColor);
+            Color inputValue;
+            Color outputValue;
+
+            ICustomStyle styles = e.customStyle;
+            if (styles.TryGetValue(k_InputColorProperty, out inputValue))
+                m_InputColor = inputValue;
+
+            if (styles.TryGetValue(k_OutputColorProperty, out outputValue))
+                m_OutputColor = outputValue;
         }
 
         protected override void DrawEdge()

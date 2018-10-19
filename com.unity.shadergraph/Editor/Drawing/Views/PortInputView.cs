@@ -8,13 +8,13 @@ namespace UnityEditor.ShaderGraph.Drawing
 {
     public class PortInputView : GraphElement, IDisposable
     {
-        const string k_EdgeColorProperty = "edge-color";
+        readonly CustomProperty<Color> k_EdgeColorProperty = new CustomProperty<Color>("--edge-color");
 
-        StyleValue<Color> m_EdgeColor;
+        Color m_EdgeColor = Color.red;
 
         public Color edgeColor
         {
-            get { return m_EdgeColor.GetSpecifiedValueOrDefault(Color.red); }
+            get { return m_EdgeColor; }
         }
 
         public MaterialSlot slot
@@ -61,12 +61,17 @@ namespace UnityEditor.ShaderGraph.Drawing
             Add(m_Container);
 
             m_Container.visible = m_EdgeControl.visible = m_Control != null;
+
+            RegisterCallback<CustomStyleResolvedEvent>(OnCustomStyleResolved);
         }
 
-        protected override void OnStyleResolved(ICustomStyle styles)
+        private void OnCustomStyleResolved(CustomStyleResolvedEvent e)
         {
-            base.OnStyleResolved(styles);
-            styles.ApplyCustomProperty(k_EdgeColorProperty, ref m_EdgeColor);
+            Color colorValue;
+
+            if (e.customStyle.TryGetValue(k_EdgeColorProperty, out colorValue))
+                m_EdgeColor = colorValue;
+
             m_EdgeControl.UpdateLayout();
             m_EdgeControl.inputColor = edgeColor;
             m_EdgeControl.outputColor = edgeColor;
