@@ -48,10 +48,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             VRTextureUsage vrUsage = XRGraphics.eyeTextureDesc.vrUsage;
             int numSlices = XRGraphics.NumSlices;
+            TextureDimension textureDimension = XRGraphics.eyeTextureDesc.dimension;
 
             for (int gbufferIndex = 0; gbufferIndex < m_BufferCount; ++gbufferIndex)
             {
-                m_RTs[gbufferIndex] = RTHandles.Alloc(Vector2.one, colorFormat: rtFormat[gbufferIndex], sRGB: sRGBFlags[gbufferIndex], filterMode: FilterMode.Point, name: string.Format("GBuffer{0}", gbufferIndex), enableRandomWrite: enableWrite[gbufferIndex], vrUsage: vrUsage, slices : numSlices); 
+                m_RTs[gbufferIndex] = RTHandles.Alloc(Vector2.one, colorFormat: rtFormat[gbufferIndex], sRGB: sRGBFlags[gbufferIndex], filterMode: FilterMode.Point, name: string.Format("GBuffer{0}", gbufferIndex), enableRandomWrite: enableWrite[gbufferIndex], vrUsage: vrUsage, slices : numSlices, dimension: textureDimension); 
                 m_RTIDs[gbufferIndex] = m_RTs[gbufferIndex].nameID;
                 m_TextureShaderIDs[gbufferIndex] = HDShaderIDs._GBufferTexture[gbufferIndex];
 
