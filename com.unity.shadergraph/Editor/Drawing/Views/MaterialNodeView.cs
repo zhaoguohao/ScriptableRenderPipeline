@@ -9,7 +9,6 @@ using UnityEngine.Rendering;
 
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
-using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
 using Node = UnityEditor.Experimental.GraphView.Node;
 
