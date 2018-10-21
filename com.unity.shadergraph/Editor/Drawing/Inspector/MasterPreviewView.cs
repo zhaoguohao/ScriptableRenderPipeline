@@ -9,7 +9,6 @@ using Object = UnityEngine.Object;
 
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
-using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
 
 namespace UnityEditor.ShaderGraph.Drawing.Inspector
