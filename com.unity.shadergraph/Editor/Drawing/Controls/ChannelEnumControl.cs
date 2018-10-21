@@ -98,7 +98,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 value = 0;
 
             m_PopupField = new PopupField<string>(popupEntries, value);
-            m_PopupField.OnValueChanged(OnValueChanged);
+            m_PopupField.RegisterValueChangedCallback(OnValueChanged);
             Add(m_PopupField);
         }
     }

@@ -16,7 +16,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
             m_Slot = slot;
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/Texture3DSlotControlView"));
             var objectField = new ObjectField { objectType = typeof(Texture3D), value = m_Slot.texture };
-            objectField.OnValueChanged(OnValueChanged);
+            objectField.RegisterValueChangedCallback(OnValueChanged);
             Add(objectField);
         }
 

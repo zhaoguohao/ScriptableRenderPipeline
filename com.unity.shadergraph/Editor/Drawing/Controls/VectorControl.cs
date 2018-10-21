@@ -78,7 +78,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             dragger.SetDragZone(label);
             field.RegisterCallback<MouseDownEvent>(Repaint);
             field.RegisterCallback<MouseMoveEvent>(Repaint);
-            field.OnValueChanged(evt =>
+            field.RegisterValueChangedCallback(evt =>
                 {
                     var value = GetValue();
                     value[index] = (float)evt.newValue;

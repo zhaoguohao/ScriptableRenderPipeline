@@ -19,7 +19,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
                 value = new Color(slot.value.x, slot.value.y, slot.value.z, 0),
                 showEyeDropper = false, showAlpha = false, hdr = (slot.colorMode == ColorMode.HDR)
             };
-            colorField.OnValueChanged(OnValueChanged);
+            colorField.RegisterValueChangedCallback(OnValueChanged);
             Add(colorField);
         }
 

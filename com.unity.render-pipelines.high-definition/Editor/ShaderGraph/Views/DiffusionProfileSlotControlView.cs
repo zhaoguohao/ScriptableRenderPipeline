@@ -18,11 +18,11 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
             styleSheets.Add(Resources.Load<StyleSheet>("DiffusionProfileSlotControlView"));
             m_Slot = slot;
             popupField = new PopupField<string>(m_Slot.diffusionProfile.popupEntries, m_Slot.diffusionProfile.selectedEntry);
-            popupField.OnValueChanged(OnValueChanged);
+            popupField.RegisterValueChangedCallback(RegisterValueChangedCallback);
             Add(popupField);
         }
 
-        void OnValueChanged(ChangeEvent<string> evt)
+        void RegisterValueChangedCallback(ChangeEvent<string> evt)
         {
             var selectedIndex = popupField.index;
 

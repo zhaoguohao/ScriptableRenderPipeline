@@ -34,7 +34,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
             m_GradientObject.gradient.mode = m_Slot.value.mode;
 
             var gradientField = new GradientField() { value = m_GradientObject.gradient };
-            gradientField.OnValueChanged(OnValueChanged);
+            gradientField.RegisterValueChangedCallback(OnValueChanged);
             Add(gradientField);
         }
 

@@ -67,7 +67,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 gradientPanel.Add(new Label(label));
 
             var gradientField = new GradientField() { value = m_GradientObject.gradient };
-            gradientField.OnValueChanged(OnValueChanged);
+            gradientField.RegisterValueChangedCallback(OnValueChanged);
             gradientPanel.Add(gradientField);
 
             Add(gradientPanel);

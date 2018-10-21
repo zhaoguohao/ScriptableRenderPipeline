@@ -52,7 +52,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             Add(new Label(label ?? ObjectNames.NicifyVariableName(propertyInfo.Name)));
             var value = (PopupList)propertyInfo.GetValue(m_Node, null);
             m_PopupField = new PopupField<string>(value.popupEntries, value.selectedEntry);
-            m_PopupField.OnValueChanged(OnValueChanged);
+            m_PopupField.RegisterValueChangedCallback(OnValueChanged);
             Add(m_PopupField);
         }
 

@@ -40,7 +40,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 Add(new Label(label));
 
             var intField = new IntegerField { value = (int)m_PropertyInfo.GetValue(m_Node, null) };
-            intField.OnValueChanged(OnChange);
+            intField.RegisterValueChangedCallback(OnChange);
 
             Add(intField);
         }

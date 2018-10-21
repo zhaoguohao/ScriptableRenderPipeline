@@ -36,7 +36,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 throw new ArgumentException("Property must be an enum.", "propertyInfo");
             Add(new Label(label ?? ObjectNames.NicifyVariableName(propertyInfo.Name)));
             var enumField = new EnumField((Enum)m_PropertyInfo.GetValue(m_Node, null));
-            enumField.OnValueChanged(OnValueChanged);
+            enumField.RegisterValueChangedCallback(OnValueChanged);
             Add(enumField);
         }
 

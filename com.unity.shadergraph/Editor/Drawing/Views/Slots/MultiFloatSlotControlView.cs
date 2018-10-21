@@ -34,7 +34,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
             var field = new FloatField { userData = index, value = initialValue[index] };
             var dragger = new FieldMouseDragger<double>(field);
             dragger.SetDragZone(label);
-            field.OnValueChanged(evt =>
+            field.RegisterValueChangedCallback(evt =>
                 {
                     var value = m_Get();
                     value[index] = (float)evt.newValue;
