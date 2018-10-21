@@ -48,7 +48,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/GradientControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/GradientControlView"));
 
             if (propertyInfo.PropertyType != typeof(Gradient))
                 throw new ArgumentException("Property must be of type Gradient.", "propertyInfo");

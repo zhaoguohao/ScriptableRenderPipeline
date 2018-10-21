@@ -43,7 +43,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/SliderControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/SliderControlView"));
             m_DisplayMinMax = displayMinMax;
 
             if (propertyInfo.PropertyType != typeof(Vector3))
@@ -110,7 +110,6 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                     value[index] = (float)evt.newValue;
                     m_PropertyInfo.SetValue(m_Node, value, null);
                     m_UndoGroup = -1;
-                    UpdateSlider(m_SliderPanel, index, value);
                     this.MarkDirtyRepaint();
                 });
             field.RegisterCallback<InputEvent>(evt =>
@@ -126,6 +125,10 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                     var value = (Vector3)m_PropertyInfo.GetValue(m_Node, null);
                     value[index] = newValue;
                     m_PropertyInfo.SetValue(m_Node, value, null);
+                    if(evt.newData.Length != 0 
+                        && evt.newData[evt.newData.Length-1] != '.' 
+                        && evt.newData[evt.newData.Length-1] != ',')
+                        UpdateSlider(m_SliderPanel, index, value);
                     this.MarkDirtyRepaint();
                 });
             field.RegisterCallback<KeyDownEvent>(evt =>

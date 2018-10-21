@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -39,7 +40,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/EnumConversionControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/EnumConversionControlView"));
             var currentValue = value;
 
             var ec = (IEnumConversion)propertyInfo.GetValue(m_Node, null);

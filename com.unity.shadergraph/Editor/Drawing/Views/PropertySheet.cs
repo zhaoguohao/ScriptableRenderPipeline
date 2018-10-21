@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEditorInternal;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing
@@ -29,14 +30,14 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public PropertySheet(Label header = null)
         {
-            AddStyleSheetPath("Styles/PropertySheet");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/PropertySheet"));
             m_ContentContainer = new VisualElement { name = "content" };
             m_HeaderContainer = new VisualElement { name = "header" };
             if (header != null)
                 m_HeaderContainer.Add(header);
 
             m_ContentContainer.Add(m_HeaderContainer);
-            shadow.Add(m_ContentContainer);
+            hierarchy.Add(m_ContentContainer);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using UnityEditor.Graphing;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -51,7 +52,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/ToggleControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/ToggleControlView"));
 
             if (propertyInfo.PropertyType != typeof(ToggleData))
                 throw new ArgumentException("Property must be a Toggle.", "propertyInfo");

@@ -9,7 +9,6 @@ using Object = UnityEngine.Object;
 
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
-using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
 
@@ -72,7 +71,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         public GraphEditorView(EditorWindow editorWindow, AbstractMaterialGraph graph)
         {
             m_Graph = graph;
-            AddStyleSheetPath("Styles/GraphEditorView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/GraphEditorView"));
             previewManager = new PreviewManager(graph);
 
             string serializedWindowLayout = EditorUserSettings.GetConfigValue(k_FloatingWindowsLayoutKey);
@@ -120,7 +119,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 Rect blackboardLayout = m_BlackboardProvider.blackboard.layout;
                 blackboardLayout.x = 10f;
                 blackboardLayout.y = 10f;
-                m_BlackboardProvider.blackboard.layout = blackboardLayout;
+                m_BlackboardProvider.blackboard.SetPosition(blackboardLayout);
 
                 m_MasterPreviewView = new MasterPreviewView(previewManager, graph) { name = "masterPreview" };
 
@@ -456,7 +455,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void HandleEditorViewChanged(GeometryChangedEvent evt)
         {
-            m_BlackboardProvider.blackboard.layout = m_FloatingWindowsLayout.blackboardLayout.GetLayout(m_GraphView.layout);
+            m_BlackboardProvider.blackboard.SetPosition(m_FloatingWindowsLayout.blackboardLayout.GetLayout(m_GraphView.layout));
         }
 
         void StoreBlackboardLayoutOnGeometryChanged(GeometryChangedEvent evt)
@@ -487,7 +486,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 blackboardRect.y = Mathf.Clamp(blackboardRect.y, 0f, Mathf.Max(1f, m_GraphView.contentContainer.layout.height - blackboardRect.height - blackboardRect.height));
 
                 // Set the processed blackboard layout.
-                m_BlackboardProvider.blackboard.layout = blackboardRect;
+                m_BlackboardProvider.blackboard.SetPosition(blackboardRect);
 
                 previewManager.ResizeMasterPreview(m_FloatingWindowsLayout.masterPreviewSize);
             }
