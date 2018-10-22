@@ -579,11 +579,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var     frameParams = hdCamera.vBufferParams[0];
                 Vector4 resolution  = frameParams.viewportResolution;
 #if UNITY_2019_1_OR_NEWER
-                float vFoV        = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
-                Vector2 lensShift = hdCamera.camera.GetGateFittedLensShift();
+                var vFoV        = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
+                var lensShift = hdCamera.camera.GetGateFittedLensShift();
 #else
-                float vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
-                Vector2 lensShift = Vector2.zero;
+                var vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                var lensShift = Vector2.zero;
 #endif
 
                 // Compose the matrix which allows us to compute the world space view direction.
@@ -707,11 +707,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var       frameParams = hdCamera.vBufferParams[0];
                 Vector4   resolution  = frameParams.viewportResolution;
 #if UNITY_2019_1_OR_NEWER
-                float vFoV = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
-                Vector2 lensShift = hdCamera.camera.GetGateFittedLensShift();
+                var vFoV = hdCamera.camera.GetGateFittedFieldOfView() * Mathf.Deg2Rad;
+                var lensShift = hdCamera.camera.GetGateFittedLensShift();
 #else
-                float vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
-                Vector2 lensShift   = Vector2.zero;
+                var vFoV        = hdCamera.camera.fieldOfView * Mathf.Deg2Rad;
+                var lensShift   = Vector2.zero;
 #endif
                 // Compose the matrix which allows us to compute the world space view direction.
                 Matrix4x4 transform   = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(vFoV, lensShift, resolution, hdCamera.viewMatrix, false);
