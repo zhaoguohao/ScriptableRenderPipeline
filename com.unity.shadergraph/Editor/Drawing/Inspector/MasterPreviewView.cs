@@ -73,11 +73,12 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
 
         public MasterPreviewView(PreviewManager previewManager, AbstractMaterialGraph graph)
         {
-            this.clippingOption = ClippingOption.ClipAndCacheContents;
+            cacheAsBitmap = true;
+            style.overflow = Overflow.Hidden;
             m_PreviewManager = previewManager;
             m_Graph = graph;
 
-            AddStyleSheetPath("Styles/MasterPreviewView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/MasterPreviewView"));
 
             m_PreviewRenderHandle = previewManager.masterRenderData;
 
@@ -166,7 +167,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
 
         Image CreatePreview(Texture texture)
         {
-            var image = new Image { name = "preview", image = StyleValue<Texture>.Create(m_PreviewRenderHandle.texture ?? texture) };
+            var image = new Image { name = "preview", image = m_PreviewRenderHandle.texture ?? texture };
             image.AddManipulator(new Draggable(OnMouseDragPreviewMesh, true));
             image.AddManipulator((IManipulator)Activator.CreateInstance(s_ContextualMenuManipulator, (Action<ContextualMenuPopulateEvent>)BuildContextualMenu));
             return image;
@@ -206,7 +207,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Inspector
 
         void OnPreviewChanged()
         {
-            m_PreviewTextureView.image = StyleValue<Texture>.Create(m_PreviewRenderHandle.texture ?? Texture2D.blackTexture);
+            m_PreviewTextureView.image = m_PreviewRenderHandle.texture ?? Texture2D.blackTexture;
             m_PreviewTextureView.MarkDirtyRepaint();
         }
 

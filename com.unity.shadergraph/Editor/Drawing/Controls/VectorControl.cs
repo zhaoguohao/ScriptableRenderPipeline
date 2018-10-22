@@ -49,7 +49,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (components == -1)
                 throw new ArgumentException("Property must be of type float, Vector2, Vector3 or Vector4.", "propertyInfo");
 
-            AddStyleSheetPath("Styles/Controls/MultiFloatControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/MultiFloatControlView"));
             m_Node = node;
             m_PropertyInfo = propertyInfo;
 
@@ -78,7 +78,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             dragger.SetDragZone(label);
             field.RegisterCallback<MouseDownEvent>(Repaint);
             field.RegisterCallback<MouseMoveEvent>(Repaint);
-            field.OnValueChanged(evt =>
+            field.RegisterValueChangedCallback(evt =>
                 {
                     var value = GetValue();
                     value[index] = (float)evt.newValue;

@@ -39,7 +39,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 Add(new Label(label));
 
             var textureField = new ObjectField { value = (Texture2DArray)m_PropertyInfo.GetValue(m_Node, null), objectType = typeof(Texture2DArray) };
-            textureField.OnValueChanged(OnChange);
+            textureField.RegisterValueChangedCallback(OnChange);
             Add(textureField);
         }
 

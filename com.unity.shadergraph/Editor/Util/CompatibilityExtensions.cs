@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    static class CompatibilityExtensions
+    public static class CompatibilityExtensions
     {
         public static void AppendAction(this DropdownMenu contextualMenu, string actionName, Action action, Func<DropdownMenuAction.Status> actionStatusCallback)
         {
@@ -42,7 +42,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         public static void OnToggleChanged(this Toggle toggle, EventCallback<ChangeEvent<bool>> callback)
         {
 #if UNITY_2018_3_OR_NEWER
-            toggle.OnValueChanged(callback);
+            toggle.RegisterValueChangedCallback(callback);
 #else
             toggle.OnToggle(() => callback(ChangeEvent<bool>.GetPooled(!toggle.value, toggle.value)));
 #endif

@@ -23,7 +23,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     row.Add(new EnumField(SurfaceType.Opaque), (field) =>
                     {
                         field.value = m_Node.surfaceType;
-                        field.OnValueChanged(ChangeSurface);
+                        field.RegisterValueChangedCallback(ChangeSurface);
                     });
                 });
 
@@ -32,7 +32,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     row.Add(new EnumField(AlphaMode.Additive), (field) =>
                     {
                         field.value = m_Node.alphaMode;
-                        field.OnValueChanged(ChangeAlphaMode);
+                        field.RegisterValueChangedCallback(ChangeAlphaMode);
                     });
                 });
 

@@ -2,6 +2,7 @@ using System;
 using UnityEditor.Graphing;
 
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing.Slots
@@ -12,10 +13,10 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
 
         public UVSlotControlView(UVMaterialSlot slot)
         {
-            AddStyleSheetPath("Styles/Controls/UVSlotControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/UVSlotControlView"));
             m_Slot = slot;
             var enumField = new EnumField(slot.channel);
-            enumField.OnValueChanged(OnValueChanged);
+            enumField.RegisterValueChangedCallback(OnValueChanged);
             Add(enumField);
         }
 

@@ -43,7 +43,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/SliderControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/SliderControlView"));
             m_DisplayMinMax = displayMinMax;
 
             if (propertyInfo.PropertyType != typeof(Vector3))
@@ -55,7 +55,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (!string.IsNullOrEmpty(label))
                 m_SliderPanel.Add(new Label(label));
             m_Slider = new Slider(m_Value.y, m_Value.z);
-            m_Slider.OnValueChanged((evt) => OnChangeSlider(evt.newValue));
+            m_Slider.RegisterValueChangedCallback((evt) => OnChangeSlider(evt.newValue));
 
             m_Slider.value = m_Value.x;
             m_SliderPanel.Add(m_Slider);
@@ -104,13 +104,12 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
             field.RegisterCallback<MouseDownEvent>(Repaint);
             field.RegisterCallback<MouseMoveEvent>(Repaint);
-            field.OnValueChanged(evt =>
+            field.RegisterValueChangedCallback(evt =>
                 {
                     var value = (Vector3)m_PropertyInfo.GetValue(m_Node, null);
                     value[index] = (float)evt.newValue;
                     m_PropertyInfo.SetValue(m_Node, value, null);
                     m_UndoGroup = -1;
-                    UpdateSlider(m_SliderPanel, index, value);
                     this.MarkDirtyRepaint();
                 });
             field.Q("unity-text-input").RegisterCallback<InputEvent>(evt =>
@@ -126,6 +125,10 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                     var value = (Vector3)m_PropertyInfo.GetValue(m_Node, null);
                     value[index] = newValue;
                     m_PropertyInfo.SetValue(m_Node, value, null);
+                    if(evt.newData.Length != 0 
+                        && evt.newData[evt.newData.Length-1] != '.' 
+                        && evt.newData[evt.newData.Length-1] != ',')
+                        UpdateSlider(m_SliderPanel, index, value);
                     this.MarkDirtyRepaint();
                 });
             field.Q("unity-text-input").RegisterCallback<KeyDownEvent>(evt =>
@@ -149,7 +152,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             value.x = Mathf.Max(Mathf.Min(value.x, value.z), value.y);
             panel.Remove(m_Slider);
             m_Slider = new Slider(value.y, value.z);
-            m_Slider.OnValueChanged((evt) => OnChangeSlider(evt.newValue));
+            m_Slider.RegisterValueChangedCallback((evt) => OnChangeSlider(evt.newValue));
 
             m_Slider.lowValue = value.y;
             m_Slider.highValue = value.z;

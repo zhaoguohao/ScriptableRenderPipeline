@@ -5,14 +5,11 @@ using System.Reflection;
 using UnityEngine;
 using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph.Drawing.Controls;
-using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
-using UnityEngine.UIElements.StyleEnums;
 using UnityEngine.UIElements.StyleSheets;
-using Edge = UnityEditor.Experimental.GraphView.Edge;
 using Node = UnityEditor.Experimental.GraphView.Node;
 
 namespace UnityEditor.ShaderGraph.Drawing
@@ -36,7 +33,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void Initialize(AbstractMaterialNode inNode, PreviewManager previewManager, IEdgeConnectorListener connectorListener)
         {
-            AddStyleSheetPath("Styles/MaterialNodeView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/MaterialNodeView"));
             AddToClassList("MaterialNode");
 
             if (inNode == null)
@@ -72,7 +69,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PreviewContainer = new VisualElement
                 {
                     name = "previewContainer",
-                    clippingOption = ClippingOption.ClipAndCacheContents,
+                    cacheAsBitmap = true,
+                    style = { overflow = Overflow.Hidden },
                     pickingMode = PickingMode.Ignore
                 };
                 m_PreviewImage = new Image
@@ -125,7 +123,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PortInputContainer = new VisualElement
             {
                 name = "portInputContainer",
-                clippingOption = ClippingOption.ClipAndCacheContents,
+                cacheAsBitmap = true,
+                style = { overflow = Overflow.Hidden },
                 pickingMode = PickingMode.Ignore
             };
             Add(m_PortInputContainer);
@@ -280,6 +279,18 @@ namespace UnityEditor.ShaderGraph.Drawing
             return graph.GetShader(node, GenerationMode.ForReals, node.name).shader;
         }
 
+        void RecreateSettings()
+        {
+            var settings = node as IHasSettings;
+            if (settings != null)
+            {
+                m_Settings.RemoveFromHierarchy();
+
+                m_Settings = settings.CreateSettingsElement();
+                m_NodeSettingsView.Add(m_Settings);
+            }
+        }
+
         void UpdateSettingsExpandedState()
         {
             m_ShowSettings = !m_ShowSettings;
@@ -345,6 +356,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             // Update slots to match node modification
             if (scope == ModificationScope.Topological)
             {
+                RecreateSettings();
+
                 var slots = node.GetSlots<MaterialSlot>().ToList();
 
                 var inputPorts = inputContainer.Children().OfType<ShaderPort>().ToList();
@@ -444,7 +457,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             var currentRect = new Rect(inputView.resolvedStyle.left, inputView.resolvedStyle.top, inputView.resolvedStyle.width, inputView.resolvedStyle.height);
             var targetRect = new Rect(0.0f, 0.0f, port.layout.width, port.layout.height);
-            targetRect = port.ChangeCoordinatesTo(inputView.shadow.parent, targetRect);
+            targetRect = port.ChangeCoordinatesTo(inputView.hierarchy.parent, targetRect);
             var centerY = targetRect.center.y;
             var centerX = targetRect.xMax - currentRect.width;
             currentRect.center = new Vector2(centerX, centerY);

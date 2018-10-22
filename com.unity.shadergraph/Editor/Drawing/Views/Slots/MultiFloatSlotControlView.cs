@@ -16,7 +16,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
 
         public MultiFloatSlotControlView(INode node, string[] labels, Func<Vector4> get, Action<Vector4> set)
         {
-            AddStyleSheetPath("Styles/Controls/MultiFloatSlotControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/MultiFloatSlotControlView"));
             m_Node = node;
             m_Get = get;
             m_Set = set;
@@ -34,7 +34,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
             var field = new FloatField { userData = index, value = initialValue[index] };
             var dragger = new FieldMouseDragger<double>(field);
             dragger.SetDragZone(label);
-            field.OnValueChanged(evt =>
+            field.RegisterValueChangedCallback(evt =>
                 {
                     var value = m_Get();
                     value[index] = (float)evt.newValue;
