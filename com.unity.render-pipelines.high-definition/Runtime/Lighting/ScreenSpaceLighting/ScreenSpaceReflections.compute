@@ -48,15 +48,19 @@
     StructuredBuffer<int2>  _SsrDepthPyramidMipLevelOffsets;
 
 CBUFFER_START(UnityScreenSpaceReflections)
+    int   _SsrStencilExclusionValue;
     int   _SsrIterLimit;
     float _SsrThicknessScale;
     float _SsrThicknessBias;
+
     float _SsrRoughnessFadeEnd;
     float _SsrRoughnessFadeRcpLength;
     float _SsrRoughnessFadeEndTimesRcpLength;
     float _SsrEdgeFadeRcpLength;
-    int   _SsrDepthPyramidMaxMip;
-    int   _SsrStencilExclusionValue;
+
+    float4 _ColorPyramidUvScaleAndLimitPrevFrame;
+
+    int    _SsrDepthPyramidMaxMip;
 CBUFFER_END
 
 //--------------------------------------------------------------------------------------------------
@@ -298,8 +302,11 @@ void ScreenSpaceReflectionsReprojection(uint2 positionSS : SV_DispatchThreadID)
     // This would require keeping the depth buffer from the previous frame.
     float2 velocityNDC  = SAMPLE_TEXTURE2D_LOD(_VelocityTexture, s_linear_clamp_sampler, hitPositionNDC * _ScreenToTargetScale.zw, 0).xy;
     float2 prevFrameNDC = hitPositionNDC - velocityNDC;
+    float2 prevFrameUV  = prevFrameNDC * _ColorPyramidUvScaleAndLimitPrevFrame.xy;
 
-    if (max(abs(prevFrameNDC.x - 0.5), abs(prevFrameNDC.y - 0.5)) > 0.5)
+    // TODO: optimize with max().
+    if ((prevFrameUV.x < 0) || (prevFrameUV.x > _ColorPyramidUvScaleAndLimitPrevFrame.x) ||
+        (prevFrameUV.y < 0) || (prevFrameUV.y > _ColorPyramidUvScaleAndLimitPrevFrame.y))
     {
         // Off-screen.
         return;
@@ -312,7 +319,9 @@ void ScreenSpaceReflectionsReprojection(uint2 positionSS : SV_DispatchThreadID)
 
     // TODO: filtering is quite awful. Needs to be non-Gaussian, bilateral and anisotropic.
     float  mipLevel = lerp(0, _SsrDepthPyramidMaxMip, roughness);
-    float3 color    = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, prevFrameNDC * _ScreenToTargetScale.zw, mipLevel).rgb;
+
+    // Note that the color pyramid uses it's own viewport scale, since it lives on the camera.
+    float3 color    = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, prevFrameNDC * _ColorPyramidScale.xy, mipLevel).rgb;
     float  opacity  = EdgeFade(prevFrameNDC, _SsrEdgeFadeRcpLength)
                     * RoughnessFade(roughness, _SsrRoughnessFadeRcpLength, _SsrRoughnessFadeEndTimesRcpLength);
 
