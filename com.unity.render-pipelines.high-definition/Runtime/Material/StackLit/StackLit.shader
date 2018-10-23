@@ -464,7 +464,7 @@ Shader "HDRenderPipeline/StackLit"
         //        4.0 show the source screen space occlusion instead of specular occlusion.}
 
         // Shared samplers
-        [ToggleUI] _EnableSamplerSharing("Enable Sampler Sharing", Float) = 0.0
+        [ToggleUI] _EnableSamplerSharing("Enable Sampler Sharing", Float) = 1.0
         [ToggleUI] _EnableSamplerSharingAutoGeneration("Enable Sampler Sharing Auto Generation", Float) = 0.0
         [HideInInspector] _SamplerSharingUsage("SamplerSharingUsage", Vector) = (0, 0, 0, 0)
         [HideInInspector] _GeneratedShaderSamplerSharingUsage("GeneratedShaderSamplerSharingUsage", Vector) = (0, 0, 0, 0)
