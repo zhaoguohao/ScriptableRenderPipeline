@@ -4,6 +4,7 @@
 //-------------------------------------------------------------------------------------
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/MaterialDebug.cs.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
 struct FragInputs
 {
@@ -28,6 +29,9 @@ struct FragInputs
 
     // For two sided lighting
     bool isFrontFace;
+
+    UNITY_VERTEX_INPUT_INSTANCE_ID
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 void GetVaryingsDataDebug(uint paramId, FragInputs input, inout float3 result, inout bool needLinearToSRGB)

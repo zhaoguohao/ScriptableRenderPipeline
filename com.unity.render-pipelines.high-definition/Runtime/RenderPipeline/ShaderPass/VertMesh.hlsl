@@ -4,6 +4,8 @@ struct VaryingsToPS
 #ifdef VARYINGS_NEED_PASS
     VaryingsPassToPS vpass;
 #endif
+    UNITY_VERTEX_INPUT_INSTANCE_ID
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 struct PackedVaryingsToPS
@@ -12,15 +14,23 @@ struct PackedVaryingsToPS
     PackedVaryingsPassToPS vpass;
 #endif
     PackedVaryingsMeshToPS vmesh;
+
+    UNITY_VERTEX_INPUT_INSTANCE_ID
+    UNITY_VERTEX_OUTPUT_STEREO
 };
 
 PackedVaryingsToPS PackVaryingsToPS(VaryingsToPS input)
 {
     PackedVaryingsToPS output;
+
     output.vmesh = PackVaryingsMeshToPS(input.vmesh);
 #ifdef VARYINGS_NEED_PASS
     output.vpass = PackVaryingsPassToPS(input.vpass);
 #endif
+
+    UNITY_SETUP_INSTANCE_ID(input);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+    UNITY_TRANSFER_INSTANCE_ID(input, output);
 
     return output;
 }
@@ -51,7 +61,7 @@ PackedVaryingsToDS PackVaryingsToDS(VaryingsToDS input)
 #ifdef VARYINGS_NEED_PASS
     output.vpass = PackVaryingsPassToDS(input.vpass);
 #endif
-
+    
     return output;
 }
 
@@ -97,10 +107,7 @@ VaryingsToDS InterpolateWithBaryCoordsToDS(VaryingsToDS input0, VaryingsToDS inp
 VaryingsMeshType VertMesh(AttributesMesh input)
 {
     VaryingsMeshType output;
-
-    UNITY_SETUP_INSTANCE_ID(input);
-    UNITY_TRANSFER_INSTANCE_ID(input, output);
-
+        
 #if defined(HAVE_MESH_MODIFICATION)
     input = ApplyMeshModification(input);
 #endif
@@ -163,9 +170,6 @@ VaryingsMeshType VertMesh(AttributesMesh input)
 VaryingsMeshToPS VertMeshTesselation(VaryingsMeshToDS input)
 {
     VaryingsMeshToPS output;
-
-    UNITY_SETUP_INSTANCE_ID(input);
-    UNITY_TRANSFER_INSTANCE_ID(input, output);
 
     output.positionCS = TransformWorldToHClip(input.positionRWS);
 

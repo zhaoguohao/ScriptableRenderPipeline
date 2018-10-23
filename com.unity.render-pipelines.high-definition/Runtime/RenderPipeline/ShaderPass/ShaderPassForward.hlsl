@@ -8,6 +8,9 @@ PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, varyingsType);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(varyingsType);
     return PackVaryingsType(varyingsType);
 }
 
@@ -37,8 +40,8 @@ void Frag(PackedVaryingsToPS packedInput,
         #endif
           )
 {
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
-
     // input.positionSS is SV_Position
     PositionInputs posInput = GetPositionInput_Stereo(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS.xyz, uint2(input.positionSS.xy) / GetTileSize(), unity_StereoEyeIndex);
 

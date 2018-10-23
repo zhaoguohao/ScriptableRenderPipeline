@@ -490,6 +490,8 @@ namespace UnityEngine.Experimental.Rendering
             };
             rt.Create();
 
+            
+
             var rth = new RTHandle(this);
             rth.SetRenderTexture(rt, category);
             rth.m_EnableMSAA = enableMSAA;
