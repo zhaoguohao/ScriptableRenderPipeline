@@ -55,7 +55,7 @@ namespace UnityEngine.Experimental.Rendering
             internal void SetRenderTexture(RenderTexture rt, RTCategory category)
             {
                 m_RT=  rt;
-                m_NameID = new RenderTargetIdentifier(rt);
+                m_NameID = new RenderTargetIdentifier(rt, depthSlice: XRGraphics.DepthSlice);
             }
 
             public void Release()

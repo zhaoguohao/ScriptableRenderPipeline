@@ -6,18 +6,26 @@
 
 PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
-    return PackVaryingsType(varyingsType);
+    PackedVaryingsType packedVaryingsType = PackVaryingsType(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
+    return packedVaryingsType;
 }
 
 #ifdef TESSELLATION_ON
 
 PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 {
-    VaryingsToPS output;
-    output.vmesh = VertMeshTesselation(input.vmesh);
-    return PackVaryingsToPS(output);
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
+    VaryingsToPS varyingsType;
+    varyingsType.vmesh = VertMeshTesselation(input.vmesh);
+    PackedVaryingsType packedVaryingsType = PackVaryingsToPS(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
+    return packedVaryingsType;
 }
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
