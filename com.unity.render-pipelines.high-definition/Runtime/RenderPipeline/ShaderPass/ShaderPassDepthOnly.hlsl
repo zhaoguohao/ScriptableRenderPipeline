@@ -6,9 +6,13 @@
 
 PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
-    return PackVaryingsType(varyingsType);
+    PackedVaryingsType packedVaryingsType = PackVaryingsType(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
+    return packedVaryingsType;
 }
 
 #ifdef TESSELLATION_ON
