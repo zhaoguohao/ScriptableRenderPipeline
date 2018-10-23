@@ -466,7 +466,7 @@ namespace UnityEditor.Experimental.Rendering
             bool temp = GUI.changed;
             GUI.changed = false;
 
-            var newMagnitude = Mathf.Max(0f, SliderLineHandle(position + forward * range, centerToLeftOnSphere.normalized, centerToLeftOnSphere.magnitude));
+            var newMagnitude = Mathf.Max(0f, SliderLineHandle(forward * range, centerToLeftOnSphere.normalized, centerToLeftOnSphere.magnitude));
             if (GUI.changed)
             {
                 s_SliderSpotAngleId = GUIUtility.hotControl;
