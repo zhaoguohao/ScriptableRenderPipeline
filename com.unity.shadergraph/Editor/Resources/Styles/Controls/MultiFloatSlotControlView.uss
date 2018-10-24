@@ -6,11 +6,14 @@ MultiFloatSlotControlView {
 #dummy > Label {
     margin-left: 0;
     margin-right: 0;
+    margin-bottom: 0;
     cursor: slide-arrow;
 }
 
 .unity-base-field {
     width: 30;
+    margin-top: 1;
+    margin-bottom: 1;
 }
 
 .unity-base-field__input{

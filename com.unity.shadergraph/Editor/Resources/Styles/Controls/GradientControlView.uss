@@ -5,6 +5,8 @@ GradientControlView > #gradientPanel {
 
 .unity-base-field {
 	flex:1;
+    margin-top: 1;
+    margin-bottom: 1;
 }
 
 .unity-base-field__input {

@@ -1,5 +1,5 @@
 PortInputView {
-    width: 212;
+    width: 232;
     height: 22;
     padding-top: 1;
     flex-direction: row;

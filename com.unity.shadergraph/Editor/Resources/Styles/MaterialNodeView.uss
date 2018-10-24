@@ -106,8 +106,8 @@ MaterialNodeView > #resize {
 
 MaterialNodeView > #portInputContainer {
     position: absolute;
-    width: 212;
-    left: -200;
+    width: 232;
+    left: -220;
     top: 46;
 }
 
