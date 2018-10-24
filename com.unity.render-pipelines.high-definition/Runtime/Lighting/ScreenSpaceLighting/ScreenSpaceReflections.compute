@@ -305,8 +305,8 @@ void ScreenSpaceReflectionsReprojection(uint2 positionSS : SV_DispatchThreadID)
     float2 prevFrameUV  = prevFrameNDC * _ColorPyramidUvScaleAndLimitPrevFrame.xy;
 
     // TODO: optimize with max().
-    if ((prevFrameUV.x < 0) || (prevFrameUV.x > _ColorPyramidUvScaleAndLimitPrevFrame.x) ||
-        (prevFrameUV.y < 0) || (prevFrameUV.y > _ColorPyramidUvScaleAndLimitPrevFrame.y))
+    if ((prevFrameUV.x < 0) || (prevFrameUV.x > _ColorPyramidUvScaleAndLimitPrevFrame.z) ||
+        (prevFrameUV.y < 0) || (prevFrameUV.y > _ColorPyramidUvScaleAndLimitPrevFrame.w))
     {
         // Off-screen.
         return;
@@ -321,7 +321,7 @@ void ScreenSpaceReflectionsReprojection(uint2 positionSS : SV_DispatchThreadID)
     float  mipLevel = lerp(0, _SsrDepthPyramidMaxMip, roughness);
 
     // Note that the color pyramid uses it's own viewport scale, since it lives on the camera.
-    float3 color    = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, prevFrameNDC * _ColorPyramidScale.xy, mipLevel).rgb;
+    float3 color    = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, prevFrameUV, mipLevel).rgb;
     float  opacity  = EdgeFade(prevFrameNDC, _SsrEdgeFadeRcpLength)
                     * RoughnessFade(roughness, _SsrRoughnessFadeRcpLength, _SsrRoughnessFadeEndTimesRcpLength);
 
