@@ -9,11 +9,11 @@ MultiFloatSlotControlView {
     cursor: slide-arrow;
 }
 
-.unity-field {
+.unity-base-field {
     width: 30;
 }
 
-.unity-field__input{
+.unity-base-field__input{
     margin-left: 0;
     margin-right: 0;
 }

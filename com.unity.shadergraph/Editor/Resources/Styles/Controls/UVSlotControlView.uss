@@ -1,8 +1,8 @@
-.unity-field {
+.unity-base-field {
      width: 40;
 }
 
-.unity-field__input{
+.unity-base-field__input{
     margin-top: 0;
     margin-bottom: 0;
     margin-left: 0;

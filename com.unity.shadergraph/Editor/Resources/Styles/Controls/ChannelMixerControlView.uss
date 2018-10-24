@@ -49,9 +49,10 @@ ChannelMixerControlView > #sliderPanel > Label {
 
 ChannelMixerControlView > #sliderPanel > Slider {
     flex-grow: 1;
+    overflow:visible;
 }
 
-ChannelMixerControlView > #sliderPanel > Slider > .unity-field__input {
+ChannelMixerControlView > #sliderPanel > Slider > .unity-base-field__input {
     margin-left: 0;
     margin-right: 0;
 }
@@ -61,7 +62,7 @@ ChannelMixerControlView > #sliderPanel > FloatField {
     max-width: 30;
 }
 
-ChannelMixerControlView > #sliderPanel > FloatField > .unity-field__input {
+ChannelMixerControlView > #sliderPanel > FloatField > .unity-base-field__input {
     margin-left: 4;
     margin-right: 2;
 }

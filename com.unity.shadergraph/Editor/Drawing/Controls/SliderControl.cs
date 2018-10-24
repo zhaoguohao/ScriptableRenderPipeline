@@ -112,7 +112,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                     m_UndoGroup = -1;
                     this.MarkDirtyRepaint();
                 });
-            field.RegisterCallback<InputEvent>(evt =>
+            field.Q("unity-text-input").RegisterCallback<InputEvent>(evt =>
                 {
                     if (m_UndoGroup == -1)
                     {
@@ -131,7 +131,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                         UpdateSlider(m_SliderPanel, index, value);
                     this.MarkDirtyRepaint();
                 });
-            field.RegisterCallback<KeyDownEvent>(evt =>
+            field.Q("unity-text-input").RegisterCallback<KeyDownEvent>(evt =>
                 {
                     if (evt.keyCode == KeyCode.Escape && m_UndoGroup > -1)
                     {

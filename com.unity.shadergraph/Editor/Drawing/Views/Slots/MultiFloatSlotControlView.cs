@@ -42,7 +42,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
                     m_Node.Dirty(ModificationScope.Node);
                     m_UndoGroup = -1;
                 });
-            field.RegisterCallback<InputEvent>(evt =>
+            field.Q("unity-text-input").RegisterCallback<InputEvent>(evt =>
                 {
                     if (m_UndoGroup == -1)
                     {
@@ -60,7 +60,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Slots
                         m_Node.Dirty(ModificationScope.Node);
                     }
                 });
-            field.RegisterCallback<KeyDownEvent>(evt =>
+            field.Q("unity-text-input").RegisterCallback<KeyDownEvent>(evt =>
                 {
                     if (evt.keyCode == KeyCode.Escape && m_UndoGroup > -1)
                     {

@@ -3,11 +3,11 @@ GradientControlView > #gradientPanel {
 }
 
 
-.unity-field {
+.unity-base-field {
 	flex:1;
 }
 
-.unity-field__input {
+.unity-base-field__input {
 	margin-left: 8;
     margin-right: 8;
     margin-top: 4;
