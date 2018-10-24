@@ -835,10 +835,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             lightData.positionRWS = light.GetPosition();
             lightData.color = GetLightColor(light);
 
-            // Caution: This is bad but if additionalData == HDUtils.s_DefaultHDAdditionalLightData it mean we are trying to promote legacy lights, which is the case for the preview for example, so we need to multiply by PI as legacy Unity do implicit divide by PI for direct intensity.
-            // So we expect that all light with additionalData == HDUtils.s_DefaultHDAdditionalLightData are currently the one from the preview, light in scene MUST have additionalData
-            lightData.color *= (HDUtils.s_DefaultHDAdditionalLightData == additionalLightData) ? Mathf.PI : 1.0f;
-
             lightData.lightDimmer           = additionalLightData.lightDimmer;
             lightData.diffuseDimmer         = additionalLightData.affectDiffuse  ? additionalLightData.lightDimmer * m_FrameSettings.diffuseGlobalDimmer  : 0;
             lightData.specularDimmer        = additionalLightData.affectSpecular ? additionalLightData.lightDimmer * m_FrameSettings.specularGlobalDimmer : 0;
@@ -2390,13 +2386,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             s_LightVolumeDataBuffer.SetData(m_lightList.lightVolumes);
         }
 
-        HDAdditionalLightData GetHDAdditionalLightData(Light light)
+        public static HDAdditionalLightData GetHDAdditionalLightData(Light light)
         {
             // Light reference can be null for particle lights.
             var add = light != null ? light.GetComponent<HDAdditionalLightData>() : null;
             if (add == null)
             {
-                add = HDUtils.s_DefaultHDAdditionalLightData;
+                add = light.gameObject.AddComponent<HDAdditionalLightData>();
+
+                HDAdditionalLightData.InitDefaultHDAdditionalLightData(add);
             }
             return add;
         }

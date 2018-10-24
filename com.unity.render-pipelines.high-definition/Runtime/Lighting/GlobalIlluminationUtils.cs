@@ -14,7 +14,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var add = l.GetComponent<HDAdditionalLightData>();
             if (add == null)
             {
-                add = HDUtils.s_DefaultHDAdditionalLightData;
+                add = LightLoop.GetHDAdditionalLightData(l);
             }
 
             // TODO: Currently color temperature is not handled at runtime, need to expose useColorTemperature publicly
