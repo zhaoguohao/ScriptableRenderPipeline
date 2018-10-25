@@ -129,15 +129,15 @@ This accommodates the high difference in light exposition values (Min and Max) a
 
 5. Create a Scene Settings GameObject (__GameObject &gt; Rendering &gt; Scene Settings__) and set the sky __Exposure__ to 0 and the __Multiplier__ to 20000.
 
-6. Set the intensity of the Light attached to the __Spot Light__ GameObject to 119000. This is because there are two 8500 lumen lamps and, to compensate for the spot angle and its reflector, you multiply that value by 7. The reason why is as follows, on these kind of spotlights, the back of the spot is covered with a reflective surface to reflect all light in the spot direction. In this case, you need to compensate the light intensity so the total amount of light inside the light’s cone is the amount of light emitted by the light bulb. Here is the formula: Spot Lumen = Bulb Lumen * 2 / ( 1 - cos( half angle ) ) .
+6. Set the intensity of the Light attached to the __Spot Light__ GameObject to 119000. This is because there are two 8500 lumen lamps and, to compensate for the spot angle and its reflector, you multiply that value by 7. The reason why is as follows, on these kind of spotlights, the back of the spot is covered with a reflective surface to reflect all light in the spot direction. In this case, you need to compensate the light intensity so the total amount of light inside the light’s cone is the amount of light emitted by the light bulb. Here is the formula: `Spot Lumen = Bulb Lumen * 2 / ( 1 - cos( half angle ) ) `.
 
 7. Correct the Light cookie (Spotlight_Cookie), as shown in the [cookie correction section](#CookieCorrection) in the previous example.
 
 8. Set the emissive intensity of the light bulb Material (LightBulb_Mat) to 13.05. Click on the __Emissive Color__ picker and manually enter 13.05 into the __Intensity __field. This value is much lower than the others because the emission color intensity uses EV units and the other values use Lumen. To convert between the two, see the following formulas. Exposure Value is a scale of powers of 2. 
-This means that x EV = 2 ^ x Lumen and y Lumen is ln( y EV ) / ln( 2 )
+This means that `x EV = 2 ^ x Lumen` and `y Lumen is ln( y EV ) / ln( 2 )`
 
-13.05 EV is: 2 ^ 13.05 = 8480 Lumen
-8480 Lumen is: ln( 8480 ) / ln( 2 ) = 13.05 EV
+`13.05 EV is: 2 ^ 13.05 = 8480 Lumen`
+`8480 Lumen is: ln( 8480 ) / ln( 2 ) = 13.05 EV`
 
 9. Click  __Generate Lighting__ to re-bake the lighting.
 
