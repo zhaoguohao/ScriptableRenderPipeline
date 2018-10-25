@@ -24,7 +24,7 @@ public class DisplayOnPlatformAPI : MonoBehaviour
     }
 
     [System.Serializable]
-    struct PlatformAPI
+    public struct PlatformAPI
     {
         public RuntimePlatform platform;
         public GraphicsDeviceType graphicsDeviceType;
