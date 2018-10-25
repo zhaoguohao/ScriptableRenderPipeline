@@ -37,6 +37,8 @@ struct VaryingsToDS
 #ifdef VARYINGS_NEED_PASS
     VaryingsPassToDS vpass;
 #endif
+
+    UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 struct PackedVaryingsToDS
