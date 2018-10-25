@@ -20,17 +20,23 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         struct Attributes
         {
             uint vertexID : SV_VertexID;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
         struct Varyings
         {
             float4 positionCS : SV_POSITION;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
+            UNITY_VERTEX_OUTPUT_STEREO
         };
 
         Varyings Vert(Attributes input)
         {
+            UNITY_SETUP_INSTANCE_ID(input);
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
+            UNITY_TRANSFER_INSTANCE_ID(input, output);
+            UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
             return output;
         }
 
@@ -58,6 +64,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
 
         float4 Frag(Varyings input) : SV_Target
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 positionSS = input.positionCS.xy;
             float3 V          = normalize(mul(float3(positionSS, 1.0), (float3x3)_PixelCoordToViewDirWS));
             float  depth      = LOAD_TEXTURE2D(_CameraDepthTexture, (int2)positionSS).x;
@@ -67,6 +74,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
 
         float4 FragMSAA(Varyings input, uint sampleIndex: SV_SampleIndex) : SV_Target
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 positionSS = input.positionCS.xy;
             float3 V          = normalize(mul(float3(positionSS, 1.0), (float3x3)_PixelCoordToViewDirWS));
             float  depth      = _DepthTextureMS.Load((int2)positionSS, sampleIndex).x;
