@@ -35,8 +35,9 @@ public class LWGraphicsTests
         }
         else
         {
-            GameObject sgRoot = GameObject.Find("sg_root");
-            GameObject lwRoot = GameObject.Find("lw_root");
+            SGLWGraphicsTestSettings sgSettings = settings as SGLWGraphicsTestSettings;
+            GameObject sgRoot = sgSettings.sgRoot;
+            GameObject lwRoot = sgSettings.lwRoot;
 
             Assert.IsNotNull(sgRoot, "Could not find the ShaderGraph root object");
             Assert.IsNotNull(lwRoot, "Could not find the Lightweight root object");
@@ -45,14 +46,15 @@ public class LWGraphicsTests
             GameObject lwCamLookat = FindChild(lwRoot, "camera_lookat");
             GameObject sgCamOrigin = FindChild(sgRoot, "camera_origin");
             GameObject sgCamLookat = FindChild(sgRoot, "camera_lookat");
-
-            // Do ShaderGraph comparison tests with LWRP
             Assert.IsNotNull(lwCamOrigin, "Lightweight camera origin transform in NULL");
             Assert.IsNotNull(lwCamLookat, "Lightweight camera lookat transform in NULL");
             Assert.IsNotNull(sgCamOrigin, "ShaderGraph camera origin transform in NULL");
             Assert.IsNotNull(sgCamLookat, "ShaderGraph camera lookat transform in NULL");
 
+            // Do ShaderGraph comparison tests with LWRP
             // First test: ShaderGraph
+            lwRoot.SetActive(false);
+            sgRoot.SetActive(true);
             camera.transform.position = sgCamOrigin.transform.position;
             camera.transform.LookAt(sgCamLookat.transform);
             
@@ -61,7 +63,7 @@ public class LWGraphicsTests
 
             try
             {
-                ImageAssert.AreEqual(testCase.ReferenceImage, camera, (settings != null) ? settings.ImageComparisonSettings : null);
+                ImageAssert.AreEqual(testCase.ReferenceImage, camera, (sgSettings != null) ? sgSettings.ImageComparisonSettings : null);
             }
             catch (AssertionException)
             {
@@ -69,6 +71,8 @@ public class LWGraphicsTests
             }
 
             // Second test: LWRP
+            lwRoot.SetActive(true);
+            sgRoot.SetActive(false);
             camera.transform.position = lwCamOrigin.transform.position;
             camera.transform.LookAt(lwCamLookat.transform);
 
@@ -77,7 +81,7 @@ public class LWGraphicsTests
 
             try
             {
-                ImageAssert.AreEqual(testCase.ReferenceImage, camera, (settings != null) ? settings.ImageComparisonSettings : null);
+                ImageAssert.AreEqual(testCase.ReferenceImage, camera, (sgSettings != null) ? sgSettings.ImageComparisonSettings : null);
             }
             catch (AssertionException)
             {
