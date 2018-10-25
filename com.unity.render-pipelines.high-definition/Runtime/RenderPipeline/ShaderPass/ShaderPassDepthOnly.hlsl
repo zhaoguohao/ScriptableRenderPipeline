@@ -19,9 +19,13 @@ PackedVaryingsType Vert(AttributesMesh inputMesh)
 
 PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 {
-    VaryingsToPS output;
-    output.vmesh = VertMeshTesselation(input.vmesh);
-    return PackVaryingsToPS(output);
+    UNITY_SETUP_INSTANCE_ID(input);
+    VaryingsToPS varyingsType;
+    varyingsType.vmesh = VertMeshTesselation(input.vmesh);
+    PackedVaryingsToPS output = PackVaryingsToPS(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(input, output);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+    return output;
 }
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
@@ -43,6 +47,7 @@ void Frag(  PackedVaryingsToPS packedInput
             #endif
         )
 {
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
     // input.positionSS is SV_Position

@@ -22,7 +22,7 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
     UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsToPS varyingsType;
     varyingsType.vmesh = VertMeshTesselation(input.vmesh);
-    PackedVaryingsType packedVaryingsType = PackVaryingsToPS(varyingsType);
+    PackedVaryingsToPS packedVaryingsType = PackVaryingsToPS(varyingsType);
     UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
     return packedVaryingsType;
@@ -45,6 +45,7 @@ void Frag(PackedVaryingsToPS packedInput,
         #endif
           )
 {
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
     uint2 tileIndex = uint2(input.positionSS.xy) / GetTileSize();
