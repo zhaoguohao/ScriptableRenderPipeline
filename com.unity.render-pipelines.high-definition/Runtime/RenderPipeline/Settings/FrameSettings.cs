@@ -135,6 +135,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool enableMSAA = false;
 
+        public int depthSlice = 0;
         // Async Compute
         public bool enableAsyncCompute = true;
         public bool runLightListAsync = true;
@@ -203,6 +204,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             this.lightLoopSettings.CopyTo(frameSettings.lightLoopSettings);
 
+            frameSettings.depthSlice = this.depthSlice;
             frameSettings.Refresh();
         }
 
@@ -341,6 +343,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             LightLoopSettings.InitializeLightLoopSettings(camera, aggregate, renderPipelineSettings, srcFrameSettings, ref aggregate.lightLoopSettings);
 
+            aggregate.depthSlice = (camera.cameraType == CameraType.SceneView || camera.cameraType == CameraType.Reflection) ? 0 : XRGraphics.DepthSlice; 
             aggregate.Refresh();
         }
 

@@ -173,6 +173,11 @@ namespace UnityEngine.Rendering
             cmd.SetRenderTarget(colorBuffers, depthBuffer);
             ClearRenderTarget(cmd, clearFlag, clearColor);
         }
+        public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthBuffer, int mipLevel, CubemapFace cubemapFace, int depthSlice, ClearFlag clearFlag, Color clearColor)
+        {
+            cmd.SetRenderTarget(colorBuffers, depthBuffer, mipLevel, cubemapFace, depthSlice);
+            ClearRenderTarget(cmd, clearFlag, clearColor);
+        }
 
         // Explicit load and store actions
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier buffer, RenderBufferLoadAction loadAction, RenderBufferStoreAction storeAction, ClearFlag clearFlag, Color clearColor)

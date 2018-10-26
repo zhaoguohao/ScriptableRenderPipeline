@@ -203,6 +203,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CoreUtils.SetRenderTarget(cmd, colorBuffer, depthBuffer, miplevel, cubemapFace, depthSlice);
             SetViewportAndClear(cmd, camera, colorBuffer, clearFlag, clearColor);
         }
+        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer, int depthSlice)
+        {
+            SetRenderTarget(cmd, camera, colorBuffers, depthBuffer, ClearFlag.None, CoreUtils.clearColorAllBlack, depthSlice);
+            SetViewport(cmd, camera, depthBuffer);
+        }
 
         public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer)
         {
@@ -219,6 +224,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, Color clearColor)
         {
             cmd.SetRenderTarget(colorBuffers, depthBuffer);
+            SetViewportAndClear(cmd, camera, depthBuffer, clearFlag, clearColor);
+        }
+        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, Color clearColor, int depthSlice)
+        {
+            cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, depthSlice);
             SetViewportAndClear(cmd, camera, depthBuffer, clearFlag, clearColor);
         }
 
