@@ -1337,18 +1337,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
                             {
                                 // This Blit will flip the screen on anything other than openGL
-                                if (camera.stereoEnabled && (XRGraphics.eyeTextureDesc.dimension == TextureDimension.Tex2D))
+                                if (camera.stereoEnabled)
                                 {
+                                    if (XRGraphics.eyeTextureDesc.dimension == TextureDimension.Tex2D)
+                                    {
 #if UNITY_2019_1_OR_NEWER
-                                    Material finalDoubleWideBlit = GetBlitMaterial();
-                                    finalDoubleWideBlit.SetTexture(HDShaderIDs._BlitTexture, m_CameraColorBuffer);
-                                    finalDoubleWideBlit.SetFloat(HDShaderIDs._BlitMipLevel, 0.0f);
-                                    finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
-                                    finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
-                                    cmd.Blit(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, finalDoubleWideBlit);
+                                        Material finalDoubleWideBlit = GetBlitMaterial();
+                                        finalDoubleWideBlit.SetTexture(HDShaderIDs._BlitTexture, m_CameraColorBuffer);
+                                        finalDoubleWideBlit.SetFloat(HDShaderIDs._BlitMipLevel, 0.0f);
+                                        finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
+                                        finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
+                                        cmd.Blit(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, finalDoubleWideBlit);
 #else
-                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // Prior to 2019.1's y-flip fixes, we didn't need a flip in the shader
+                                        cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // Prior to 2019.1's y-flip fixes, we didn't need a flip in the shader
 #endif
+                                    }
+                                    else
+                                    { // Can use the same shader as legacy pipeline
+                                        cmd.Blit(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget);
+                                    }
                                 }
                                 else
                                 {
@@ -1883,11 +1890,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 m_MRTWithSSS[i + 2] = m_SSSBufferManager.GetSSSBuffer(i);
                             }
                         }
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTWithSSS, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTWithSSS, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: hdCamera.frameSettings.depthSlice);
                     }
                     else
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: hdCamera.frameSettings.depthSlice);
                     }
 
                     var passNames = hdCamera.frameSettings.enableForwardRenderingOnly
@@ -1897,7 +1904,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 else
                 {
-                    HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(), depthSlice: XRGraphics.DepthSlice);
+                    HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(), depthSlice: hdCamera.frameSettings.depthSlice);
                     if ((hdCamera.frameSettings.enableDecals) && (DecalSystem.m_DecalDatasCount > 0)) // enable d-buffer flag value is being interpreted more like enable decals in general now that we have clustered
                                                                                                       // decal datas count is 0 if no decals affect transparency
                     {
@@ -2386,10 +2393,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     if (hdCamera.clearDepth)
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Depth, depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Depth, depthSlice: hdCamera.frameSettings.depthSlice);
                         if (hdCamera.frameSettings.enableMSAA)
                         {
-                            HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthTexture(true), m_SharedRTManager.GetDepthStencilBuffer(true), ClearFlag.Color, Color.black, depthSlice: XRGraphics.DepthSlice);
+                            HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthTexture(true), m_SharedRTManager.GetDepthStencilBuffer(true), ClearFlag.Color, Color.black, depthSlice: hdCamera.frameSettings.depthSlice);
                         }
                     }
                 }
@@ -2413,7 +2420,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if (m_DebugDisplaySettings.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuxMeter)
                             clearColor = Color.black;
 
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Color, clearColor);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Color, clearColor, depthSlice: hdCamera.frameSettings.depthSlice);
 
                     }
                 }
@@ -2422,7 +2429,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     using (new ProfilingSample(cmd, "Clear SSS Lighting Buffer", CustomSamplerId.ClearSssLightingBuffer.GetSampler()))
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraSssDiffuseLightingMSAABuffer : m_CameraSssDiffuseLightingBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraSssDiffuseLightingMSAABuffer : m_CameraSssDiffuseLightingBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: hdCamera.frameSettings.depthSlice);
                     }
                 }
 
@@ -2433,8 +2440,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // In practice, these textures are sparse (mostly black). Therefore, clearing them is fast (due to CMASK),
                         // and much faster than fully overwriting them from within SSR shaders.
                         // HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrDebugTexture,    ClearFlag.Color, CoreUtils.clearColorAllBlack);
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrHitPointTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack);
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrLightingTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrHitPointTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: hdCamera.frameSettings.depthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrLightingTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: hdCamera.frameSettings.depthSlice);
                     }
                 }
 

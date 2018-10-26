@@ -118,6 +118,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool enableMSAA = false;
 
+        public int depthSlice = 0;
+
         // GC.Alloc
         // FrameSettings..ctor() 
         public LightLoopSettings lightLoopSettings = new LightLoopSettings();
@@ -169,6 +171,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             frameSettings.overrides = this.overrides;
 
             this.lightLoopSettings.CopyTo(frameSettings.lightLoopSettings);
+
+            frameSettings.depthSlice = this.depthSlice;
         }
 
         public FrameSettings Override(FrameSettings overridedFrameSettings)
@@ -286,6 +290,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             LightLoopSettings.InitializeLightLoopSettings(camera, aggregate, renderPipelineSettings, srcFrameSettings, ref aggregate.lightLoopSettings);
+
+            aggregate.depthSlice = (camera.cameraType == CameraType.SceneView || camera.cameraType == CameraType.Reflection) ? 0 : XRGraphics.DepthSlice; 
         }
 
         public void ConfigureMSAADependentSettings()
