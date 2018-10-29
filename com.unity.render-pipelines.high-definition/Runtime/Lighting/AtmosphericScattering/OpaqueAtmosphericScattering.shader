@@ -24,7 +24,6 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         struct Varyings
         {
             float4 positionCS : SV_POSITION;
-            float2 texcoord   : TEXCOORD0;
             UNITY_VERTEX_INPUT_INSTANCE_ID
             UNITY_VERTEX_OUTPUT_STEREO
         };
@@ -34,7 +33,6 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
             UNITY_SETUP_INSTANCE_ID(input);
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
-            output.texcoord   = GetFullScreenTriangleTexCoord(input.vertexID);
             UNITY_TRANSFER_INSTANCE_ID(input, output);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
             return output;
@@ -66,8 +64,9 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         float4 FragMSAA(Varyings input, uint sampleIndex: SV_SampleIndex) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-            int2 msTex = int2(TexCoordStereoOffset(input.texcoord.xy * _ScreenSize.xy));
-            float depth = _DepthTextureMS.Load(msTex, sampleIndex).x;
+            //int2 msTex = int2(TexCoordStereoOffset(input.texcoord.xy * _ScreenSize.xy));
+            //float depth = _DepthTextureMS.Load(msTex, sampleIndex).x;
+            float depth = _DepthTextureMS.Load(input.positionCS.xy, sampleIndex).x;
             return AtmosphericScatteringCompute(input, depth);
         }
     ENDHLSL
