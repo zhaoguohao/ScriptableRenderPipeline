@@ -57,7 +57,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         float4 Frag(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-            float depth = LOAD_TEXTURE2D(_CameraDepthTexture, input.positionCS.xy).x;
+            float depth = LOAD_TEXTURE(_CameraDepthTexture, input.positionCS.xy).x;
             return AtmosphericScatteringCompute(input, depth);
         }
 
