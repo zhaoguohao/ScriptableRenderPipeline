@@ -20,8 +20,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - `Scene Depth` and `Scene Color` nodes now work in single pass stereo in Lightweight Render Pipeline.
 - `Channel Mask` node controls are now aligned correctly.
 - In Lightweight Render Pipeline, Pre-multiply surface type now matches the Lit shader. 
+- Fixed an issue where floatfield would be parsed according to OS locale settings with .NET 4.6
 
 ## [5.0.0-preview] - 2018-09-28
+### Fixed
+- In the High Definition Render Pipeline, Shader Graph now supports 4-channel UVs.
+- The Lightweight PBR subshader now generates the correct meta pass.
+- Both PBR subshaders can now generate indirect light from emission.
+- Shader graphs now support the SRP batcher.
 
 ## [4.0.0-preview] - 2018-09-28
 ### Added
@@ -98,9 +104,3 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The Shader Graph and Sub Shader Graph file extensions are no longer case-sensitive.
 - The dynamic value slot type now uses the correct decimal separator during HLSL generation.
 - Fixed an issue where Show Generated Code could fail when external editor was not set.
-- In the High Definition Render Pipeline, Shader Graph now supports 4-channel UVs.
-- The Lightweight PBR subshader now generates the correct meta pass.
-- Both PBR subshaders can now generate indirect light from emission.
-- Shader graphs now support the SRP batcher.
-- Fixed an issue where floatfield would be parsed according to OS locale settings with .NET 4.6
-
