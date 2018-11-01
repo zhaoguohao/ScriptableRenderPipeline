@@ -89,6 +89,10 @@
 #define RW_TEXTURE2D_ARRAY(type, textureName)           ERROR_ON_UNSUPPORTED_FUNCTION(RWTexture2DArray)
 #define RW_TEXTURE3D(type, textureNam)                  ERROR_ON_UNSUPPORTED_FUNCTION(RWTexture3D)
 
+#define TEXTURE2D_TYPE(type, textureName)       ERROR_ON_UNSUPPORTED_FUNCTION(Texture2D)
+#define TEXTURE2D_ARRAY_TYPE(type, textureName) ERROR_ON_UNSUPPORTED_FUNCTION(Texture2DArray)
+#define TEXTURE3D_TYPE(type, textureName)       ERROR_ON_UNSUPPORTED_FUNCTION(Texture3D)
+
 #define SAMPLER(samplerName)
 #define SAMPLER_CMP(samplerName)
 
