@@ -98,6 +98,10 @@ bool WaveActiveAnyTrue(bool expression)
 #define RW_TEXTURE2D_ARRAY(type, textureName) RW_Texture2D_Array<type> textureName
 #define RW_TEXTURE3D(type, textureName)       RW_Texture3D<type> textureName
 
+#define TEXTURE2D_TYPE(type, textureName)       Texture2D<type> textureName
+#define TEXTURE2D_ARRAY_TYPE(type, textureName) Texture2D_Array<type> textureName
+#define TEXTURE3D_TYPE(type, textureName)       Texture3D<type> textureName
+
 #define SAMPLER(samplerName)                  SamplerState samplerName
 #define SAMPLER_CMP(samplerName)              SamplerComparisonState samplerName
 

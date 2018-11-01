@@ -9,14 +9,19 @@ namespace UnityEngine.Experimental.Rendering
         ComputeShader m_Shader;
         int k_SampleKernel_xyzw2x_8;
         int k_SampleKernel_xyzw2x_1;
+        int k_SampleKernelSPI_xyzw2x_8;
+        int k_SampleKernelSPI_xyzw2x_1;
 
         public GPUCopy(ComputeShader shader)
         {
             m_Shader = shader;
+            k_SampleKernelSPI_xyzw2x_8 = m_Shader.FindKernel("KSampleCopySPI4_1_x_8");
+            k_SampleKernelSPI_xyzw2x_1 = m_Shader.FindKernel("KSampleCopySPI4_1_x_1");
             k_SampleKernel_xyzw2x_8 = m_Shader.FindKernel("KSampleCopy4_1_x_8");
             k_SampleKernel_xyzw2x_1 = m_Shader.FindKernel("KSampleCopy4_1_x_1");
         }
 
+        static readonly int _ComputeEyeIndex = Shader.PropertyToID("_ComputeEyeIndex");
         static readonly int _RectOffset = Shader.PropertyToID("_RectOffset");
         static readonly int _Result1 = Shader.PropertyToID("_Result1");
         static readonly int _Source4 = Shader.PropertyToID("_Source4");
@@ -78,7 +83,11 @@ namespace UnityEngine.Experimental.Rendering
                     var r = dispatch8Rect;
                     // Caution: passing parameters to SetComputeIntParams() via params generate 48B several times at each frame here !
                     cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
-                    cmd.DispatchCompute(m_Shader, kernel8, (int)Mathf.Max(r.width / 8, 1), (int)Mathf.Max(r.height / 8, 1), 1);
+                    for (int eye = 0; eye < XRGraphics.NumSlices; eye++)
+                    {
+                        cmd.SetGlobalInt(_ComputeEyeIndex, (int)eye);
+                        cmd.DispatchCompute(m_Shader, kernel8, (int)Mathf.Max(r.width / 8, 1), (int)Mathf.Max(r.height / 8, 1), 1);
+                    }
                 }
 
                 for (int i = 0, c = dispatch1RectCount; i < c; ++i)
@@ -86,13 +95,20 @@ namespace UnityEngine.Experimental.Rendering
                     var r = dispatch1Rects[i];
                     // Caution: passing parameters to SetComputeIntParams() via params generate 48B several times at each frame here !
                     cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
-                    cmd.DispatchCompute(m_Shader, kernel1, (int)Mathf.Max(r.width, 1), (int)Mathf.Max(r.height, 1), 1);
+                    for (int eye = 0; eye < XRGraphics.NumSlices; eye++) // Fixme dispatch only once for scene view
+                    {
+                        cmd.SetGlobalInt(_ComputeEyeIndex, (int)eye);
+                        cmd.DispatchCompute(m_Shader, kernel1, (int)Mathf.Max(r.width, 1), (int)Mathf.Max(r.height, 1), 1);
+                    }
                 }
             }
         }
         public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect)
           {
-                 SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1);
+            if (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) // Even when rendering scene camera, the textures being used will be arrayed, so we still need to use the SPI kernels, but we will only dispatch once.
+                SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernelSPI_xyzw2x_8, k_SampleKernelSPI_xyzw2x_1);
+            else
+                SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1);
           }
 
     }
