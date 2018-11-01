@@ -15,6 +15,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         MaterialPropertyBlock m_PropertyBlock;
 
         int m_DepthDownsampleKernel;
+        int m_DepthDownsampleSPIKernel;
         int m_ColorDownsampleKernel;
         int m_ColorDownsampleKernelCopyMip0;
         int m_ColorGaussianKernel;
@@ -28,6 +29,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ColorPyramidCS = asset.renderPipelineResources.shaders.colorPyramidCS;
 
             m_DepthDownsampleKernel = m_DepthPyramidCS.FindKernel("KDepthDownsample8DualUav");
+            m_DepthDownsampleSPIKernel = m_DepthPyramidCS.FindKernel("KDepthDownsample8DualUavSPI");
             m_ColorDownsampleKernel = m_ColorPyramidCS.FindKernel("KColorDownsample");
             m_ColorDownsampleKernelCopyMip0 = m_ColorPyramidCS.FindKernel("KColorDownsampleCopyMip0");
             m_ColorGaussianKernel = m_ColorPyramidCS.FindKernel("KColorGaussian");
@@ -51,7 +53,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDUtils.CheckRTCreated(texture);
 
             var cs     = m_DepthPyramidCS;
-            int kernel = m_DepthDownsampleKernel;
+            int kernel = (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? m_DepthDownsampleSPIKernel : m_DepthDownsampleKernel;
 
             // TODO: Do it 1x MIP at a time for now. In the future, do 4x MIPs per pass, or even use a single pass.
             // Note: Gather() doesn't take a LOD parameter and we cannot bind an SRV of a MIP level,
@@ -78,7 +80,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeIntParams(   cs,         HDShaderIDs._DstOffset,         m_DstOffset);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DepthMipChain,     texture);
 
-                cmd.DispatchCompute(cs, kernel, HDUtils.DivRoundUp(dstSize.x, 8), HDUtils.DivRoundUp(dstSize.y, 8), 1);
+                for (int eye = 0; eye < XRGraphics.NumSlices; eye++)
+                {
+                    cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
+                    cmd.DispatchCompute(cs, kernel, HDUtils.DivRoundUp(dstSize.x, 8), HDUtils.DivRoundUp(dstSize.y, 8), 1);
+                }
             }
         }
 
