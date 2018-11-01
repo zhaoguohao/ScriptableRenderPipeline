@@ -48,10 +48,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Generates an in-place depth pyramid
         // TODO: Mip-mapping depth is problematic for precision at lower mips, generate a packed atlas instead
-        public void RenderMinDepthPyramid(CommandBuffer cmd, RenderTexture texture, HDUtils.PackedMipChainInfo info)
+        public void RenderMinDepthPyramid(CommandBuffer cmd, RenderTexture texture, HDUtils.PackedMipChainInfo info, int numSlices = 1)
         {
             HDUtils.CheckRTCreated(texture);
-
+            
             var cs     = m_DepthPyramidCS;
             int kernel = (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? m_DepthDownsampleSPIKernel : m_DepthDownsampleKernel;
 
@@ -80,7 +80,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeIntParams(   cs,         HDShaderIDs._DstOffset,         m_DstOffset);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DepthMipChain,     texture);
 
-                for (int eye = 0; eye < XRGraphics.NumSlices; eye++)
+                for (int eye = 0; eye < numSlices; eye++)
                 {
                     cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
                     cmd.DispatchCompute(cs, kernel, HDUtils.DivRoundUp(dstSize.x, 8), HDUtils.DivRoundUp(dstSize.y, 8), 1);

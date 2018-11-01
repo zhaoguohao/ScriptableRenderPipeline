@@ -33,7 +33,8 @@ namespace UnityEngine.Experimental.Rendering
             int _target,
             RenderTargetIdentifier target,
             int kernel8,
-            int kernel1)
+            int kernel1,
+            int numSlices = 1)
         {
             RectInt main, topRow, rightCol, topRight;
             unsafe
@@ -41,7 +42,7 @@ namespace UnityEngine.Experimental.Rendering
                 RectInt* dispatch1Rects = stackalloc RectInt[3];
                 int dispatch1RectCount = 0;
                 RectInt dispatch8Rect = RectInt.zero;
-
+                
                 if (TileLayoutUtils.TryLayoutByTiles(
                     rect,
                     8,
@@ -83,7 +84,7 @@ namespace UnityEngine.Experimental.Rendering
                     var r = dispatch8Rect;
                     // Caution: passing parameters to SetComputeIntParams() via params generate 48B several times at each frame here !
                     cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
-                    for (int eye = 0; eye < XRGraphics.NumSlices; eye++)
+                    for (int eye = 0; eye < numSlices; eye++)
                     {
                         cmd.SetGlobalInt(_ComputeEyeIndex, (int)eye);
                         cmd.DispatchCompute(m_Shader, kernel8, (int)Mathf.Max(r.width / 8, 1), (int)Mathf.Max(r.height / 8, 1), 1);
@@ -95,7 +96,7 @@ namespace UnityEngine.Experimental.Rendering
                     var r = dispatch1Rects[i];
                     // Caution: passing parameters to SetComputeIntParams() via params generate 48B several times at each frame here !
                     cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
-                    for (int eye = 0; eye < XRGraphics.NumSlices; eye++) // Fixme dispatch only once for scene view
+                    for (int eye = 0; eye < numSlices; eye++) // Fixme dispatch only once for scene view
                     {
                         cmd.SetGlobalInt(_ComputeEyeIndex, (int)eye);
                         cmd.DispatchCompute(m_Shader, kernel1, (int)Mathf.Max(r.width, 1), (int)Mathf.Max(r.height, 1), 1);
@@ -103,10 +104,10 @@ namespace UnityEngine.Experimental.Rendering
                 }
             }
         }
-        public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect)
+        public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect, int numSlices = 1)
           {
             if (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) // Even when rendering scene camera, the textures being used will be arrayed, so we still need to use the SPI kernels, but we will only dispatch once.
-                SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernelSPI_xyzw2x_8, k_SampleKernelSPI_xyzw2x_1);
+                SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernelSPI_xyzw2x_8, k_SampleKernelSPI_xyzw2x_1, numSlices);
             else
                 SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1);
           }

@@ -717,7 +717,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_LightLoop.GetFeatureVariantsEnabled();
         }
 
-        void CopyDepthBufferIfNeeded(CommandBuffer cmd)
+        void CopyDepthBufferIfNeeded(CommandBuffer cmd, int numSlices = 1)
         {
             if (!m_IsDepthBufferCopyValid)
             {
@@ -731,7 +731,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // TODO: reading the depth buffer with a compute shader will cause it to decompress in place.
                     // On console, to preserve the depth test performance, we must NOT decompress the 'm_CameraDepthStencilBuffer' in place.
                     // We should call decompressDepthSurfaceToCopy() and decompress it to 'm_CameraDepthBufferMipChain'.
-                    m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetDepthTexture(), new RectInt(0, 0, m_CurrentWidth, m_CurrentHeight));
+                    m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetDepthTexture(), new RectInt(0, 0, m_CurrentWidth, m_CurrentHeight), numSlices);
                 }
                 m_IsDepthBufferCopyValid = true;
             }
@@ -1839,7 +1839,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             using (new ProfilingSample(cmd, "DBufferRender", CustomSamplerId.DBufferRender.GetSampler()))
             {
                 // We need to copy depth buffer texture if we want to bind it at this stage
-                CopyDepthBufferIfNeeded(cmd);
+                CopyDepthBufferIfNeeded(cmd, (int)hdCamera.numEyes);
 
                 bool rtCount4 = m_Asset.GetRenderPipelineSettings().decalSettings.perChannelMask;
                 // Depth texture is now ready, bind it.
@@ -2322,7 +2322,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void GenerateDepthPyramid(HDCamera hdCamera, CommandBuffer cmd, FullScreenDebugMode debugMode)
         {
-            CopyDepthBufferIfNeeded(cmd);
+            CopyDepthBufferIfNeeded(cmd, (int)hdCamera.numEyes);
 
             int mipCount = m_SharedRTManager.GetDepthBufferMipChainInfo().mipLevelCount;
 
@@ -2330,7 +2330,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // String.Format
             using (new ProfilingSample(cmd, "Generate Depth Buffer MIP Chain", CustomSamplerId.DepthPyramid))
             {
-                m_MipGenerator.RenderMinDepthPyramid(cmd, m_SharedRTManager.GetDepthTexture(), m_SharedRTManager.GetDepthBufferMipChainInfo());
+                m_MipGenerator.RenderMinDepthPyramid(cmd, m_SharedRTManager.GetDepthTexture(), m_SharedRTManager.GetDepthBufferMipChainInfo(), (int)hdCamera.numEyes);
             }
 
             float scaleX = hdCamera.actualWidth / (float)m_SharedRTManager.GetDepthTexture().rt.width;
