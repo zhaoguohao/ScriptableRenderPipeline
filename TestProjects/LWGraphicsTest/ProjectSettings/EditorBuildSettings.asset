@@ -152,4 +152,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Packages/com.unity.testing.srp.lightweight/Tests/Scenes/101_ShaderGraph_Lit.unity
     guid: 3dbbcaee330673643b6569ab356630c3
+  - enabled: 1
+    path: Packages/com.unity.testing.srp.lightweight/tests/scenes/102_shadergraph_vertexanimations.unity
+    guid: 281393d7700313e49a6b333c1b42a21b
   m_configObjects: {}

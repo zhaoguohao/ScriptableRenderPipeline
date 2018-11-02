@@ -67,7 +67,7 @@ public class LWGraphicsTests
 
             try
             {
-                ImageAssert.AreEqual(testCase.ReferenceImage, cameras, (sgSettings != null) ? sgSettings.ImageComparisonSettings : null);
+                ImageAssert.AreEqual(testCase.ReferenceImage, cameras, sgSettings.ImageComparisonSettings);
             }
             catch (AssertionException)
             {
@@ -89,7 +89,7 @@ public class LWGraphicsTests
 
             try
             {
-                ImageAssert.AreEqual(testCase.ReferenceImage, cameras, (sgSettings != null) ? sgSettings.ImageComparisonSettings : null);
+                ImageAssert.AreEqual(testCase.ReferenceImage, cameras, sgSettings.ImageComparisonSettings);
             }
             catch (AssertionException)
             {
