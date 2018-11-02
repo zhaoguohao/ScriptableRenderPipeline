@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -292,7 +293,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         
         protected override bool showBlendModePopup
         {
-            get { return refractionModel == null || refractionModel.floatValue == 0f; }
+            get { return refractionModel == null || refractionModel.floatValue == 0f || preRefractionPass.floatValue > 0.0f; }
         }
 
         protected void FindMaterialLayerProperties(MaterialProperty[] props)
