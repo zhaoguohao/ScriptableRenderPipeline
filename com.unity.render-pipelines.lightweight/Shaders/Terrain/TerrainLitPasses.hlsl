@@ -19,6 +19,17 @@ UNITY_INSTANCING_BUFFER_START(Terrain)
     UNITY_DEFINE_INSTANCED_PROP(float4, _TerrainPatchInstanceData)  // float4(xBase, yBase, skipScale, ~)
 UNITY_INSTANCING_BUFFER_END(Terrain)
 
+#ifdef TERRAIN_SURFACE_MASK_ENABLED
+TEXTURE2D(_TerrainSurfaceMaskTexture);
+SAMPLER(sampler_TerrainSurfaceMaskTexture);
+
+void ClipSurfaceMask(float2 uv)
+{
+	float surfMask = SAMPLE_TEXTURE2D(_TerrainSurfaceMaskTexture, sampler_TerrainSurfaceMaskTexture, uv).r;
+	clip(surfMask == 0.0f ? -1 : 1);
+}
+#endif
+
 struct VertexInput
 {
     float4 vertex : POSITION;
@@ -216,6 +227,10 @@ VertexOutput SplatmapVert(VertexInput v)
 // Used in Standard Terrain shader
 half4 SplatmapFragment(VertexOutput IN) : SV_TARGET
 {
+#ifdef TERRAIN_SURFACE_MASK_ENABLED
+	ClipSurfaceMask(IN.uvMainAndLM.xy);
+#endif	
+	
     half3 normalTS = half3(0.0h, 0.0h, 1.0h);
 #ifdef TERRAIN_SPLAT_BASEPASS
     half3 albedo = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, IN.uvMainAndLM.xy).rgb;
@@ -254,11 +269,22 @@ struct VertexInputLean
     float4 position     : POSITION;
     float3 normal       : NORMAL;
     UNITY_VERTEX_INPUT_INSTANCE_ID
+#ifdef TERRAIN_SURFACE_MASK_ENABLED
+	float2 texcoord     : TEXCOORD0;
+#endif
 };
 
-float4 ShadowPassVertex(VertexInputLean v) : SV_POSITION
+struct VertexOutputLean
 {
-    VertexOutput o;
+    float4 clipPos      : SV_POSITION;
+#ifdef TERRAIN_SURFACE_MASK_ENABLED		
+    float2 texcoord     : TEXCOORD0;
+#endif
+};
+
+VertexOutputLean ShadowPassVertex(VertexInputLean v)
+{
+    VertexOutputLean o = (VertexOutputLean)0;
     UNITY_SETUP_INSTANCE_ID(v);
     TerrainInstancing(v.position, v.normal);
 
@@ -273,26 +299,42 @@ float4 ShadowPassVertex(VertexInputLean v) : SV_POSITION
     clipPos.z = max(clipPos.z, clipPos.w * UNITY_NEAR_CLIP_VALUE);
 #endif
 
-    return clipPos;
+    o.clipPos = clipPos;
+	
+#ifdef TERRAIN_SURFACE_MASK_ENABLED		
+	o.texcoord = v.texcoord;
+#endif	
+	
+	return o;
 }
 
-half4 ShadowPassFragment() : SV_TARGET
+half4 ShadowPassFragment(VertexOutputLean IN) : SV_TARGET
 {
+#ifdef TERRAIN_SURFACE_MASK_ENABLED
+	ClipSurfaceMask(IN.texcoord);
+#endif	
     return 0;
 }
 
 // Depth pass
 
-float4 DepthOnlyVertex(VertexInputLean v) : SV_POSITION
+VertexOutputLean DepthOnlyVertex(VertexInputLean v)
 {
-    VertexOutput o = (VertexOutput)0;
+    VertexOutputLean o = (VertexOutputLean)0;
     UNITY_SETUP_INSTANCE_ID(v);
     TerrainInstancing(v.position, v.normal);
-    return TransformObjectToHClip(v.position.xyz);
+    o.clipPos = TransformObjectToHClip(v.position.xyz);
+#ifdef TERRAIN_SURFACE_MASK_ENABLED		
+	o.texcoord = v.texcoord;
+#endif	
+	return o;
 }
 
-half4 DepthOnlyFragment() : SV_TARGET
+half4 DepthOnlyFragment(VertexOutputLean IN) : SV_TARGET
 {
+#ifdef TERRAIN_SURFACE_MASK_ENABLED
+	ClipSurfaceMask(IN.texcoord);
+#endif
     return 0;
 }
 

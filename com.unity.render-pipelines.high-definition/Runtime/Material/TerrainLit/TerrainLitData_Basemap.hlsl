@@ -49,6 +49,10 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     }
 #endif
 
+#ifdef TERRAIN_SURFACE_MASK_ENABLED
+	ClipSurfaceMask(input.texCoord0);
+#endif	
+
     // terrain lightmap uvs are always taken from uv0
     input.texCoord1 = input.texCoord2 = input.texCoord0;
 

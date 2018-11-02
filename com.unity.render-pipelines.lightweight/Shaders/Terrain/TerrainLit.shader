@@ -29,6 +29,12 @@ Shader "Lightweight Render Pipeline/Terrain/Lit"
         [Toggle(_TERRAIN_INSTANCED_PERPIXEL_NORMAL)] _TERRAIN_INSTANCED_PERPIXEL_NORMAL("Enable Instanced Per-pixel Normal", Float) = 0
     }
 
+	HLSLINCLUDE
+	
+	#pragma multi_compile __ TERRAIN_SURFACE_MASK_ENABLED
+	
+	ENDHLSL
+	
     SubShader
     {
         Tags { "Queue" = "Geometry-100" "RenderType" = "Opaque" "RenderPipeline" = "LightweightPipeline" "IgnoreProjector" = "False"}

@@ -7,6 +7,12 @@ Shader "Hidden/Lightweight Render Pipeline/Terrain/Lit (Base Pass)"
         _MetallicTex ("Metallic (R)", 2D) = "black" {}
     }
 
+	HLSLINCLUDE
+	
+	#pragma multi_compile __ TERRAIN_SURFACE_MASK_ENABLED
+	
+	ENDHLSL
+	
     SubShader
     {
         Tags { "Queue" = "Geometry-100" "RenderType" = "Opaque" "RenderPipeline" = "LightweightPipeline" "IgnoreProjector" = "True"}

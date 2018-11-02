@@ -26,6 +26,12 @@ Shader "Hidden/Lightweight Render Pipeline/Terrain/Lit (Add Pass)"
         [HideInInspector] _Color("Main Color", Color) = (1,1,1,1)
     }
 
+	HLSLINCLUDE
+	
+	#pragma multi_compile __ TERRAIN_SURFACE_MASK_ENABLED
+	
+	ENDHLSL
+	
     SubShader
     {
         Tags { "Queue" = "Geometry-99" "RenderType" = "Opaque" "RenderPipeline" = "LightweightPipeline" "IgnoreProjector" = "True"}

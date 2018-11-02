@@ -65,6 +65,8 @@ Shader "HDRenderPipeline/TerrainLit"
     #pragma multi_compile_instancing
     #pragma instancing_options assumeuniformscaling nomatrices nolightprobe nolightmap
 
+	#pragma multi_compile __ TERRAIN_SURFACE_MASK_ENABLED
+	
     //-------------------------------------------------------------------------------------
     // Define
     //-------------------------------------------------------------------------------------
@@ -72,6 +74,10 @@ Shader "HDRenderPipeline/TerrainLit"
     #define SURFACE_GRADIENT
     #define HAVE_MESH_MODIFICATION
 
+	#ifdef TERRAIN_SURFACE_MASK_ENABLED
+	#define _ALPHATEST_ON
+	#endif
+	
     //-------------------------------------------------------------------------------------
     // Include
     //-------------------------------------------------------------------------------------

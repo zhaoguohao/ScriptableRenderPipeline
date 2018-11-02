@@ -33,6 +33,17 @@ TEXTURE2D(_TerrainHeightmapTexture);
 TEXTURE2D(_TerrainNormalmapTexture);
 #endif
 
+#ifdef TERRAIN_SURFACE_MASK_ENABLED
+TEXTURE2D(_TerrainSurfaceMaskTexture);
+SAMPLER(sampler_TerrainSurfaceMaskTexture);
+
+void ClipSurfaceMask(float2 uv)
+{
+	float surfMask = SAMPLE_TEXTURE2D(_TerrainSurfaceMaskTexture, sampler_TerrainSurfaceMaskTexture, uv).r;
+	clip(surfMask == 0.0f ? -1 : 1);
+}
+#endif
+
 #define DECLARE_TERRAIN_LAYER_PROPS(n)  \
     float4 _Splat##n##_ST;              \
     float _Metallic##n;                 \
