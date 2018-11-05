@@ -1,3 +1,5 @@
+using UnityEngine.Rendering;
+
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public static class HDShaderPassNames
@@ -28,36 +30,36 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly string s_MeshDecals3RTStr = "DBufferMesh_3RT";
 
         // ShaderPass name
-        public static readonly ShaderPassName s_EmptyName = new ShaderPassName(s_EmptyStr);
-        public static readonly ShaderPassName s_ForwardName = new ShaderPassName(s_ForwardStr);
-        public static readonly ShaderPassName s_DepthOnlyName = new ShaderPassName(s_DepthOnlyStr);
-        public static readonly ShaderPassName s_DepthForwardOnlyName = new ShaderPassName(s_DepthForwardOnlyStr);
-        public static readonly ShaderPassName s_ForwardOnlyName = new ShaderPassName(s_ForwardOnlyStr);
-        public static readonly ShaderPassName s_GBufferName = new ShaderPassName(s_GBufferStr);
-        public static readonly ShaderPassName s_GBufferWithPrepassName = new ShaderPassName(s_GBufferWithPrepassStr);
-        public static readonly ShaderPassName s_SRPDefaultUnlitName = new ShaderPassName(s_SRPDefaultUnlitStr);
-        public static readonly ShaderPassName s_MotionVectorsName = new ShaderPassName(s_MotionVectorsStr);
-        public static readonly ShaderPassName s_DistortionVectorsName = new ShaderPassName(s_DistortionVectorsStr);
-        public static readonly ShaderPassName s_TransparentDepthPrepassName = new ShaderPassName(s_TransparentDepthPrepassStr);
-        public static readonly ShaderPassName s_TransparentBackfaceName = new ShaderPassName(s_TransparentBackfaceStr);
-        public static readonly ShaderPassName s_TransparentDepthPostpassName = new ShaderPassName(s_TransparentDepthPostpassStr);
-        public static readonly ShaderPassName s_MeshDecalsMName = new ShaderPassName(s_MeshDecalsMStr);
-        public static readonly ShaderPassName s_MeshDecalsSName = new ShaderPassName(s_MeshDecalsSStr);
-        public static readonly ShaderPassName s_MeshDecalsMSName = new ShaderPassName(s_MeshDecalsMSStr);
-        public static readonly ShaderPassName s_MeshDecalsAOName = new ShaderPassName(s_MeshDecalsAOStr);
-        public static readonly ShaderPassName s_MeshDecalsMAOName = new ShaderPassName(s_MeshDecalsMAOStr);
-        public static readonly ShaderPassName s_MeshDecalsAOSName = new ShaderPassName(s_MeshDecalsAOSStr);
-        public static readonly ShaderPassName s_MeshDecalsMAOSName = new ShaderPassName(s_MeshDecalsMAOSStr);
-        public static readonly ShaderPassName s_MeshDecals3RTName = new ShaderPassName(s_MeshDecals3RTStr);
+        public static readonly ShaderTagId s_EmptyName = new ShaderTagId(s_EmptyStr);
+        public static readonly ShaderTagId s_ForwardName = new ShaderTagId(s_ForwardStr);
+        public static readonly ShaderTagId s_DepthOnlyName = new ShaderTagId(s_DepthOnlyStr);
+        public static readonly ShaderTagId s_DepthForwardOnlyName = new ShaderTagId(s_DepthForwardOnlyStr);
+        public static readonly ShaderTagId s_ForwardOnlyName = new ShaderTagId(s_ForwardOnlyStr);
+        public static readonly ShaderTagId s_GBufferName = new ShaderTagId(s_GBufferStr);
+        public static readonly ShaderTagId s_GBufferWithPrepassName = new ShaderTagId(s_GBufferWithPrepassStr);
+        public static readonly ShaderTagId s_SRPDefaultUnlitName = new ShaderTagId(s_SRPDefaultUnlitStr);
+        public static readonly ShaderTagId s_MotionVectorsName = new ShaderTagId(s_MotionVectorsStr);
+        public static readonly ShaderTagId s_DistortionVectorsName = new ShaderTagId(s_DistortionVectorsStr);
+        public static readonly ShaderTagId s_TransparentDepthPrepassName = new ShaderTagId(s_TransparentDepthPrepassStr);
+        public static readonly ShaderTagId s_TransparentBackfaceName = new ShaderTagId(s_TransparentBackfaceStr);
+        public static readonly ShaderTagId s_TransparentDepthPostpassName = new ShaderTagId(s_TransparentDepthPostpassStr);
+        public static readonly ShaderTagId s_MeshDecalsMName = new ShaderTagId(s_MeshDecalsMStr);
+        public static readonly ShaderTagId s_MeshDecalsSName = new ShaderTagId(s_MeshDecalsSStr);
+        public static readonly ShaderTagId s_MeshDecalsMSName = new ShaderTagId(s_MeshDecalsMSStr);
+        public static readonly ShaderTagId s_MeshDecalsAOName = new ShaderTagId(s_MeshDecalsAOStr);
+        public static readonly ShaderTagId s_MeshDecalsMAOName = new ShaderTagId(s_MeshDecalsMAOStr);
+        public static readonly ShaderTagId s_MeshDecalsAOSName = new ShaderTagId(s_MeshDecalsAOSStr);
+        public static readonly ShaderTagId s_MeshDecalsMAOSName = new ShaderTagId(s_MeshDecalsMAOSStr);
+        public static readonly ShaderTagId s_MeshDecals3RTName = new ShaderTagId(s_MeshDecals3RTStr);
 
         // Legacy name
-        public static readonly ShaderPassName s_AlwaysName = new ShaderPassName("Always");
-        public static readonly ShaderPassName s_ForwardBaseName = new ShaderPassName("ForwardBase");
-        public static readonly ShaderPassName s_DeferredName = new ShaderPassName("Deferred");
-        public static readonly ShaderPassName s_PrepassBaseName = new ShaderPassName("PrepassBase");
-        public static readonly ShaderPassName s_VertexName = new ShaderPassName("Vertex");
-        public static readonly ShaderPassName s_VertexLMRGBMName = new ShaderPassName("VertexLMRGBM");
-        public static readonly ShaderPassName s_VertexLMName = new ShaderPassName("VertexLM");
+        public static readonly ShaderTagId s_AlwaysName = new ShaderTagId("Always");
+        public static readonly ShaderTagId s_ForwardBaseName = new ShaderTagId("ForwardBase");
+        public static readonly ShaderTagId s_DeferredName = new ShaderTagId("Deferred");
+        public static readonly ShaderTagId s_PrepassBaseName = new ShaderTagId("PrepassBase");
+        public static readonly ShaderTagId s_VertexName = new ShaderTagId("Vertex");
+        public static readonly ShaderTagId s_VertexLMRGBMName = new ShaderTagId("VertexLMRGBM");
+        public static readonly ShaderTagId s_VertexLMName = new ShaderTagId("VertexLM");
     }
 
     // Pre-hashed shader ids - naming conventions are a bit off in this file as we use the same
@@ -154,6 +156,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _DebugLightingSmoothness = Shader.PropertyToID("_DebugLightingSmoothness");
         public static readonly int _DebugLightingNormal = Shader.PropertyToID("_DebugLightingNormal");
         public static readonly int _DebugLightingSpecularColor = Shader.PropertyToID("_DebugLightingSpecularColor");
+        public static readonly int _DebugLightingEmissiveColor = Shader.PropertyToID("_DebugLightingEmissiveColor");
         public static readonly int _AmbientOcclusionTexture = Shader.PropertyToID("_AmbientOcclusionTexture");
         public static readonly int _DebugMipMapMode = Shader.PropertyToID("_DebugMipMapMode");
         public static readonly int _DebugMipMapModeTerrainTexture = Shader.PropertyToID("_DebugMipMapModeTerrainTexture");
@@ -334,10 +337,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _SsrHitPointTexture                = Shader.PropertyToID("_SsrHitPointTexture");
         public static readonly int _SsrDepthPyramidMipOffsets         = Shader.PropertyToID("_SsrDepthPyramidMipLevelOffsets");
         public static readonly int _SsrStencilExclusionValue          = Shader.PropertyToID("_SsrStencilExclusionValue");
+        public static readonly int _SsrReflectsSky                    = Shader.PropertyToID("_SsrReflectsSky");
 
 
-
-        public static readonly int _VelocityTexture = Shader.PropertyToID("_VelocityTexture");
         public static readonly int _ShadowMaskTexture = Shader.PropertyToID("_ShadowMaskTexture");
         public static readonly int _LightLayersTexture = Shader.PropertyToID("_LightLayersTexture");
         public static readonly int _DistortionTexture = Shader.PropertyToID("_DistortionTexture");
@@ -345,6 +347,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _DepthPyramidTexture = Shader.PropertyToID("_DepthPyramidTexture");
         public static readonly int _ColorPyramidSize = Shader.PropertyToID("_ColorPyramidSize");
         public static readonly int _ColorPyramidScale = Shader.PropertyToID("_ColorPyramidScale");
+        public static readonly int _ColorPyramidUvScaleAndLimitPrevFrame = Shader.PropertyToID("_ColorPyramidUvScaleAndLimitPrevFrame");
         public static readonly int _DepthPyramidSize = Shader.PropertyToID("_DepthPyramidSize");
         public static readonly int _DepthPyramidScale = Shader.PropertyToID("_DepthPyramidScale");
 
@@ -406,6 +409,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _HeightFogBaseScattering        = Shader.PropertyToID("_HeightFogBaseScattering");
         public static readonly int _HeightFogBaseHeight            = Shader.PropertyToID("_HeightFogBaseHeight");
         public static readonly int _HeightFogExponents             = Shader.PropertyToID("_HeightFogExponents");
+        public static readonly int _EnableDistantFog               = Shader.PropertyToID("_EnableDistantFog");
         public static readonly int _GlobalFogAnisotropy            = Shader.PropertyToID("_GlobalFogAnisotropy");
         public static readonly int _CornetteShanksConstant         = Shader.PropertyToID("_CornetteShanksConstant");
         public static readonly int _VBufferResolution              = Shader.PropertyToID("_VBufferResolution");
@@ -418,6 +422,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _VBufferPrevUvScaleAndLimit     = Shader.PropertyToID("_VBufferPrevUvScaleAndLimit");
         public static readonly int _VBufferPrevDepthEncodingParams = Shader.PropertyToID("_VBufferPrevDepthEncodingParams");
         public static readonly int _VBufferPrevDepthDecodingParams = Shader.PropertyToID("_VBufferPrevDepthDecodingParams");
+        public static readonly int _VBufferMaxLinearDepth          = Shader.PropertyToID("_VBufferMaxLinearDepth");
         public static readonly int _VBufferCoordToViewDirWS        = Shader.PropertyToID("_VBufferCoordToViewDirWS");
         public static readonly int _VBufferDensity                 = Shader.PropertyToID("_VBufferDensity");
         public static readonly int _VBufferLighting                = Shader.PropertyToID("_VBufferLighting");
