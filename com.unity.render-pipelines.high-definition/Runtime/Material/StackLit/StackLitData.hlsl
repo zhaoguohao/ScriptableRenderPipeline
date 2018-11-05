@@ -5,31 +5,8 @@
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
-
-void ApplyDecalToSurfaceData(DecalSurfaceData decalSurfaceData, inout SurfaceData surfaceData)
-{
-    // using alpha compositing https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch23.html
-    if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_DIFFUSE)
-    {
-        surfaceData.baseColor.xyz = surfaceData.baseColor.xyz * decalSurfaceData.baseColor.w + decalSurfaceData.baseColor.xyz;
-    }
-
-    if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_NORMAL)
-    {
-        surfaceData.normalWS.xyz = normalize(surfaceData.normalWS.xyz * decalSurfaceData.normalWS.w + decalSurfaceData.normalWS.xyz);
-    }
-
-    if (decalSurfaceData.HTileMask & DBUFFERHTILEBIT_MASK)
-    {
-#ifdef DECALS_4RT // only smoothness in 3RT mode
-        surfaceData.metallic = surfaceData.metallic * decalSurfaceData.MAOSBlend.x + decalSurfaceData.mask.x;
-        surfaceData.ambientOcclusion = surfaceData.ambientOcclusion * decalSurfaceData.MAOSBlend.y + decalSurfaceData.mask.y;
-#endif
-        surfaceData.perceptualSmoothnessA = surfaceData.perceptualSmoothnessA * decalSurfaceData.mask.w + decalSurfaceData.mask.z;
-        surfaceData.perceptualSmoothnessB = surfaceData.perceptualSmoothnessB * decalSurfaceData.mask.w + decalSurfaceData.mask.z;
-        surfaceData.coatPerceptualSmoothness = surfaceData.coatPerceptualSmoothness * decalSurfaceData.mask.w + decalSurfaceData.mask.z;
-    }
-}
+//for void ApplyDecalToSurfaceData(DecalSurfaceData decalSurfaceData, inout SurfaceData surfaceData):
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/StackLit/StackLitDecalData.hlsl"
 
 //-----------------------------------------------------------------------------
 // Texture Mapping
@@ -237,8 +214,11 @@ float4 SampleTexture2DTriplanarNormalScaleBias(TEXTURE2D_ARGS(textureName, sampl
 // Texture Mapping: Sampler Sharing
 //-----------------------------------------------------------------------------
 
+#ifndef _DISABLE_SAMPLER_SHARING
+#define _USE_SAMPLER_SHARING
+#endif
 // The following include needs those defined and uses the _USE_SAMPLER_SHARING keyword:
-
+//
 //#define SAMPLE_TEXTURE2D_SCALE_BIAS(name)
 //#define SAMPLE_TEXTURE2D_NORMAL_SCALE_BIAS(name, scale, objSpace)
 //#define SAMPLE_TEXTURE2D_NORMAL_PROPNAME_SCALE_BIAS(name, propname, scale, objSpace)
@@ -293,6 +273,12 @@ float4 AddDetailGradient(float4 gradient, float4 detailGradient, float detailMas
 //
 void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 {
+    // TODOTOCHECK:
+#ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
+    uint3 fadeMaskSeed = asuint((int3)(V * _ScreenSize.xyx)); // Quantize V to _ScreenSize values
+    LODDitheringTransition(fadeMaskSeed, unity_LODFade.x);
+#endif
+
     ApplyDoubleSidedFlipOrMirror(input); // Apply double sided flip on the vertex normal.
 
     TextureUVMapping uvMapping; // Note this identifier is directly referenced in the SAMPLE_TEXTURE2D_* macros above
@@ -715,7 +701,10 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
 
     #ifdef _MATERIAL_FEATURE_DUAL_SPECULAR_LOBE
     // Note that this will be ignored when using Hazy Gloss parametrization.
-    // This could be translated to apply to hazeExtent instead if we really want that control.
+    // This could be translated to apply to hazeExtent instead if we really want that control, but conceptually,
+    // since smoothnessB depends on hazeExtent and smoothnessA only, it makes sense to not additionally covary hazeExtent.
+    // See also the case of specular AA below.
+
 
     smoothnessOverlay = lerp(surfaceData.perceptualSmoothnessB, (detailPerceptualSmoothness < 0.0) ? 0.0 : 1.0, smoothnessDetailSpeed);
     // Lerp with details mask
@@ -736,6 +725,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // but this is ok as the Orthonormalize() call here will:
     surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
 
+    // TODO: Improve StackLitDecalData (also, problem with TextureNormalFiltering)
 #if HAVE_DECALS
     if (_EnableDecals)
     {
@@ -752,6 +742,16 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         // Intuitively, an increase of variance should enlarge (possible) visibility and thus diminish the occlusion
         // (enlarge the visibility cone). This goes in hand with the softer BSDF specular lobe.
 
+        // See remark about _DETAILMAP when in hazy gloss mode above:
+        // Note that when using the Hazy Gloss parametrization, the user has no direct control on smoothnessB, and
+        // surfaceData.perceptualSmoothnessB will be 0 in that case.
+        // Conceptually, in that mode smoothnessB now depends on hazeExtent and smoothnessA only, and hazeExtent is
+        // a perceptual control in that "smoothnessB from smoothnessA" dependency (it will also influence lobeMix and the new
+        // f0 for the base layer precisely via smoothnessB). Finally, in that parametrization, smoothnessB is always <= smoothnessA.
+        // It thus makes sense to only modify smoothnessA while doing SpecularAA, the hazemapping takes care of the rest.
+        // The compiler should prune out our calculations for surfaceData.perceptualSmoothnessB in that case since it will never
+        // be read before being overwritten later.
+
         float geometricVariance = _GeometricNormalFilteringEnabled ? GeometricNormalVariance(input.worldToTangent[2], _SpecularAntiAliasingScreenSpaceVariance) : 0.0;
         float textureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeVariance(gradient.w) : 0.0;
         float coatTextureFilteringVariance = _TextureNormalFilteringEnabled ? DecodeVariance(coatGradient.w) : 0.0;
@@ -760,8 +760,6 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
         surfaceData.perceptualSmoothnessB = NormalFiltering(surfaceData.perceptualSmoothnessB, geometricVariance + textureFilteringVariance, _SpecularAntiAliasingThreshold);
         surfaceData.coatPerceptualSmoothness = NormalFiltering(surfaceData.coatPerceptualSmoothness, geometricVariance + coatTextureFilteringVariance, _SpecularAntiAliasingThreshold);
     }
-
-    // TODO: decal etc.
 
 #if defined(DEBUG_DISPLAY)
     if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
@@ -778,7 +776,7 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     }
 
     // We need to call ApplyDebugToSurfaceData after filling the surfarcedata and before filling builtinData
-    // as it can modify attribute use for static lighting
+    // as it can modify attributes used for static lighting
     ApplyDebugToSurfaceData(input.worldToTangent, surfaceData);
 #endif
 
@@ -786,8 +784,9 @@ void GetSurfaceAndBuiltinData(FragInputs input, float3 V, inout PositionInputs p
     // Builtin Data:
     // -------------------------------------------------------------
 
-    // For back lighting we use the oposite vertex normal 
-    InitBuiltinData(alpha, surfaceData.normalWS, -input.worldToTangent[2], input.positionRWS, input.texCoord1, input.texCoord2, builtinData);
+    // For back lighting we use the oposite vertex normal
+    // Like in Lit (see LitBuiltinData), we use the bentNormalWS direction for the normal to use for baked data.
+    InitBuiltinData(alpha, surfaceData.bentNormalWS, -input.worldToTangent[2], input.positionRWS, input.texCoord1, input.texCoord2, builtinData);
 
     builtinData.emissiveColor = _EmissiveColor * lerp(float3(1.0, 1.0, 1.0), surfaceData.baseColor.rgb, _AlbedoAffectEmissive);
     if (_EmissiveColorUseMap)

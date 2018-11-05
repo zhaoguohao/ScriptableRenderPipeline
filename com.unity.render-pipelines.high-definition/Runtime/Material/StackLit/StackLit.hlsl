@@ -359,6 +359,10 @@ SSSData ConvertSurfaceDataToSSSData(SurfaceData surfaceData)
     return sssData;
 }
 
+// Warning:
+//
+// Keep StackLitSubShader.cs in synch with what we do here (see AddPixelShaderSlotsForWriteNormalBufferPasses)
+// along with EvaluateBSDF_ScreenSpaceReflection()
 NormalData ConvertSurfaceDataToNormalData(SurfaceData surfaceData)
 {
     NormalData normalData;
@@ -372,6 +376,16 @@ NormalData ConvertSurfaceDataToNormalData(SurfaceData surfaceData)
     }
     else
     {
+        // In HazyGloss mode. ConvertSurfaceDataToNormalData() would need positionSS and to call
+        // ConvertSurfaceDataToBSDFData, might be too heavy for a prepass, maybe find a lightweight approximation
+        // of HazeMapping. 
+        // This is a moot point though: mixing though roughnesses directly in one is already a hack, the
+        // resulting lobe isn't representative of this. But for what ConvertSurfaceDataToNormalData() influences
+        // (like SSR and shadows), it might be sufficient.
+        // Ignoring the case of hazy gloss doesn't seem a bad solution either: lobeMix will be 0 and we will use
+        // smoothnessA, which is "incomplete" but since smoothnessA >= smoothnessB, it at least bounds the
+        // differing behavior vs the hack with the direct input mode.
+
         normalData.normalWS = surfaceData.normalWS;
         // Do average mix in case of dual lobe
         normalData.perceptualRoughness = PerceptualSmoothnessToPerceptualRoughness(lerp(surfaceData.perceptualSmoothnessA, surfaceData.perceptualSmoothnessB, surfaceData.lobeMix));
@@ -386,8 +400,12 @@ NormalData ConvertSurfaceDataToNormalData(SurfaceData surfaceData)
 
 //
 // Outputs:
+//
 //    bsdfData.fresnel0
 //    bsdfData.lobeMix
+//
+//    (and these that only depend on hazeExtent and bsdfData.anisotropyB:)
+//
 //    bsdfData.perceptualRoughnessB
 //    bsdfData.roughnessBT
 //    bsdfData.roughnessBB
@@ -549,6 +567,7 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     // 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_HAZY_GLOSS))
     {
+        // reminder: ComputeFresnel0 lerps from last param to first param using middle param as lerp factor.
         float3 hazyGlossMaxf0 = ComputeFresnel0(float3(1.0, 1.0, 1.0), surfaceData.metallic, surfaceData.hazyGlossMaxDielectricF0);
         HazeMapping(bsdfData.fresnel0, bsdfData.roughnessAT, bsdfData.roughnessAB, surfaceData.haziness, surfaceData.hazeExtent, bsdfData.anisotropyB, hazyGlossMaxf0, bsdfData);
     }
@@ -833,7 +852,7 @@ float GetModifiedAnisotropy(float anisotropy, float perceptualRoughness, float r
     //r = sqrt(r);
     float factor = 1000.0;
 #ifdef STACKLIT_DEBUG
-    factor = _DebugAniso.y;
+    factor = _DebugAniso.w;
 #endif
     float newAniso = anisotropy * (r  + (1-r) * clamp(factor*roughness*roughness,0,1));
 

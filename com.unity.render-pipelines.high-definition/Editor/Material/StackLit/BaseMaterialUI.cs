@@ -105,14 +105,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                     if (!m_Show.IsValid || m_Show.BoolValue)
                     {
-                        EditorGUI.indentLevel++;
+                        if (!string.IsNullOrEmpty(m_Title))
+                        {
+                            EditorGUI.indentLevel++;
+                        }
 
                         foreach (var c in m_ChildProperties)
                         {
                             c.OnGUI(material);
                         }
 
-                        EditorGUI.indentLevel--;
+                        if (!string.IsNullOrEmpty(m_Title))
+                        {
+                            EditorGUI.indentLevel--;
+                        }
 
                         if (m_ExtraOnGUI != null)
                         {
@@ -857,7 +863,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // enableMap allows to set UseMap to 0 even when a texture is assigned.
             // Useful in case there's no feature keyword to exclude sampling and we want to avoid it.
             //
-            // TextureSamplerSharing object is mandatory if shader keyword _USE_SAMPLER_SHARING is set, otherwise, it is useless
+            // TextureSamplerSharing object is mandatory if shader keyword _DISABLE_SAMPLER_SHARING is not set, otherwise, it is useless
             // as it will set UseMap properties to various shared sampler slots (numbers starting at 2.0) but the
             // shader code will only test if(UseMap) so it should be ok. The shader code samples with the texture's
             // own sampler when that keyword isn't set.

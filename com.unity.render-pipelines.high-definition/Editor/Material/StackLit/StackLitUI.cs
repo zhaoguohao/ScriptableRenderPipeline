@@ -186,11 +186,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_SamplerSharingUsage = "_SamplerSharingUsage";
         protected const string k_GeneratedShaderSamplerSharingUsage = "_GeneratedShaderSamplerSharingUsage";
 
+        protected const string k_EnableDecals = "_SupportDecals";
+        protected const string k_EnableSSR = "_ReceivesSSR";
+
         #endregion
 
         // Add the properties into an array.
         private readonly GroupProperty _baseMaterialProperties = null;
         private readonly GroupProperty _materialProperties = null;
+
+        private Property EnableDecals;
+        private Property EnableSSR;
 
         private Property EnableDetails;
         private Property EnableSpecularOcclusion;
@@ -257,13 +263,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         public StackLitGUI()
         {
+            EnableDecals = new Property(this, k_EnableDecals, "Enable Decals", "Enable Decals", true);
+            EnableSSR = new Property(this, k_EnableSSR, "Receives SSR", "Receives SSR", true);
+
             _baseMaterialProperties = new GroupProperty(this, "_BaseMaterial", new BaseProperty[]
             {
                 new Property(this, k_DoubleSidedNormalMode, "Normal mode", "This will modify the normal base on the selected mode. Mirror: Mirror the normal with vertex normal plane, Flip: Flip the normal.",
                     false, _ => (/* from BaseUnlitUI: */ base.doubleSidedEnable != null && base.doubleSidedEnable.floatValue > 0.0f)),
                 new GroupProperty(this, "_BaseUnlitDistortion", "Distortion", new BaseProperty[] { },
                     extraOnGUI: _ => {  base.DoDistortionInputsGUI(); },
-                    isVisible: _ => ((SurfaceType)base.surfaceType.floatValue == SurfaceType.Transparent) )
+                    isVisible: _ => ((SurfaceType)base.surfaceType.floatValue == SurfaceType.Transparent) ),
+                EnableDecals,
+                EnableSSR,
             });
 
             EnableDetails = new Property(this, k_EnableDetails, "Enable Details", "Enable Detail", true);
@@ -410,7 +421,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var Haziness = new TextureProperty(this, k_HazinessMap, k_Haziness, "Haziness", "Haziness", false, false, samplerSharingEnabled: (_, __) => IsSamplerSharingGlobalEnabled);
             var HazeExtent = new TextureProperty(this, k_HazeExtentMap, k_HazeExtent, "Haze Extent", "Haze Extent", false, false, samplerSharingEnabled: (_, __) => IsSamplerSharingGlobalEnabled);
 
-            CapHazinessWrtMetallic = new Property(this, k_CapHazinessWrtMetallic, "Cap Haziness Wrt Metallic", "Cap Haziness To Agree With Metallic", false,
+            CapHazinessWrtMetallic = new Property(this, k_CapHazinessWrtMetallic, "Cap Haziness For Non Metallic", "Cap Haziness To Agree With Metallic - Only Valid When Base Parametrization is BaseMetallic", false,
                 _ => (IsMetallicParametrizationUsed));
 
             var HazyGlossMaxDielectricF0UI = new UIBufferedProperty(this, k_HazyGlossMaxDielectricF0, "Maximum Dielectric Specular Color", "Cap Dielectrics To This Maximum Dielectric Specular Color", false,
@@ -448,14 +459,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 new GroupProperty(this, "_MaterialFeatures", "Material Features", new BaseProperty[]
                 {
                     EnableDetails,
-                    EnableSpecularOcclusion,
-                    EnableDualSpecularLobe,
                     EnableAnisotropy,
                     EnableCoat,
                     EnableCoatNormalMap,
+                    EnableDualSpecularLobe,
                     EnableIridescence,
                     EnableSSS,
                     EnableTransmission,
+                    EnableSpecularOcclusion,
                     EnableSamplerSharing
                 }),
 
@@ -885,7 +896,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     new Vector4(samplerSharing.SharedSamplersUsedOnLastAssignement, samplerSharing.BuiltInSamplersUsedOnLastAssignement, samplerSharing.OwnSamplersUsedOnLastAssignement, totalSamplersUsedNum),
                     generated: hasAssignedGeneratedShader);
             }
-            CoreUtils.SetKeyword(material, "_USE_SAMPLER_SHARING", samplerSharingEnabled);
+            CoreUtils.SetKeyword(material, "_DISABLE_SAMPLER_SHARING", samplerSharingEnabled == false);
+
+            bool decalsEnabled = material.HasProperty(k_EnableDecals) && material.GetFloat(k_EnableDecals) > 0.0f;
+            CoreUtils.SetKeyword(material, "_DISABLE_DECALS", decalsEnabled == false);
+            bool ssrEnabled = material.HasProperty(k_EnableSSR) && material.GetFloat(k_EnableSSR) > 0.0f;
+            CoreUtils.SetKeyword(material, "_DISABLE_SSR", ssrEnabled == false);
 
             //
             // Check if we are using specific UVs (but only do it for potentially used maps):
@@ -964,23 +980,46 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_MAPPING_TRIPLANAR", requireTriplanar);
 
             //
-            // Set the reference value for the stencil test - required for SSS
+            // Set the reference values for the stencil test - required for SSS, decals, motion vectors 
+            // and TODOTODO disabling wasteful SSR tracing in compute shader
             //
+
+            // We tag during velocity pass, forwardonly pass, and depth forwardonly prepass
+            // so we need a separate state and we need to use the write mask:
             int stencilRef = (int)StencilLightingUsage.RegularLighting;
+            int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
             if (sssEnabled)
             {
                 stencilRef = (int)StencilLightingUsage.SplitLighting;
             }
 
-            // As we tag both during velocity pass and Gbuffer pass we need a separate state and we need to use the write mask
+            // For depth only pass, we also tag: when the renderpipeline itself is set in deferred mode,
+            // this is needed for decal to normal buffer compositing to still happen for forward only materials (like stacklit).
+            // When the renderpipeline is in full forward, it automatically do compositing for all pixels
+            // tagged with the decal bit as they all need compositing since it knows every opaque was rendered in forward.
+            int stencilDepthPrepassRef = decalsEnabled ? (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer : 0;
+            int stencilDepthPrepassWriteMask = decalsEnabled ? (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer : 0;
+
+            // TODOTODO enable this and test, when RenderPipeline is modified to copy the stencil to UAV not
+            // only on feature variants, but if we render any depth forward only prepasses and have SSR,
+            // as in this case, it might be worth it to save SSR tracing for full forward materials that escape
+            // it. 
+            // (If the pipeline is itself in fullforward, then depth only prepasses (eg in Lit) should also tag,
+            // like we plan to do here:)
+            //if (!ssrEnabled)
+            //{
+            //    stencilDepthPrepassRef |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
+            //    stencilDepthPrepassWriteMask |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR;
+            //}
+
+            // We tag during velocity pass, forwardonly pass, so we need a separate state and we need to use the write mask
             material.SetInt(kStencilRef, stencilRef);
-            material.SetInt(kStencilWriteMask, (int)HDRenderPipeline.StencilBitMask.LightingMask);
+            material.SetInt(kStencilWriteMask, stencilWriteMask);
             material.SetInt(kStencilRefMV, (int)HDRenderPipeline.StencilBitMask.ObjectVelocity);
             material.SetInt(kStencilWriteMaskMV, (int)HDRenderPipeline.StencilBitMask.ObjectVelocity);
 
-            // for depth only pass to be used in decal to normal buffer compositing
-            material.SetInt(kStencilDepthPrepassRef, (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer);
-            material.SetInt(kStencilDepthPrepassWriteMask, (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer);
+            material.SetInt(kStencilDepthPrepassRef, stencilDepthPrepassRef);
+            material.SetInt(kStencilDepthPrepassWriteMask, stencilDepthPrepassWriteMask);
         }
     }
 } // namespace UnityEditor

@@ -520,6 +520,9 @@ Shader "HDRenderPipeline/StackLit"
 
         // This is required by motion vector pass to be able to disable the pass by default
         [HideInInspector] _EnableMotionVectorForVertexAnimation("EnableMotionVectorForVertexAnimation", Float) = 0.0
+
+        [ToggleUI] _SupportDecals("Support Decals", Float) = 1.0
+        [ToggleUI] _ReceivesSSR("Receives SSR", Float) = 1.0
     }
 
     HLSLINCLUDE
@@ -539,11 +542,14 @@ Shader "HDRenderPipeline/StackLit"
     #pragma shader_feature _TANGENTMAP
     #pragma shader_feature _ENABLESPECULAROCCLUSION // This will control SO whether bent normals are there or not (cf Lit where only bent normals have effect with this keyword)
 
-    #pragma shader_feature _USE_SAMPLER_SHARING
+    #pragma shader_feature _DISABLE_SAMPLER_SHARING
 
     //#pragma shader_feature _REQUIRE_UV2
     //#pragma shader_feature _REQUIRE_UV3
     #pragma shader_feature _MAPPING_TRIPLANAR // This shader makes use of TRIPLANAR mapping, we reuse the Lit keyword _MAPPING_TRIPLANAR
+
+    #pragma shader_feature _DISABLE_DECALS
+    #pragma shader_feature _DISABLE_SSR
 
     // Keyword for transparent
     #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
