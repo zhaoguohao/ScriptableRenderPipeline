@@ -304,7 +304,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _EmissiveColorMapSamplerSharingNullOptout("EmissiveColorMap Sampler Sharing Allow Null Opt-out", Float) = 1
         // ...tells to allow/honor optout option even on unassigned texture (only valid for shader generation)
 
-        [ToggleUI] _EnableSubsurfaceScattering("Enable Subsurface Scattering", Float) = 0.0
+        [ToggleUI] _EnableSubsurfaceScatteringStackLitUI("Enable Subsurface Scattering", Float) = 0.0
         _DiffusionProfile("Diffusion Profile", Int) = 0
         [HideInInspector] _SubsurfaceMaskMapShow("Subsurface Mask Map Show", Float) = 0
         _SubsurfaceMask("Subsurface Mask", Range(0.0, 1.0)) = 1.0

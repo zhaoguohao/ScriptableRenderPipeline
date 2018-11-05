@@ -88,7 +88,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string k_CoatNormalScale = "_CoatNormalScale";
 
         // SSS
-        protected const string k_EnableSubsurfaceScattering = "_EnableSubsurfaceScattering";
+        protected const string k_EnableSubsurfaceScattering = "_EnableSubsurfaceScatteringStackLitUI";
         protected const string k_DiffusionProfile = "_DiffusionProfile";
         protected const string k_SubsurfaceMask = "_SubsurfaceMask";
         protected const string k_SubsurfaceMaskMap = "_SubsurfaceMaskMap";
