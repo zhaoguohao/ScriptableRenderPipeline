@@ -968,16 +968,35 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Set keyword for required coordinate mappings:
             //
 
-            //bool requireUv2 = false;
-            //bool requireUv3 = false;
+            bool requireUv2 = false;
+            bool requireUv3 = false;
             bool requireTriplanar = false;
             for (int i = 0; i < uvIndices.Length; ++i)
             {
-                //requireUv2 = requireUv2 || uvIndices[i] == TextureProperty.UVMapping.UV2;
-                //requireUv3 = requireUv3 || uvIndices[i] == TextureProperty.UVMapping.UV3;
+                requireUv2 = requireUv2 || uvIndices[i] == TextureProperty.UVMapping.UV2;
+                requireUv3 = requireUv3 || uvIndices[i] == TextureProperty.UVMapping.UV3;
                 requireTriplanar = requireTriplanar || uvIndices[i] == TextureProperty.UVMapping.Triplanar;
             }
             CoreUtils.SetKeyword(material, "_MAPPING_TRIPLANAR", requireTriplanar);
+
+            // This is for the ShaderPass/StackLit*Pass.hlsl + VaryingMesh.hlsl interpolant declarations
+            // and forwarding, StackLitData setups all gradient-based basis regardless if fraginputs
+            // will have relevant data in its texCoord2 and texCoord3 fields.
+            if (requireUv3)
+            {
+                material.DisableKeyword("_REQUIRE_UV2");
+                material.EnableKeyword("_REQUIRE_UV3");
+            }
+            else if (requireUv2)
+            {
+                material.EnableKeyword("_REQUIRE_UV2");
+                material.DisableKeyword("_REQUIRE_UV3");
+            }
+            else
+            {
+                material.DisableKeyword("_REQUIRE_UV2");
+                material.DisableKeyword("_REQUIRE_UV3");
+            }
 
             //
             // Set the reference values for the stencil test - required for SSS, decals, motion vectors 

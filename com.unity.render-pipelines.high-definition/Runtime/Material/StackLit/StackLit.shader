@@ -544,8 +544,7 @@ Shader "HDRenderPipeline/StackLit"
 
     #pragma shader_feature _DISABLE_SAMPLER_SHARING
 
-    //#pragma shader_feature _REQUIRE_UV2
-    //#pragma shader_feature _REQUIRE_UV3
+    #pragma shader_feature _ _REQUIRE_UV2 _REQUIRE_UV3
     #pragma shader_feature _MAPPING_TRIPLANAR // This shader makes use of TRIPLANAR mapping, we reuse the Lit keyword _MAPPING_TRIPLANAR
 
     #pragma shader_feature _DISABLE_DECALS
