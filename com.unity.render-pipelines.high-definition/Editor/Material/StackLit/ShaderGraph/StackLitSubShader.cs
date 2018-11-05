@@ -3,6 +3,7 @@ using UnityEditor.Graphing;
 using UnityEditor.ShaderGraph;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
@@ -135,12 +136,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TemplateName = "StackLitPass.template",
             MaterialName = "StackLit",
             ShaderPassName = "SHADERPASS_DEPTH_ONLY",
+            ZWriteOverride = "ZWrite On",
+
             ExtraDefines = new List<string>()
             {
                 "#define WRITE_NORMAL_BUFFER",
                 "#pragma multi_compile _ WRITE_MSAA_DEPTH"
             },
-            ColorMaskOverride = "ColorMask 0",
             Includes = new List<string>()
             {
                 "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassDepthOnly.hlsl\"",
@@ -154,10 +156,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // See AddPixelShaderSlotsForWriteNormalBufferPasses()
             RequiredFields = new List<string>()
             {
+                "AttributesMesh.normalOS",
+                "AttributesMesh.tangentOS",     // Always present as we require it also in case of Variants lighting
+                "AttributesMesh.uv0",
+                "AttributesMesh.uv1",
+                "AttributesMesh.color",
+                "AttributesMesh.uv2",           // SHADERPASS_LIGHT_TRANSPORT always uses uv2
+                "AttributesMesh.uv3",           // DEBUG_DISPLAY
+
                 "FragInputs.worldToTangent",
                 "FragInputs.positionRWS",
+                "FragInputs.texCoord0",
                 "FragInputs.texCoord1",
-                "FragInputs.texCoord2"
+                "FragInputs.texCoord2",
+                "FragInputs.texCoord3",
+                "FragInputs.color",
             },
             PixelShaderSlots = new List<int>()
             {
@@ -236,8 +249,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 var masterNode = node as StackLitMasterNode;
 
-                // TODOTODO or-in the DoesntReceiveSSR bit but would require tweak in RenderPipeline.cs, but this would save work in the compute shader.
-                // Then also need UI to optout, along with defining _DISABLE_SSR.
                 int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
                 int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
 
