@@ -184,7 +184,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
 
             // Material type enables:
-            ps.Add(new PropertyRow(CreateLabel("Material core features", indentLevel)), (row) => {} );
+            ps.Add(new PropertyRow(CreateLabel("Material Core Features", indentLevel)), (row) => {} );
             ++indentLevel;
 
             ps.Add(new PropertyRow(CreateLabel("Anisotropy", indentLevel)), (row) =>
