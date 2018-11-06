@@ -465,8 +465,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             inputView.style.top = currentRect.yMin;
             var newHeight = inputView.parent.layout.height;
             foreach (var element in inputView.parent.Children())
-                newHeight = Mathf.Max(newHeight, element.resolvedStyle.top + element.layout.height);
-            if (Math.Abs(inputView.parent.resolvedStyle.height - newHeight) > 1e-3)
+                newHeight = Mathf.Max(newHeight, element.style.top.value.value + element.layout.height);
+            if (Math.Abs(inputView.parent.style.height.value.value - newHeight) > 1e-3)                
                 inputView.parent.style.height = newHeight;
         }
 
