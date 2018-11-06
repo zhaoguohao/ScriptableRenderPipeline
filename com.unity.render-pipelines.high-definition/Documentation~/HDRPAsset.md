@@ -26,7 +26,7 @@ Now that you have created a HDRP Asset, you must assign it it to the __Scriptabl
 
  
 
-You can create multiple HDRP Assets containing different settings. Assets can be set by either manually selecting a Pipeline Asset in the Graphics Settings window, or by using the [GraphicsSettings.renderPipelineAsset](API Link) property via script. 
+You can create multiple HDRP Assets containing different settings. You can manually select a __Scriptable Render Pipeline Asset__ in the Graphics Settings window, or you can use GraphicsSettings.renderPipelineAsset](API Link) property via script. 
 
  
 
