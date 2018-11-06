@@ -21,5 +21,7 @@ MultiFloatSlotControlView {
     margin-right: 0;
 }
 
-
-
+FloatField.unity-double-field {
+    padding-left: 0;
+    padding-right: 0;
+}
