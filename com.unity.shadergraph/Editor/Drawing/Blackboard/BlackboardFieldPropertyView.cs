@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEditor.UIElements;
 using UnityEngine.UIElements;
 using Toggle = UnityEngine.UIElements.Toggle;
+using UnityEditor.Experimental.GraphView;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
