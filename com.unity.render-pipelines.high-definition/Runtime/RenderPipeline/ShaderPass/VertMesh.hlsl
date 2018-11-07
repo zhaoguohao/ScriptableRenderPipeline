@@ -1,4 +1,4 @@
-struct VaryingsToPS
+struct VaryingsToPS // Internal to shader stage
 {
     VaryingsMeshToPS vmesh;
 #ifdef VARYINGS_NEED_PASS
@@ -6,7 +6,7 @@ struct VaryingsToPS
 #endif
 };
 
-struct PackedVaryingsToPS
+struct PackedVaryingsToPS // v2f
 {
 #ifdef VARYINGS_NEED_PASS
     PackedVaryingsPassToPS vpass;
@@ -31,17 +31,15 @@ PackedVaryingsToPS PackVaryingsToPS(VaryingsToPS input)
 #ifdef TESSELLATION_ON
 
 
-struct VaryingsToDS
+struct VaryingsToDS // internal to shader stage
 {
     VaryingsMeshToDS vmesh;
 #ifdef VARYINGS_NEED_PASS
     VaryingsPassToDS vpass;
 #endif
-
-    UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
-struct PackedVaryingsToDS
+struct PackedVaryingsToDS // v2d
 {
     PackedVaryingsMeshToDS vmesh;
 #ifdef VARYINGS_NEED_PASS
