@@ -19,6 +19,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int m_ColorDownsampleKernel;
         int m_ColorDownsampleKernelCopyMip0;
         int m_ColorGaussianKernel;
+        int m_ColorDownsampleSPIKernel;
+        int m_ColorDownsampleSPIKernelCopyMip0;
+        int m_ColorGaussianSPIKernel;
 
         int[] m_SrcOffset;
         int[] m_DstOffset;
@@ -33,6 +36,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ColorDownsampleKernel = m_ColorPyramidCS.FindKernel("KColorDownsample");
             m_ColorDownsampleKernelCopyMip0 = m_ColorPyramidCS.FindKernel("KColorDownsampleCopyMip0");
             m_ColorGaussianKernel = m_ColorPyramidCS.FindKernel("KColorGaussian");
+            m_ColorDownsampleSPIKernel = m_ColorPyramidCS.FindKernel("KColorDownsampleSPI");
+            m_ColorDownsampleSPIKernelCopyMip0 = m_ColorPyramidCS.FindKernel("KColorDownsampleCopyMip0SPI");
+            m_ColorGaussianSPIKernel = m_ColorPyramidCS.FindKernel("KColorGaussianSPI");
             m_SrcOffset = new int[4];
             m_DstOffset = new int[4];
             m_ColorPyramidPS = asset.renderPipelineResources.shaders.colorPyramidPS;
@@ -53,7 +59,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDUtils.CheckRTCreated(texture);
             
             var cs     = m_DepthPyramidCS;
-            int kernel = (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? m_DepthDownsampleSPIKernel : m_DepthDownsampleKernel;
+            // Texture will be arrayed even when rendering scene view if SPI is enabled, so bind SPI kernels, but dispatch only once
+            int kernel = (texture.dimension == TextureDimension.Tex2DArray) ? m_DepthDownsampleSPIKernel : m_DepthDownsampleKernel; 
 
             // TODO: Do it 1x MIP at a time for now. In the future, do 4x MIPs per pass, or even use a single pass.
             // Note: Gather() doesn't take a LOD parameter and we cannot bind an SRV of a MIP level,
@@ -92,7 +99,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // We can't do it in place as the color pyramid has to be read while writing to the color
         // buffer in some cases (e.g. refraction, distortion)
         // Returns the number of mips
-        public int RenderColorGaussianPyramid(CommandBuffer cmd, Vector2Int size, Texture source, RenderTexture destination)
+        public int RenderColorGaussianPyramid(CommandBuffer cmd, Vector2Int size, Texture source, RenderTexture destination, int numSlices = 1)
         {
             // Only create the temporary target on-demand in case the game doesn't actually need it
             if (m_TempColorTarget == null)
@@ -172,9 +179,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else
             {
                 var cs = m_ColorPyramidCS;
-                int downsampleKernel = m_ColorDownsampleKernel;
-                int downsampleKernelMip0 = m_ColorDownsampleKernelCopyMip0;
-                int gaussianKernel = m_ColorGaussianKernel;
+                // Texture will be arrayed even when rendering scene view if SPI is enabled, so bind SPI kernels, but dispatch only once
+                int downsampleKernel = (source.dimension == TextureDimension.Tex2DArray) ? m_ColorDownsampleSPIKernel : m_ColorDownsampleKernel;
+                int downsampleKernelMip0 = (source.dimension == TextureDimension.Tex2DArray) ? m_ColorDownsampleSPIKernelCopyMip0 : m_ColorDownsampleKernelCopyMip0;
+                int gaussianKernel = (source.dimension == TextureDimension.Tex2DArray) ? m_ColorGaussianSPIKernel : m_ColorGaussianKernel;
 
                 while (srcMipWidth >= 8 || srcMipHeight >= 8)
                 {
@@ -189,19 +197,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Source, source, 0);
                         cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Mip0, destination, 0);
                         cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Destination, m_TempColorTarget);
-                        cmd.DispatchCompute(cs, downsampleKernelMip0, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
+                        for (int eye = 0; eye < numSlices; eye++)
+                        {
+                            cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
+                            cmd.DispatchCompute(cs, downsampleKernelMip0, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
+                        }
                     }
                     else
                     {
                         cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Source, destination, srcMipLevel);
                         cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Destination, m_TempColorTarget);
-                        cmd.DispatchCompute(cs, downsampleKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
+                        for (int eye = 0; eye < numSlices; eye++)
+                        {
+                            cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
+                            cmd.DispatchCompute(cs, downsampleKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
+                        }
                     }
 
                     cmd.SetComputeVectorParam(cs, HDShaderIDs._Size, new Vector4(dstMipWidth, dstMipHeight, 0f, 0f));
                     cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Source, m_TempColorTarget);
                     cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Destination, destination, srcMipLevel + 1);
-                    cmd.DispatchCompute(cs, gaussianKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
+                    for (int eye = 0; eye < numSlices; eye++)
+                    {
+                        cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
+                        cmd.DispatchCompute(cs, gaussianKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
+                    }
 
                     srcMipLevel++;
                     srcMipWidth  = srcMipWidth  >> 1;
