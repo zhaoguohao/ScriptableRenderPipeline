@@ -44,6 +44,10 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         {
             PositionInputs posInput = GetPositionInput_Stereo(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
 
+#if defined(USING_STEREO_MATRICES)
+            // XRTODO: fixup and consolidate stereo code relying on _PixelCoordToViewDirWS
+            V = -normalize(posInput.positionWS);
+#endif
             if (depth == UNITY_RAW_FAR_CLIP_VALUE)
             {
                 // When a pixel is at far plane, the world space coordinate reconstruction is not reliable.
