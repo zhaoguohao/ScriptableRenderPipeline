@@ -68,6 +68,10 @@
 #define TEXTURECUBE_ARRAY(textureName)                  samplerCUBE textureName // No supoport to textureCubeArray and can't emulate with texture2DArray
 #define TEXTURE3D(textureName)                          sampler3D textureName
 
+// Fixme unsure if this is supported
+#define TEXTURE2DMS(textureName)                        ERROR_ON_UNSUPPORTED_FUNCTION(Texture2DMS)
+#define TEXTURE2DMS_ARRAY(textureName)                  ERROR_ON_UNSUPPORTED_FUNCTION(Texture2DMSArray)
+
 #define TEXTURE2D_FLOAT(textureName)                    sampler2D_float textureName
 #define TEXTURE2D_ARRAY_FLOAT(textureName)              TEXTURECUBE_FLOAT(textureName) // No support to texture2DArray
 #define TEXTURECUBE_FLOAT(textureName)                  samplerCUBE_float textureName

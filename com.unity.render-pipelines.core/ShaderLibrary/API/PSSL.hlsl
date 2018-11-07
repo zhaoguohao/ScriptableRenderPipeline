@@ -77,6 +77,10 @@ bool WaveActiveAnyTrue(bool expression)
 #define TEXTURECUBE_ARRAY(textureName)        TextureCubeArray textureName
 #define TEXTURE3D(textureName)                Texture3D textureName
 
+// Only RW_ versions of MS textures are available in PSSL (https://ps4.siedev.net/resources/documents/SDK/6.000/PSSL-Specification/0016.html#__document_toc_00000060)
+#define TEXTURE2DMS(textureName)              RW_MS_Texture2D textureName
+#define TEXTURE2DMS_ARRAY(textureName)        RW_MS_Texture2D_Array textureName
+
 #define TEXTURE2D_FLOAT(textureName)          TEXTURE2D(textureName)
 #define TEXTURE2D_ARRAY_FLOAT(textureName)    TEXTURE2D_ARRAY(textureName)
 #define TEXTURECUBE_FLOAT(textureName)        TEXTURECUBE(textureName)
@@ -156,7 +160,7 @@ bool WaveActiveAnyTrue(bool expression)
 #define LOAD_TEXTURE2D_LOD(textureName, unCoord2, lod)                          textureName.Load(int3(unCoord2, lod))
 #define LOAD_TEXTURE2D_MSAA(textureName, unCoord2, sampleIndex)                 textureName.Load(unCoord2, sampleIndex)
 #define LOAD_TEXTURE2D_ARRAY(textureName, unCoord2, index)                      textureName.Load(int4(unCoord2, index, 0))
-#define LOAD_TEXTURE2D_ARRAY_MSAA(textureName, unCoord2, index, sampleIndex)    textureName.Load(int4(unCoord2, index, 0), sampleIndex)
+#define LOAD_TEXTURE2D_ARRAY_MSAA(textureName, unCoord2, index, sampleIndex)    textureName.Load(int3(unCoord2, index), sampleIndex)
 #define LOAD_TEXTURE2D_ARRAY_LOD(textureName, unCoord2, index, lod)             textureName.Load(int4(unCoord2, index, lod))
 #define LOAD_TEXTURE3D(textureName, unCoord3)                                   textureName.Load(int4(unCoord3, 0))
 #define LOAD_TEXTURE3D_LOD(textureName, unCoord3, lod)                          textureName.Load(int4(unCoord3, lod))
