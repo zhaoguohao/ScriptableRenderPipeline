@@ -9,6 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
+  m_GeneratorAsset: {fileID: 0}
   m_Script: {fileID: 11500000, guid: 0cf1dab834d4ec34195b920ea7bbf9ec, type: 3}
   m_Name: HDRP_Test_Fwd
   m_EditorClassIdentifier: 
@@ -26,7 +27,7 @@ MonoBehaviour:
     enableTransmission: 1
     enableAtmosphericScattering: 1
     enableVolumetrics: 1
-    enableReprojectionForVolumetrics: 1
+    enableReprojectionForVolumetrics: 0
     enableLightLayers: 1
     diffuseGlobalDimmer: 1
     specularGlobalDimmer: 1
@@ -143,7 +144,7 @@ MonoBehaviour:
     supportLightLayers: 1
     supportedLitShaderMode: 3
     supportDecals: 1
-    m_SupportMSAA: 0
+    supportMSAA: 0
     msaaSampleCount: 1
     supportMotionVectors: 1
     supportRuntimeDebugDisplay: 0
