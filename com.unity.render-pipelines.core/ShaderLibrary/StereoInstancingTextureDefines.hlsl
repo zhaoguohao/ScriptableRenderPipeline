@@ -23,6 +23,7 @@ CBUFFER_END
 #define TEXTURE_TYPE(type, textureName) TEXTURE2D_ARRAY_TYPE(type, textureName)
 #define LOAD_TEXTURE(textureName, pixelCoord) LOAD_TEXTURE2D_ARRAY(textureName, pixelCoord, unity_StereoEyeIndex)
 #define LOAD_TEXTURE_LOD(textureName, pixelCoord, lod) LOAD_TEXTURE2D_ARRAY_LOD(textureName, pixelCoord, unity_StereoEyeIndex, lod)
+#define SAMPLE_TEXTURE_LOD(textureName, samplerName, pixelCoord, lod) SAMPLE_TEXTURE2D_ARRAY_LOD(textureName, samplerName, pixelCoord, unity_StereoEyeIndex, lod)
 #define INDEX_TEXTURE(pixelCoord) uint3(pixelCoord, unity_StereoEyeIndex)
 #else
 #define UNITY_DECLARE_SCREENSPACE_TEXTURE(textureName) TEXTURE2D(textureName)
@@ -32,5 +33,6 @@ CBUFFER_END
 #define TEXTURE_TYPE(type, textureName) TEXTURE2D_TYPE(type, textureName)
 #define LOAD_TEXTURE(textureName, pixelCoord) LOAD_TEXTURE2D(textureName, pixelCoord)
 #define LOAD_TEXTURE_LOD(textureName, pixelCoord, lod) LOAD_TEXTURE2D_LOD(textureName, pixelCoord, lod) 
+#define SAMPLE_TEXTURE_LOD(textureName, samplerName, pixelCoord, lod) SAMPLE_TEXTURE2D_LOD(textureName, samplerName, pixelCoord, lod)
 #define INDEX_TEXTURE(pixelCoord) uint2(pixelCoord)
 #endif
