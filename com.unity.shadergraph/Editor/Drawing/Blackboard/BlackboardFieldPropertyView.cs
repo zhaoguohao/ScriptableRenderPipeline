@@ -19,7 +19,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         Toggle m_ExposedToogle;
         TextField m_ReferenceNameField;
 
-        static Type s_ContextualMenuManipulator = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypesOrNothing()).FirstOrDefault(t => t.FullName == "UnityEngine.Experimental.UIElements.ContextualMenuManipulator");
+        static Type s_ContextualMenuManipulator = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypesOrNothing()).FirstOrDefault(t => t.FullName == "UnityEngine.UIElements.ContextualMenuManipulator");
 
         IManipulator m_ResetReferenceMenu;
 
