@@ -16,8 +16,20 @@ Now that you have created a HDRP Asset, you must assign it it to the Scriptable 
 
 You can create multiple HDRP Assets containing different settings. You can change the HDRP Asset your render pipeline uses by either manually selecting a Pipeline Asset in the Graphics Settings window (as shown above), or by using the GraphicsSettings.renderPipelineAsset property via script.
 
+
 Creating multiple HDRP Assets is useful when developing for multiple platforms. You can create a HDRP asset for each platform your Unity Project supports (for example, PC, Xbox One, PlayStation 4). In each HDRP Asset, you can change settings to suite the hardware of each platform and then assign the relevant one when building your Project for each platform.
 
+ ![](Images\HDRPAsset1.png)
+
+
+Now that you have created a HDRP Asset, you must assign it it to the __Scriptable Render Pipeline Settings__ field in your Unity Project's Graphic Settings. In the menu, navigate to **Edit &gt; Project Settings &gt; Graphics** and locate the __Scriptable Render Pipeline Settings__ field at the top. To assign your HDRP Asset to this field, either drag and drop it into the field, or use the object picker (located on the right of the field) to select it from a list of all HDRP Assets in your Unity Project.
+
+ 
+
+You can create multiple HDRP Assets containing different settings. You can manually select a __Scriptable Render Pipeline Asset__ in the Graphics Settings window, or you can use GraphicsSettings.renderPipelineAsset](API Link) property via script. 
+
+
+You must create a new asset for each platform your project will support (PC, Xbox One, Playstation 4, etc) and then assign the relevant Asset when you build your project for each platform. 
 
 
 ## Render Pipeline Resources
