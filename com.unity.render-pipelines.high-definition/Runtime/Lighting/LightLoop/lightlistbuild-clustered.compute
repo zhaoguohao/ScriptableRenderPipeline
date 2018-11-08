@@ -69,11 +69,7 @@ CBUFFER_END
 #include "ClusteredUtils.hlsl"
 
 #ifdef MSAA_ENABLED
-#ifdef UNITY_STEREO_INSTANCING_ENABLED
-Texture2DMSArray<float> g_depth_tex : register(t0);
-#else
-Texture2DMS<float> g_depth_tex : register (t0);
-#endif
+TEXTUREMS(g_depth_tex) : register (t0);
 #else
 UNITY_DECLARE_SCREENSPACE_TEXTURE(g_depth_tex) : register( t0 );
 #endif

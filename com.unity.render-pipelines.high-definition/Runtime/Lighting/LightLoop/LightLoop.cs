@@ -1079,7 +1079,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.size = new Vector2(additionalLightData.shapeRadius * additionalLightData.shapeRadius, 0);
             }
 
-            if (lightData.lightType == GPULightType.Rectangle || lightData.lightType == GPULightType.Line)
+            if (lightData.lightType == GPULightType.Rectangle || lightData.lightType == GPULightType.Tube)
             {
                 lightData.size = new Vector2(additionalLightData.shapeWidth, additionalLightData.shapeHeight);
             }
@@ -1259,7 +1259,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightVolumeData.radiusSq = range * range;
                 lightVolumeData.featureFlags = (uint)LightFeatureFlags.Punctual;
             }
-            else if (gpuLightType == GPULightType.Line)
+            else if (gpuLightType == GPULightType.Tube)
             {
                 Vector3 dimensions = new Vector3(lightDimensions.x + 2 * range, 2 * range, 2 * range); // Omni-directional
                 Vector3 extents = 0.5f * dimensions;
@@ -1727,10 +1727,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     lightVolumeType = LightVolumeType.Box;
                                     break;
 
-                                case LightTypeExtent.Line:
+                                case LightTypeExtent.Tube:
                                     if (areaLightCount >= m_MaxAreaLightsOnScreen)
                                         continue;
-                                    gpuLightType = GPULightType.Line;
+                                    gpuLightType = GPULightType.Tube;
                                     lightVolumeType = LightVolumeType.Box;
                                     break;
 
@@ -2338,46 +2338,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, stencilTextureRT, skyEnabled);
             PushGlobalParams(hdCamera, cmd);
         }
-
-#if UNITY_2019_1_OR_NEWER
-        public GraphicsFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GraphicsFence startFence, bool skyEnabled)
-#else
-        public GPUFence BuildGPULightListsAsyncBegin(HDCamera hdCamera, ScriptableRenderContext renderContext, RenderTargetIdentifier cameraDepthBufferRT, RenderTargetIdentifier stencilTextureRT, GPUFence startFence, bool skyEnabled)
-#endif
-        {
-            var cmd = CommandBufferPool.Get("Build light list");
-#if UNITY_2019_1_OR_NEWER
-            cmd.WaitOnAsyncGraphicsFence(startFence);
-#else
-            cmd.WaitOnGPUFence(startFence);
-#endif
-
-            BuildGPULightListsCommon(hdCamera, cmd, cameraDepthBufferRT, stencilTextureRT, skyEnabled);
-#if UNITY_2019_1_OR_NEWER
-            GraphicsFence completeFence = cmd.CreateAsyncGraphicsFence();
-#else
-            GPUFence completeFence = cmd.CreateGPUFence();
-#endif
-            renderContext.ExecuteCommandBufferAsync(cmd, ComputeQueueType.Background);
-            CommandBufferPool.Release(cmd);
-
-            return completeFence;
-        }
-
-#if UNITY_2019_1_OR_NEWER
-        public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GraphicsFence doneFence)
-#else
-        public void BuildGPULightListAsyncEnd(HDCamera hdCamera, CommandBuffer cmd, GPUFence doneFence)
-#endif
-        {
-#if UNITY_2019_1_OR_NEWER
-            cmd.WaitOnAsyncGraphicsFence(doneFence);
-#else
-            cmd.WaitOnGPUFence(doneFence);
-#endif
-            PushGlobalParams(hdCamera, cmd);
-        }
-
         void UpdateDataBuffers()
         {
             m_DirectionalLightDatas.SetData(m_lightList.directionalLights);
@@ -2401,7 +2361,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return add;
         }
 
-        void PushGlobalParams(HDCamera hdCamera, CommandBuffer cmd)
+        public void PushGlobalParams(HDCamera hdCamera, CommandBuffer cmd)
         {
             using (new ProfilingSample(cmd, "Push Global Parameters", CustomSamplerId.TPPushGlobalParameters.GetSampler()))
             {
