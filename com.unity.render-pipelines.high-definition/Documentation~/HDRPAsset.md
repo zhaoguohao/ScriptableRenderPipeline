@@ -18,6 +18,8 @@ You can create multiple HDRP Assets containing different settings. You can chang
 
 Creating multiple HDRP Assets is useful when developing for multiple platforms. You can create a HDRP asset for each platform your Unity Project supports (for example, PC, Xbox One, PlayStation 4). In each HDRP Asset, you can change settings to suite the hardware of each platform and then assign the relevant one when building your Project for each platform.
 
+
+
 ## Render Pipeline Resources
 
 The High Definition Render Pipeline Resources Asset (HDRP Resources Asset) stores references to Shaders and Materials used by HDRP.  When you build your Unity Project, it will embed all of the resources the HDRP Resources Asset references. This is the Scriptable Render Pipeline equivalent of the Legacy Resources folder mechanism of Unity. It is useful because it allows you to set up multiple render pipelines in a Unity Project and, when you build the Project, Unity only embeds Shaders and Materials relevant for that pipeline.
