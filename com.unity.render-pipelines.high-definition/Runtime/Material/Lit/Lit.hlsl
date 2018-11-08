@@ -1540,7 +1540,7 @@ IndirectLighting EvaluateBSDF_ScreenSpaceReflection(PositionInputs posInput,
     ZERO_INITIALIZE(IndirectLighting, lighting);
 
     // TODO: this texture is sparse (mostly black). Can we avoid reading every texel? How about using Hi-S?
-    float4 ssrLighting = LOAD_TEXTURE2D(_SsrLightingTexture, posInput.positionSS);
+    float4 ssrLighting = LOAD_TEXTURE(_SsrLightingTexture, posInput.positionSS);
 
     // Note: RGB is already premultiplied by A.
     // TODO: we should multiply all indirect lighting by the FGD value only ONCE.
@@ -1610,7 +1610,7 @@ IndirectLighting EvaluateBSDF_ScreenspaceRefraction(LightLoopContext lightLoopCo
     samplingPositionNDC.x = 0.5f * (samplingPositionNDC.x + unity_StereoEyeIndex);
 #endif
 
-    float3 preLD = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler,
+    float3 preLD = SAMPLE_TEXTURE_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler,
                                         // Offset by half a texel to properly interpolate between this pixel and its mips
                                         samplingPositionNDC * _ColorPyramidScale.xy, preLightData.transparentSSMipLevel).rgb;
 
