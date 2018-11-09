@@ -64,15 +64,11 @@ MasterPreviewView > #top > #collapse-container > #icon.expanded {
 
 MasterPreviewView > #middle {
     flex-grow: 1;
-    border-width: 10;
     flex-direction: row;
-    border-color: rgb(0,10,190);
 }
 
 MasterPreviewView > #middle > #preview {
     flex-grow: 1;
-    border-width: 10;
-    border-color: rgb(200,10,190);
     width: 200;
     height: 200;
 }
