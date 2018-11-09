@@ -321,15 +321,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Count = 3,
         }
 
-        static string[,] s_ClusterKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count]
+        static string[,] s_ClusterKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count * 2] // Additional kernels for SPI
         {
-            { "TileLightListGen_NoDepthRT", "TileLightListGen_DepthRT", "TileLightListGen_DepthRT_MSAA" },
-            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile", "TileLightListGen_DepthRT_MSAA_SrcBigTile" }
+            { "TileLightListGen_NoDepthRT", "TileLightListGen_DepthRT", "TileLightListGen_DepthRT_MSAA",
+                "TileLightListGen_SPI_NoDepthRT", "TileLightListGen_SPI_DepthRT", "TileLightListGen_SPI_DepthRT_MSAA" },
+            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile", "TileLightListGen_DepthRT_MSAA_SrcBigTile",
+                "TileLightListGen_SPI_NoDepthRT_SrcBigTile", "TileLightListGen_SPI_DepthRT_SrcBigTile", "TileLightListGen_SPI_DepthRT_MSAA_SrcBigTile"}
         };
-        static string[,] s_ClusterObliqueKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count]
+        static string[,] s_ClusterObliqueKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count * 2]
         {
-            { "TileLightListGen_NoDepthRT ", "TileLightListGen_DepthRT_Oblique", "TileLightListGen_DepthRT_MSAA_Oblique" },
-            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile_Oblique", "TileLightListGen_DepthRT_MSAA_SrcBigTile_Oblique" }
+            { "TileLightListGen_NoDepthRT ", "TileLightListGen_DepthRT_Oblique", "TileLightListGen_DepthRT_MSAA_Oblique",
+                "TileLightListGen_SPI_NoDepthRT ", "TileLightListGen_SPI_DepthRT_Oblique", "TileLightListGen_SPI_DepthRT_MSAA_Oblique"},
+            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile_Oblique", "TileLightListGen_DepthRT_MSAA_SrcBigTile_Oblique",
+                "TileLightListGen_SPI_NoDepthRT_SrcBigTile", "TileLightListGen_SPI_DepthRT_SrcBigTile_Oblique", "TileLightListGen_SPI_DepthRT_MSAA_SrcBigTile_Oblique"}
         };
         // clustered light list specific buffers and data end
 
@@ -673,8 +677,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     else
                         clustDepthSourceIdx = ClusterDepthSource.Depth;
                 }
-                var kernelName = s_ClusterKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx];
-                var kernelObliqueName = s_ClusterObliqueKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx];
+                var kernelName = s_ClusterKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + ((XRGraphics.NumSlices > 1) ? (int)ClusterDepthSource.Count : 0)];
+                var kernelObliqueName = s_ClusterObliqueKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + ((XRGraphics.NumSlices > 1) ? (int)ClusterDepthSource.Count : 0)];
 
                 s_GenListPerVoxelKernel = buildPerVoxelLightListShader.FindKernel(kernelName);
                 s_GenListPerVoxelKernelOblique = buildPerVoxelLightListShader.FindKernel(kernelObliqueName);

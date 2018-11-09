@@ -10,12 +10,14 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
 
         float4x4 _PixelCoordToViewDirWS; // Actually just 3x3, but Unity can only set 4x4
 
-        Texture2DMS<float> _DepthTextureMS;
         
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/AtmosphericScattering/AtmosphericScattering.hlsl"
+
+        
+        TEXTUREMS(_DepthTextureMS);
 
         struct Attributes
         {
@@ -77,7 +79,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 positionSS = input.positionCS.xy;
             float3 V          = normalize(mul(float3(positionSS, 1.0), (float3x3)_PixelCoordToViewDirWS));
-            float  depth      = _DepthTextureMS.Load((int2)positionSS, sampleIndex).x;
+            float  depth      = LOAD_TEXTURE_MSAA(_DepthTextureMS, (int2)positionSS, sampleIndex).x;
 
             return AtmosphericScatteringCompute(input, V, depth);
         }

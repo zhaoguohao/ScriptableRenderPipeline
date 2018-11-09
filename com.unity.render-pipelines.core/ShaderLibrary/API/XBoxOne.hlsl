@@ -112,8 +112,10 @@ float WaveActiveSum(float value)
 #define TEXTURE3D(textureName)                Texture3D textureName
 
 // Fixme unsure if this is supported
-#define TEXTURE2DMS(textureName)              Texture2DMS textureName
-#define TEXTURE2DMS_ARRAY(textureName)        Texture2DMSArray textureName
+#define TEXTURE2DMS(textureName)              Texture2DMS<float> textureName
+#define TEXTURE2DMS_ARRAY(textureName)        Texture2DMSArray<float> textureName
+#define TEXTURE2DMS_TYPE(type, textureName)              Texture2DMS<type> textureName
+#define TEXTURE2DMS_ARRAY_TYPE(type, textureName)        Texture2DMSArray<type> textureName
 
 #define TEXTURE2D_FLOAT(textureName)          TEXTURE2D(textureName)
 #define TEXTURE2D_ARRAY_FLOAT(textureName)    TEXTURE2D_ARRAY(textureName)

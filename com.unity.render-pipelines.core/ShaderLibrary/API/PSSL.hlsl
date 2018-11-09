@@ -80,6 +80,8 @@ bool WaveActiveAnyTrue(bool expression)
 // Only RW_ versions of MS textures are available in PSSL (https://ps4.siedev.net/resources/documents/SDK/6.000/PSSL-Specification/0016.html#__document_toc_00000060)
 #define TEXTURE2DMS(textureName)              RW_MS_Texture2D textureName
 #define TEXTURE2DMS_ARRAY(textureName)        RW_MS_Texture2D_Array textureName
+#define TEXTURE2DMS_TYPE(textureName)              RW_MS_Texture2D<type> textureName
+#define TEXTURE2DMS_ARRAY_TYPE(textureName)        RW_MS_Texture2D_Array<type> textureName
 
 #define TEXTURE2D_FLOAT(textureName)          TEXTURE2D(textureName)
 #define TEXTURE2D_ARRAY_FLOAT(textureName)    TEXTURE2D_ARRAY(textureName)

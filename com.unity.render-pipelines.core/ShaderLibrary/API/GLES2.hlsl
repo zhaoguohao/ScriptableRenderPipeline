@@ -71,6 +71,8 @@
 // Fixme unsure if this is supported
 #define TEXTURE2DMS(textureName)                        ERROR_ON_UNSUPPORTED_FUNCTION(Texture2DMS)
 #define TEXTURE2DMS_ARRAY(textureName)                  ERROR_ON_UNSUPPORTED_FUNCTION(Texture2DMSArray)
+#define TEXTURE2DMS_TYPE(type, textureName)              ERROR_ON_UNSUPPORTED_FUNCTION(Texture2DMS)
+#define TEXTURE2DMS_ARRAY_TYPE(type, textureName)        ERROR_ON_UNSUPPORTED_FUNCTION(Texture2DMSArray)
 
 #define TEXTURE2D_FLOAT(textureName)                    sampler2D_float textureName
 #define TEXTURE2D_ARRAY_FLOAT(textureName)              TEXTURECUBE_FLOAT(textureName) // No support to texture2DArray
