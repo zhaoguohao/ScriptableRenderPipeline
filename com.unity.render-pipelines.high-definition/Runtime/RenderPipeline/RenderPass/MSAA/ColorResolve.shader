@@ -8,53 +8,63 @@ Shader "Hidden/HDRenderPipeline/ColorResolve"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
         #pragma enable_d3d11_debug_symbols
 
-        Texture2DMS<float4> _ColorTextureMS;
+        TEXTUREMS_TYPE(float4, _ColorTextureMS);
 
         struct Attributes
         {
             uint vertexID : SV_VertexID;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
         struct Varyings
         {
             float4 positionCS : SV_POSITION;
             float2 texcoord   : TEXCOORD0;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
+            UNITY_VERTEX_OUTPUT_STEREO
         };
 
         Varyings Vert(Attributes input)
         {
+            UNITY_SETUP_INSTANCE_ID(input);
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
             output.texcoord   = GetFullScreenTriangleTexCoord(input.vertexID) * _ScreenSize.xy;
+            UNITY_TRANSFER_INSTANCE_ID(input, output);
+            UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
             return output;
         }
 
         float4 Frag1X(Varyings input) : SV_Target
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return _ColorTextureMS.Load(pixelCoords, 0);
+            return LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0);
         }
 
         float4 Frag2X(Varyings input) : SV_Target
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return FastTonemapInvert((FastTonemap(_ColorTextureMS.Load(pixelCoords, 0)) + FastTonemap(_ColorTextureMS.Load(pixelCoords, 1))) * 0.5f);
+            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 1))) * 0.5f);
         }
 
         float4 Frag4X(Varyings input) : SV_Target
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return FastTonemapInvert((FastTonemap(_ColorTextureMS.Load(pixelCoords, 0)) + FastTonemap(_ColorTextureMS.Load(pixelCoords, 1))
-                            + FastTonemap(_ColorTextureMS.Load(pixelCoords, 2)) + FastTonemap(_ColorTextureMS.Load(pixelCoords, 3))) * 0.25f);
+            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 1))
+                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 2)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 3))) * 0.25f);
         }
 
         float4 Frag8X(Varyings input) : SV_Target
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return FastTonemapInvert((FastTonemap(_ColorTextureMS.Load(pixelCoords, 0)) + FastTonemap(_ColorTextureMS.Load(pixelCoords, 1))
-                            + FastTonemap(_ColorTextureMS.Load(pixelCoords, 2)) + FastTonemap(_ColorTextureMS.Load(pixelCoords, 3))
-                            + FastTonemap(_ColorTextureMS.Load(pixelCoords, 4)) + FastTonemap(_ColorTextureMS.Load(pixelCoords, 5))
-                            + FastTonemap(_ColorTextureMS.Load(pixelCoords, 6)) + FastTonemap(_ColorTextureMS.Load(pixelCoords, 7))) * 0.125f);
+            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 1))
+                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 2)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 3))
+                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 4)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 5))
+                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 6)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 7))) * 0.125f);
         }
     ENDHLSL
     SubShader
