@@ -7,8 +7,6 @@ using UnityEditor.Graphing;
 
 using UnityEngine.UIElements;
 
-[assembly: InternalsVisibleTo("Unity.ShaderGraph.EditorTests")]
-
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
