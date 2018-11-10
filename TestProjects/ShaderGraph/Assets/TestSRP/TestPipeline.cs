@@ -3,22 +3,23 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 
-namespace ShaderGraph.Tests
+namespace UnityEngine.Rendering.ShaderGraph.Tests
 {
-    public class TestPipeline : RenderPipeline
+    public class TestPipeline : UnityEngine.Rendering.RenderPipeline
     {
         private const string k_cameraTag = "TestSRP - Render Camera";
-        private readonly ShaderPassName m_shaderPassName = new ShaderPassName("TestPass");
-        private CullResults m_cullResults = new CullResults();
+        private ShaderTagId m_shaderTagId = new ShaderTagId("TestPass");
 
         public TestPipeline()
         {
-            Shader.globalRenderPipeline = "TestPipeline";
+            Shader.globalRenderPipeline = "ShaderGraphTestPipeline";
             SetRenderFeatures();
         }
 
-        public override void Dispose()
+        protected override void Dispose(bool disposing)
         {
+            base.Dispose(disposing);
+
             Shader.globalRenderPipeline = "";
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures();
         }
@@ -28,28 +29,25 @@ namespace ShaderGraph.Tests
             #if UNITY_EDITOR
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures
             {
-                reflectionProbeSupportFlags = SupportedRenderingFeatures.ReflectionProbeSupportFlags.None,
-                defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeMode.None,
-                supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeMode.None,
-                supportedLightmapBakeTypes = LightmapBakeType.Baked,
-                supportedLightmapsModes = LightmapsMode.NonDirectional,
-                rendererSupportsLightProbeProxyVolumes = false,
-                rendererSupportsMotionVectors = false,
-                rendererSupportsReceiveShadows = false,
-                rendererSupportsReflectionProbes = false
+                reflectionProbeModes = SupportedRenderingFeatures.ReflectionProbeModes.None,
+                defaultMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeModes.None,
+                lightmapBakeTypes = LightmapBakeType.Baked,
+                lightmapsModes = LightmapsMode.NonDirectional,
+                lightProbeProxyVolumes = false,
+                motionVectors = false,
+                receiveShadows = false,
+                reflectionProbes = false
             };
             #endif
         }
 
-        public override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
+        protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
             if (cameras == null || cameras.Length == 0)
             {
                 Debug.LogWarning("The camera list passed to the render pipeline is either null or empty.");
                 return;
             }
-
-            base.Render(renderContext, cameras);
 
             SetPerFramShaderConstants();
 
@@ -70,27 +68,44 @@ namespace ShaderGraph.Tests
             SetPerCameraShaderConstants(camera);
 
             ScriptableCullingParameters cullingParameters;
-            if(!CullResults.GetCullingParameters(camera, false, out cullingParameters))
+            
+            if(!camera.TryGetCullingParameters(false, out cullingParameters))
             {
                 return;
             }
 
             cullingParameters.shadowDistance = 0.0f;
-            CullResults.Cull(ref cullingParameters, renderContext, ref m_cullResults);
+
+#if UNITY_EDITOR
+
+            // Emit scene view UI
+            if (camera.cameraType == CameraType.SceneView)
+            {
+                ScriptableRenderContext.EmitWorldGeometryForSceneView(camera);
+            }
+#endif
+            
+            CullingResults cullResults = renderContext.Cull(ref cullingParameters);
 
             // clear color and depth buffers
             CommandBuffer cmd = CommandBufferPool.Get(k_cameraTag);
-            cmd.ClearRenderTarget(true, true, Color.black);
+            cmd.ClearRenderTarget(true, true, Color.blue);
             renderContext.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
 
             // draw opaque renderers
-            DrawRendererSettings drawSettings = new DrawRendererSettings(camera, m_shaderPassName);
-            FilterRenderersSettings filterSettings = new FilterRenderersSettings();
-            drawSettings.sorting.flags = SortFlags.CommonOpaque;
+            SortingSettings sortingSettings = new SortingSettings(camera);
+            sortingSettings.criteria = SortingCriteria.CommonOpaque;
+            DrawingSettings drawSettings = new DrawingSettings(m_shaderTagId, sortingSettings);
+            FilteringSettings filterSettings = new FilteringSettings();
             filterSettings.renderQueueRange = RenderQueueRange.opaque;
-            renderContext.DrawRenderers(m_cullResults.visibleRenderers, ref drawSettings, filterSettings);
+            
+            renderContext.DrawRenderers(cullResults, ref drawSettings, ref filterSettings);
             renderContext.Submit();
+            
+#if UNITY_EDITOR
+            UnityEditor.Handles.DrawGizmos(camera);
+#endif
         }
 
         private static void SetPerFramShaderConstants()

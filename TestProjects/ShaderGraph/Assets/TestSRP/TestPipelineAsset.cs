@@ -1,37 +1,33 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Experimental.Rendering;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.ProjectWindowCallback;
+#endif
 
-namespace ShaderGraph.Tests
+namespace UnityEngine.Rendering.ShaderGraph.Tests
 {
     public class TestPipelineAsset : RenderPipelineAsset
     {
-        [System.Serializable]
-        public struct Settings
+        public static TestPipelineAsset CreateAsset()
         {
-            public bool whatGoesHere;
-            public Material defaultMaterial;
+            var asset = CreateInstance<TestPipelineAsset>();
+            AssetDatabase.CreateAsset(asset, "Assets/New Test Pipeline Asset.asset");
+            return asset;
         }
 
-        [SerializeField]
-        private Settings m_settings = new Settings();
-        public Settings settings
+        public override Shader defaultShader
         {
             get
             {
-                return m_settings;
+                return Shader.Find("ShaderGraph/Tests/Default-Unlit");
             }
         }
 
-        protected override IRenderPipeline InternalCreatePipeline()
+        protected override RenderPipeline CreatePipeline()
         {
             return new TestPipeline();
-        }
-
-        public override Material GetDefaultMaterial()
-        {
-            return m_settings.defaultMaterial;
         }
     }
 }

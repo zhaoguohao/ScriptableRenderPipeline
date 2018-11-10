@@ -7,17 +7,20 @@ Shader "ShaderGraph/Tests/Default-Unlit"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "Queue"="Geometry" "RenderType"="Opaque" }
 
         Pass
         {
-            Tags { "LightMode" = "TestPass" }
+
+            Tags { "RenderPipeline"="ShaderGraphTestPipeline" 
+                    "LightMode" = "TestPass" }
 
             HLSLPROGRAM
 
             #pragma vertex vert
             #pragma fragment frag
             
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/ShaderVariables.hlsl"
 
             float4 _Color;

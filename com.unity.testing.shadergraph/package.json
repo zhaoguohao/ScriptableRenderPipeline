@@ -1,0 +1,13 @@
+{
+    "name": "com.unity.testing.shadergraph",
+    "displayName": "ShaderGraph Tests",
+    "version": "5.1.0-preview",
+    "unity": "2019.1",
+    "keywords": [
+        "qa", "test", "tests", "graphics", "shadergraph"
+    ],
+    "dependencies": {
+        "com.unity.render-pipelines.core": "5.1.0-preview",
+        "com.unity.testframework.graphics": "5.1.0-preview"
+    }
+}

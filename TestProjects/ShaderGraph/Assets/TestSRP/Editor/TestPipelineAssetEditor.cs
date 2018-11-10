@@ -1,13 +1,13 @@
 using UnityEngine;
 using UnityEditor;
-using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering.ShaderGraph.Tests;
 
-namespace ShaderGraph.Tests
+namespace UnityEditor.Rendering.ShaderGraph.Editor.Tests
 {
     [CustomEditor(typeof(TestPipelineAsset))]
-    public class TestPipelineAssetEditor : Editor
+    public class TestPipelineAssetEditor : UnityEditor.Editor
     {
-        [MenuItem("Assets/Create/Rendering/Test Pipeline Asset", priority = CoreUtils.assetCreateMenuPriority1)]
+        [MenuItem("Assets/Create/Rendering/Test Pipeline Asset")]
         static void CreateAsset()
         {
             var asset = ScriptableObject.CreateInstance<TestPipelineAsset>();
