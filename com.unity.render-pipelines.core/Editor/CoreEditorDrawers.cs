@@ -10,7 +10,8 @@ namespace UnityEditor.Experimental.Rendering
     {
         None = 0,
         Indent = 1 << 0,
-        Animate = 1 << 1
+        Animate = 1 << 1,
+        Boxed = 1 << 2
     }
 
     [Flags]
@@ -182,6 +183,7 @@ namespace UnityEditor.Experimental.Rendering
 
             bool animate { get { return (m_Options & FoldoutOption.Animate) != 0; } }
             bool indent { get { return (m_Options & FoldoutOption.Indent) != 0; } }
+            bool boxed { get { return (m_Options & FoldoutOption.Boxed) != 0; } }
 
             public FoldoutDrawerInternal(string title, AnimBoolGetter isExpanded, FoldoutOption options, params IDrawer[] bodies)
             {
@@ -194,8 +196,8 @@ namespace UnityEditor.Experimental.Rendering
             public void Draw(TUIState s, TData p, Editor owner)
             {
                 var r = m_IsExpanded(s, p, owner);
-                CoreEditorUtils.DrawSplitter();
-                r.target = CoreEditorUtils.DrawHeaderFoldout(m_Title, r.target);
+                CoreEditorUtils.DrawSplitter(boxed);
+                r.target = CoreEditorUtils.DrawHeaderFoldout(m_Title, r.target, boxed);
                 // We must start with a layout group here
                 // Otherwise, nested FadeGroup won't work
                 GUILayout.BeginVertical();
@@ -213,6 +215,43 @@ namespace UnityEditor.Experimental.Rendering
                     EditorGUILayout.EndFadeGroup();
                 GUILayout.EndVertical();
             }
+        }
+        
+        /// <summary> Create an IDrawer foldout header using an ExpandedState </summary>
+        /// <param name="title">Title wanted for this foldout header</param>
+        /// <param name="mask">Bit mask (enum) used to define the boolean saving the state in ExpandedState</param>
+        /// <param name="state">The ExpandedState describing the component</param>
+        /// <param name="contentDrawer">The content of the foldout header</param>
+        public static IDrawer FoldoutGroup<TEnum, TState>(string title, TEnum mask, ExpandedState<TEnum, TState> state, params ActionDrawer[] contentDrawer)
+            where TEnum : struct, IConvertible
+        {
+            return Action((uiState, data, editor) =>
+            {
+                CoreEditorUtils.DrawSplitter();
+                bool expended = state[mask];
+                bool newExpended = CoreEditorUtils.DrawHeaderFoldout(title, expended);
+                if (newExpended ^ expended)
+                    state[mask] = newExpended;
+                if (newExpended)
+                {
+                    ++EditorGUI.indentLevel;
+                    for (var i = 0; i < contentDrawer.Length; i++)
+                        contentDrawer[i](uiState, data, editor);
+                    --EditorGUI.indentLevel;
+                    EditorGUILayout.Space();
+                }
+            });
+        }
+
+        /// <summary> Create an IDrawer foldout header using an ExpandedState </summary>
+        /// <param name="title">Title wanted for this foldout header</param>
+        /// <param name="mask">Bit mask (enum) used to define the boolean saving the state in ExpandedState</param>
+        /// <param name="state">The ExpandedState describing the component</param>
+        /// <param name="contentDrawer">The content of the foldout header</param>
+        public static IDrawer FoldoutGroup<TEnum, TState>(string title, TEnum mask, ExpandedState<TEnum, TState> state, params IDrawer[] contentDrawer)
+            where TEnum : struct, IConvertible
+        {
+            return FoldoutGroup(title, mask, state, contentDrawer.Draw);
         }
     }
 

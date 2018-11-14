@@ -6,12 +6,14 @@ using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class DecalUI : ShaderGUI, IExpendableArea
+    class DecalUI : ExpandableAreaMaterial
     {
-        protected enum Expendable : uint
+        [Flags]
+        enum Expandable : uint
         {
             Input = 1 << 0
         }
+        protected override uint defaultExpandedState { get { return (uint)Expandable.Input; } }
 
         protected static class Styles
         {
@@ -91,16 +93,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected const string kDecalStencilWriteMask = "_DecalStencilWriteMask";
         protected const string kDecalStencilRef = "_DecalStencilRef";
-        
-        const string k_expendedAreas = "_EditorExpendedAreas";
-        private MaterialProperty editorStatus;
 
         protected MaterialEditor m_MaterialEditor;
-        
-        protected void FindEditorProperties(MaterialProperty[] props)
-        {
-            editorStatus = FindProperty(k_expendedAreas, props);
-        }
 
         void FindMaterialProperties(MaterialProperty[] props)
         {
@@ -193,9 +187,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDRenderPipelineAsset hdrp = GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset;
             bool perChannelMask = hdrp.renderPipelineSettings.decalSettings.perChannelMask;
 
-            using (var header = new BaseUnlitGUI.HeaderScope(Styles.InputsText, (uint)Expendable.Input, this))
+            using (var header = new HeaderScope(Styles.InputsText, (uint)Expandable.Input, this))
             {
-                if (header.expended)
+                if (header.expanded)
                 {
                     // Detect any changes to the material
                     EditorGUI.BeginChangeCheck();
@@ -274,10 +268,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
         {
             m_MaterialEditor = materialEditor;
+
+            // We should always register the key used to keep collapsable state
+            InitExpandableState(materialEditor);
+
             // We should always do this call at the beginning
             m_MaterialEditor.serializedObject.Update();
-
-            FindEditorProperties(props);
+            
             FindMaterialProperties(props);
 
             Material material = materialEditor.target as Material;
@@ -285,43 +282,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // We should always do this call at the end
             m_MaterialEditor.serializedObject.ApplyModifiedProperties();
-        }
-
-        bool IExpendableArea.GetExpendedAreas(uint mask)
-        {
-            float stockedValue = editorStatus.floatValue;
-            bool result;
-
-            unsafe
-            {
-                uint uintView = *(uint*)&stockedValue;
-                result = (uintView & mask) > 0;
-            }
-
-            return result;
-        }
-
-        void IExpendableArea.SetExpendedAreas(uint mask, bool value)
-        {
-            float stockedValue = editorStatus.floatValue;
-
-            unsafe
-            {
-                uint uintView = *(uint*)&stockedValue;
-
-                if (value)
-                {
-                    uintView |= mask;
-                }
-                else
-                {
-                    mask = ~mask;
-                    uintView &= mask; 
-                }
-                stockedValue = *(float*)&uintView;
-            }
-
-            editorStatus.floatValue = stockedValue;
         }
     }
 }

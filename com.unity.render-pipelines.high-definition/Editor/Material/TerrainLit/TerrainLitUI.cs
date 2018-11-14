@@ -7,8 +7,10 @@ using System.Linq;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class TerrainLitGUI : LitGUI, ITerrainLayerCustomUI
+    class TerrainLitGUI : LitGUI, ITerrainLayerCustomUI
     {
+        protected override uint defaultExpandedState { get { return 0u; } }
+
         private class StylesLayer
         {
             public readonly GUIContent enableHeightBlend = new GUIContent("Enable Height-based Blend", "Blend terrain layers based on height values.");
@@ -105,10 +107,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
         {
             FindBaseMaterialProperties(props);
-            FindEditorProperties(props);
             FindMaterialProperties(props);
 
             m_MaterialEditor = materialEditor;
+
+            // We should always register the key used to keep collapsable state
+            InitExpandableState(materialEditor);
+
             // We should always do this call at the beginning
             m_MaterialEditor.serializedObject.Update();
 
@@ -141,9 +146,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             bool enablePerPixelNormalChanged = false;
 
 
-            using (var header = new HeaderScope(StylesBaseUnlit.advancedText, (uint)Expendable.Advance, this))
+            using (var header = new HeaderScope(StylesBaseUnlit.advancedText, (uint)Expandable.Advance, this))
             {
-                if (header.expended)
+                if (header.expanded)
                 {
                     // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
                     m_MaterialEditor.EnableInstancingField();

@@ -2,11 +2,14 @@ using System;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
+using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class LitGUI : BaseLitGUI
+    class LitGUI : BaseLitGUI
     {
+        protected override uint defaultExpandedState { get { return (uint)(Expandable.Base | Expandable.Input | Expandable.VertexAnimation | Expandable.Detail | Expandable.Emissive | Expandable.Transparency | Expandable.Tesselation); } }
+
         protected static class Styles
         {
             public static string InputsText = "Inputs";
@@ -86,7 +89,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             // Transparency
             public static string refractionModelText = "Refraction Model";
-            public static GUIContent refractionProjectionModelText = new GUIContent("SSRay Model", "Screen Space Ray Model");
             public static GUIContent refractionIorText = new GUIContent("Index of refraction", "Index of refraction");
             public static GUIContent refractionThicknessText = new GUIContent("Refraction Thickness", "Thickness for rough refraction");
             public static GUIContent refractionThicknessMultiplierText = new GUIContent("Refraction Thickness multiplier (m)", "Thickness multiplier");
@@ -291,7 +293,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         
         protected override bool showBlendModePopup
         {
-            get { return refractionModel == null || refractionModel.floatValue == 0f; }
+            get { return refractionModel == null || refractionModel.floatValue == 0f || preRefractionPass.floatValue > 0.0f; }
         }
 
         protected void FindMaterialLayerProperties(MaterialProperty[] props)
@@ -569,14 +571,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        protected void DoLayerGUI(Material material, int layerIndex, bool isLayeredLit, bool showHeightMap, string layerPrefix = "", uint inputToggle = (uint)Expendable.Input, uint detailToggle = (uint)Expendable.Detail, Color colorDot = default(Color))
+        protected void DoLayerGUI(Material material, int layerIndex, bool isLayeredLit, bool showHeightMap, string layerPrefix = "", uint inputToggle = (uint)Expandable.Input, uint detailToggle = (uint)Expandable.Detail, Color colorDot = default(Color))
         {
             UVBaseMapping uvBaseMapping = (UVBaseMapping)UVBase[layerIndex].floatValue;
             float X, Y, Z, W;
 
             using (var header = new HeaderScope(layerPrefix + Styles.InputsText, inputToggle, this, colorDot: colorDot))
             {
-                if (header.expended)
+                if (header.expanded)
                 {
                     m_MaterialEditor.TexturePropertySingleLine(Styles.baseColorText, baseColorMap[layerIndex], baseColor[layerIndex]);
 
@@ -744,7 +746,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             
             using (var header = new HeaderScope(layerPrefix + Styles.detailText, detailToggle, this, colorDot: colorDot))
             {
-                if (header.expended)
+                if (header.expanded)
                 {
                     m_MaterialEditor.TexturePropertySingleLine(Styles.detailMapNormalText, detailMap[layerIndex]);
 
@@ -795,9 +797,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (surfaceTypeValue == SurfaceType.Transparent
                 && refractionModel != null)
             {
-                using (var header = new HeaderScope(StylesBaseUnlit.TransparencyInputsText, (uint)Expendable.Transparency, this))
+                using (var header = new HeaderScope(StylesBaseUnlit.TransparencyInputsText, (uint)Expandable.Transparency, this))
                 {
-                    if (header.expended)
+                    if (header.expanded)
                     {
                         var isPrepass = material.HasProperty(kPreRefractionPass) && material.GetFloat(kPreRefractionPass) > 0.0;
                         if (refractionModel != null
@@ -805,10 +807,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             && !isPrepass)
                         {
                             m_MaterialEditor.ShaderProperty(refractionModel, Styles.refractionModelText);
-                            var mode = (ScreenSpaceLighting.RefractionModel)refractionModel.floatValue;
-                            if (mode != ScreenSpaceLighting.RefractionModel.None)
+                            var mode = (ScreenSpaceRefraction.RefractionModel)refractionModel.floatValue;
+                            if (mode != ScreenSpaceRefraction.RefractionModel.None)
                             {
-                                m_MaterialEditor.ShaderProperty(ssrefractionProjectionModel, Styles.refractionProjectionModelText);
                                 m_MaterialEditor.ShaderProperty(ior, Styles.refractionIorText);
 
                                 blendMode.floatValue = (float)BlendMode.Alpha;
@@ -838,9 +839,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         protected void DoEmissiveGUI(Material material)
         {
-            using (var header = new HeaderScope(Styles.emissiveLabelText, (uint)Expendable.Emissive, this))
+            using (var header = new HeaderScope(Styles.emissiveLabelText, (uint)Expandable.Emissive, this))
             {
-                if (header.expended)
+                if (header.expanded)
                 {
                     // TODO: display warning if we don't have bent normal (either OS or TS) and ambient occlusion
                     //if (enableSpecularOcclusion.floatValue > 0.0f)
@@ -972,15 +973,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(material, "_MATERIAL_FEATURE_IRIDESCENCE", materialId == BaseLitGUI.MaterialId.LitIridescence);
             CoreUtils.SetKeyword(material, "_MATERIAL_FEATURE_SPECULAR_COLOR", materialId == BaseLitGUI.MaterialId.LitSpecular);
 
-            var refractionModelValue = (ScreenSpaceLighting.RefractionModel)material.GetFloat(kRefractionModel);
-            var refractionProjectionModelValue = (ScreenSpaceLighting.ProjectionModel)material.GetFloat(kSSRefractionProjectionModel);
+            var refractionModelValue = (ScreenSpaceRefraction.RefractionModel)material.GetFloat(kRefractionModel);
             // We can't have refraction in pre-refraction queue
             var canHaveRefraction = !material.HasProperty(kPreRefractionPass) || material.GetFloat(kPreRefractionPass) <= 0.0;
-            CoreUtils.SetKeyword(material, "_REFRACTION_PLANE", (refractionModelValue == ScreenSpaceLighting.RefractionModel.Plane) && canHaveRefraction);
-            CoreUtils.SetKeyword(material, "_REFRACTION_SPHERE", (refractionModelValue == ScreenSpaceLighting.RefractionModel.Sphere) && canHaveRefraction);
+            CoreUtils.SetKeyword(material, "_REFRACTION_PLANE", (refractionModelValue == ScreenSpaceRefraction.RefractionModel.Box) && canHaveRefraction);
+            CoreUtils.SetKeyword(material, "_REFRACTION_SPHERE", (refractionModelValue == ScreenSpaceRefraction.RefractionModel.Sphere) && canHaveRefraction);
             CoreUtils.SetKeyword(material, "_TRANSMITTANCECOLORMAP", material.GetTexture(kTransmittanceColorMap) && canHaveRefraction);
-            CoreUtils.SetKeyword(material, "_REFRACTION_SSRAY_PROXY", (refractionProjectionModelValue == ScreenSpaceLighting.ProjectionModel.Proxy) && canHaveRefraction);
-            CoreUtils.SetKeyword(material, "_REFRACTION_SSRAY_HIZ", (refractionProjectionModelValue == ScreenSpaceLighting.ProjectionModel.HiZ) && canHaveRefraction);
         }
     }
 } // namespace UnityEditor
