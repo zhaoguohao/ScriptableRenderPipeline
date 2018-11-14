@@ -8,7 +8,7 @@ namespace UnityEngine.Rendering.ShaderGraph.Tests
     public class TestPipeline : UnityEngine.Rendering.RenderPipeline
     {
         private const string k_cameraTag = "TestSRP - Render Camera";
-        private ShaderTagId m_shaderTagId = new ShaderTagId("TestPass");
+        private ShaderTagId m_shaderTagId = new ShaderTagId("ShaderGraphTestDefaultUnlit");
 
         public TestPipeline()
         {
@@ -89,18 +89,20 @@ namespace UnityEngine.Rendering.ShaderGraph.Tests
 
             // clear color and depth buffers
             CommandBuffer cmd = CommandBufferPool.Get(k_cameraTag);
-            cmd.ClearRenderTarget(true, true, Color.blue);
+            cmd.ClearRenderTarget(true, true, Color.black);
             renderContext.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
 
             // draw opaque renderers
             SortingSettings sortingSettings = new SortingSettings(camera);
             sortingSettings.criteria = SortingCriteria.CommonOpaque;
+
             DrawingSettings drawSettings = new DrawingSettings(m_shaderTagId, sortingSettings);
-            FilteringSettings filterSettings = new FilteringSettings();
-            filterSettings.renderQueueRange = RenderQueueRange.opaque;
+            
+            FilteringSettings filterSettings = new FilteringSettings(RenderQueueRange.opaque);
             
             renderContext.DrawRenderers(cullResults, ref drawSettings, ref filterSettings);
+            
             renderContext.Submit();
             
 #if UNITY_EDITOR
@@ -110,15 +112,16 @@ namespace UnityEngine.Rendering.ShaderGraph.Tests
 
         private static void SetPerFramShaderConstants()
         {
-
+            Shader.SetGlobalColor("_Color", Color.red);
         }
 
         private static void SetPerCameraShaderConstants(Camera camera)
         {
-            Matrix4x4 proj = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
-            Matrix4x4 view = camera.worldToCameraMatrix;
-            Matrix4x4 viewProj = proj * view;
-            Shader.SetGlobalMatrix("unity_MatrixVP", viewProj);
+            Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(camera.projectionMatrix, false);
+            Matrix4x4 viewMatrix = camera.worldToCameraMatrix;
+            Matrix4x4 viewProjMatrix = projMatrix * viewMatrix;
+            Matrix4x4 invViewProjMatrix = Matrix4x4.Inverse(viewProjMatrix);
+            Shader.SetGlobalMatrix("unity_MatrixVP", viewProjMatrix);
         }
     }
 }

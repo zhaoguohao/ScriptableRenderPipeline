@@ -12,8 +12,11 @@ Shader "ShaderGraph/Tests/Default-Unlit"
         Pass
         {
 
-            Tags { "RenderPipeline"="ShaderGraphTestPipeline" 
-                    "LightMode" = "TestPass" }
+            Tags
+            {
+                "RenderPipeline"="ShaderGraphTestPipeline" 
+                "LightMode"="ShaderGraphTestDefaultUnlit"
+            }
 
             HLSLPROGRAM
 

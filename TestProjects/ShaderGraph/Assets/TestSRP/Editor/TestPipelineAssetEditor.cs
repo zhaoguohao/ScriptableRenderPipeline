@@ -7,6 +7,8 @@ namespace UnityEditor.Rendering.ShaderGraph.Editor.Tests
     [CustomEditor(typeof(TestPipelineAsset))]
     public class TestPipelineAssetEditor : UnityEditor.Editor
     {
+        private SerializedProperty m_defaultMaterial;
+
         [MenuItem("Assets/Create/Rendering/Test Pipeline Asset")]
         static void CreateAsset()
         {
@@ -17,7 +19,12 @@ namespace UnityEditor.Rendering.ShaderGraph.Editor.Tests
 
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI();
+            if(m_defaultMaterial == null)
+            {
+                m_defaultMaterial = serializedObject.FindProperty("m_defaultMaterial");
+            }
+
+            EditorGUILayout.PropertyField(m_defaultMaterial);
         }
     }
 }

@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
+  m_GeneratorAsset: {fileID: 0}
   m_Script: {fileID: 11500000, guid: 4563bab7e54f68944a81cebbb59ead76, type: 3}
   m_Name: TestPipelineAsset
   m_EditorClassIdentifier: 
-  m_settings:
-    whatGoesHere: 0
-    defaultMaterial: {fileID: 2100000, guid: 0c8e0c114c949b245bf143b5d550b164, type: 2}
+  m_defaultMaterial: {fileID: 0}
+  m_defaultShader: {fileID: 0}

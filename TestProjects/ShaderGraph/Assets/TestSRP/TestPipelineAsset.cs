@@ -10,6 +10,11 @@ namespace UnityEngine.Rendering.ShaderGraph.Tests
 {
     public class TestPipelineAsset : RenderPipelineAsset
     {
+        [SerializeField]
+        private Material m_defaultMaterial = null;
+        [SerializeField]
+        private Shader m_defaultShader = null;
+
         public static TestPipelineAsset CreateAsset()
         {
             var asset = CreateInstance<TestPipelineAsset>();
@@ -19,10 +24,12 @@ namespace UnityEngine.Rendering.ShaderGraph.Tests
 
         public override Shader defaultShader
         {
-            get
-            {
-                return Shader.Find("ShaderGraph/Tests/Default-Unlit");
-            }
+            get { return m_defaultShader; }
+        }
+
+        public override Material defaultMaterial
+        {
+            get { return m_defaultMaterial; }
         }
 
         protected override RenderPipeline CreatePipeline()
