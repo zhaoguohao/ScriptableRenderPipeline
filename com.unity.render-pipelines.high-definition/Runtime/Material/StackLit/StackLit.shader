@@ -875,5 +875,5 @@ Shader "HDRenderPipeline/StackLit"
 
     }
 
-    CustomEditor "Experimental.Rendering.HDPipeline.StackLitGUI"
+    CustomEditor "Experimental.Rendering.HDPipeline.StackLitEditorGUI"
 }

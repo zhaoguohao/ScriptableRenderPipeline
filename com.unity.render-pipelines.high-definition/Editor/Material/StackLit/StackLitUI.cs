@@ -5,7 +5,7 @@ using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    class StackLitGUI : BaseMaterialGUI
+    class StackLitEditorGUI : BaseMaterialGUI
     {
         protected override uint defaultExpandedState { get { return (uint)(Expandable.Base | Expandable.Input | Expandable.VertexAnimation | Expandable.Detail | Expandable.Emissive | Expandable.Transparency | Expandable.Other); } }
 
@@ -261,7 +261,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        public StackLitGUI()
+        public StackLitEditorGUI()
         {
             EnableDecals = new Property(this, k_EnableDecals, "Enable Decals", "Enable Decals", true);
             EnableSSR = new Property(this, k_EnableSSR, "Receives SSR", "Receives SSR", true);

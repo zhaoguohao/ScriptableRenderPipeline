@@ -39,7 +39,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         // TODO: check collab works, crawl scenes too (cf ResetAllMaterialKeywordsInProjectAndScenes)
         private static void UpdateStackLitMaterials(string[] reImportedTextures = null, bool markSceneDirtyAndSave = false, bool useGetAllAssetPaths = false)
         {
-            Shader stacklitShader = Shader.Find(StackLitGUI.k_StackLitShaderName);
+            Shader stacklitShader = Shader.Find(StackLitEditorGUI.k_StackLitShaderName);
             if (stacklitShader == null)
             {
                 Debug.LogWarning("Cannot find StackLit shader!");
@@ -142,9 +142,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         // Note: it is the responsibility of the material to enable auto-generation when it was generated
                         // and it wants to support a needed config modification (and thus regeneration) in case a texture
                         // importer has changed.
-                        //StackLitGUI.SetupMaterialKeywordsAndPassWithOptions(mat, refreshSharedSamplerUsedNumDefineProperty: refreshSharedSamplerUsedNumDefineProperty);
+                        //StackLitEditorGUI.SetupMaterialKeywordsAndPassWithOptions(mat, refreshSharedSamplerUsedNumDefineProperty: refreshSharedSamplerUsedNumDefineProperty);
                         //dont need this, we have already refreshed with TextureSamplerSharing.CheckUpdate...
-                        StackLitGUI.SetupMaterialKeywordsAndPassWithOptions(mat);
+                        StackLitEditorGUI.SetupMaterialKeywordsAndPassWithOptions(mat);
                         EditorUtility.SetDirty(mat);
                         numMaterialsUpdated++;
                     }
@@ -181,7 +181,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     Debug.LogFormat("{0} texture (re)imported...", path);
                     reImportedTextures.Add(path);
                 }
-                masterShaderHasChanged = path.Equals(StackLitGUI.k_StackLitPackagedShaderPath, StringComparison.InvariantCultureIgnoreCase);
+                masterShaderHasChanged = path.Equals(StackLitEditorGUI.k_StackLitPackagedShaderPath, StringComparison.InvariantCultureIgnoreCase);
                 if (masterShaderHasChanged)
                 {
                     Debug.Log("StackLit shader (re)imported...");

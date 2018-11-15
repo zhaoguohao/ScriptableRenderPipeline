@@ -281,7 +281,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             SharedSamplersNeededOnLastAssignement = 0;
         }
 
-        public TextureSamplerSharing(Material material, string shaderName = StackLitGUI.k_StackLitShaderName,
+        public TextureSamplerSharing(Material material, string shaderName = StackLitEditorGUI.k_StackLitShaderName,
             Action<SamplerClient, int, bool, bool> assignmentCallback = null, int definedSharedSamplerUsedNum = k_DefaultSharedSamplerUsedNum)
         {
             m_UniqueSharedSamplerStates = new Dictionary<ulong, List<SamplerClient>>();
@@ -531,7 +531,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         private const string k_GeneratedSuffix = "/" + k_Generated + "/";
 
         public const string k_SharedSamplerUsedNumDefine = "SHARED_SAMPLER_USED_NUM";
-        public const string k_StackLitGeneratedShaderNamePrefix = StackLitGUI.k_StackLitShaderName + k_GeneratedSuffix; // shaderlab name string of a generated shader is this the sampling config state MD5
+        public const string k_StackLitGeneratedShaderNamePrefix = StackLitEditorGUI.k_StackLitShaderName + k_GeneratedSuffix; // shaderlab name string of a generated shader is this the sampling config state MD5
         // Matches main or generated shaders, no anchor (\A \z)
         public const string k_StackLitFamilyFindRegexPattern = @"(?<shadername>HDRenderPipeline\/StackLit)(\/Generated\/(?<statecode>[0-9a-fA-F]{32}))?";
 
@@ -728,7 +728,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         private void SetShaderNameAndPaths(string shaderName)
         {
-            m_ShaderName = shaderName ?? StackLitGUI.k_StackLitShaderName;
+            m_ShaderName = shaderName ?? StackLitEditorGUI.k_StackLitShaderName;
             m_ShaderSimpleName = m_ShaderName.Substring(m_ShaderName.LastIndexOf('/') + 1); // if there's no /, too bad, we take everything
 
             m_DefaultGeneratedFilesPath = "Assets/" + m_ShaderName + k_Generated;

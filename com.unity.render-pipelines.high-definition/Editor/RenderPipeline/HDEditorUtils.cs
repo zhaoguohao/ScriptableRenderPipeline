@@ -21,7 +21,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // { "HDRenderPipeline/Fabric",  FabricGUI.SetupMaterialKeywordsAndPass },
             { "HDRenderPipeline/Decal", DecalUI.SetupMaterialKeywordsAndPass },
             { "HDRenderPipeline/TerrainLit", TerrainLitGUI.SetupMaterialKeywordsAndPass },
-            { StackLitGUI.k_StackLitShaderName, StackLitGUI.SetupMaterialKeywordsAndPass },
+            { StackLitEditorGUI.k_StackLitShaderName, StackLitEditorGUI.SetupMaterialKeywordsAndPass },
         };
 
         const string k_MaterialShaderNameRegexPattern = @"\A"
