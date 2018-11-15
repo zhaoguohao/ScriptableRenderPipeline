@@ -7,7 +7,7 @@ using UnityEngine.Rendering;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class StackLitSubShader : IStackLitSubShader
+    class StackLitSubShader : IStackLitSubShader
     {
         Pass m_PassMETA = new Pass()
         {
@@ -891,7 +891,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             subShader.Deindent();
             subShader.AddShaderChunk("}", true);
-            subShader.AddShaderChunk(@"CustomEditor ""UnityEditor.ShaderGraph.StackLitGUI""");
+            subShader.AddShaderChunk(@"CustomEditor ""UnityEditor.Experimental.Rendering.HDPipeline.StackLitGUI""");
 
             return subShader.GetShaderString(0);
         }

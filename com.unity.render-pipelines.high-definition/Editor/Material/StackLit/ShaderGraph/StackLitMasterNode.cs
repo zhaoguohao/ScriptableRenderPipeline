@@ -1,21 +1,23 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEditor.Experimental.Rendering.HDPipeline.Drawing;
 using UnityEditor.Graphing;
-using UnityEditor.ShaderGraph.Drawing;
+using UnityEditor.ShaderGraph;
 using UnityEditor.ShaderGraph.Drawing.Controls;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
 //TODOTODO: 
 // clamp in shader code the ranged() properties
 // or let inputs (eg mask?) follow invalid values ? Lit does that (let them free running).
-namespace UnityEditor.ShaderGraph
+namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     [Serializable]
     [Title("Master", "StackLit")]
-    public class StackLitMasterNode : MasterNode<IStackLitSubShader>, IMayRequirePosition, IMayRequireNormal, IMayRequireTangent
+    [FormerName("UnityEditor.ShaderGraph.StackLitMasterNode")]
+    class StackLitMasterNode : MasterNode<IStackLitSubShader>, IMayRequirePosition, IMayRequireNormal, IMayRequireTangent
     {
         public const string PositionSlotName = "Position";
 

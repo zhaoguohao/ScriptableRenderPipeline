@@ -1,8 +1,9 @@
 using System;
+using UnityEditor.ShaderGraph;
 
-namespace UnityEditor.ShaderGraph
+namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public interface IStackLitSubShader : ISubShader
+    interface IStackLitSubShader : ISubShader
     {
     }
 }
