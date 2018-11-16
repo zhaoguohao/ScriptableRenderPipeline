@@ -62,7 +62,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [5.1.0-preview] - 2018-11-19
 
 ### Added
-
+- Added AllocFromDefault, which allocates textures from a default texture descriptor and selectively overrides attributes
+- Added the beginnings of single-pass instanced stereo support for HDRP, including SPI-specific compute kernels and dispatch code
 - Added a separate Editor resources file for resources Unity does not take when it builds a Player.
 - You can now disable SSR on Materials in Shader Graph.
 - Added support for MSAA when the Supported Lit Shader Mode is set to Both. Previously HDRP only supported MSAA for Forward mode.
@@ -112,7 +113,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed issue in pyramid shaped spotlight handles manipulation
 
 ### Changed
-
+- Now allocating RTs using AllocFromDefault instead of Alloc
 - Renamed Line shaped Lights to Tube Lights.
 - HDRP now uses mean height fog parametrization.
 - Shadow quality settings are set to All when you use HDRP (This setting is not visible in the UI when using SRP). This avoids Legacy Graphics Quality Settings disabling the shadows and give SRP full control over the Shadows instead.
