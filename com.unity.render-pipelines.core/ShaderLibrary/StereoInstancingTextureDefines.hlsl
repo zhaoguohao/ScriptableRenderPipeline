@@ -28,6 +28,7 @@ CBUFFER_END
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
 #define UNITY_DECLARE_SCREENSPACE_TEXTURE(textureName) TEXTURE2D_ARRAY(textureName)
 #define TEXTUREMS(textureName) TEXTURE2DMS_ARRAY(textureName)
+#define DEPTH_TEXTURE_MS(textureName, samples) Texture2DMSArray<float, samples> textureName // For consistency with LWRP
 #define TEXTUREMS_TYPE(type, textureName) TEXTURE2DMS_ARRAY_TYPE(type, textureName)
 #define UNITY_SAMPLE_SCREENSPACE_TEXTURE(textureName, uv) SAMPLE_TEXTURE2D_ARRAY(textureName, sampler##textureName, uv, unity_StereoEyeIndex)
 #define RW_TEXTURE(type, textureName) RW_TEXTURE2D_ARRAY(type, textureName)
@@ -41,6 +42,7 @@ CBUFFER_END
 #else
 #define UNITY_DECLARE_SCREENSPACE_TEXTURE(textureName) TEXTURE2D(textureName)
 #define TEXTUREMS(textureName) TEXTURE2DMS(textureName)
+#define DEPTH_TEXTURE_MS(textureName, samples) Texture2DMS<float, samples> textureName
 #define TEXTUREMS_TYPE(type, textureName) TEXTURE2DMS_TYPE(type, textureName)
 #define UNITY_SAMPLE_SCREENSPACE_TEXTURE(textureName, uv) SAMPLE_TEXTURE2D(textureName, sampler##textureName, uv)
 #define RW_TEXTURE(type, textureName) RW_TEXTURE2D(type, textureName)
