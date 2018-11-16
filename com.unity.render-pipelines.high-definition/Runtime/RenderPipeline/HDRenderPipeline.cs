@@ -271,7 +271,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SharedRTManager.Build(asset);
 
             // Initialize various compute shader resources
-            m_applyDistortionKernel = (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? m_applyDistortionCS.FindKernel("KMainSPI") : m_applyDistortionCS.FindKernel("KMain");
+            m_applyDistortionKernel = (XRGraphics.UsingTexArray) ? m_applyDistortionCS.FindKernel("KMainSPI") : m_applyDistortionCS.FindKernel("KMain");
             m_SsrTracingKernel      = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsTracing");
             m_SsrReprojectionKernel = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsReprojection");
 
@@ -1043,7 +1043,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     ClearBuffers(hdCamera, cmd);
 
-                    // TODO: Add stereo occlusion mask
                     bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
                     if (!shouldRenderMotionVectorAfterGBuffer)
@@ -1819,7 +1818,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // In case we are in an MSAA frame, we need to feed both min and max depth of the pixel so that we compute ao values for both depths and resolve the AO afterwards
                         var aoTarget = hdCamera.frameSettings.enableMSAA ? m_MultiAmbientOcclusionBuffer : m_AmbientOcclusionBuffer;
                         var depthTexture = hdCamera.frameSettings.enableMSAA ? m_SharedRTManager.GetDepthValuesTexture() : m_SharedRTManager.GetDepthTexture();
-
                         HDUtils.CheckRTCreated(aoTarget.rt);
                         postProcessLayer.BakeMSVOMap(cmd, camera, aoTarget, depthTexture, true, hdCamera.frameSettings.enableMSAA);
                     }
@@ -2263,6 +2261,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 context.flip = context.flip && (!hdcamera.camera.stereoEnabled);
 #endif
 
+                //if (XRGraphics.NumSlices > 1)
+                //{
+                //    context.GetScreenSpaceTemporaryRT(cmd, _TempDepthTextureForPPVR, 0, RenderTextureFormat.ARGBHalf);
+                //    for (int eye = 0; eye < XRGraphics.NumSlices; eye++)
+                //    {
+                //        cmd.BlitFullscreenTriangleFromTexArray(m_SharedRTManager.GetDepthStencilBuffer(), _TempDepthTextureForPPVRID, RuntimeUtilities.copyFromTexArraySheet, 1, false, eye);
+                //    }
+                //    cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, _TempDepthTextureForPPVRID);
+                //}
                 layer.Render(context);
             }
         }

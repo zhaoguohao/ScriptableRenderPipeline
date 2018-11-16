@@ -6,12 +6,11 @@ Shader "Hidden/HDRenderPipeline/DepthValues"
         #pragma enable_d3d11_debug_symbols
         //enable GPU instancing support
         #pragma multi_compile_instancing
-        #pragma instancing_options renderinglayer
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
         // Target multisampling textures
-        TEXTUREMS_TYPE(float, _DepthTextureMS);
+        TEXTUREMS(_DepthTextureMS);
         TEXTUREMS_TYPE(float4, _NormalTextureMS);
 
         struct Attributes

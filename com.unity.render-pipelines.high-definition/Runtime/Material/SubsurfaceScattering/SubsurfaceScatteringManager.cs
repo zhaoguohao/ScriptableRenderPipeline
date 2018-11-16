@@ -87,11 +87,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // Disney SSS (compute + combine)
             string kernelName = hdAsset.renderPipelineSettings.increaseSssSampleCount ?
-                (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? "SubsurfaceScatteringHQ_SPI" : "SubsurfaceScatteringHQ"
-                : (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? "SubsurfaceScatteringMQ_SPI" : "SubsurfaceScatteringMQ";
+                (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringHQ_SPI" : "SubsurfaceScatteringHQ"
+                : (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringMQ_SPI" : "SubsurfaceScatteringMQ";
             string kernelNameMSAA = hdAsset.renderPipelineSettings.increaseSssSampleCount ?
-                (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? "SubsurfaceScatteringHQ_MSAA_SPI" : "SubsurfaceScatteringHQ_MSAA"
-                : (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePassInstanced) ? "SubsurfaceScatteringMQ_MSAA_SPI" : "SubsurfaceScatteringMQ_MSAA";
+                (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringHQ_MSAA_SPI" : "SubsurfaceScatteringHQ_MSAA"
+                : (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringMQ_MSAA_SPI" : "SubsurfaceScatteringMQ_MSAA";
             m_SubsurfaceScatteringCS = hdAsset.renderPipelineResources.shaders.subsurfaceScatteringCS;
             m_SubsurfaceScatteringKernel = m_SubsurfaceScatteringCS.FindKernel(kernelName);
             m_SubsurfaceScatteringKernelMSAA = m_SubsurfaceScatteringCS.FindKernel(kernelNameMSAA);
@@ -176,7 +176,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Clear the SSS filtering target
                     using (new ProfilingSample(cmd, "Clear SSS filtering target", CustomSamplerId.ClearSSSFilteringTarget.GetSampler()))
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraFilteringBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraFilteringBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: XRGraphics.DepthSlice);
                     }
                 }
 
@@ -186,9 +186,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Therefore, it's computed in a pixel shader, and optimized to only contain the SSS bit.
 
                     // Clear the HTile texture. TODO: move this to ClearBuffers(). Clear operations must be batched!
-                    HDUtils.SetRenderTarget(cmd, hdCamera, m_HTile, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                    HDUtils.SetRenderTarget(cmd, hdCamera, m_HTile, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: XRGraphics.DepthSlice);
 
-                    HDUtils.SetRenderTarget(cmd, hdCamera, depthStencilBufferRT); // No need for color buffer here
+                    HDUtils.SetRenderTarget(cmd, hdCamera, depthStencilBufferRT, depthSlice: XRGraphics.DepthSlice); // No need for color buffer here
                     cmd.SetRandomWriteTarget(1, m_HTile); // This need to be done AFTER SetRenderTarget
                     // Generate HTile for the split lighting stencil usage. Don't write into stencil texture (shaderPassId = 2)
                     // Use ShaderPassID 1 => "Pass 2 - Export HTILE for stencilRef to output"
