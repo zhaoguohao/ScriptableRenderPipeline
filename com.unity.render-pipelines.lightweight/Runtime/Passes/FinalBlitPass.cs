@@ -1,7 +1,8 @@
 using System;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.LWRP;
 
-namespace UnityEngine.Experimental.Rendering.LightweightPipeline
+namespace UnityEngine.Experimental.Rendering.LWRP
 {
     /// <summary>
     /// Copy the given color target to the current camera target
@@ -10,7 +11,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
     /// the camera target. The pass takes the screen viewport into
     /// consideration.
     /// </summary>
-    public class FinalBlitPass : ScriptableRenderPass
+    internal class FinalBlitPass : ScriptableRenderPass
     {
         const string k_FinalBlitTag = "Final Blit Pass";
 
@@ -36,7 +37,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             CommandBuffer cmd = CommandBufferPool.Get(k_FinalBlitTag);
 
-            if (renderingData.cameraData.isStereoEnabled)
+            if (renderingData.cameraData.isStereoEnabled || renderingData.cameraData.isSceneViewCamera)
             {
                 cmd.Blit(colorAttachmentHandle.Identifier(), BuiltinRenderTextureType.CameraTarget);
             }
