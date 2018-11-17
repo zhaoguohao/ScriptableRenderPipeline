@@ -34,11 +34,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (builtinParams.depthBuffer == BuiltinSkyParameters.nullRT)
             {
-                HDUtils.SetRenderTarget(builtinParams.commandBuffer, builtinParams.hdCamera, builtinParams.colorBuffer, depthSlice: builtinParams.hdCamera.frameSettings.depthSlice);
+                HDUtils.SetRenderTarget(builtinParams.commandBuffer, builtinParams.hdCamera, builtinParams.colorBuffer, depthSlice: XRGraphics.DepthSlice);
             }
             else
             {
-                HDUtils.SetRenderTarget(builtinParams.commandBuffer, builtinParams.hdCamera, builtinParams.colorBuffer, builtinParams.depthBuffer, depthSlice: builtinParams.hdCamera.frameSettings.depthSlice);
+                HDUtils.SetRenderTarget(builtinParams.commandBuffer, builtinParams.hdCamera, builtinParams.colorBuffer, builtinParams.depthBuffer, depthSlice: XRGraphics.DepthSlice);
             }
         }
 
