@@ -411,7 +411,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         public override Material default2DMaterial
         {
-            get { return GetMaterial(DefaultMaterialType.UnityBuiltinDefault); }
+            get { return new Material(Shader.Find("2D Lighting/Sprite Lighting")); }
         }
 
         public override Shader defaultShader
