@@ -850,6 +850,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             lightData.lightDimmer           = additionalLightData.lightDimmer;
             lightData.diffuseDimmer         = additionalLightData.affectDiffuse  ? additionalLightData.lightDimmer * m_FrameSettings.diffuseGlobalDimmer  : 0;
             lightData.specularDimmer        = additionalLightData.affectSpecular ? additionalLightData.lightDimmer * m_FrameSettings.specularGlobalDimmer : 0;
+            lightData.shadowColor           = new Vector3(additionalLightData.shadowColor.r, additionalLightData.shadowColor.g, additionalLightData.shadowColor.b);
             lightData.volumetricLightDimmer = additionalLightData.volumetricDimmer;
 
             lightData.shadowIndex = lightData.cookieIndex = -1;
@@ -1096,6 +1097,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             lightData.diffuseDimmer         = lightDistanceFade * (additionalLightData.affectDiffuse  ? additionalLightData.lightDimmer * m_FrameSettings.diffuseGlobalDimmer  : 0);
             lightData.specularDimmer        = lightDistanceFade * (additionalLightData.affectSpecular ? additionalLightData.lightDimmer * m_FrameSettings.specularGlobalDimmer : 0);
             lightData.volumetricLightDimmer = lightDistanceFade * (additionalLightData.volumetricDimmer);
+            lightData.shadowColor           = new Vector3(additionalLightData.shadowColor.r, additionalLightData.shadowColor.g, additionalLightData.shadowColor.b);
 
             lightData.cookieIndex = -1;
             lightData.shadowIndex = -1;

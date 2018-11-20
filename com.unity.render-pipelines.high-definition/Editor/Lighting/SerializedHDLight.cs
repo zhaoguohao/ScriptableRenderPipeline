@@ -17,6 +17,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public SerializedProperty fadeDistance;
             public SerializedProperty affectDiffuse;
             public SerializedProperty affectSpecular;
+            public SerializedProperty shadowColor;
             public SerializedProperty nonLightmappedOnly;
             public SerializedProperty lightTypeExtent;
             public SerializedProperty spotLightShape;
@@ -99,6 +100,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     fadeDistance = o.Find(x => x.fadeDistance),
                     affectDiffuse = o.Find(x => x.affectDiffuse),
                     affectSpecular = o.Find(x => x.affectSpecular),
+                    shadowColor = o.Find(x => x.shadowColor),
                     nonLightmappedOnly = o.Find(x => x.nonLightmappedOnly),
                     lightTypeExtent = o.Find(x => x.lightTypeExtent),
                     spotLightShape = o.Find(x => x.spotLightShape),

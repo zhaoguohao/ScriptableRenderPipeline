@@ -47,6 +47,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent lightRadius = new GUIContent("Emission Radius", "Can be used to soften the core of the punctual light to create fill lighting.");
             public readonly GUIContent affectDiffuse = new GUIContent("Affect Diffuse", "This will disable diffuse lighting for this light. Doesn't save performance, diffuse lighting is still computed.");
             public readonly GUIContent affectSpecular = new GUIContent("Affect Specular", "This will disable specular lighting for this light. Doesn't save performance, specular lighting is still computed.");
+            public readonly GUIContent shadowColor = new GUIContent("Penumbra Color", "Tints the shadow penumbra.");
             public readonly GUIContent nonLightmappedOnly = new GUIContent("Shadowmask Mode", "Sets the shadowmask behaviour when using Shadowmask Mixed Lighting mode. Distance Shadowmask: Realtime shadows are used up to Shadow Distance, baked shadows after. Shadowmask: Static shadow casters always use baked shadows. Refer to documentation for further details.");
             public readonly GUIContent lightDimmer = new GUIContent("Dimmer", "Aim to be used with script, timeline or animation. It allows dimming one or multiple lights of heterogeneous intensity easily (without needing to know the intensity of each light).");
             public readonly GUIContent fadeDistance = new GUIContent("Fade Distance", "The distance at which the light will smoothly fade before being culled to minimize popping.");

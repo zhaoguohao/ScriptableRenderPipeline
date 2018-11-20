@@ -81,12 +81,13 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
     // Caution: this function modifies N, NdotL, contactShadowIndex and shadowMaskSelector.
     float3 transmittance = PreEvaluateDirectionalLightTransmission(bsdfData, light, N, NdotL);
 
-    float3 color; float attenuation;
+    float3 color; float3 attenuation;
     EvaluateLight_Directional(lightLoopContext, posInput, light, builtinData, N, L, NdotL,
                               color, attenuation);
 
+    float minAttenuation = dot(attenuation, 1);
     // TODO: transmittance contributes to attenuation, how can we use it for early-out?
-    if (attenuation > 0)
+    if (minAttenuation > 0)
     {
         // We must clamp here, otherwise our disk light hack for smooth surfaces does not work.
         // Explanation: for a perfectly smooth surface, lighting is only reflected if (NdotL = NdotV).
@@ -234,12 +235,13 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
     // Caution: this function modifies N, NdotL, shadowIndex, contactShadowIndex and shadowMaskSelector.
     float3 transmittance = PreEvaluatePunctualLightTransmission(lightLoopContext, posInput, bsdfData,
                                                                 light, distances.x, N, L, NdotL);
-    float3 color; float attenuation;
+    float3 color; float3 attenuation;
     EvaluateLight_Punctual(lightLoopContext, posInput, light, builtinData, N, L, NdotL, lightToSample, distances,
                            color, attenuation);
 
+    float minAttenuation = dot(attenuation, 1);
     // TODO: transmittance contributes to attenuation, how can we use it for early-out?
-    if (attenuation > 0)
+    if (minAttenuation > 0)
     {
         // Simulate a sphere/disk light with this hack
         // Note that it is not correct with our pre-computation of PartLambdaV (mean if we disable the optimization we will not have the

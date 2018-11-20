@@ -547,7 +547,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         }
                     }
                 }
-                
+                EditorGUILayout.PropertyField(serialized.serializedLightData.shadowColor, s_Styles.shadowColor);
                 EditorGUILayout.Slider(serialized.serializedShadowData.viewBiasScale, 0.0f, 15.0f, s_Styles.viewBiasScale);
             }
         }

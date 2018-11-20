@@ -45,7 +45,7 @@ float EvaluateRuntimeSunShadow(LightLoopContext lightLoopContext, PositionInputs
 void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs posInput,
                                DirectionalLightData light, BuiltinData builtinData,
                                float3 N, float3 L, float NdotL,
-                               out float3 color, out float attenuation)
+                               out float3 color, out float3 attenuation)
 {
     color = attenuation = 0;
     if ((light.lightDimmer <= 0) || (NdotL <= 0)) return;
@@ -114,6 +114,9 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
 #ifndef _SURFACE_TYPE_TRANSPARENT
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
 #endif
+
+    float3 shadowColor = light.shadowColor;
+    float3 shadowColored = pow(shadow.xxx, 1.0 / shadowColor);
 
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
@@ -207,7 +210,7 @@ float4 EvaluateCookie_Punctual(LightLoopContext lightLoopContext, LightData ligh
 void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs posInput,
                             LightData light, BuiltinData builtinData,
                             float3 N, float3 L, float NdotL, float3 lightToSample, float4 distances,
-                            out float3 color, out float attenuation)
+                            out float3 color, out float3 attenuation)
 {
     color = attenuation = 0;
     if ((light.lightDimmer <= 0) || (NdotL <= 0)) return;
@@ -267,6 +270,9 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
 #ifndef _SURFACE_TYPE_TRANSPARENT
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
 #endif
+
+    float3 shadowColor = light.shadowColor;
+    float3 shadowColored = pow(shadow.xxx, 1.0 / shadowColor);
 
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
