@@ -64,7 +64,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         SplineEditor m_SplineEditor;
         SplineSceneEditor m_SplineSceneEditor;
 
-        SerializedProperty m_IsUsingFreeForm;
         bool m_ModifiedMesh = false;
 
         private Light2D lightObject { get { return target as Light2D; } }
@@ -120,8 +119,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             var light = target as Light2D;
             m_SplineEditor = new SplineEditor(this);
             m_SplineSceneEditor = new SplineSceneEditor(light.spline, this, light);
-
-            m_IsUsingFreeForm = serializedObject.FindProperty("m_IsUsingFreeForm");
         }
 
         private void OnDestroy()
@@ -196,7 +193,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
                 if (m_ModifiedMesh)
                 {
-                    m_IsUsingFreeForm.boolValue = true;
                     updateMesh = true;
                 }
 
@@ -209,31 +205,28 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (lastShape != shape)
                 {
                     int sides = shapeLightParametricSides.intValue;
-                    if (shape == (int)Light2D.ParametricShapes.Triangle) sides = 3;
-                    else if (shape == (int)Light2D.ParametricShapes.Square) sides = -1;
-                    else if (shape == (int)Light2D.ParametricShapes.Diamond) sides = 4;
-                    else if (shape == (int)Light2D.ParametricShapes.Hexagon) sides = 6;
-                    else if (shape == (int)Light2D.ParametricShapes.Circle) sides = 128;
-                    else if (shape == (int)Light2D.ParametricShapes.Polygon) sides = sides > 2 ? sides : 3;
-
+                    if (shape == (int)Light2D.ParametricShapes.Circle) sides = 128;
+                    else if (shape == (int)Light2D.ParametricShapes.Freeform) sides = 4; // This one should depend on if this has data at the moment
                     shapeLightParametricSides.intValue = sides;
-                    m_IsUsingFreeForm.boolValue = false;
                 }
 
                 m_ModifiedMesh = false;
 
-                if (shapeLightParametricShape.enumValueIndex == (int)Light2D.ParametricShapes.Polygon)
+                if (shapeLightParametricShape.enumValueIndex == (int)Light2D.ParametricShapes.Circle)
+                {
                     EditorGUILayout.PropertyField(shapeLightParametricSides, EditorGUIUtility.TrTextContent("Sides", "Adjust the shapes number of sides"));
+                    if (shapeLightParametricSides.intValue < 3)
+                        shapeLightParametricSides.intValue = 3;
+                }
 
                 EditorGUILayout.Slider(shapeLightFeathering, 0, 1, EditorGUIUtility.TrTextContent("Feathering", "Specify the shapes number of sides"));
-
 
 
                 Vector2 lastOffset = shapeLightOffset.vector2Value;
                 EditorGUILayout.PropertyField(shapeLightOffset, EditorGUIUtility.TrTextContent("Offset", "Specify the shape's offset"));
 
                 // update the light meshes if either the sides or feathering has changed;
-                updateMesh |= (lastSides != shapeLightParametricSides.intValue || lastFeathering != shapeLightFeathering.floatValue || lastOffset.x != shapeLightOffset.vector2Value.x || lastOffset.y != shapeLightOffset.vector2Value.y);
+                updateMesh |= (lastSides != shapeLightParametricSides.intValue || lastFeathering != shapeLightFeathering.floatValue || lastOffset.x != shapeLightOffset.vector2Value.x || lastOffset.y != shapeLightOffset.vector2Value.y || lastShape != shapeLightParametricShape.enumValueIndex);
                 EditorGUI.indentLevel--;
             }
 
@@ -378,7 +371,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     float sides = lt.m_ParametricSides;
                     float angleOffset = Mathf.PI / 2.0f;
 
-                    if (lt.m_ParametricShape == Light2D.ParametricShapes.Polygon)
+                    if (lt.m_ParametricShape == Light2D.ParametricShapes.Freeform)
                     {
                         m_SplineSceneEditor.CalculateBounds();
 
@@ -395,7 +388,6 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                             m_ModifiedMesh = true;
                             //lightObject.UpdateShapeLightMesh();
                         }
-
                     }
                     else
                     {
@@ -463,7 +455,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             InternalEditorBridge.SortingLayerField(EditorGUIUtility.TrTextContent("Target Sorting Layer", "Apply this light to the specifed layer"), applyToLayers, EditorStyles.popup, EditorStyles.label);
 
-            if (lightObject.m_ParametricShape == Light2D.ParametricShapes.Polygon && lightObject.LightProjectionType == Light2D.LightProjectionTypes.Shape && lightObject.m_ShapeLightStyle != Light2D.CookieStyles.Sprite)
+            if (lightObject.m_ParametricShape == Light2D.ParametricShapes.Freeform && lightObject.LightProjectionType == Light2D.LightProjectionTypes.Shape && lightObject.m_ShapeLightStyle != Light2D.CookieStyles.Sprite)
             {
                 m_SplineSceneEditor.OnInspectorGUI();
                 m_SplineEditor.OnInspectorGUI(lightObject.spline);
@@ -500,7 +492,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         [DrawGizmo(GizmoType.InSelectionHierarchy | GizmoType.Selected | GizmoType.Pickable)]
         static void RenderSpline(Light2D light, GizmoType gizmoType)
         {
-            if (light.m_ParametricShape == Light2D.ParametricShapes.Polygon && light.LightProjectionType == Light2D.LightProjectionTypes.Shape && light.m_ShapeLightStyle != Light2D.CookieStyles.Sprite)
+            if (light.m_ParametricShape == Light2D.ParametricShapes.Freeform && light.LightProjectionType == Light2D.LightProjectionTypes.Shape && light.m_ShapeLightStyle != Light2D.CookieStyles.Sprite)
             {
                 UnityEngine.U2D.Shape.Spline m_Spline = light.spline;
                 Matrix4x4 oldMatrix = Handles.matrix;
