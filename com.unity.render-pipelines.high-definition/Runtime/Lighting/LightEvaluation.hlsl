@@ -115,15 +115,14 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
 #endif
 
-    float3 shadowColor = light.shadowColor;
-    float3 shadowColored = pow(shadow.xxx, 1.0 / shadowColor);
+    float3 shadowColored = pow(shadow.xxx, 1.0 / light.shadowColor);
 
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
-        debugShadowAttenuation = shadow;
+        debugShadowAttenuation = shadowColored;
 #endif
 
-    attenuation *= shadow;
+    attenuation *= shadowColored;
 }
 
 //-----------------------------------------------------------------------------
@@ -271,15 +270,14 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
 #endif
 
-    float3 shadowColor = light.shadowColor;
-    float3 shadowColored = pow(shadow.xxx, 1.0 / shadowColor);
+    float3 shadowColored = pow(shadow.xxx, 1.0 / light.shadowColor);
 
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
-        debugShadowAttenuation = step(FLT_EPS, attenuation) * shadow;
+        debugShadowAttenuation = step(FLT_EPS, attenuation) * shadowColored;
 #endif
 
-    attenuation *= shadow;
+    attenuation *= shadowColored;
 }
 
 // Environment map share function
