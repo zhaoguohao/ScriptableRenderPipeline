@@ -149,6 +149,11 @@ namespace UnityEditor.ShaderGraph
         }
 
         [NonSerialized]
+        GroupData m_MostRecentlyCreatedGroup;
+
+        public GroupData mostRecentlyCreatedGroup => m_MostRecentlyCreatedGroup;
+
+        [NonSerialized]
         Dictionary<Guid, List<AbstractMaterialNode>> m_GroupNodes = new Dictionary<Guid, List<AbstractMaterialNode>>();
 
         public IEnumerable<AbstractMaterialNode> GetNodesInGroup(GroupData groupData)
@@ -241,6 +246,7 @@ namespace UnityEditor.ShaderGraph
             m_AddedProperties.Clear();
             m_RemovedProperties.Clear();
             m_MovedProperties.Clear();
+            m_MostRecentlyCreatedGroup = null;
         }
 
         public virtual void AddNode(INode node)
@@ -256,13 +262,24 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
-        public void AddGroupData(GroupData groupData)
+        public void CreateGroup(GroupData groupData)
+        {
+            if (AddGroup(groupData))
+            {
+                m_MostRecentlyCreatedGroup = groupData;
+            }
+        }
+
+        bool AddGroup(GroupData groupData)
         {
             if (m_Groups.Contains(groupData))
-                return;
+                return false;
+
             m_Groups.Add(groupData);
             m_AddedGroups.Add(groupData);
             m_GroupNodes.Add(groupData.guid, new List<AbstractMaterialNode>());
+
+            return true;
         }
 
         public void RemoveGroup(GroupData groupData)
@@ -752,7 +769,7 @@ namespace UnityEditor.ShaderGraph
             ValidateGraph();
 
             foreach (GroupData groupData in other.groups)
-                AddGroupData(groupData);
+                AddGroup(groupData);
 
             foreach (var node in other.GetNodes<INode>())
                 AddNodeNoValidate(node);
@@ -778,7 +795,7 @@ namespace UnityEditor.ShaderGraph
                 var newGuid = newGroup.guid;
                 groupGuidMap[oldGuid] = newGuid;
 
-                AddGroupData(newGroup);
+                AddGroup(newGroup);
                 m_PastedGroups.Add(newGroup);
             }
 

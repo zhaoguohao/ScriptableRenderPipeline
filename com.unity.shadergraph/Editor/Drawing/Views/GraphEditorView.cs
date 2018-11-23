@@ -140,7 +140,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.AddManipulator(new SelectionDragger());
                 m_GraphView.AddManipulator(new RectangleSelector());
                 m_GraphView.AddManipulator(new ClickSelector());
-                m_GraphView.RegisterCallback<KeyDownEvent>(OnSpaceDown);
+                m_GraphView.RegisterCallback<KeyDownEvent>(OnKeyDown);
                 m_GraphView.groupTitleChanged = OnGroupTitleChanged;
                 m_GraphView.elementsAddedToGroup = OnElementsAddedToGroup;
                 m_GraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
@@ -201,7 +201,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             Add(content);
         }
 
-        void OnSpaceDown(KeyDownEvent evt)
+        void OnKeyDown(KeyDownEvent evt)
         {
             if (evt.keyCode == KeyCode.F1)
             {
@@ -210,6 +210,14 @@ namespace UnityEditor.ShaderGraph.Drawing
                     var nodeView = (MaterialNodeView)graphView.selection.First();
                     if (nodeView.node.documentationURL != null)
                         System.Diagnostics.Process.Start(nodeView.node.documentationURL);
+                }
+            }
+
+            if (evt.ctrlKey && evt.keyCode == KeyCode.G)
+            {
+                if (m_GraphView.selection.OfType<MaterialNodeView>().Any())
+                {
+                    m_GraphView.GroupSelection();
                 }
             }
         }
@@ -475,6 +483,20 @@ namespace UnityEditor.ShaderGraph.Drawing
                 node.UpdatePortInputVisibilities();
 
             UpdateEdgeColors(nodesToUpdate);
+
+            // Checking if any new Group Nodes just got added
+            if (m_Graph.mostRecentlyCreatedGroup != null)
+            {
+                var groups = m_GraphView.graphElements.ToList().OfType<ShaderGroup>();
+                foreach (ShaderGroup shaderGroup in groups)
+                {
+                    if (shaderGroup.userData == m_Graph.mostRecentlyCreatedGroup)
+                    {
+                        shaderGroup.OpenTextEditor();
+                        break;
+                    }
+                }
+            }
         }
 
         List<GraphElement> m_AddNodeGraphElements = new List<GraphElement>();
