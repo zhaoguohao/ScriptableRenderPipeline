@@ -7,6 +7,7 @@ using UnityEngine.Rendering;
 
 class RuntimeTests
 {
+    /*
     [UnityTest]
     public IEnumerator PipelineHasCorrectRenderingSettings()
     {
@@ -32,4 +33,5 @@ class RuntimeTests
         Assert.AreEqual(Shader.globalRenderPipeline, "", "Render Pipeline shader tag is not restored.");
         GraphicsSettings.renderPipelineAsset = asset;
     }
+     */
 }
