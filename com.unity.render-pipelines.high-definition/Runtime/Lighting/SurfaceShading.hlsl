@@ -103,7 +103,7 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
         if (surfaceReflection)
         {
             attenuation    *= ComputeMicroShadowing(bsdfData, NdotL);
-            float intensity = attenuation * NdotL;
+            float3 intensity = attenuation * NdotL;
 
             lighting.diffuse  = diffuseBsdf  * (intensity * light.diffuseDimmer);
             lighting.specular = specularBsdf * (intensity * light.specularDimmer);
@@ -112,7 +112,7 @@ DirectLighting ShadeSurface_Directional(LightLoopContext lightLoopContext,
         {
              // Apply wrapped lighting to better handle thin objects at grazing angles.
             float wrapNdotL = ComputeWrappedDiffuseLighting(NdotL, TRANSMISSION_WRAP_LIGHT);
-            float intensity = attenuation * wrapNdotL;
+            float3 intensity = attenuation * wrapNdotL;
 
             // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
             // Note: Disney's LdoV term in 'diffuseBsdf' does not hold a meaningful value
@@ -253,7 +253,7 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
 
         if (surfaceReflection)
         {
-            float intensity = attenuation * NdotL;
+            float3 intensity = attenuation * NdotL;
 
             lighting.diffuse  = diffuseBsdf  * (intensity * light.diffuseDimmer);
             lighting.specular = specularBsdf * (intensity * light.specularDimmer);
@@ -262,7 +262,7 @@ DirectLighting ShadeSurface_Punctual(LightLoopContext lightLoopContext,
         {
              // Apply wrapped lighting to better handle thin objects at grazing angles.
             float wrapNdotL = ComputeWrappedDiffuseLighting(NdotL, TRANSMISSION_WRAP_LIGHT);
-            float intensity = attenuation * wrapNdotL;
+            float3 intensity = attenuation * wrapNdotL;
 
             // We use diffuse lighting for accumulation since it is going to be blurred during the SSS pass.
             // Note: Disney's LdoV term in 'diffuseBsdf' does not hold a meaningful value

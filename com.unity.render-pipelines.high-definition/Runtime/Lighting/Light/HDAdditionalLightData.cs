@@ -125,13 +125,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Directional light only.
         public float sunDiskSize = 1.0f;
         public float sunHaloSize = 0.1f;
-        public Color shadowColor = Color.white;
 
         // Not used for directional lights.
         public float fadeDistance = 10000.0f;
 
         public bool affectDiffuse = true;
         public bool affectSpecular = true;
+        public Color shadowColor = Color.white;
 
         // This property work only with shadow mask and allow to say we don't render any lightMapped object in the shadow map
         public bool nonLightmappedOnly = false;

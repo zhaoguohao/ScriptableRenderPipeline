@@ -213,8 +213,9 @@ VoxelLighting EvaluateVoxelLightingDirectional(LightLoopContext context, uint fe
         float cosTheta = dot(L, ray.centerDirWS);
         float phase    = CornetteShanksPhasePartVarying(anisotropy, cosTheta);
 
+        float minAttenuation = dot(attenuation, 1);
         // Note: the 'weight' accounts for transmittance from 't0' to 't'.
-        float intensity = light.volumetricLightDimmer * attenuation * weight;
+        float intensity = light.volumetricLightDimmer * minAttenuation * weight;
 
         // Compute the amount of in-scattered radiance.
         lighting.radianceNoPhase  += intensity * color;
@@ -329,7 +330,8 @@ VoxelLighting EvaluateVoxelLightingLocal(LightLoopContext context, uint featureF
                 float  cosTheta = dot(centerL, ray.centerDirWS) * rsqrt(dot(centerL, centerL));
                 float  phase    = CornetteShanksPhasePartVarying(anisotropy, cosTheta);
 
-                float intensity = light.volumetricLightDimmer * attenuation * rcpPdf;
+                float minAttenuation = dot(attenuation, 1);
+                float intensity = light.volumetricLightDimmer * minAttenuation * rcpPdf;
 
                 // Compute transmittance from 't0' to 't'.
                 intensity *= TransmittanceHomogeneousMedium(extinction, t - t0);
@@ -399,8 +401,9 @@ VoxelLighting EvaluateVoxelLightingLocal(LightLoopContext context, uint featureF
                 float  cosTheta = dot(centerL, ray.centerDirWS) * rsqrt(dot(centerL, centerL));
                 float  phase    = CornetteShanksPhasePartVarying(anisotropy, cosTheta);
 
+                float minAttenuation = dot(attenuation, 1);
                 // Note: the 'weight' accounts for transmittance from 'tEntr' to 't'.
-                float intensity = light.volumetricLightDimmer * attenuation * weight;
+                float intensity = light.volumetricLightDimmer * minAttenuation * weight;
 
                 // Compute transmittance from 't0' to 'tEntr'.
                 intensity *= TransmittanceHomogeneousMedium(extinction, tEntr - t0);
