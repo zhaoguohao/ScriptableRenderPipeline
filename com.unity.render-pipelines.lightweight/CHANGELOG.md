@@ -4,11 +4,21 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [5.1.0-preview] - 2018-10-18
+## [5.2.0] - 2018-11-xx
+### Added
+- LWRP now handles blits that are required by the device when rendering to the backbuffer.
+- You can now enable the SRP Batcher. To do so, go to the `Pipeline Asset`. Under `Advanced`, toggle `SRP Batcher`.
+
+### Changed
+- Renamed shader variable `unity_LightIndicesOffsetAndCount` to `unity_PerObjectLightData`.
+- Shader variables `unity_4LightIndices0` and `unity_4LightIndices1` are now declared as `unity_PerObjectLightIndices` array.
+
+## [5.1.0] - 2018-11-19
 ### Added
 - The user documentation for LWRP is now in this GitHub repo, instead of in the separate GitHub wiki. You can find the most up-to-date pages in the [TableOfContents.md](TableOfCotents.md) file. Pages not listed in that file are still in progress.
 
 ### Changed
+- The LWRP package is no longer in preview.
 - LWRP built-in render passes are now internal.
 - Changed namespace from `UnityEngine.Experimental.Rendering.LightweightPipeline` to `UnityEngine.Rendering.LWRP`.
 - Changed namespace from `UnityEditor.Experimental.Rendering.LightweightPipeline` to `UnityEditor.Rendering.LWRP`.
