@@ -8,6 +8,7 @@ using UnityEngine.TestTools;
 using UnityEngine.SceneManagement;
 
 using UnityEditor;
+using UnityEngine.TestTools.Graphics;
 using EditorSceneManagement = UnityEditor.SceneManagement;
 
 namespace UnityEditor.TestTools.Graphics
@@ -36,7 +37,7 @@ namespace UnityEditor.TestTools.Graphics
 
         public void Setup()
         {
-            Setup(EditorGraphicsTestCaseProvider.ReferenceImagesRoot);
+            Setup(EditorProviderUtility.ReferenceImagesRoot);
         }
 
         public void Setup(string rootImageTemplatePath)
@@ -66,7 +67,7 @@ namespace UnityEditor.TestTools.Graphics
 
             foreach (var api in graphicsDevices)
             {
-                var images = EditorGraphicsTestCaseProvider.CollectReferenceImagePathsFor(rootImageTemplatePath, colorSpace, runtimePlatform, api);
+                var images = EditorProviderUtility.CollectReferenceImagePathsFor(rootImageTemplatePath, colorSpace, runtimePlatform, api);
 
                 Utils.SetupReferenceImageImportSettings(images.Values);
 
@@ -99,7 +100,7 @@ namespace UnityEditor.TestTools.Graphics
 
             Scene trScene = EditorSceneManagement.EditorSceneManager.GetSceneAt(0);
 
-            foreach( EditorBuildSettingsScene scene in EditorBuildSettings.scenes)
+            foreach( EditorBuildSettingsScene scene in EditorProviderUtility.buildSettingsScenes)
             {
                 SceneAsset sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path);
                 var labels = new System.Collections.Generic.List<string>(AssetDatabase.GetLabels(sceneAsset));

@@ -45,7 +45,11 @@ namespace UnityEngine.TestTools.Graphics
         {
             get
             {
+            #if UNITY_EDITOR
+                return EditorProviderUtility.colorSpace;
+            #else
                 return QualitySettings.activeColorSpace;
+            #endif
             }
         }
 
@@ -53,7 +57,11 @@ namespace UnityEngine.TestTools.Graphics
         {
             get
             {
+            #if UNITY_EDITOR
+                return EditorProviderUtility.platform;
+            #else
                 return Application.platform;
+            #endif
             }
         }
 
@@ -61,7 +69,11 @@ namespace UnityEngine.TestTools.Graphics
         {
             get
             {
+            #if UNITY_EDITOR
+                return EditorProviderUtility.graphicsDeviceType;
+            #else
                 return SystemInfo.graphicsDeviceType;
+            #endif
             }
         }
 
