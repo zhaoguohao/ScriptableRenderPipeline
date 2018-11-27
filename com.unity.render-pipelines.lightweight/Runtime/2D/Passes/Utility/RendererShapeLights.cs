@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -27,10 +27,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         static public void Setup(Color defaultAmbientColor, Color defaultSpecularColor, Color defaultRimColor)
         {
-            m_RenderTextureFormatToUse = RenderTextureFormat.RGB111110Float;
+            m_RenderTextureFormatToUse = RenderTextureFormat.ARGB32;
             if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.ARGBHalf))
                 m_RenderTextureFormatToUse = RenderTextureFormat.ARGBHalf;
-            
+            else if (SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float))
+                m_RenderTextureFormatToUse = RenderTextureFormat.RGB111110Float;
+
             m_DefaultSpecularColor = defaultSpecularColor;
             m_DefaultAmbientColor = defaultAmbientColor;
             m_DefaultRimColor = defaultRimColor;

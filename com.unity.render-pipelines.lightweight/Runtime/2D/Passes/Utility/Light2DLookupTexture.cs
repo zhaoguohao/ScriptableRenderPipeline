@@ -15,7 +15,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             const float WIDTH = 256;
             const float HEIGHT = 256;
 
-            m_LightLookupTexture = new Texture2D((int)WIDTH, (int)HEIGHT, TextureFormat.RGBAHalf, false);
+            var format = SystemInfo.SupportsTextureFormat(TextureFormat.RGBAHalf) ? TextureFormat.RGBAHalf : TextureFormat.RGBA32;
+
+            m_LightLookupTexture = new Texture2D((int)WIDTH, (int)HEIGHT, format, false);
             m_LightLookupTexture.filterMode = FilterMode.Bilinear;
             m_LightLookupTexture.wrapMode = TextureWrapMode.Clamp;
             if (m_LightLookupTexture != null)
