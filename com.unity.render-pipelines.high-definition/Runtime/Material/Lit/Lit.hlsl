@@ -37,16 +37,16 @@
 //-----------------------------------------------------------------------------
 
 // GBuffer texture declaration
-TEXTURE2D(_GBufferTexture0);
-TEXTURE2D(_GBufferTexture1);
-TEXTURE2D(_GBufferTexture2);
-TEXTURE2D(_GBufferTexture3); // Bake lighting and/or emissive
-TEXTURE2D(_GBufferTexture4); // Light layer or shadow mask
-TEXTURE2D(_GBufferTexture5); // shadow mask
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture0);
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture1);
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture2);
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture3); // Bake lighting and/or emissive
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture4); // Light layer or shadow mask
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture5); // shadow mask
 
-TEXTURE2D(_LightLayersTexture);
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_LightLayersTexture);
 #ifdef SHADOWS_SHADOWMASK
-TEXTURE2D(_ShadowMaskTexture); // Alias for shadow mask, so we don't need to know which gbuffer is used for shadow mask
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_ShadowMaskTexture); // Alias for shadow mask, so we don't need to know which gbuffer is used for shadow mask
 #endif
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/LTCAreaLight/LTCAreaLight.hlsl"
@@ -632,17 +632,17 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
     // Isolate material features.
     tileFeatureFlags &= MATERIAL_FEATURE_MASK_FLAGS;
 
-    GBufferType0 inGBuffer0 = LOAD_TEXTURE2D(_GBufferTexture0, positionSS);
-    GBufferType1 inGBuffer1 = LOAD_TEXTURE2D(_GBufferTexture1, positionSS);
-    GBufferType2 inGBuffer2 = LOAD_TEXTURE2D(_GBufferTexture2, positionSS);
+    GBufferType0 inGBuffer0 = LOAD_TEXTURE(_GBufferTexture0, positionSS);
+    GBufferType1 inGBuffer1 = LOAD_TEXTURE(_GBufferTexture1, positionSS);
+    GBufferType2 inGBuffer2 = LOAD_TEXTURE(_GBufferTexture2, positionSS);
 
     // BuiltinData
-    builtinData.bakeDiffuseLighting = LOAD_TEXTURE2D(_GBufferTexture3, positionSS).rgb;  // This also contain emissive (and * AO if no lightlayers)
+    builtinData.bakeDiffuseLighting = LOAD_TEXTURE(_GBufferTexture3, positionSS).rgb;  // This also contain emissive (and * AO if no lightlayers)
 
     // Avoid to introduce a new variant for light layer as it is already long to compile
     if (_EnableLightLayers)
     {
-        float4 inGBuffer4 = LOAD_TEXTURE2D(_LightLayersTexture, positionSS);
+        float4 inGBuffer4 = LOAD_TEXTURE(_LightLayersTexture, positionSS);
         // If we have light layers, take the opportunity to save AO and avoid double occlusion with SSAO
         bsdfData.ambientOcclusion = inGBuffer4.z;
         builtinData.renderingLayers = uint(inGBuffer4.w * 255.5);
@@ -655,7 +655,7 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
 
     // We know the GBufferType no need to use abstraction
 #ifdef SHADOWS_SHADOWMASK
-    float4 shadowMaskGbuffer = LOAD_TEXTURE2D(_ShadowMaskTexture, positionSS);
+    float4 shadowMaskGbuffer = LOAD_TEXTURE(_ShadowMaskTexture, positionSS);
     builtinData.shadowMask0 = shadowMaskGbuffer.x;
     builtinData.shadowMask1 = shadowMaskGbuffer.y;
     builtinData.shadowMask2 = shadowMaskGbuffer.z;
@@ -1594,7 +1594,7 @@ IndirectLighting EvaluateBSDF_ScreenspaceRefraction(LightLoopContext lightLoopCo
         // Do nothing and don't update the hierarchy weight so we can fall back on refraction probe
         return lighting;
 
-    float hitDeviceDepth = LOAD_TEXTURE2D_LOD(_DepthPyramidTexture, TexCoordStereoOffset(hit.positionSS), 0).r;
+    float hitDeviceDepth = LOAD_TEXTURE_LOD(_DepthPyramidTexture, TexCoordStereoOffset(hit.positionSS), 0).r;
     float hitLinearDepth = LinearEyeDepth(hitDeviceDepth, _ZBufferParams);
 
     // This is an empirically set hack/modifier to reduce haloes of objects visible in the refraction.
