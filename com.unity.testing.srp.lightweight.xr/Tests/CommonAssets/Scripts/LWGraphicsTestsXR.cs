@@ -6,7 +6,7 @@ using UnityEngine.TestTools;
 using UnityEngine.TestTools.Graphics;
 using UnityEngine.SceneManagement;
 
-public class LWGraphicsTests
+public class LWGraphicsTestsXR
 {
 
     public const string lwPackagePath = "Packages/com.unity.testing.srp.lightweight.xr/Tests/ReferenceImages";
