@@ -39,6 +39,7 @@ void Frag(  PackedVaryingsToPS packedInput,
             #endif
             )
 {
+    UNITY_SETUP_INSTANCE_ID(packedInput);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
