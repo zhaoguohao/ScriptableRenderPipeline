@@ -51,9 +51,6 @@ struct VaryingsMeshToPS
 #ifdef VARYINGS_NEED_COLOR
     float4 color;
 #endif
-
-UNITY_VERTEX_INPUT_INSTANCE_ID
-
 };
 
 struct PackedVaryingsMeshToPS
@@ -220,8 +217,6 @@ struct VaryingsMeshToDS
 #ifdef VARYINGS_DS_NEED_COLOR
     float4 color;
 #endif
-
-    UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 struct PackedVaryingsMeshToDS
@@ -250,7 +245,6 @@ struct PackedVaryingsMeshToDS
     float4 interpolators5 : TEXCOORD2;
 #endif
 
-     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 // Functions to pack data to use as few interpolator as possible, the ShaderGraph should generate these functions

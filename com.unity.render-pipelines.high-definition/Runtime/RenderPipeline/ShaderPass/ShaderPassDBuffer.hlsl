@@ -16,23 +16,28 @@ void MeshDecalsPositionZBias(inout VaryingsToPS input)
 
 PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
 #if (SHADERPASS == SHADERPASS_DBUFFER_MESH)
 	MeshDecalsPositionZBias(varyingsType);
 #endif
-    return PackVaryingsType(varyingsType);
+    PackedVaryingsType o = PackVaryingsType(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, o);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+    return o;
 }
 
 void Frag(  PackedVaryingsToPS packedInput,
             OUTPUT_DBUFFER(outDBuffer)
             )
 {
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 	DecalSurfaceData surfaceData;
 
 #if (SHADERPASS == SHADERPASS_DBUFFER_PROJECTOR)
-	float depth = LOAD_TEXTURE2D(_CameraDepthTexture, input.positionSS.xy).x;
+	float depth = LOAD_TEXTURE(_CameraDepthTexture, input.positionSS.xy).x;
 	PositionInputs posInput = GetPositionInput_Stereo(input.positionSS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
     // Transform from relative world space to decal space (DS) to clip the decal
     float3 positionDS = TransformWorldToObject(posInput.positionWS);
