@@ -48,7 +48,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Generates an in-place depth pyramid
         // TODO: Mip-mapping depth is problematic for precision at lower mips, generate a packed atlas instead
-        public void RenderMinDepthPyramid(CommandBuffer cmd, RenderTexture texture, HDUtils.PackedMipChainInfo info, int numSlices = 1)
+        public void RenderMinDepthPyramid(CommandBuffer cmd, RenderTexture texture, HDUtils.PackedMipChainInfo info, int numEyes = 1)
         {
             HDUtils.CheckRTCreated(texture);
             
@@ -81,7 +81,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeIntParams(   cs,         HDShaderIDs._DstOffset,         m_DstOffset);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DepthMipChain,     texture);
 
-                for (int eye = 0; eye < numSlices; eye++)
+                for (int eye = 0; eye < numEyes; eye++)
                 {
                     cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
                     cmd.DispatchCompute(cs, kernel, HDUtils.DivRoundUp(dstSize.x, 8), HDUtils.DivRoundUp(dstSize.y, 8), 1);
@@ -93,7 +93,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // We can't do it in place as the color pyramid has to be read while writing to the color
         // buffer in some cases (e.g. refraction, distortion)
         // Returns the number of mips
-        public int RenderColorGaussianPyramid(CommandBuffer cmd, Vector2Int size, Texture source, RenderTexture destination, int numSlices = 1)
+        public int RenderColorGaussianPyramid(CommandBuffer cmd, Vector2Int size, Texture source, RenderTexture destination, int numEyes = 1)
         {
             // Only create the temporary target on-demand in case the game doesn't actually need it
             if (m_TempColorTarget == null)
@@ -140,7 +140,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Source, source, 0);
                     cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Mip0, destination, 0);
                     cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Destination, m_TempColorTarget);
-                    for (int eye = 0; eye < numSlices; eye++)
+                    for (int eye = 0; eye < numEyes; eye++)
                     {
                         cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
                         cmd.DispatchCompute(cs, downsampleKernelMip0, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
@@ -151,7 +151,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Source, destination, srcMipLevel);
                     cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Destination, m_TempColorTarget);
 
-                    for (int eye = 0; eye < numSlices; eye++)
+                    for (int eye = 0; eye < numEyes; eye++)
                     {
                         cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
                         cmd.DispatchCompute(cs, downsampleKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
@@ -162,7 +162,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Source, m_TempColorTarget);
                 cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Destination, destination, srcMipLevel + 1);
 
-                for (int eye = 0; eye < numSlices; eye++)
+                for (int eye = 0; eye < numEyes; eye++)
                 {
                     cmd.SetGlobalInt(Shader.PropertyToID("_ComputeEyeIndex"), (int)eye);
                     cmd.DispatchCompute(cs, gaussianKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
