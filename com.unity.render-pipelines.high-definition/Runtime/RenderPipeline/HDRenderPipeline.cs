@@ -717,7 +717,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_LightLoop.GetFeatureVariantsEnabled();
         }
 
-        void CopyDepthBufferIfNeeded(CommandBuffer cmd, int numSlices = 1)
+        void CopyDepthBufferIfNeeded(CommandBuffer cmd, int numEyes = 1)
         {
             if (!m_IsDepthBufferCopyValid)
             {
@@ -731,7 +731,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // TODO: reading the depth buffer with a compute shader will cause it to decompress in place.
                     // On console, to preserve the depth test performance, we must NOT decompress the 'm_CameraDepthStencilBuffer' in place.
                     // We should call decompressDepthSurfaceToCopy() and decompress it to 'm_CameraDepthBufferMipChain'.
-                    m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetDepthTexture(), new RectInt(0, 0, m_CurrentWidth, m_CurrentHeight), numSlices);
+                    m_GPUCopy.SampleCopyChannel_xyzw2x(cmd, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetDepthTexture(), new RectInt(0, 0, m_CurrentWidth, m_CurrentHeight), numEyes);
                 }
                 m_IsDepthBufferCopyValid = true;
             }
@@ -1757,7 +1757,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 case LitShaderMode.Forward:
                     using (new ProfilingSample(cmd, "Depth Prepass (forward)", CustomSamplerId.DepthPrepass.GetSampler()))
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
 
                         XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.camera.stereoEnabled);
 
@@ -2086,11 +2086,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 m_MRTWithSSS[i + 2] = m_SSSBufferManager.GetSSSBuffer(i);
                             }
                         }
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTWithSSS, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTWithSSS, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
                     }
                     else
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
                     }
 
                     var passNames = hdCamera.frameSettings.shaderLitMode == LitShaderMode.Forward
@@ -2100,7 +2100,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 else
                 {
-                    HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: XRGraphics.DepthSlice);
+                    HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
                     if ((hdCamera.frameSettings.enableDecals) && (DecalSystem.m_DecalDatasCount > 0)) // enable d-buffer flag value is being interpreted more like enable decals in general now that we have clustered
                                                                                                       // decal datas count is 0 if no decals affect transparency
                     {
@@ -2599,10 +2599,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     if (hdCamera.clearDepth)
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Depth, depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Depth);
                         if (hdCamera.frameSettings.enableMSAA)
                         {
-                            HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthTexture(true), m_SharedRTManager.GetDepthStencilBuffer(true), ClearFlag.Color, Color.black, depthSlice: XRGraphics.DepthSlice);
+                            HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthTexture(true), m_SharedRTManager.GetDepthStencilBuffer(true), ClearFlag.Color, Color.black);
                         }
                     }
                 }
@@ -2626,7 +2626,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if (m_DebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuxMeter)
                             clearColor = Color.black;
 
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Color, clearColor, depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Color, clearColor);
 
                     }
                 }
@@ -2635,7 +2635,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     using (new ProfilingSample(cmd, "Clear SSS Lighting Buffer", CustomSamplerId.ClearSssLightingBuffer.GetSampler()))
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraSssDiffuseLightingMSAABuffer : m_CameraSssDiffuseLightingBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraSssDiffuseLightingMSAABuffer : m_CameraSssDiffuseLightingBuffer, ClearFlag.Color, CoreUtils.clearColorAllBlack);
                     }
                 }
 
@@ -2646,8 +2646,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // In practice, these textures are sparse (mostly black). Therefore, clearing them is fast (due to CMASK),
                         // and much faster than fully overwriting them from within SSR shaders.
                         // HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrDebugTexture,    ClearFlag.Color, CoreUtils.clearColorAllBlack);
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrHitPointTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: XRGraphics.DepthSlice);
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrLightingTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack, depthSlice: XRGraphics.DepthSlice);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrHitPointTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_SsrLightingTexture, ClearFlag.Color, CoreUtils.clearColorAllBlack);
                     }
                 }
 

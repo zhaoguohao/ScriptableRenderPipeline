@@ -154,20 +154,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #endif
         }
 
+        public static int GetDepthSlice(RTHandleSystem.RTHandle buffer)
+        {
+            return (buffer.m_RT.dimension == TextureDimension.Tex2DArray || buffer.m_RT.dimension == TextureDimension.CubeArray) ? -1 : 0;
+        }
+
         // This set of RenderTarget management methods is supposed to be used when rendering into a camera dependent render texture.
         // This will automatically set the viewport based on the camera size and the RTHandle scaling info.
-        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle buffer, ClearFlag clearFlag, Color clearColor, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
+        // TODO add overloads for explicit depthslice binding as needed
+        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle buffer, ClearFlag clearFlag, Color clearColor, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown)
         {
+            int depthSlice = GetDepthSlice(buffer);
             cmd.SetRenderTarget(buffer, miplevel, cubemapFace, depthSlice);
             SetViewportAndClear(cmd, camera, buffer, clearFlag, clearColor);
         }
 
-        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle buffer, ClearFlag clearFlag = ClearFlag.None, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
+        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle buffer, ClearFlag clearFlag = ClearFlag.None, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown)
         {
-            SetRenderTarget(cmd, camera, buffer, clearFlag, CoreUtils.clearColorAllBlack, miplevel, cubemapFace, depthSlice);
+            SetRenderTarget(cmd, camera, buffer, clearFlag, CoreUtils.clearColorAllBlack, miplevel, cubemapFace);
         }
 
-        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
+        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown)
         {
             int cw = colorBuffer.rt.width;
             int ch = colorBuffer.rt.height;
@@ -176,10 +183,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             Debug.Assert(cw == dw && ch == dh);
 
-            SetRenderTarget(cmd, camera, colorBuffer, depthBuffer, ClearFlag.None, CoreUtils.clearColorAllBlack, miplevel, cubemapFace, depthSlice);
+            SetRenderTarget(cmd, camera, colorBuffer, depthBuffer, ClearFlag.None, CoreUtils.clearColorAllBlack, miplevel, cubemapFace);
         }
 
-        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
+        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown)
         {
             int cw = colorBuffer.rt.width;
             int ch = colorBuffer.rt.height;
@@ -188,10 +195,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             Debug.Assert(cw == dw && ch == dh);
 
-            SetRenderTarget(cmd, camera, colorBuffer, depthBuffer, clearFlag, CoreUtils.clearColorAllBlack, miplevel, cubemapFace, depthSlice);
+            SetRenderTarget(cmd, camera, colorBuffer, depthBuffer, clearFlag, CoreUtils.clearColorAllBlack, miplevel, cubemapFace);
         }
 
-        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, Color clearColor, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown, int depthSlice = 0)
+        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, Color clearColor, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown)
         {
             int cw = colorBuffer.rt.width;
             int ch = colorBuffer.rt.height;
@@ -199,14 +206,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             int dh = depthBuffer.rt.height;
 
             Debug.Assert(cw == dw && ch == dh);
+
+            int depthSlice = GetDepthSlice(colorBuffer);
 
             CoreUtils.SetRenderTarget(cmd, colorBuffer, depthBuffer, miplevel, cubemapFace, depthSlice);
             SetViewportAndClear(cmd, camera, colorBuffer, clearFlag, clearColor);
-        }
-        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer, int depthSlice)
-        {
-            SetRenderTarget(cmd, camera, colorBuffers, depthBuffer, ClearFlag.None, CoreUtils.clearColorAllBlack, depthSlice);
-            SetViewport(cmd, camera, depthBuffer);
         }
 
         public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer)
@@ -222,13 +226,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, Color clearColor)
-        {
-            cmd.SetRenderTarget(colorBuffers, depthBuffer);
-            SetViewportAndClear(cmd, camera, depthBuffer, clearFlag, clearColor);
-        }
-        public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, Color clearColor, int depthSlice)
-        {
-            cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, depthSlice);
+        {   // TODO VR: Modify/overload this if there is ever a situation where:
+            // - Stereo is enabled on input camera
+            // - XRGraphics.UsingTexArray is true, but
+            // - We want this camera to render to a non-arrayed texture
+            if (camera.camera.stereoEnabled && XRGraphics.UsingTexArray)
+                cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, XRGraphics.DepthSlice);
+            else
+                cmd.SetRenderTarget(colorBuffers, depthBuffer);
             SetViewportAndClear(cmd, camera, depthBuffer, clearFlag, clearColor);
         }
 
@@ -271,7 +276,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void BlitCameraTexture(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle source, RTHandleSystem.RTHandle destination, float mipLevel = 0.0f, bool bilinear = false)
         {
             // Will set the correct camera viewport as well.
-            SetRenderTarget(cmd, camera, destination, depthSlice: XRGraphics.DepthSlice);
+            SetRenderTarget(cmd, camera, destination);
             BlitTexture(cmd, source, destination, camera.viewportScale, mipLevel, bilinear);
         }
 
@@ -279,13 +284,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void BlitCameraTexture(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle source, RTHandleSystem.RTHandle destination, Vector4 scaleBias, float mipLevel = 0.0f, bool bilinear = false)
         {
             // Will set the correct camera viewport as well.
-            SetRenderTarget(cmd, camera, destination, depthSlice: XRGraphics.DepthSlice);
+            SetRenderTarget(cmd, camera, destination);
             BlitTexture(cmd, source, destination, scaleBias, mipLevel, bilinear);
         }
 
         public static void BlitCameraTexture(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle source, RTHandleSystem.RTHandle destination, Rect destViewport, float mipLevel = 0.0f, bool bilinear = false)
         {
-            SetRenderTarget(cmd, camera, destination, depthSlice: XRGraphics.DepthSlice);
+            SetRenderTarget(cmd, camera, destination);
             cmd.SetViewport(destViewport);
             BlitTexture(cmd, source, destination, camera.viewportScale, mipLevel, bilinear);
         }
@@ -307,7 +312,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void BlitCameraTexture(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier source, RTHandleSystem.RTHandle destination)
         {
             // Will set the correct camera viewport as well.
-            SetRenderTarget(cmd, camera, destination, depthSlice: XRGraphics.DepthSlice);
+            SetRenderTarget(cmd, camera, destination);
 
             cmd.SetGlobalTexture(HDShaderIDs._BlitTexture, source);
             cmd.SetGlobalVector(HDShaderIDs._BlitScaleBias, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
@@ -324,7 +329,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandleSystem.RTHandle colorBuffer,
             MaterialPropertyBlock properties = null, int shaderPassId = 0)
         {
-            HDUtils.SetRenderTarget(commandBuffer, camera, colorBuffer, depthSlice: XRGraphics.DepthSlice);
+            HDUtils.SetRenderTarget(commandBuffer, camera, colorBuffer);
             commandBuffer.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, camera.doubleBufferedViewportScale);
             commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassId, MeshTopology.Triangles, 3, 1, properties);
         }
@@ -333,7 +338,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthStencilBuffer,
             MaterialPropertyBlock properties = null, int shaderPassId = 0)
         {
-            HDUtils.SetRenderTarget(commandBuffer, camera, colorBuffer, depthStencilBuffer, depthSlice: XRGraphics.DepthSlice);
+            HDUtils.SetRenderTarget(commandBuffer, camera, colorBuffer, depthStencilBuffer);
             commandBuffer.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, camera.doubleBufferedViewportScale);
             commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassId, MeshTopology.Triangles, 3, 1, properties);
         }
@@ -342,7 +347,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthStencilBuffer,
             MaterialPropertyBlock properties = null, int shaderPassId = 0)
         {
-            HDUtils.SetRenderTarget(commandBuffer, camera, colorBuffers, depthStencilBuffer, depthSlice: XRGraphics.DepthSlice);
+            HDUtils.SetRenderTarget(commandBuffer, camera, colorBuffers, depthStencilBuffer);
             commandBuffer.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, camera.doubleBufferedViewportScale);
             commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassId, MeshTopology.Triangles, 3, 1, properties);
         }

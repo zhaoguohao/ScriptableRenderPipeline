@@ -169,8 +169,13 @@ namespace UnityEngine.Rendering
         }
 
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthBuffer, ClearFlag clearFlag, Color clearColor)
-        {
-            cmd.SetRenderTarget(colorBuffers, depthBuffer);
+        {   // TODO VR: Modify/overload this if there is ever a situation where:
+            // - XRGraphics.UsingTexArray is true, but
+            // - We want to render to non-arrayed MRT
+            if (XRGraphics.UsingTexArray)
+                cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, XRGraphics.DepthSlice);
+            else
+                cmd.SetRenderTarget(colorBuffers, depthBuffer);
             ClearRenderTarget(cmd, clearFlag, clearColor);
         }
         public static void SetRenderTarget(CommandBuffer cmd, RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthBuffer, int mipLevel, CubemapFace cubemapFace, int depthSlice, ClearFlag clearFlag, Color clearColor)

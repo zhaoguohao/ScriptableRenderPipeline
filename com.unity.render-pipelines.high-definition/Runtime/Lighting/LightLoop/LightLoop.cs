@@ -677,8 +677,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     else
                         clustDepthSourceIdx = ClusterDepthSource.Depth;
                 }
-                var kernelName = s_ClusterKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + ((XRGraphics.NumSlices > 1) ? (int)ClusterDepthSource.Count : 0)];
-                var kernelObliqueName = s_ClusterObliqueKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + ((XRGraphics.NumSlices > 1) ? (int)ClusterDepthSource.Count : 0)];
+                var kernelName = s_ClusterKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + (XRGraphics.UsingTexArray ? (int)ClusterDepthSource.Count : 0)];
+                var kernelObliqueName = s_ClusterObliqueKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + (XRGraphics.UsingTexArray ? (int)ClusterDepthSource.Count : 0)];
 
                 s_GenListPerVoxelKernel = buildPerVoxelLightListShader.FindKernel(kernelName);
                 s_GenListPerVoxelKernelOblique = buildPerVoxelLightListShader.FindKernel(kernelObliqueName);
