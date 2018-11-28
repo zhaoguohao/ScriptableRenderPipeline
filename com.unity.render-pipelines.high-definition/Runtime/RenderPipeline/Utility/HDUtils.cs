@@ -231,7 +231,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // - XRGraphics.UsingTexArray is true, but
             // - We want this camera to render to a non-arrayed texture
             if (camera.camera.stereoEnabled && XRGraphics.UsingTexArray)
-                cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, XRGraphics.DepthSlice);
+                cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, -1);
             else
                 cmd.SetRenderTarget(colorBuffers, depthBuffer);
             SetViewportAndClear(cmd, camera, depthBuffer, clearFlag, clearColor);

@@ -173,7 +173,7 @@ namespace UnityEngine.Rendering
             // - XRGraphics.UsingTexArray is true, but
             // - We want to render to non-arrayed MRT
             if (XRGraphics.UsingTexArray)
-                cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, XRGraphics.DepthSlice);
+                cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, -1);
             else
                 cmd.SetRenderTarget(colorBuffers, depthBuffer);
             ClearRenderTarget(cmd, clearFlag, clearColor);
