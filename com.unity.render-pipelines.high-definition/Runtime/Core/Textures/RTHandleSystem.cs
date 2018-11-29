@@ -452,6 +452,55 @@ namespace UnityEngine.Experimental.Rendering
 
             return rth;
         }
+
+        public RTHandle AllocFromDescriptor(Vector2 scaleFactor, RenderTextureDescriptor desc, string name = "")
+        {
+            desc.width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
+            desc.height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
+
+            RTCategory category = desc.bindMS ? RTCategory.MSAA : RTCategory.Regular;
+
+            var rt = new RenderTexture(desc);
+            rt.name = CoreUtils.GetRenderTargetAutoName(desc.width, desc.height, desc.volumeDepth, desc.colorFormat, name, mips: desc.useMipMap, enableMSAA: desc.bindMS, msaaSamples: m_ScaledRTCurrentMSAASamples);
+            rt.Create();
+
+            var rth = new RTHandle(this);
+            rth.SetRenderTexture(rt, category);
+            rth.m_EnableMSAA = desc.bindMS;
+            rth.m_EnableRandomWrite = desc.enableRandomWrite;
+            rth.useScaling = true;
+            rth.m_Name = name;
+            m_AutoSizedRTs.Add(rth);
+
+            rth.referenceSize = new Vector2Int(desc.width, desc.height);
+            return rth;
+        }
+
+        public RTHandle AllocFromDescriptor(ScaleFunc scaleFunc, RenderTextureDescriptor desc, string name = "")
+        {
+            var scaleFactor = scaleFunc(new Vector2Int(GetMaxWidth(), GetMaxHeight()));
+            desc.width = Mathf.Max(scaleFactor.x, 1);
+            desc.height = Mathf.Max(scaleFactor.y, 1);
+
+            RTCategory category = desc.bindMS ? RTCategory.MSAA : RTCategory.Regular;
+
+            var rt = new RenderTexture(desc);
+            rt.name = CoreUtils.GetRenderTargetAutoName(desc.width, desc.height, desc.volumeDepth, desc.colorFormat, name, mips: desc.useMipMap, enableMSAA: desc.bindMS, msaaSamples: m_ScaledRTCurrentMSAASamples);
+            rt.Create();
+
+            var rth = new RTHandle(this);
+            rth.SetRenderTexture(rt, category);
+            rth.m_EnableMSAA = desc.bindMS;
+            rth.m_EnableRandomWrite = desc.enableRandomWrite;
+            rth.useScaling = true;
+            rth.m_Name = name;
+            m_AutoSizedRTs.Add(rth);
+
+            rth.referenceSize = new Vector2Int(desc.width, desc.height);
+            rth.scaleFunc = scaleFunc;
+            return rth;
+        }
+
         public RTHandle AllocFromDefault(
             Vector2 scaleFactor,
             bool bindTextureMS,
@@ -459,39 +508,38 @@ namespace UnityEngine.Experimental.Rendering
             FilterMode filterMode,
             RenderTextureFormat colorFormat,
             bool sRGB,
-            string name)
+            string name = "")
         {
+            // If an MSAA target is requested, make sure the support was on
+            if (enableMSAA)
+                Debug.Assert(m_ScaledRTSupportsMSAA);
+
+            // Here user made a mistake in setting up msaa/bindMS, hence the warning
             if (!enableMSAA && bindTextureMS == true)
             {
                 Debug.LogWarning("RTHandle allocated without MSAA but with bindMS set to true, forcing bindMS to false.");
                 bindTextureMS = false;
             }
 
+            bool allocForMSAA = m_ScaledRTSupportsMSAA ? enableMSAA : false;
+            // Here we purposefully disable MSAA so we just force the bindMS param to false.
+            if (!allocForMSAA)
+            {
+                bindTextureMS = false;
+            }
+            int msaaSamples = allocForMSAA ? (int)m_ScaledRTCurrentMSAASamples : 1;
+
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
             overrideTextureDescriptor.sRGB = sRGB;
             overrideTextureDescriptor.colorFormat = colorFormat;
             overrideTextureDescriptor.bindMS = bindTextureMS;
+            overrideTextureDescriptor.msaaSamples = msaaSamples;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = enableMSAA ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.m_EnableMSAA = enableMSAA;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor);
+            rth.rt.filterMode = filterMode;
             return rth;
         }
+
         public RTHandle AllocFromDefault(
             Vector2 scaleFactor,
             bool bindTextureMS,
@@ -499,37 +547,34 @@ namespace UnityEngine.Experimental.Rendering
             DepthBits depthBufferBits,
             FilterMode filterMode,
             RenderTextureFormat colorFormat,
-            string name)
+            string name = "")
         {
+            // If an MSAA target is requested, make sure the support was on
+            if (enableMSAA)
+                Debug.Assert(m_ScaledRTSupportsMSAA);
+
+            // Here user made a mistake in setting up msaa/bindMS, hence the warning
             if (!enableMSAA && bindTextureMS == true)
             {
                 Debug.LogWarning("RTHandle allocated without MSAA but with bindMS set to true, forcing bindMS to false.");
                 bindTextureMS = false;
             }
 
+            bool allocForMSAA = m_ScaledRTSupportsMSAA ? enableMSAA : false;
+            // Here we purposefully disable MSAA so we just force the bindMS param to false.
+            if (!allocForMSAA)
+            {
+                bindTextureMS = false;
+            }
+            int msaaSamples = allocForMSAA ? (int)m_ScaledRTCurrentMSAASamples : 1;
+
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
             overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.depthBufferBits = (int)depthBufferBits;
             overrideTextureDescriptor.bindMS = bindTextureMS;
+            overrideTextureDescriptor.msaaSamples = msaaSamples;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * overrideTextureDescriptor.width), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * overrideTextureDescriptor.height), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = enableMSAA ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_EnableMSAA = enableMSAA;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode;
             return rth;
         }
         public RTHandle AllocFromDefault(
@@ -537,29 +582,14 @@ namespace UnityEngine.Experimental.Rendering
             FilterMode filterMode,
             RenderTextureFormat colorFormat,
             bool sRGB,
-            string name)
+            string name = "")
         {
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
             overrideTextureDescriptor.sRGB = sRGB;
             overrideTextureDescriptor.colorFormat = colorFormat;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * overrideTextureDescriptor.width), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * overrideTextureDescriptor.height), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode;
             return rth;
         }
         public RTHandle AllocFromDefault(
@@ -567,96 +597,14 @@ namespace UnityEngine.Experimental.Rendering
             DepthBits depthBufferBits,
             FilterMode filterMode,
             RenderTextureFormat colorFormat,
-            string name)
+            string name = "")
         {
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
             overrideTextureDescriptor.colorFormat = colorFormat;
             overrideTextureDescriptor.depthBufferBits = (int)depthBufferBits;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * overrideTextureDescriptor.width), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * overrideTextureDescriptor.height), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
-            return rth;
-        }
-
-        public RTHandle AllocFromDefault(
-            ScaleFunc scaleFunc,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            string name)
-        {
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-
-            var scaleFactor = scaleFunc(new Vector2Int(GetMaxWidth(), GetMaxHeight()));
-            int width = Mathf.Max(scaleFactor.x, 1);
-            int height = Mathf.Max(scaleFactor.y, 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFunc = scaleFunc;
-            m_AutoSizedRTs.Add(rth);
-
-            return rth;
-        }
-        public RTHandle AllocFromDefault(
-            ScaleFunc scaleFunc,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            bool enableRandomWrite,
-            string name)
-        {
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = enableRandomWrite;
-
-            var scaleFactor = scaleFunc(new Vector2Int(GetMaxWidth(), GetMaxHeight()));
-            int width = Mathf.Max(scaleFactor.x, 1);
-            int height = Mathf.Max(scaleFactor.y, 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFunc = scaleFunc;
-            m_AutoSizedRTs.Add(rth);
-
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode;
             return rth;
         }
         public RTHandle AllocFromDefault(
@@ -665,30 +613,24 @@ namespace UnityEngine.Experimental.Rendering
             RenderTextureFormat colorFormat,
             bool sRGB,
             bool enableRandomWrite,
-            string name)
+            string name = "")
         {
+            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
+            // MSAA Does not support random read/write.
+            bool UAV = enableRandomWrite;
+            if (allocForMSAA && (UAV == true))
+            {
+                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
+                UAV = false;
+            }
+
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
             overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = enableRandomWrite;
+            overrideTextureDescriptor.enableRandomWrite = UAV;
+            overrideTextureDescriptor.sRGB = sRGB;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode;
             return rth;
         }
         public RTHandle AllocFromDefault(
@@ -698,31 +640,25 @@ namespace UnityEngine.Experimental.Rendering
             RenderTextureFormat colorFormat,
             bool sRGB,
             bool enableRandomWrite,
-            string name)
+            string name = "")
         {
+            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
+            // MSAA Does not support random read/write.
+            bool UAV = enableRandomWrite;
+            if (allocForMSAA && (UAV == true))
+            {
+                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
+                UAV = false;
+            }
+
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
             overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = enableRandomWrite;
+            overrideTextureDescriptor.enableRandomWrite = UAV;
             overrideTextureDescriptor.depthBufferBits = (int)depthBufferBits;
+            overrideTextureDescriptor.sRGB = sRGB;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode;
             return rth;
         }
 
@@ -733,28 +669,25 @@ namespace UnityEngine.Experimental.Rendering
             bool sRGB,
             bool enableRandomWrite,
             bool useMipMap,
-            string name)
+            string name = "")
         {
+            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
+            // MSAA Does not support random read/write.
+            bool UAV = enableRandomWrite;
+            if (allocForMSAA && (UAV == true))
+            {
+                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
+                UAV = false;
+            }
+
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
             overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = enableRandomWrite;
+            overrideTextureDescriptor.enableRandomWrite = UAV;
             overrideTextureDescriptor.useMipMap = useMipMap;
+            overrideTextureDescriptor.sRGB = sRGB;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.SetRenderTexture(rt, category);
-
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode;
             return rth;
         }
         public RTHandle AllocFromDefault(
@@ -765,34 +698,63 @@ namespace UnityEngine.Experimental.Rendering
             bool enableRandomWrite,
             bool useMipMap,
             bool autoGenerateMips,
+            string name = "")
+        {
+            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
+            // MSAA Does not support random read/write.
+            bool UAV = enableRandomWrite;
+            if (allocForMSAA && (UAV == true))
+            {
+                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
+                UAV = false;
+            }
+
+            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
+            overrideTextureDescriptor.colorFormat = colorFormat;
+            overrideTextureDescriptor.enableRandomWrite = UAV;
+            overrideTextureDescriptor.useMipMap = useMipMap;
+            overrideTextureDescriptor.autoGenerateMips = autoGenerateMips;
+            overrideTextureDescriptor.sRGB = sRGB;
+
+            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode;
+            return rth;
+        }
+
+        public RTHandle AllocFromDefault(
+            ScaleFunc scaleFunc,
+            FilterMode filterMode,
+            RenderTextureFormat colorFormat,
+            bool sRGB,
+            string name = "")
+        {
+            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
+            overrideTextureDescriptor.sRGB = sRGB;
+            overrideTextureDescriptor.colorFormat = colorFormat;
+            
+            var rth = AllocFromDescriptor(scaleFunc, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode; // No way to pass in filtermode through descriptor
+            return rth;
+        }
+
+        public RTHandle AllocFromDefault(
+            ScaleFunc scaleFunc,
+            FilterMode filterMode,
+            RenderTextureFormat colorFormat,
+            bool sRGB,
+            bool enableRandomWrite,
             string name)
         {
             RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
             overrideTextureDescriptor.sRGB = sRGB;
             overrideTextureDescriptor.colorFormat = colorFormat;
             overrideTextureDescriptor.enableRandomWrite = enableRandomWrite;
-            overrideTextureDescriptor.useMipMap = useMipMap;
-            overrideTextureDescriptor.autoGenerateMips = autoGenerateMips;
 
-            int width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
-            int height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
-
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.filterMode = filterMode;
-            rt.name = name;
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.scaleFactor = scaleFactor;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
+            var rth = AllocFromDescriptor(scaleFunc, overrideTextureDescriptor, name);
+            rth.rt.filterMode = filterMode; // No way to pass in filtermode through descriptor
             return rth;
         }
+
 
         // Internal function
         RTHandle AllocAutoSizedRenderTexture(
