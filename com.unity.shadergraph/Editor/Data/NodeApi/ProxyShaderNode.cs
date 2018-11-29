@@ -148,6 +148,21 @@ namespace UnityEditor.ShaderGraph
                     case PortValueType.DynamicVector:
                         AddSlot(new DynamicVectorMaterialSlot(port.id, port.displayName, displayName, SlotType.Input, port.value.vector4Value));
                         break;
+                    case PortValueType.Matrix2x2:
+                        AddSlot(new Matrix2MaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.Matrix3x3:
+                        AddSlot(new Matrix3MaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.Matrix4x4:
+                        AddSlot(new Matrix4MaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.DynamicMatrix:
+                        AddSlot(new DynamicMatrixMaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.DynamicValue:
+                        AddSlot(new DynamicValueMaterialSlot(port.id, port.displayName, displayName, SlotType.Input, Matrix4x4.identity));
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -174,6 +189,21 @@ namespace UnityEditor.ShaderGraph
                         break;
                     case PortValueType.DynamicVector:
                         AddSlot(new DynamicVectorMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Matrix2x2:
+                        AddSlot(new Matrix2MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Matrix3x3:
+                        AddSlot(new Matrix3MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Matrix4x4:
+                        AddSlot(new Matrix4MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.DynamicMatrix:
+                        AddSlot(new DynamicMatrixMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.DynamicValue:
+                        AddSlot(new DynamicValueMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();

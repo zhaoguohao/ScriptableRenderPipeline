@@ -13,6 +13,9 @@ namespace UnityEditor.ShaderGraph
         [FieldOffset(4)]
         Vector4 m_Vector;
 
+        [FieldOffset(8)]
+        Matrix4x4 m_Matrix;
+
         PortValue(PortValueType type)
             : this()
         {
@@ -31,6 +34,16 @@ namespace UnityEditor.ShaderGraph
         
         public static PortValue DynamicVector(float value) => new PortValue(PortValueType.DynamicVector) { m_Vector = new Vector4(value, 0) };
 
+        public static PortValue Matrix2x2() => new PortValue(PortValueType.Matrix2x2) { m_Matrix = UnityEngine.Matrix4x4.identity };
+
+        public static PortValue Matrix3x3() => new PortValue(PortValueType.Matrix3x3) { m_Matrix = UnityEngine.Matrix4x4.identity };
+
+        public static PortValue Matrix4x4() => new PortValue(PortValueType.Matrix4x4) { m_Matrix = UnityEngine.Matrix4x4.identity };
+
+        public static PortValue DynamicMatrix() => new PortValue(PortValueType.DynamicMatrix) { m_Matrix = UnityEngine.Matrix4x4.identity };
+
+        public static PortValue DynamicValue(float value) => new PortValue(PortValueType.DynamicValue) { m_Vector = new Vector4(value, 0) };
+
         public PortValueType type => m_Type;
 
         public float vector1Value => m_Vector.x;
@@ -40,6 +53,8 @@ namespace UnityEditor.ShaderGraph
         public Vector3 vector3Value => m_Vector;
 
         public Vector4 vector4Value => m_Vector;
+
+        public Matrix4x4 matrix4x4Value => m_Matrix;
 
         public override string ToString()
         {
