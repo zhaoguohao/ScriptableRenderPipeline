@@ -108,7 +108,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var state in m_Graph.nodeTypeStates)
             {
-                Debug.Log($"{state.type.path}/{state.type.name}");
                 var node = new ProxyShaderNode(state);
                 AddEntries(node, state.type.path.Split('/').Append(state.type.name).ToArray(), nodeEntries);
             }
