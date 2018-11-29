@@ -145,6 +145,9 @@ namespace UnityEditor.ShaderGraph
                     case PortValueType.Vector4:
                         AddSlot(new Vector4MaterialSlot(port.id, port.displayName, displayName, SlotType.Input, port.value.vector4Value));
                         break;
+                    case PortValueType.DynamicVector:
+                        AddSlot(new DynamicVectorMaterialSlot(port.id, port.displayName, displayName, SlotType.Input, port.value.vector4Value));
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -168,6 +171,9 @@ namespace UnityEditor.ShaderGraph
                         break;
                     case PortValueType.Vector4:
                         AddSlot(new Vector4MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.DynamicVector:
+                        AddSlot(new DynamicVectorMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
