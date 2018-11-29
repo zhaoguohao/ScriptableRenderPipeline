@@ -12,8 +12,8 @@ namespace UnityEditor.ShaderGraph
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_APort = context.CreateInputPort(0, "A", PortValue.DynamicVector(0.5f));
-            m_BPort = context.CreateInputPort(1, "B", PortValue.DynamicVector(0.5f));
+            m_APort = context.CreateInputPort(0, "A", PortValue.DynamicVector(0f));
+            m_BPort = context.CreateInputPort(1, "B", PortValue.DynamicVector(2f));
             m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.DynamicVector);
 
             var type = new NodeTypeDescriptor
