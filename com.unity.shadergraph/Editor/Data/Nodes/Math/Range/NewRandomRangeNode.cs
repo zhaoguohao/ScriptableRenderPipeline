@@ -14,8 +14,8 @@ namespace UnityEditor.ShaderGraph
         public void Setup(ref NodeSetupContext context)
         {
             m_InPort = context.CreateInputPort(0, "In", PortValue.DynamicVector(.5f));
-            m_MinPort = context.CreateInputPort(1, "Min", PortValue.Vector1(0));
-            m_MaxPort = context.CreateInputPort(2, "Max", PortValue.Vector1(1));
+            m_MinPort = context.CreateInputPort(1, "Min", PortValue.DynamicVector(0));
+            m_MaxPort = context.CreateInputPort(2, "Max", PortValue.DynamicVector(1));
             m_OutPort = context.CreateOutputPort(3, "Out", PortValueType.DynamicVector);
 
             var type = new NodeTypeDescriptor
