@@ -1,3 +1,6 @@
+#ifndef __Unity_Hue__
+#define __Unity_Hue__
+
 real3 Unity_Hue(real3 IN, real offset, float offsetFactor)
 {
     // RGB to HSV
@@ -18,3 +21,5 @@ real3 Unity_Hue(real3 IN, real offset, float offsetFactor)
     real3 P2 = abs(frac(hsv.xxx + K2.xyz) * 6.0 - K2.www);
     return hsv.z * lerp(K2.xxx, saturate(P2 - K2.xxx), hsv.y);
 }
+
+#endif
