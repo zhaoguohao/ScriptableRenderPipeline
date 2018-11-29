@@ -3,22 +3,24 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewSquareRootNode : IShaderNodeType
+    class NewStepNode : IShaderNodeType
     {
-        InputPortRef m_InPort;
+        InputPortRef m_APort;
+        InputPortRef m_BPort;
         OutputPortRef m_OutPort;
         HlslSourceRef m_Source;
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_InPort = context.CreateInputPort(0, "In", PortValue.DynamicVector(0f));
-            m_OutPort = context.CreateOutputPort(1, "Out", PortValueType.DynamicVector);
+            m_APort = context.CreateInputPort(0, "Edge", PortValue.DynamicVector(1f));
+            m_BPort = context.CreateInputPort(1, "In", PortValue.DynamicVector(0f));
+            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.DynamicVector);
 
             var type = new NodeTypeDescriptor
             {
-                path = "Math/Basic",
-                name = "New Square Root",
-                inputs = new List<InputPortRef> { m_InPort },
+                path = "Math/Round",
+                name = "New Step",
+                inputs = new List<InputPortRef> { m_APort, m_BPort },
                 outputs = new List<OutputPortRef> { m_OutPort }
             };
             context.CreateType(type);
@@ -28,7 +30,7 @@ namespace UnityEditor.ShaderGraph
         {
             if (!m_Source.isValid)
             {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
+                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Round/Math_Round.hlsl");
             }
 
             foreach (var node in context.addedNodes)
@@ -36,8 +38,8 @@ namespace UnityEditor.ShaderGraph
                 context.SetHlslFunction(node, new HlslFunctionDescriptor
                 {
                     source = m_Source,
-                    name = "Unity_SquareRoot",
-                    arguments = new HlslArgumentList { m_InPort },
+                    name = "Unity_Step",
+                    arguments = new HlslArgumentList { m_APort, m_BPort },
                     returnValue = m_OutPort
                 });
             }

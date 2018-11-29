@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewSquareRootNode : IShaderNodeType
+    class NewFloorNode : IShaderNodeType
     {
         InputPortRef m_InPort;
         OutputPortRef m_OutPort;
@@ -16,8 +16,8 @@ namespace UnityEditor.ShaderGraph
 
             var type = new NodeTypeDescriptor
             {
-                path = "Math/Basic",
-                name = "New Square Root",
+                path = "Math/Round",
+                name = "New Floor",
                 inputs = new List<InputPortRef> { m_InPort },
                 outputs = new List<OutputPortRef> { m_OutPort }
             };
@@ -28,7 +28,7 @@ namespace UnityEditor.ShaderGraph
         {
             if (!m_Source.isValid)
             {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
+                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Round/Math_Round.hlsl");
             }
 
             foreach (var node in context.addedNodes)
@@ -36,7 +36,7 @@ namespace UnityEditor.ShaderGraph
                 context.SetHlslFunction(node, new HlslFunctionDescriptor
                 {
                     source = m_Source,
-                    name = "Unity_SquareRoot",
+                    name = "Unity_Floor",
                     arguments = new HlslArgumentList { m_InPort },
                     returnValue = m_OutPort
                 });
