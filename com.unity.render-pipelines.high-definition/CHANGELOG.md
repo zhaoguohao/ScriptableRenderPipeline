@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [5.2.0-preview] - 2018-11-27
 
 ### Added
+- Added the beginnings of single-pass instanced stereo support for HDRP, including SPI-specific compute kernels and dispatch code
 - Added option to run Contact Shadows and Volumetrics Voxelization stage in Async Compute
 - Added camera freeze debug mode - Allow to visually see culling result for a camera
 - Added support of Gizmo rendering before and after postprocess in Editor
@@ -62,8 +63,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [5.1.0-preview] - 2018-11-19
 
 ### Added
-- Added AllocFromDefault, which allocates textures from a default texture descriptor and selectively overrides attributes
-- Added the beginnings of single-pass instanced stereo support for HDRP, including SPI-specific compute kernels and dispatch code
 - Added a separate Editor resources file for resources Unity does not take when it builds a Player.
 - You can now disable SSR on Materials in Shader Graph.
 - Added support for MSAA when the Supported Lit Shader Mode is set to Both. Previously HDRP only supported MSAA for Forward mode.
