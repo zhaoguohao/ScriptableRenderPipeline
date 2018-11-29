@@ -3,24 +3,22 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewDivideNode : IShaderNodeType
+    class NewSquareRootNode : IShaderNodeType
     {
-        InputPortRef m_APort;
-        InputPortRef m_BPort;
+        InputPortRef m_InPort;
         OutputPortRef m_OutPort;
         HlslSourceRef m_Source;
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_APort = context.CreateInputPort(0, "A", PortValue.Vector1(1.0f));
-            m_BPort = context.CreateInputPort(1, "B", PortValue.Vector1(1.0f));
-            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.Vector1);
+            m_InPort = context.CreateInputPort(0, "In", PortValue.DynamicVector(0f));
+            m_OutPort = context.CreateOutputPort(1, "Out", PortValueType.DynamicVector);
 
             var type = new NodeTypeDescriptor
             {
                 path = "Math/Basic",
-                name = "New Divide",
-                inputs = new List<InputPortRef> { m_APort, m_BPort },
+                name = "New Square Root",
+                inputs = new List<InputPortRef> { m_InPort },
                 outputs = new List<OutputPortRef> { m_OutPort }
             };
             context.CreateType(type);
@@ -38,8 +36,8 @@ namespace UnityEditor.ShaderGraph
                 context.SetHlslFunction(node, new HlslFunctionDescriptor
                 {
                     source = m_Source,
-                    name = "Unity_Divide",
-                    arguments = new HlslArgumentList { m_APort, m_BPort },
+                    name = "Unity_SquareRoot",
+                    arguments = new HlslArgumentList { m_InPort },
                     returnValue = m_OutPort
                 });
             }

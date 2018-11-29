@@ -30,7 +30,7 @@ namespace UnityEditor.ShaderGraph
         {
             if (!m_Source.isValid)
             {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Math.hlsl");
+                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Vector/Math_Vector.hlsl");
             }
 
             foreach (var node in context.addedNodes)
