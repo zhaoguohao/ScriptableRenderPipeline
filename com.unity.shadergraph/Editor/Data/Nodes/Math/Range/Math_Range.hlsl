@@ -1,6 +1,8 @@
 #ifndef UNITY_SHADERGRAPH_MATH_RANGE
 #define UNITY_SHADERGRAPH_MATH_RANGE
 
+#include "Packages/com.unity.shadergraph/Editor/Data/Nodes/NodeUtil/NodeUtil_Numerics.hlsl"
+
 /****************************************************************
     
     Unity_Clamp
@@ -197,39 +199,91 @@ real4 Unity_OneMinus(real4 In)
 
 ****************************************************************/
 
-real Unity_RandomRange(real A, real B)
+real Unity_RandomRange(real Seed, real Min, real Max)
 {
-    return min(A, B);
+    return lerp( Min, Max, UnityUtil_Random( Seed ) );
 }
 
-real2 Unity_RandomRange(real2 A, real2 B)
+real2 Unity_RandomRange(real2 Seed, real2 Min, real2 Max)
 {
-    return min(A, B);
+    return lerp( Min, Max, UnityUtil_Random( Seed ) );
 }
 
-real3 Unity_RandomRange(real3 A, real3 B)
+real3 Unity_RandomRange(real3 Seed, real3 Min, real3 Max)
 {
-    return min(A, B);
+    return lerp( Min, Max, UnityUtil_Random( Seed ) );
 }
 
-real4 Unity_RandomRange(real4 A, real4 B)
+real4 Unity_RandomRange(real4 Seed, real4 Min, real4 Max)
 {
-    return min(A, B);
+    return lerp( Min, Max, UnityUtil_Random( Seed ) );
 }
 
-real2x2 Unity_RandomRange(real2x2 A, real2x2 B)
+/****************************************************************
+    
+    Unity_Remap
+
+****************************************************************/
+
+real Unity_Remap( real In, real2 InMinMax, real2 OutMinMax )
 {
-    return min(A, B);
+    return UnityUtil_Remap( In, InMinMax, OutMinMax );
 }
 
-real3x3 Unity_RandomRange(real3x3 A, real3x3 B)
+real2 Unity_Remap( real2 In, real2 InMinMax, real2 OutMinMax )
 {
-    return min(A, B);
+    return UnityUtil_Remap( In, InMinMax, OutMinMax );
 }
 
-real4x4 Unity_RandomRange(real4x4 A, real4x4 B)
+real3 Unity_Remap( real3 In, real2 InMinMax, real2 OutMinMax )
 {
-    return min(A, B);
+    return UnityUtil_Remap( In, InMinMax, OutMinMax );
+}
+
+real4 Unity_Remap( real4 In, real2 InMinMax, real2 OutMinMax )
+{
+    return UnityUtil_Remap( In, InMinMax, OutMinMax );
+}
+
+/****************************************************************
+    
+    Unity_Saturate
+
+****************************************************************/
+
+real Unity_Saturate( real In )
+{
+    return saturate(In);
+}
+
+real2 Unity_Saturate( real2 In )
+{
+    return saturate(In);
+}
+
+real3 Unity_Saturate( real3 In )
+{
+    return saturate(In);
+}
+
+real4 Unity_Saturate( real4 In )
+{
+    return saturate(In);
+}
+
+real2x2 Unity_Saturate(real2x2 In)
+{
+    return saturate(In);
+}
+
+real3x3 Unity_Saturate(real3x3 In)
+{
+    return saturate(In);
+}
+
+real4x4 Unity_Saturate(real4x4 In)
+{
+    return saturate(In);
 }
 
 #endif

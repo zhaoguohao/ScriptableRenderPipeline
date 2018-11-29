@@ -4,23 +4,21 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewMultiplyNode : IShaderNodeType
+    class NewSaturateNode : IShaderNodeType
     {
-        InputPortRef m_APort;
-        InputPortRef m_BPort;
+        InputPortRef m_InPort;
         OutputPortRef m_OutPort;
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_APort = context.CreateInputPort(0, "A", PortValue.Vector1(0.5f));
-            m_BPort = context.CreateInputPort(1, "B", PortValue.Vector1(0.5f));
-            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.Vector1);
+            m_InPort = context.CreateInputPort(0, "In", PortValue.DynamicVector(.5f));
+            m_OutPort = context.CreateOutputPort(1, "Out", PortValueType.DynamicVector);
 
             var type = new NodeTypeDescriptor
             {
-                path = "Math/Basic",
-                name = "New Multiply",
-                inputs = new List<InputPortRef> { m_APort, m_BPort },
+                path = "Math/Range",
+                name = "New Saturate",
+                inputs = new List<InputPortRef> { m_InPort },
                 outputs = new List<OutputPortRef> { m_OutPort }
             };
 
@@ -35,7 +33,7 @@ namespace UnityEditor.ShaderGraph
             // TODO: How does sharing files between multiple node types work?
             if (!m_Source.isValid)
             {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
+                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Range/Math_Range.hlsl");
             }
 
             foreach (var node in context.addedNodes)
@@ -43,8 +41,8 @@ namespace UnityEditor.ShaderGraph
                 context.SetHlslFunction(node, new HlslFunctionDescriptor
                 {
                     source = m_Source,
-                    name = "Unity_Multiply",
-                    arguments = new HlslArgumentList { m_APort, m_BPort },
+                    name = "Unity_Saturate",
+                    arguments = new HlslArgumentList { m_InPort },
                     returnValue = m_OutPort
                 });
             }
