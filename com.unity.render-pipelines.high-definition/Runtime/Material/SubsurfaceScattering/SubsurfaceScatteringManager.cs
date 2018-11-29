@@ -44,14 +44,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // In case of full forward we must allocate the render target for forward SSS (or reuse one already existing)
                 // TODO: Provide a way to reuse a render target
-                m_ColorMRTs[0] = RTHandles.AllocFromDefault(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: true, name: "SSSBuffer");
+                m_ColorMRTs[0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: true, name: "SSSBuffer", renderStereoIfVRActive: true);
                 m_ReuseGBufferMemory [0] = false;
             }
 
             // We need to allocate the texture if we are in forward or both in case one of the cameras is in enable forward only mode
             if (m_MSAASupport)
             {
-                 m_ColorMSAAMRTs[0] = RTHandles.AllocFromDefault(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, enableMSAA: true, bindTextureMS: true, sRGB: true, name: "SSSBufferMSAA");
+                 m_ColorMSAAMRTs[0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, enableMSAA: true, bindTextureMS: true, sRGB: true, name: "SSSBufferMSAA", renderStereoIfVRActive: true);
             }
 
             if ((settings.supportedLitShaderMode & RenderPipelineSettings.SupportedLitShaderMode.DeferredOnly) != 0) //deferred or both
@@ -64,11 +64,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (NeedTemporarySubsurfaceBuffer() || settings.supportMSAA)
             {
                 // Caution: must be same format as m_CameraSssDiffuseLightingBuffer
-                m_CameraFilteringBuffer = RTHandles.AllocFromDefault(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "SSSCameraFiltering"); // Enable UAV
+                m_CameraFilteringBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "SSSCameraFiltering", renderStereoIfVRActive: true); // Enable UAV
             }
 
             // We use 8x8 tiles in order to match the native GCN HTile as closely as possible.
-            m_HTile = RTHandles.AllocFromDefault(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "SSSHtile"); // Enable UAV
+            m_HTile = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "SSSHtile", renderStereoIfVRActive: true); // Enable UAV
         }
 
         public RTHandleSystem.RTHandle GetSSSBuffer(int index)

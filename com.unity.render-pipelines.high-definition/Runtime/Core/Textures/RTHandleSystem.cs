@@ -265,6 +265,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
+            bool renderStereoIfVRActive = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -275,26 +276,51 @@ namespace UnityEngine.Experimental.Rendering
                 Debug.LogWarning("RTHandle allocated without MSAA but with bindMS set to true, forcing bindMS to false.");
                 bindTextureMS = false;
             }
+            
+            RenderTexture rt;
 
-            var rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+            if (XRGraphics.enabled && renderStereoIfVRActive) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
-                hideFlags = HideFlags.HideAndDontSave,
-                volumeDepth = slices,
-                filterMode = filterMode,
-                wrapMode = wrapMode,
-                dimension = dimension,
-                enableRandomWrite = enableRandomWrite,
-                useMipMap = useMipMap,
-                autoGenerateMips = autoGenerateMips,
-                anisoLevel = anisoLevel,
-                mipMapBias = mipMapBias,
-                antiAliasing = (int)msaaSamples,
-                bindTextureMS = bindTextureMS,
-                useDynamicScale = useDynamicScale,
-                vrUsage = vrUsage,
-                memorylessMode = memoryless,
-                name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples)
-            };
+                RenderTextureDescriptor overrideDesc = s_DefaultDescriptor;
+                overrideDesc.width = width;
+                overrideDesc.height = height;
+                overrideDesc.depthBufferBits = (int)depthBufferBits;
+                overrideDesc.enableRandomWrite = enableRandomWrite;
+                overrideDesc.useMipMap = useMipMap;
+                overrideDesc.autoGenerateMips = autoGenerateMips;
+                overrideDesc.msaaSamples = (int)msaaSamples;
+                overrideDesc.bindMS = bindTextureMS;
+                overrideDesc.memoryless = memoryless;
+                rt = new RenderTexture(overrideDesc);
+                rt.name = CoreUtils.GetRenderTargetAutoName(width, height, overrideDesc.volumeDepth, colorFormat, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples);
+                rt.mipMapBias = mipMapBias;
+                rt.filterMode = filterMode;
+                rt.wrapMode = wrapMode;
+                rt.anisoLevel = anisoLevel;
+                rt.useDynamicScale = useDynamicScale;
+            }
+            else
+            {
+                rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+                {
+                    hideFlags = HideFlags.HideAndDontSave,
+                    volumeDepth = slices,
+                    filterMode = filterMode,
+                    wrapMode = wrapMode,
+                    dimension = dimension,
+                    enableRandomWrite = enableRandomWrite,
+                    useMipMap = useMipMap,
+                    autoGenerateMips = autoGenerateMips,
+                    anisoLevel = anisoLevel,
+                    mipMapBias = mipMapBias,
+                    antiAliasing = (int)msaaSamples,
+                    bindTextureMS = bindTextureMS,
+                    useDynamicScale = useDynamicScale,
+                    vrUsage = vrUsage,
+                    memorylessMode = memoryless,
+                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples)
+                };
+            }
             rt.Create();
 
             RTCategory category = enableMSAA ? RTCategory.MSAA : RTCategory.Regular;
@@ -332,6 +358,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
+            bool renderStereoIfVRActive = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -361,6 +388,7 @@ namespace UnityEngine.Experimental.Rendering
                     bindTextureMS,
                     useDynamicScale,
                     vrUsage,
+                    renderStereoIfVRActive,
                     memoryless,
                     name
                     );
@@ -399,6 +427,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
+            bool renderStereoIfVRActive = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -425,6 +454,7 @@ namespace UnityEngine.Experimental.Rendering
                     bindTextureMS,
                     useDynamicScale,
                     vrUsage,
+                    renderStereoIfVRActive,
                     memoryless,
                     name
                     );
@@ -433,309 +463,7 @@ namespace UnityEngine.Experimental.Rendering
 
             rth.scaleFunc = scaleFunc;
             return rth;
-        }
-        
-        public RTHandle AllocFromDescriptor(Vector2 scaleFactor, RenderTextureDescriptor desc, string name = "")
-        {
-            desc.width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
-            desc.height = Mathf.Max(Mathf.RoundToInt(scaleFactor.y * GetMaxHeight()), 1);
-
-            RTCategory category = desc.bindMS ? RTCategory.MSAA : RTCategory.Regular;
-
-            var rt = new RenderTexture(desc);
-            rt.name = CoreUtils.GetRenderTargetAutoName(desc.width, desc.height, desc.volumeDepth, desc.colorFormat, name, mips: desc.useMipMap, enableMSAA: desc.bindMS, msaaSamples: m_ScaledRTCurrentMSAASamples);
-            rt.Create();
-
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.m_EnableMSAA = desc.bindMS;
-            rth.m_EnableRandomWrite = desc.enableRandomWrite;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
-            rth.referenceSize = new Vector2Int(desc.width, desc.height);
-            return rth;
-        }
-
-        public RTHandle AllocFromDescriptor(ScaleFunc scaleFunc, RenderTextureDescriptor desc, string name = "")
-        {
-            var scaleFactor = scaleFunc(new Vector2Int(GetMaxWidth(), GetMaxHeight()));
-            desc.width = Mathf.Max(scaleFactor.x, 1);
-            desc.height = Mathf.Max(scaleFactor.y, 1);
-
-            RTCategory category = desc.bindMS ? RTCategory.MSAA : RTCategory.Regular;
-
-            var rt = new RenderTexture(desc);
-            rt.name = CoreUtils.GetRenderTargetAutoName(desc.width, desc.height, desc.volumeDepth, desc.colorFormat, name, mips: desc.useMipMap, enableMSAA: desc.bindMS, msaaSamples: m_ScaledRTCurrentMSAASamples);
-            rt.Create();
-
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.m_EnableMSAA = desc.bindMS;
-            rth.m_EnableRandomWrite = desc.enableRandomWrite;
-            rth.useScaling = true;
-            rth.m_Name = name;
-            m_AutoSizedRTs.Add(rth);
-
-            rth.referenceSize = new Vector2Int(desc.width, desc.height);
-            rth.scaleFunc = scaleFunc;
-            return rth;
-        }
-
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            bool bindTextureMS,
-            bool enableMSAA,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            string name = "")
-        {
-            // If an MSAA target is requested, make sure the support was on
-            if (enableMSAA)
-                Debug.Assert(m_ScaledRTSupportsMSAA);
-
-            // Here user made a mistake in setting up msaa/bindMS, hence the warning
-            if (!enableMSAA && bindTextureMS == true)
-            {
-                Debug.LogWarning("RTHandle allocated without MSAA but with bindMS set to true, forcing bindMS to false.");
-                bindTextureMS = false;
-            }
-
-            bool allocForMSAA = m_ScaledRTSupportsMSAA ? enableMSAA : false;
-            // Here we purposefully disable MSAA so we just force the bindMS param to false.
-            if (!allocForMSAA)
-            {
-                bindTextureMS = false;
-            }
-            int msaaSamples = allocForMSAA ? (int)m_ScaledRTCurrentMSAASamples : 1;
-
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.bindMS = bindTextureMS;
-            overrideTextureDescriptor.msaaSamples = msaaSamples;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            bool bindTextureMS,
-            bool enableMSAA,
-            DepthBits depthBufferBits,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            string name = "")
-        {
-            // If an MSAA target is requested, make sure the support was on
-            if (enableMSAA)
-                Debug.Assert(m_ScaledRTSupportsMSAA);
-
-            // Here user made a mistake in setting up msaa/bindMS, hence the warning
-            if (!enableMSAA && bindTextureMS == true)
-            {
-                Debug.LogWarning("RTHandle allocated without MSAA but with bindMS set to true, forcing bindMS to false.");
-                bindTextureMS = false;
-            }
-
-            bool allocForMSAA = m_ScaledRTSupportsMSAA ? enableMSAA : false;
-            // Here we purposefully disable MSAA so we just force the bindMS param to false.
-            if (!allocForMSAA)
-            {
-                bindTextureMS = false;
-            }
-            int msaaSamples = allocForMSAA ? (int)m_ScaledRTCurrentMSAASamples : 1;
-
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.bindMS = bindTextureMS;
-            overrideTextureDescriptor.msaaSamples = msaaSamples;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            string name = "")
-        {
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            DepthBits depthBufferBits,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            string name = "")
-        {
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.depthBufferBits = (int)depthBufferBits;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            bool enableRandomWrite,
-            string name = "")
-        {
-            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
-            // MSAA Does not support random read/write.
-            bool UAV = enableRandomWrite;
-            if (allocForMSAA && (UAV == true))
-            {
-                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
-                UAV = false;
-            }
-
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = UAV;
-            overrideTextureDescriptor.sRGB = sRGB;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            DepthBits depthBufferBits,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            bool enableRandomWrite,
-            string name = "")
-        {
-            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
-            // MSAA Does not support random read/write.
-            bool UAV = enableRandomWrite;
-            if (allocForMSAA && (UAV == true))
-            {
-                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
-                UAV = false;
-            }
-
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = UAV;
-            overrideTextureDescriptor.depthBufferBits = (int)depthBufferBits;
-            overrideTextureDescriptor.sRGB = sRGB;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            bool enableRandomWrite,
-            bool useMipMap,
-            string name = "")
-        {
-            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
-            // MSAA Does not support random read/write.
-            bool UAV = enableRandomWrite;
-            if (allocForMSAA && (UAV == true))
-            {
-                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
-                UAV = false;
-            }
-
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = UAV;
-            overrideTextureDescriptor.useMipMap = useMipMap;
-            overrideTextureDescriptor.sRGB = sRGB;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-        public RTHandle AllocFromDefault(
-            Vector2 scaleFactor,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            bool enableRandomWrite,
-            bool useMipMap,
-            bool autoGenerateMips,
-            string name = "")
-        {
-            bool allocForMSAA = m_ScaledRTSupportsMSAA ? s_DefaultDescriptor.bindMS : false;
-            // MSAA Does not support random read/write.
-            bool UAV = enableRandomWrite;
-            if (allocForMSAA && (UAV == true))
-            {
-                Debug.LogWarning("RTHandle that is MSAA-enabled cannot allocate MSAA RT with 'enableRandomWrite = true'.");
-                UAV = false;
-            }
-
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = UAV;
-            overrideTextureDescriptor.useMipMap = useMipMap;
-            overrideTextureDescriptor.autoGenerateMips = autoGenerateMips;
-            overrideTextureDescriptor.sRGB = sRGB;
-
-            var rth = AllocFromDescriptor(scaleFactor, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode;
-            return rth;
-        }
-
-        public RTHandle AllocFromDefault(
-            ScaleFunc scaleFunc,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            string name = "")
-        {
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            
-            var rth = AllocFromDescriptor(scaleFunc, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode; // No way to pass in filtermode through descriptor
-            return rth;
-        }
-
-        public RTHandle AllocFromDefault(
-            ScaleFunc scaleFunc,
-            FilterMode filterMode,
-            RenderTextureFormat colorFormat,
-            bool sRGB,
-            bool enableRandomWrite,
-            string name)
-        {
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.sRGB = sRGB;
-            overrideTextureDescriptor.colorFormat = colorFormat;
-            overrideTextureDescriptor.enableRandomWrite = enableRandomWrite;
-
-            var rth = AllocFromDescriptor(scaleFunc, overrideTextureDescriptor, name);
-            rth.rt.filterMode = filterMode; // No way to pass in filtermode through descriptor
-            return rth;
-        }
+        }     
 
 
         // Internal function
@@ -757,7 +485,8 @@ namespace UnityEngine.Experimental.Rendering
             bool enableMSAA,
             bool bindTextureMS,
             bool useDynamicScale,
-            VRTextureUsage vrUsage,
+            VRTextureUsage vrUsage, // Todo remove?
+            bool renderStereoIfVRActive,
             RenderTextureMemoryless memoryless,
             string name
             )
@@ -786,26 +515,50 @@ namespace UnityEngine.Experimental.Rendering
 
             int msaaSamples = allocForMSAA ? (int)m_ScaledRTCurrentMSAASamples : 1;
             RTCategory category = allocForMSAA ? RTCategory.MSAA : RTCategory.Regular;
+            RenderTexture rt;
 
-            var rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+            if (XRGraphics.enabled && renderStereoIfVRActive) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
-                hideFlags = HideFlags.HideAndDontSave,
-                volumeDepth = slices,
-                filterMode = filterMode,
-                wrapMode = wrapMode,
-                dimension = dimension,
-                enableRandomWrite = UAV,
-                useMipMap = useMipMap,
-                autoGenerateMips = autoGenerateMips,
-                anisoLevel = anisoLevel,
-                mipMapBias = mipMapBias,
-                antiAliasing = msaaSamples,
-                bindTextureMS = bindTextureMS,
-                useDynamicScale = useDynamicScale,
-                vrUsage = vrUsage,
-                memorylessMode = memoryless,
-                name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: allocForMSAA, msaaSamples: m_ScaledRTCurrentMSAASamples)
-            };
+                RenderTextureDescriptor overrideDesc = s_DefaultDescriptor;
+                overrideDesc.width = width;
+                overrideDesc.height = height;
+                overrideDesc.depthBufferBits = (int)depthBufferBits;
+                overrideDesc.enableRandomWrite = UAV;
+                overrideDesc.useMipMap = useMipMap;
+                overrideDesc.autoGenerateMips = autoGenerateMips;
+                overrideDesc.msaaSamples = msaaSamples;
+                overrideDesc.bindMS = bindTextureMS;
+                overrideDesc.memoryless = memoryless;
+                rt = new RenderTexture(overrideDesc);
+                rt.name = CoreUtils.GetRenderTargetAutoName(width, height, overrideDesc.volumeDepth, colorFormat, name, mips: useMipMap, enableMSAA: allocForMSAA, msaaSamples: m_ScaledRTCurrentMSAASamples);
+                rt.mipMapBias = mipMapBias;
+                rt.filterMode = filterMode;
+                rt.wrapMode = wrapMode;
+                rt.anisoLevel = anisoLevel;
+                rt.useDynamicScale = useDynamicScale;
+            }
+            else
+            {
+                rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+                {
+                    hideFlags = HideFlags.HideAndDontSave,
+                    volumeDepth = slices,
+                    filterMode = filterMode,
+                    wrapMode = wrapMode,
+                    dimension = dimension,
+                    enableRandomWrite = UAV,
+                    useMipMap = useMipMap,
+                    autoGenerateMips = autoGenerateMips,
+                    anisoLevel = anisoLevel,
+                    mipMapBias = mipMapBias,
+                    antiAliasing = msaaSamples,
+                    bindTextureMS = bindTextureMS,
+                    useDynamicScale = useDynamicScale,
+                    vrUsage = vrUsage,
+                    memorylessMode = memoryless,
+                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: allocForMSAA, msaaSamples: m_ScaledRTCurrentMSAASamples)
+                };
+            }
             rt.Create();
 
             var rth = new RTHandle(this);
