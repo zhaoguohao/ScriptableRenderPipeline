@@ -16,6 +16,9 @@ namespace UnityEditor.ShaderGraph
         [FieldOffset(8)]
         Matrix4x4 m_Matrix;
 
+        [FieldOffset(12)]
+        Texture m_Texture;
+
         PortValue(PortValueType type)
             : this()
         {
@@ -44,6 +47,16 @@ namespace UnityEditor.ShaderGraph
 
         public static PortValue DynamicValue(float value) => new PortValue(PortValueType.DynamicValue) { m_Vector = new Vector4(value, 0) };
 
+        public static PortValue Texture2D(Texture2D texture) => new PortValue(PortValueType.Texture2D) { m_Texture = texture };
+
+        public static PortValue Texture3D(Texture3D texture) => new PortValue(PortValueType.Texture3D) { m_Texture = texture };
+
+        public static PortValue Texture2DArray(Texture2DArray texture) => new PortValue(PortValueType.Texture2DArray) { m_Texture = texture };
+
+        public static PortValue Cubemap(Cubemap texture) => new PortValue(PortValueType.Cubemap) { m_Texture = texture };
+
+        public static PortValue SamplerState() => new PortValue(PortValueType.SamplerState);
+
         public PortValueType type => m_Type;
 
         public float vector1Value => m_Vector.x;
@@ -55,6 +68,14 @@ namespace UnityEditor.ShaderGraph
         public Vector4 vector4Value => m_Vector;
 
         public Matrix4x4 matrix4x4Value => m_Matrix;
+
+        public Texture2D texture2DValue => (Texture2D)m_Texture;
+
+        public Texture3D texture3DValue => (Texture3D)m_Texture;
+
+        public Texture2DArray texture2DArrayValue => (Texture2DArray)m_Texture;
+
+        public Cubemap cubemapValue => (Cubemap)m_Texture;
 
         public override string ToString()
         {

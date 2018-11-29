@@ -12,5 +12,10 @@ namespace UnityEditor.ShaderGraph
         Matrix4x4,
         DynamicMatrix,
         DynamicValue,
+        Texture2D,
+        Texture3D,
+        Texture2DArray,
+        Cubemap,
+        SamplerState,
     }
 }
