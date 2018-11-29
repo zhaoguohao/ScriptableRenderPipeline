@@ -285,6 +285,8 @@ namespace UnityEngine.Experimental.Rendering
                 overrideDesc.width = width;
                 overrideDesc.height = height;
                 overrideDesc.depthBufferBits = (int)depthBufferBits;
+                overrideDesc.colorFormat = colorFormat;
+                overrideDesc.sRGB = sRGB;
                 overrideDesc.enableRandomWrite = enableRandomWrite;
                 overrideDesc.useMipMap = useMipMap;
                 overrideDesc.autoGenerateMips = autoGenerateMips;
@@ -523,6 +525,8 @@ namespace UnityEngine.Experimental.Rendering
                 overrideDesc.width = width;
                 overrideDesc.height = height;
                 overrideDesc.depthBufferBits = (int)depthBufferBits;
+                overrideDesc.colorFormat = colorFormat;
+                overrideDesc.sRGB = sRGB;
                 overrideDesc.enableRandomWrite = UAV;
                 overrideDesc.useMipMap = useMipMap;
                 overrideDesc.autoGenerateMips = autoGenerateMips;
