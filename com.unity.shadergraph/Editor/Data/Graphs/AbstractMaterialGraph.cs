@@ -104,7 +104,7 @@ namespace UnityEditor.ShaderGraph
         {
             get { return m_PastedNodes; }
         }
-
+        
         #endregion
 
         #region Group Data
@@ -223,8 +223,9 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
-        public List<NodeTypeState> nodeTypeStates { get; } = new List<NodeTypeState>();
+        public MessageManager messageManager { get; set; }
 
+        public List<NodeTypeState> nodeTypeStates { get; } = new List<NodeTypeState>();
         int m_CurrentContextId = 1;
 
         public int currentContextId => m_CurrentContextId;
@@ -466,6 +467,7 @@ namespace UnityEditor.ShaderGraph
             m_Nodes[materialNode.tempId.index] = null;
             m_FreeNodeTempIds.Push(materialNode.tempId);
             m_NodeDictionary.Remove(materialNode.guid);
+            messageManager.RemoveNode(materialNode.tempId);
             m_RemovedNodes.Add(materialNode);
 
             if (m_GroupNodes.TryGetValue(materialNode.groupGuid, out var nodes))
@@ -762,6 +764,7 @@ namespace UnityEditor.ShaderGraph
             foreach (var pNode in propertyNodes)
                 ReplacePropertyNodeWithConcreteNodeNoValidate(pNode);
 
+            messageManager?.ClearAllFromProvider(this);
             //First validate edges, remove any
             //orphans. This can happen if a user
             //manually modifies serialized data
@@ -804,6 +807,11 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
+        public void AddValidationError(Identifier id, string errorMessage)
+        {
+            messageManager?.AddOrAppendError(this, id, new ShaderMessage(errorMessage));;
+        }
+        
         public void ReplaceWith(IGraph other)
         {
             var otherMg = other as AbstractMaterialGraph;
