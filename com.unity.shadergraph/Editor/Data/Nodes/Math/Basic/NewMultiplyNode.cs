@@ -13,7 +13,6 @@ namespace UnityEditor.ShaderGraph
         public void Setup(ref NodeSetupContext context)
         {
             m_aPort = context.CreateInputPort(0, "A", PortValue.Vector1(0.5f));
-            m_aPort.bindingType = new BindingUV(0);
             m_bPort = context.CreateInputPort(1, "B", PortValue.Vector1(0.5f));
             m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.Vector1);
 
