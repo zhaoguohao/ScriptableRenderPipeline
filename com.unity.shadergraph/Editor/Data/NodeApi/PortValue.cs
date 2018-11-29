@@ -28,6 +28,8 @@ namespace UnityEditor.ShaderGraph
         public static PortValue Vector3(Vector3 value) => new PortValue(PortValueType.Vector3) { m_Vector = value };
 
         public static PortValue Vector4(Vector4 value) => new PortValue(PortValueType.Vector4) { m_Vector = value };
+        
+        public static PortValue DynamicVector(float value) => new PortValue(PortValueType.DynamicVector) { m_Vector = new Vector4(value, 0) };
 
         public PortValueType type => m_Type;
 

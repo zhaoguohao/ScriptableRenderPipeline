@@ -5,6 +5,7 @@ namespace UnityEditor.ShaderGraph
         Vector1 = 1,
         Vector2,
         Vector3,
-        Vector4
+        Vector4,
+        DynamicVector
     }
 }
