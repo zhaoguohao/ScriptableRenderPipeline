@@ -11,10 +11,6 @@ namespace UnityEngine.Experimental.Rendering
         public static int maxWidth { get { return s_DefaultInstance.GetMaxWidth(); } }
         public static int maxHeight { get { return s_DefaultInstance.GetMaxHeight(); } }
 
-        public static RTHandleSystem.RTHandle AllocFromDefault(int width, int height)
-        {
-            return XRGraphics.enabled ? s_DefaultInstance.AllocFromDefault(width, height) : s_DefaultInstance.Alloc(width, height);
-        }
         public static RTHandleSystem.RTHandle AllocFromDefault(
             Vector2 scaleFactor,
             FilterMode filterMode,

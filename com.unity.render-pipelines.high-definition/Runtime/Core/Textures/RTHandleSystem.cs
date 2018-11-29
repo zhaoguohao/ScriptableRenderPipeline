@@ -434,25 +434,7 @@ namespace UnityEngine.Experimental.Rendering
             rth.scaleFunc = scaleFunc;
             return rth;
         }
-
-        public RTHandle AllocFromDefault(int width, int height)
-        {
-            RenderTextureDescriptor overrideTextureDescriptor = s_DefaultDescriptor;
-            overrideTextureDescriptor.width = width;
-            overrideTextureDescriptor.height = height;
-            var rt = new RenderTexture(overrideTextureDescriptor);
-            rt.Create();
-
-            RTCategory category = (s_DefaultDescriptor.msaaSamples > 1) ? RTCategory.MSAA : RTCategory.Regular;
-            var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
-            rth.referenceSize = new Vector2Int(width, height);
-            rth.useScaling = true;
-            m_AutoSizedRTs.Add(rth);
-
-            return rth;
-        }
-
+        
         public RTHandle AllocFromDescriptor(Vector2 scaleFactor, RenderTextureDescriptor desc, string name = "")
         {
             desc.width = Mathf.Max(Mathf.RoundToInt(scaleFactor.x * GetMaxWidth()), 1);
