@@ -460,7 +460,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var edge in m_Graph.removedEdges)
             {
                 var edgeView = m_GraphView.graphElements.ToList().OfType<Edge>()
-                    .FirstOrDefault(p => p.userData is IEdge && Equals((ShaderEdge) p.userData, edge));
+                    .FirstOrDefault(p => p.userData is ShaderEdge && Equals((ShaderEdge) p.userData, edge));
                 if (edgeView != null)
                 {
                     var nodeView = edgeView.input.node as MaterialNodeView;
