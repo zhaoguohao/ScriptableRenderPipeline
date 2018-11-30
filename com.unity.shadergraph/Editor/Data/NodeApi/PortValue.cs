@@ -16,7 +16,7 @@ namespace UnityEditor.ShaderGraph
         [FieldOffset(8)]
         Matrix4x4 m_Matrix;
 
-        [FieldOffset(12)]
+        [FieldOffset(24)]
         Texture m_Texture;
 
         PortValue(PortValueType type)
