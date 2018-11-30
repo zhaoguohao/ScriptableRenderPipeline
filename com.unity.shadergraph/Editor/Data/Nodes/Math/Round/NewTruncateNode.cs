@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿/*
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
@@ -41,3 +42,4 @@ namespace UnityEditor.ShaderGraph
         }
     }
 }
+*/
