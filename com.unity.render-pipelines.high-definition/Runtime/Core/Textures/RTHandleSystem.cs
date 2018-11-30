@@ -255,7 +255,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
-            bool renderStereoIfVRActive = false, // true if texture is a screen-space texture
+            bool requireStereoSupport = true, // true if texture is a screen-space texture
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -269,7 +269,7 @@ namespace UnityEngine.Experimental.Rendering
             
             RenderTexture rt;
 
-            if (XRGraphics.enabled && renderStereoIfVRActive) // Only use eyeTextureDesc texture if texture must be rendered in stereo
+            if (XRGraphics.enabled && requireStereoSupport) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
                 RenderTextureDescriptor overrideDesc = XRGraphics.eyeTextureDesc;
                 // VRDevice's eye texture has authority over the following:
@@ -354,7 +354,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
-            bool renderStereoIfVRActive = false,
+            bool requireStereoSupport = true,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -384,7 +384,7 @@ namespace UnityEngine.Experimental.Rendering
                     bindTextureMS,
                     useDynamicScale,
                     vrUsage,
-                    renderStereoIfVRActive,
+                    requireStereoSupport,
                     memoryless,
                     name
                     );
@@ -423,7 +423,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
-            bool renderStereoIfVRActive = false,
+            bool requireStereoSupport = true,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -450,7 +450,7 @@ namespace UnityEngine.Experimental.Rendering
                     bindTextureMS,
                     useDynamicScale,
                     vrUsage,
-                    renderStereoIfVRActive,
+                    requireStereoSupport,
                     memoryless,
                     name
                     );
@@ -482,7 +482,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS,
             bool useDynamicScale,
             VRTextureUsage vrUsage, // Todo remove?
-            bool renderStereoIfVRActive, // true if texture is a screen-space texture
+            bool requireStereoSupport, // true if texture is a screen-space texture
             RenderTextureMemoryless memoryless,
             string name
             )
@@ -513,7 +513,7 @@ namespace UnityEngine.Experimental.Rendering
             RTCategory category = allocForMSAA ? RTCategory.MSAA : RTCategory.Regular;
             RenderTexture rt;
 
-            if (XRGraphics.enabled && renderStereoIfVRActive) // Only use eyeTextureDesc texture if texture must be rendered in stereo
+            if (XRGraphics.enabled && requireStereoSupport) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
                 RenderTextureDescriptor overrideDesc = XRGraphics.eyeTextureDesc;
                 // VRDevice's eye texture has authority over the following:

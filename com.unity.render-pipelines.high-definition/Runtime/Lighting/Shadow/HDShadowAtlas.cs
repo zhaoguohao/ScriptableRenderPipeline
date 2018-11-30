@@ -42,7 +42,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_Atlas != null)
                 m_Atlas.Release();
             
-            m_Atlas = RTHandles.Alloc(width, height, filterMode: m_FilterMode, depthBufferBits: m_DepthBufferBits, sRGB: false, colorFormat: m_Format, name: m_Name);
+            m_Atlas = RTHandles.Alloc(width, height, filterMode: m_FilterMode, depthBufferBits: m_DepthBufferBits, sRGB: false, colorFormat: m_Format, name: m_Name, requireStereoSupport: false);
             identifier = new RenderTargetIdentifier(m_Atlas);
         }
 
