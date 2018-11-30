@@ -6,27 +6,22 @@ namespace UnityEditor.ShaderGraph
 {
     class NewCheckerboardNode : IShaderNodeType
     {
-        InputPortRef m_inPortUV;
-        InputPortRef m_inPortColorA;
-        InputPortRef m_inPortColorB;
-        InputPortRef m_inPortFrequency;
-        OutputPortRef m_outPortResult;
+        InputPort m_inPortUV = new InputPort(0, "UV", PortValue.Vector2(Vector2.zero));
+        InputPort m_inPortColorA = new InputPort(1, "ColorA", PortValue.Vector3(Vector3.zero));
+        InputPort m_inPortColorB = new InputPort(2, "ColorB", PortValue.Vector3(Vector3.one));
+        InputPort m_inPortFrequency = new InputPort(3, "Frequency", PortValue.Vector2(Vector2.one));
+        OutputPort m_outPortResult = new OutputPort(4, "Out", PortValueType.Vector3);
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_inPortUV = context.CreateInputPort(0, "UV", PortValue.Vector2(Vector2.zero));
-            m_inPortColorA = context.CreateInputPort(1, "ColorA", PortValue.Vector3(Vector3.zero));
-            m_inPortColorB = context.CreateInputPort(2, "ColorB", PortValue.Vector3(Vector3.one));
-            m_inPortFrequency = context.CreateInputPort(3, "Frequency", PortValue.Vector2(Vector2.one));
-            m_outPortResult = context.CreateOutputPort(4, "Out", PortValueType.Vector3);
             var type = new NodeTypeDescriptor
             {
                 path = "Procedural/Checkerboard",
                 name = "New Checkerboard",
-                inputs = new List<InputPortRef> { m_inPortUV, m_inPortColorA, m_inPortColorB, m_inPortFrequency },
-                outputs = new List<OutputPortRef> { m_outPortResult }
+                inputs = new List<InputPort> { m_inPortUV, m_inPortColorA, m_inPortColorB, m_inPortFrequency },
+                outputs = new List<OutputPort> { m_outPortResult }
             };
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
         HlslSourceRef m_Source;

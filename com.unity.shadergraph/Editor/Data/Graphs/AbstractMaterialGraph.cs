@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -266,7 +266,7 @@ namespace UnityEditor.ShaderGraph
                         state.shaderNodeType.Setup(ref context);
                         if (!context.nodeTypeCreated)
                         {
-                            throw new InvalidOperationException($"An {nameof(IShaderNodeType)} must provide a type via {nameof(NodeSetupContext)}.{nameof(NodeSetupContext.CreateType)}({nameof(NodeTypeDescriptor)}).");
+                            throw new InvalidOperationException($"An {nameof(IShaderNodeType)} must provide a type via {nameof(NodeSetupContext)}.{nameof(NodeSetupContext.CreateNodeType)}({nameof(NodeTypeDescriptor)}).");
                         }
                         nodeTypeStates.Add(state);
                     }

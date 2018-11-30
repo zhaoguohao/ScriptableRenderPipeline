@@ -127,9 +127,10 @@ namespace UnityEditor.ShaderGraph
             var validSlotIds = new List<int>();
 
             // TODO: Properly handle shaderOutputName (i.e.
-            foreach (var portRef in typeState.type.inputs)
+            foreach (InputPort iport in typeState.type.inputs)
             {
-                var port = typeState.inputPorts[portRef.index];
+                // find matching port in registered values
+                var port = typeState.inputPorts[iport.inputPortRef.index];
                 var displayName = $"{NodeUtils.GetHLSLSafeName(port.displayName)}{port.id}";
                 switch (port.value.type)
                 {
@@ -184,9 +185,10 @@ namespace UnityEditor.ShaderGraph
                 validSlotIds.Add(port.id);
             }
 
-            foreach (var portRef in typeState.type.outputs)
+            foreach (var oport in typeState.type.outputs)
             {
-                var port = typeState.outputPorts[portRef.index];
+                // find matching port in registered values
+                var port = typeState.outputPorts[oport.outputPortRef.index];
                 var displayName = $"{NodeUtils.GetHLSLSafeName(port.displayName)}{port.id}";
                 switch (port.type)
                 {
@@ -256,7 +258,7 @@ namespace UnityEditor.ShaderGraph
                     continue;
                 }
 
-                var slotId = typeState.outputPorts[argument.outputPortRef.index].id;
+                var slotId = argument.outputPortID;
                 var slot = FindSlot<MaterialSlot>(slotId);
                 var typeStr = NodeUtils.ConvertConcreteSlotValueTypeToString(precision, slot.concreteValueType);
                 var variableStr = GetVariableNameForSlot(slotId);
@@ -264,9 +266,9 @@ namespace UnityEditor.ShaderGraph
             }
 
             // Declare variable for return value, and set it to the return value from the following function call.
-            if (function.returnValue.isValid)
+            if (function.returnValue.outputPortRef.isValid)
             {
-                var slotId = typeState.outputPorts[function.returnValue.index].id;
+                var slotId = function.returnValue.id;
                 var slot = FindSlot<MaterialSlot>(slotId);
                 var typeStr = NodeUtils.ConvertConcreteSlotValueTypeToString(precision, slot.concreteValueType);
                 builder.Append($"{typeStr} {GetVariableNameForSlot(slotId)} = ");
@@ -288,11 +290,11 @@ namespace UnityEditor.ShaderGraph
                 switch (argument.type)
                 {
                     case HlslArgumentType.InputPort:
-                        var inputSlotId = typeState.inputPorts[argument.inputPortRef.index].id;
+                        var inputSlotId = argument.inputPortID;
                         builder.Append(GetSlotValue(inputSlotId, generationMode));
                         break;
                     case HlslArgumentType.OutputPort:
-                        var outputSlotId = typeState.outputPorts[argument.outputPortRef.index].id;
+                        var outputSlotId = argument.outputPortID;
                         builder.Append(GetVariableNameForSlot(outputSlotId));
                         break;
                     case HlslArgumentType.Vector1:

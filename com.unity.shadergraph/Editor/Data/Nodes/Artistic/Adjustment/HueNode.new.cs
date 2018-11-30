@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,23 +6,20 @@ namespace UnityEditor.ShaderGraph
 {
     class NewHueNode : IShaderNodeType
     {
-        InputPortRef m_InPort;
-        InputPortRef m_OffsetPort;
-        OutputPortRef m_OutPort;
+        InputPort m_InPort = new InputPort(0, "In", PortValue.Vector3());
+        InputPort m_OffsetPort = new InputPort(1, "Offset", PortValue.Vector1(0.5f));
+        OutputPort m_OutPort = new OutputPort(2, "Out", PortValueType.Vector3);
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_InPort = context.CreateInputPort(0, "In", PortValue.Vector3());
-            m_OffsetPort = context.CreateInputPort(1, "Offset", PortValue.Vector1(0.5f));
-            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.Vector3);
             var type = new NodeTypeDescriptor
             {
                 path = "Artistic/Adjustment",
                 name = "New Hue",
-                inputs = new List<InputPortRef> { m_InPort, m_OffsetPort },
-                outputs = new List<OutputPortRef> { m_OutPort }
+                inputs = new List<InputPort> { m_InPort, m_OffsetPort },
+                outputs = new List<OutputPort> { m_OutPort }
             };
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
         HlslSourceRef m_Source;

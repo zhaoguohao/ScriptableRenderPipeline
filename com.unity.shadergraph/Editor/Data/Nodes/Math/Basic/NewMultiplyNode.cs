@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,25 +6,21 @@ namespace UnityEditor.ShaderGraph
 {
     class NewMultiplyNode : IShaderNodeType
     {
-        InputPortRef m_aPort;
-        InputPortRef m_bPort;
-        OutputPortRef m_OutPort;
+        InputPort m_aPort = new InputPort(0, "A", PortValue.DynamicVector(0f));
+        InputPort m_bPort = new InputPort(1, "B", PortValue.DynamicVector(2f));
+        OutputPort m_OutPort = new OutputPort(2, "Out", PortValueType.DynamicVector);
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_aPort = context.CreateInputPort(0, "A", PortValue.DynamicVector(0f));
-            m_bPort = context.CreateInputPort(1, "B", PortValue.DynamicVector(2f));
-            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.DynamicVector);
-
             var type = new NodeTypeDescriptor
             {
                 path = "Math/Basic",
                 name = "New Multiply",
-                inputs = new List<InputPortRef> { m_aPort, m_bPort },
-                outputs = new List<OutputPortRef> { m_OutPort }
+                inputs = new List<InputPort> { m_aPort, m_bPort },
+                outputs = new List<OutputPort> { m_OutPort }
             };
 
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
         HlslSourceRef m_Source;

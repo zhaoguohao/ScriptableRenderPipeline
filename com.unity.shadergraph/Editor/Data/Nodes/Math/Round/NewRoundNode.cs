@@ -1,27 +1,24 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
     class NewRoundNode : IShaderNodeType
     {
-        InputPortRef m_InPort;
-        OutputPortRef m_OutPort;
+        InputPort m_InPort = new InputPort(0, "In", PortValue.DynamicVector(0f));
+        OutputPort m_OutPort = new OutputPort(1, "Out", PortValueType.DynamicVector);
         HlslSourceRef m_Source;
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_InPort = context.CreateInputPort(0, "In", PortValue.DynamicVector(0f));
-            m_OutPort = context.CreateOutputPort(1, "Out", PortValueType.DynamicVector);
-
             var type = new NodeTypeDescriptor
             {
                 path = "Math/Round",
                 name = "New Round",
-                inputs = new List<InputPortRef> { m_InPort },
-                outputs = new List<OutputPortRef> { m_OutPort }
+                inputs = new List<InputPort> { m_InPort },
+                outputs = new List<OutputPort> { m_OutPort }
             };
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
         public void OnChange(ref NodeTypeChangeContext context)
