@@ -114,7 +114,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     enableMSAA: false,
                     name: "Temp Gaussian Pyramid Target",
                     dimension: source.dimension,
-                    slices: (source.dimension == TextureDimension.Tex2DArray) ? XRGraphics.NumSlices : 1
+                    slices: (source.dimension == TextureDimension.Tex2DArray) ? 2 : 1 // VR TODO generalize to more eyes
                 );
             }
 

@@ -159,39 +159,12 @@ namespace UnityEngine.Rendering
                 return XRSettings.eyeTextureHeight;
             }
         }
-        public static int NumSlices
-        {
-            get
-            {
-                if (!enabled) // Need to check that XR is enabled before anything else
-                    return 1;
-                if (UsingTexArray)
-                    return 2; // TODO VR: Generalize this for numEyes > 2 when StarVR support lands
-                else
-                    return 1;
-            }
-        }
-        public static int DepthSlice
-        {
-            get
-            {
-                if (!enabled)
-                    return 0;
-                if (UsingTexArray)
-                    return -1;
-                else
-                    return 0;
-            }
-        }
 
-        public static bool UsingTexArray
+        public static bool usingTexArray()
         {
-            get
-            {
-                if (!enabled)
-                    return false;
-                return ((stereoRenderingMode == StereoRenderingMode.SinglePassInstanced) || (stereoRenderingMode == StereoRenderingMode.SinglePassMultiView));
-            }
+            if (!enabled)
+                return false;
+            return ((stereoRenderingMode == StereoRenderingMode.SinglePassInstanced) || (stereoRenderingMode == StereoRenderingMode.SinglePassMultiView));
         }
 
     }

@@ -154,9 +154,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #endif
         }
 
-        public static int GetDepthSlice(RTHandleSystem.RTHandle buffer)
+        public static int GetDepthSlice(HDCamera cam)
         {
-            return (buffer.m_RT.dimension == TextureDimension.Tex2DArray || buffer.m_RT.dimension == TextureDimension.CubeArray) ? -1 : 0;
+            if (cam.camera.stereoEnabled)
+                return XRGraphics.usingTexArray() ? -1 : 0;
+            else
+                return 0;
         }
 
         // This set of RenderTarget management methods is supposed to be used when rendering into a camera dependent render texture.
@@ -164,7 +167,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // TODO add overloads for explicit depthslice binding as needed
         public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RTHandleSystem.RTHandle buffer, ClearFlag clearFlag, Color clearColor, int miplevel = 0, CubemapFace cubemapFace = CubemapFace.Unknown)
         {
-            int depthSlice = GetDepthSlice(buffer);
+            int depthSlice = GetDepthSlice(camera);
             cmd.SetRenderTarget(buffer, miplevel, cubemapFace, depthSlice);
             SetViewportAndClear(cmd, camera, buffer, clearFlag, clearColor);
         }
@@ -207,7 +210,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             Debug.Assert(cw == dw && ch == dh);
 
-            int depthSlice = GetDepthSlice(colorBuffer);
+            int depthSlice = GetDepthSlice(camera);
 
             CoreUtils.SetRenderTarget(cmd, colorBuffer, depthBuffer, miplevel, cubemapFace, depthSlice);
             SetViewportAndClear(cmd, camera, colorBuffer, clearFlag, clearColor);
@@ -228,11 +231,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static void SetRenderTarget(CommandBuffer cmd, HDCamera camera, RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthBuffer, ClearFlag clearFlag, Color clearColor)
         {   // TODO VR: Modify/overload this if there is ever a situation where:
             // - Stereo is enabled on input camera
-            // - XRGraphics.UsingTexArray is true, but
+            // - XRGraphics.usingTexArray() is true, but
             // - We want this camera to render to a non-arrayed texture
-            if (camera.camera.stereoEnabled && XRGraphics.UsingTexArray)
-                cmd.SetRenderTarget(colorBuffers, depthBuffer, 0, CubemapFace.Unknown, -1);
-            else
+            int depthSlice = GetDepthSlice(camera);
                 cmd.SetRenderTarget(colorBuffers, depthBuffer);
             SetViewportAndClear(cmd, camera, depthBuffer, clearFlag, clearColor);
         }
@@ -356,7 +357,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RenderTargetIdentifier colorBuffer,
             MaterialPropertyBlock properties = null, int shaderPassId = 0)
         {
-            CoreUtils.SetRenderTarget(commandBuffer, colorBuffer, depthSlice: XRGraphics.DepthSlice);
+            if (XRGraphics.usingTexArray())
+                CoreUtils.SetRenderTarget(commandBuffer, colorBuffer, depthSlice: -1);
+            else
+                CoreUtils.SetRenderTarget(commandBuffer, colorBuffer);
             commandBuffer.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, camera.doubleBufferedViewportScale);
             commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassId, MeshTopology.Triangles, 3, 1, properties);
         }

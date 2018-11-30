@@ -279,7 +279,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SharedRTManager.Build(asset);
 
             // Initialize various compute shader resources
-            m_applyDistortionKernel = (XRGraphics.UsingTexArray) ? m_applyDistortionCS.FindKernel("KMainSPI") : m_applyDistortionCS.FindKernel("KMain");
+            m_applyDistortionKernel = (XRGraphics.usingTexArray()) ? m_applyDistortionCS.FindKernel("KMainSPI") : m_applyDistortionCS.FindKernel("KMain");
             m_SsrTracingKernel      = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsTracing");
             m_SsrReprojectionKernel = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsReprojection");
 

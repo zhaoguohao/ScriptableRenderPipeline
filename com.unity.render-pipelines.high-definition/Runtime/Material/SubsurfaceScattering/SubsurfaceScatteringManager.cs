@@ -87,11 +87,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // Disney SSS (compute + combine)
             string kernelName = hdAsset.renderPipelineSettings.increaseSssSampleCount ?
-                (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringHQ_SPI" : "SubsurfaceScatteringHQ"
-                : (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringMQ_SPI" : "SubsurfaceScatteringMQ";
+                (XRGraphics.usingTexArray()) ? "SubsurfaceScatteringHQ_SPI" : "SubsurfaceScatteringHQ"
+                : (XRGraphics.usingTexArray()) ? "SubsurfaceScatteringMQ_SPI" : "SubsurfaceScatteringMQ";
             string kernelNameMSAA = hdAsset.renderPipelineSettings.increaseSssSampleCount ?
-                (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringHQ_MSAA_SPI" : "SubsurfaceScatteringHQ_MSAA"
-                : (XRGraphics.UsingTexArray) ? "SubsurfaceScatteringMQ_MSAA_SPI" : "SubsurfaceScatteringMQ_MSAA";
+                (XRGraphics.usingTexArray()) ? "SubsurfaceScatteringHQ_MSAA_SPI" : "SubsurfaceScatteringHQ_MSAA"
+                : (XRGraphics.usingTexArray()) ? "SubsurfaceScatteringMQ_MSAA_SPI" : "SubsurfaceScatteringMQ_MSAA";
             m_SubsurfaceScatteringCS = hdAsset.renderPipelineResources.shaders.subsurfaceScatteringCS;
             m_SubsurfaceScatteringKernel = m_SubsurfaceScatteringCS.FindKernel(kernelName);
             m_SubsurfaceScatteringKernelMSAA = m_SubsurfaceScatteringCS.FindKernel(kernelNameMSAA);
