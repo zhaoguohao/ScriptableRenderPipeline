@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor.Graphing;
-using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph.Drawing.Controls;
+using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph.Drawing.Inspector;
 using Object = UnityEngine.Object;
 
@@ -459,8 +459,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var edge in m_Graph.removedEdges)
             {
-                var edgeView = m_GraphView.graphElements.ToList().OfType<Edge>()
-                    .FirstOrDefault(p => p.userData is ShaderEdge && Equals((ShaderEdge) p.userData, edge));
+                var edgeView = m_GraphView.graphElements.ToList().OfType<Edge>().FirstOrDefault(p => p.userData is ShaderEdge && Equals((ShaderEdge)p.userData, edge));
                 if (edgeView != null)
                 {
                     var nodeView = edgeView.input.node as MaterialNodeView;
@@ -489,36 +488,38 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var node in nodesToUpdate)
                 node.UpdatePortInputVisibilities();
 
-            UpdateEdgeColors(nodesToUpdate);
-
-            UpdateBadges();
-
             foreach (var slice in m_Graph.createdControlsSlices)
             {
-                var typeState = slice.nodeTypeState;
+                var nodeState = slice.nodeTypeState;
                 for (var i = slice.startIndex; i < slice.startIndex + slice.length; i++)
                 {
                     var controlRef = m_Graph.createdControls[i];
-                    var initialControlState = typeState.controls[controlRef.index];
-                    var nodeView = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().First(x => x.node.tempId == initialControlState.nodeId);
-                    var node = nodeView.node;
-                    var controlView = new MultiFloatControlView(initialControlState.label, "", "", "", "", node, typeof(float),
-                        () =>
-                        {
-                            var controlState = typeState.controls[controlRef.index];
-                            return new Vector4(controlState.value, 0, 0, 0);
-                        }, value =>
-                        {
-                            // TODO: Dirty tracking so that IShaderNodeType can be notified of change
-                            var controlState = typeState.controls[controlRef.index];
-                            controlState.wasModified = true;
-                            controlState.value = value.x;
-                            typeState.controls[controlRef.index] = controlState;
-                            typeState.modifiedNodes.Add(node.tempId.index);
-                        });
-                    nodeView.AddControl(controlView);
+                    var initialControl = nodeState.controls[controlRef.index];
+                    var node = (AbstractMaterialNode) m_Graph.GetNodeFromTempId(initialControl.nodeId);
+                    var nodesResult = ListPool<Node>.Get();
+                    graphView.nodes.ToList(nodesResult);
+                    var nodeView = nodesResult.OfType<MaterialNodeView>().First(x => x.node == node);
+                    ListPool<Node>.Release(nodesResult);
+
+                    Vector4 Getter() => new Vector4(nodeState.controls[controlRef.index].value, 0);
+
+                    void Setter(Vector4 value)
+                    {
+                        var control = nodeState.controls[controlRef.index];
+                        control.value = value.x;
+                        control.wasModified = true;
+                        nodeState.controls[controlRef.index] = control;
+                        nodeState.modifiedNodes.Add(node.tempId.index);
+                    }
+
+                    nodeView.AddControl(new MultiFloatControlView(initialControl.label, null, null, null, null, node,
+                        typeof(float), Getter, Setter));
                 }
             }
+
+            UpdateEdgeColors(nodesToUpdate);
+            
+            UpdateBadges();
         }
 
         void UpdateBadges()

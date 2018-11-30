@@ -235,7 +235,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_ControlsContainer.RemoveFromHierarchy();
             }
         }
-        
+
         void OnGeometryChanged(GeometryChangedEvent evt)
         {
             // style.positionTop and style.positionLeft are in relation to the parent,

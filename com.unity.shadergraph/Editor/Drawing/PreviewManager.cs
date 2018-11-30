@@ -189,9 +189,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var renderData = GetRenderData(node.tempId);
                 renderData.previewMode = PreviewMode.Preview3D;
                 if (node.previewMode == PreviewMode.Preview2D)
-                {
+            {
                     renderData.previewMode = PreviewMode.Preview2D;
-                }
+            }
 
                 node.CollectPreviewMaterialProperties(m_PreviewProperties);
                 foreach (var prop in m_Graph.properties)
@@ -317,7 +317,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var uberShaderHasError = GenerateUberShader(errNodes, out results);
                 
                 if (uberShaderHasError)
-                {
+                    {
                     errNodes = ProcessUberErrors(results);
                     // Also collect any nodes that had validation errors because they cause the uber shader to fail without
                     // putting valid entries in the source map so ProcessUberErrors doesn't find them.
@@ -327,29 +327,29 @@ namespace UnityEditor.ShaderGraph.Drawing
                     // Try generating the shader again, excluding the nodes with errors (and descendants)
                     uberShaderHasError = GenerateUberShader(errNodes, out results);
                     if (uberShaderHasError)
-                    {
+                        {
                         Debug.LogWarning("Shader Graph compilation failed due to multiple errors. Resolve the visible errors to reveal more.");
-                    }
+                                }
 
                     foreach (var errNode in errNodes)
-                    {
+                                {
                         GetRenderData(errNode.tempId).shaderData.hasError = true;
-                    }
-                }
+                                }
+                            }
 
                 var debugOutputPath = DefaultShaderIncludes.GetDebugOutputPath();
                 if (debugOutputPath != null)
-                {
+                        {
                     File.WriteAllText(debugOutputPath + "/ColorShader.shader",
                         (results.shader ?? "null").Replace("UnityEngine.MaterialGraph", "Generated"));
-                }
+                    }
 
                 m_NeedShaderUpdate = false;
-            }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
-            }
+                }
+                finally
+                {
+                    EditorUtility.ClearProgressBar();
+                }
         }
 
         bool GenerateUberShader(ICollection<INode> errNodes, out GenerationResults results)
@@ -359,7 +359,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_OutputIdName = results.outputIdProperty.referenceName;
             ShaderUtil.UpdateShaderAsset(m_UberShader, results.shader);
             return ShaderUtil.ShaderHasError(m_UberShader);
-        }
+            }
 
         HashSet<INode> ProcessUberErrors(GenerationResults results)
         {
@@ -430,7 +430,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (masterNode == null || shaderData == null)
                 return;
 
-            List<PropertyCollector.TextureInfo> configuredTextures;
+                    List<PropertyCollector.TextureInfo> configuredTextures;
             shaderData.shaderString = masterNode.GetShader(GenerationMode.Preview, masterNode.name, out configuredTextures);
 
             var debugOutputPath = DefaultShaderIncludes.GetDebugOutputPath();

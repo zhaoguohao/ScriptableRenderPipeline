@@ -226,6 +226,7 @@ namespace UnityEditor.ShaderGraph
         public MessageManager messageManager { get; set; }
 
         public List<NodeTypeState> nodeTypeStates { get; } = new List<NodeTypeState>();
+
         int m_CurrentContextId = 1;
 
         public int currentContextId => m_CurrentContextId;
@@ -467,7 +468,7 @@ namespace UnityEditor.ShaderGraph
             m_Nodes[materialNode.tempId.index] = null;
             m_FreeNodeTempIds.Push(materialNode.tempId);
             m_NodeDictionary.Remove(materialNode.guid);
-            messageManager.RemoveNode(materialNode.tempId);
+            messageManager?.RemoveNode(materialNode.tempId);
             m_RemovedNodes.Add(materialNode);
 
             if (m_GroupNodes.TryGetValue(materialNode.groupGuid, out var nodes))
