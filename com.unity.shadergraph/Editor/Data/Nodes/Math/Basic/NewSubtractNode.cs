@@ -3,14 +3,14 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewSubtractNode : IShaderNodeType
+    sealed class NewSubtractNode : ShaderNodeType
     {
         InputPort m_APort = new InputPort(0, "A", PortValue.DynamicVector(1f));
         InputPort m_BPort = new InputPort(1, "B", PortValue.DynamicVector(1f));
         OutputPort m_OutPort = new OutputPort(2, "Out", PortValueType.DynamicVector);
-        HlslSourceRef m_Source;
+        HlslSource m_Source = HlslSource.File("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
 
-        public void Setup(ref NodeSetupContext context)
+        public override void Setup(ref NodeSetupContext context)
         {
             var type = new NodeTypeDescriptor
             {
@@ -22,23 +22,15 @@ namespace UnityEditor.ShaderGraph
             context.CreateNodeType(type);
         }
 
-        public void OnChange(ref NodeTypeChangeContext context)
+        public override void OnNodeAdded(NodeChangeContext context, NodeRef node)
         {
-            if (!m_Source.isValid)
+            context.SetHlslFunction(node, new HlslFunctionDescriptor
             {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
-            }
-
-            foreach (var node in context.addedNodes)
-            {
-                context.SetHlslFunction(node, new HlslFunctionDescriptor
-                {
-                    source = m_Source,
-                    name = "Unity_Subtract",
-                    arguments = new HlslArgumentList { m_APort, m_BPort },
-                    returnValue = m_OutPort
-                });
-            }
+                source = m_Source,
+                name = "Unity_Subtract",
+                arguments = new HlslArgumentList { m_APort, m_BPort },
+                returnValue = m_OutPort
+            });
         }
     }
 }

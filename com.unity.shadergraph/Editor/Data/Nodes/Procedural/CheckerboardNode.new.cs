@@ -1,10 +1,10 @@
-﻿using System.Reflection;
+﻿//using System.Reflection;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewCheckerboardNode : IShaderNodeType
+    sealed class NewCheckerboardNode : ShaderNodeType
     {
         InputPort m_inPortUV = new InputPort(0, "UV", PortValue.Vector2(Vector2.zero));
         InputPort m_inPortColorA = new InputPort(1, "ColorA", PortValue.Vector3(Vector3.zero));
@@ -12,7 +12,7 @@ namespace UnityEditor.ShaderGraph
         InputPort m_inPortFrequency = new InputPort(3, "Frequency", PortValue.Vector2(Vector2.one));
         OutputPort m_outPortResult = new OutputPort(4, "Out", PortValueType.Vector3);
 
-        public void Setup(ref NodeSetupContext context)
+        public override void Setup(ref NodeSetupContext context)
         {
             var type = new NodeTypeDescriptor
             {
@@ -24,39 +24,27 @@ namespace UnityEditor.ShaderGraph
             context.CreateNodeType(type);
         }
 
-        HlslSourceRef m_Source;
-        public void OnChange(ref NodeTypeChangeContext context)
-        {
-            if (!m_Source.isValid)
-            {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Procedural/CheckerboardNode.hlsl");
-            }
+        HlslSource m_Source = HlslSource.File("Packages/com.unity.shadergraph/Editor/Data/Nodes/Procedural/CheckerboardNode.hlsl");
 
-            // process newly created nodes
-            foreach (NodeRef node in context.addedNodes)
-            {
-                context.SetHlslFunction(
-                    node,
-                    new HlslFunctionDescriptor
+
+        public override void OnNodeAdded(NodeChangeContext context, NodeRef node)
+        {
+            context.SetHlslFunction(
+                node,
+                new HlslFunctionDescriptor
+                {
+                    source = m_Source,
+                    name = "Unity_Checkerboard",
+                    arguments = new HlslArgumentList
                     {
-                        source = m_Source,
-                        name = "Unity_Checkerboard",
-                        arguments = new HlslArgumentList
-                        {
                             m_inPortUV,
                             m_inPortColorA,
                             m_inPortColorB,
                             m_inPortFrequency
-                        },
-                        returnValue = m_outPortResult
-                    }
-                );
-            }
-
-            foreach (var node in context.modifiedNodes)
-            {
-                // .... no controls
-            }
+                    },
+                    returnValue = m_outPortResult
+                }
+            );
         }
     }
 }

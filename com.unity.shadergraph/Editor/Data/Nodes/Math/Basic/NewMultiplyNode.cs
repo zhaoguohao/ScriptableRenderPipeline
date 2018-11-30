@@ -4,13 +4,13 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewMultiplyNode : IShaderNodeType
+    sealed class NewMultiplyNode : ShaderNodeType
     {
         InputPort m_aPort = new InputPort(0, "A", PortValue.DynamicVector(0f));
         InputPort m_bPort = new InputPort(1, "B", PortValue.DynamicVector(2f));
         OutputPort m_OutPort = new OutputPort(2, "Out", PortValueType.DynamicVector);
 
-        public void Setup(ref NodeSetupContext context)
+        public override void Setup(ref NodeSetupContext context)
         {
             var type = new NodeTypeDescriptor
             {
@@ -23,27 +23,17 @@ namespace UnityEditor.ShaderGraph
             context.CreateNodeType(type);
         }
 
-        HlslSourceRef m_Source;
+        HlslSource m_Source = HlslSource.File("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
 
-        public void OnChange(ref NodeTypeChangeContext context)
+        public override void OnNodeAdded(NodeChangeContext context, NodeRef node)
         {
-            // TODO: Figure out what should cause the user to create the hlsl source
-            // TODO: How does sharing files between multiple node types work?
-            if (!m_Source.isValid)
+            context.SetHlslFunction(node, new HlslFunctionDescriptor
             {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
-            }
-
-            foreach (var node in context.addedNodes)
-            {
-                context.SetHlslFunction(node, new HlslFunctionDescriptor
-                {
-                    source = m_Source,
-                    name = "Unity_Multiply",
-                    arguments = new HlslArgumentList { m_aPort, m_bPort },
-                    returnValue = m_OutPort
-                });
-            }
+                source = m_Source,
+                name = "Unity_Multiply",
+                arguments = new HlslArgumentList { m_aPort, m_bPort },
+                returnValue = m_OutPort
+            });
         }
     }
 }
