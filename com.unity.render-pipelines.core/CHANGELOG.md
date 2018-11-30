@@ -7,14 +7,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [5.3.0] - 2018-11-xx
 
 ## [5.2.0] - 2018-11-27
-
-## [5.1.0] - 2018-11-19
 ### Added
 - Added StereoInstancingTextureDefines.hlsl, which defines single-pass instanced-compatible texture declaration and operation macros
 - Added DepthSlice, NumSlices, and UsingTexArray methods to XRGraphics, to make SPI support more concise
 - Added Tex2DArray texture macros in API hlsl include files
 - Added a define for determining if any instancing path is taken.
 
+## [5.1.0] - 2018-11-19
 ### Changed
 - The Core SRP package is no longer in preview.
 
