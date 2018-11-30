@@ -145,6 +145,39 @@ namespace UnityEditor.ShaderGraph
                     case PortValueType.Vector4:
                         AddSlot(new Vector4MaterialSlot(port.id, port.displayName, displayName, SlotType.Input, port.value.vector4Value));
                         break;
+                    case PortValueType.DynamicVector:
+                        AddSlot(new DynamicVectorMaterialSlot(port.id, port.displayName, displayName, SlotType.Input, port.value.vector4Value));
+                        break;
+                    case PortValueType.Matrix2x2:
+                        AddSlot(new Matrix2MaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.Matrix3x3:
+                        AddSlot(new Matrix3MaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.Matrix4x4:
+                        AddSlot(new Matrix4MaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.DynamicMatrix:
+                        AddSlot(new DynamicMatrixMaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
+                    case PortValueType.DynamicValue:
+                        AddSlot(new DynamicValueMaterialSlot(port.id, port.displayName, displayName, SlotType.Input, Matrix4x4.identity));
+                        break;
+                    case PortValueType.Texture2D:
+                        AddSlot(new Texture2DInputMaterialSlot(port.id, port.displayName, displayName));
+                        break;
+                    case PortValueType.Texture3D:
+                        AddSlot(new Texture3DInputMaterialSlot(port.id, port.displayName, displayName));
+                        break;
+                    case PortValueType.Texture2DArray:
+                        AddSlot(new Texture2DArrayInputMaterialSlot(port.id, port.displayName, displayName));
+                        break;
+                    case PortValueType.Cubemap:
+                        AddSlot(new CubemapInputMaterialSlot(port.id, port.displayName, displayName));
+                        break;
+                    case PortValueType.SamplerState:
+                        AddSlot(new SamplerStateMaterialSlot(port.id, port.displayName, displayName, SlotType.Input));
+                        break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -168,6 +201,39 @@ namespace UnityEditor.ShaderGraph
                         break;
                     case PortValueType.Vector4:
                         AddSlot(new Vector4MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.DynamicVector:
+                        AddSlot(new DynamicVectorMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Matrix2x2:
+                        AddSlot(new Matrix2MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Matrix3x3:
+                        AddSlot(new Matrix3MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Matrix4x4:
+                        AddSlot(new Matrix4MaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.DynamicMatrix:
+                        AddSlot(new DynamicMatrixMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.DynamicValue:
+                        AddSlot(new DynamicValueMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Texture2D:
+                        AddSlot(new Texture2DMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Texture3D:
+                        AddSlot(new Texture3DMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Texture2DArray:
+                        AddSlot(new Texture2DArrayMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.Cubemap:
+                        AddSlot(new CubemapMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
+                        break;
+                    case PortValueType.SamplerState:
+                        AddSlot(new SamplerStateMaterialSlot(port.id, port.displayName, displayName, SlotType.Output, default));
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
