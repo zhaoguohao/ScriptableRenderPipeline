@@ -33,7 +33,7 @@ namespace UnityEditor.ShaderGraph
             // a single node type to be provided.
             if (m_NodeTypeCreated)
             {
-                throw new InvalidOperationException($"An {nameof(IShaderNodeType)} can only have 1 type.");
+                throw new InvalidOperationException($"An {nameof(ShaderNodeType)} can only have 1 type.");
             }
 
             var i = 0;
@@ -128,7 +128,7 @@ namespace UnityEditor.ShaderGraph
         {
             if (m_CurrentSetupContextId != m_Graph.currentContextId)
             {
-                throw new InvalidOperationException($"{nameof(NodeSetupContext)} is only valid during the call to {nameof(IShaderNodeType)}.{nameof(IShaderNodeType.Setup)} it was provided for.");
+                throw new InvalidOperationException($"{nameof(NodeSetupContext)} is only valid during the call to {nameof(ShaderNodeType)}.{nameof(ShaderNodeType.Setup)} it was provided for.");
             }
         }
     }
