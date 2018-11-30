@@ -255,7 +255,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
-            bool renderStereoIfVRActive = false,
+            bool renderStereoIfVRActive = false, // true if texture is a screen-space texture
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -272,6 +272,10 @@ namespace UnityEngine.Experimental.Rendering
             if (XRGraphics.enabled && renderStereoIfVRActive) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
                 RenderTextureDescriptor overrideDesc = XRGraphics.eyeTextureDesc;
+                // VRDevice's eye texture has authority over the following:
+                //  - dimension
+                //  - volumeDepth
+                //  - vrUsage
                 overrideDesc.width = width;
                 overrideDesc.height = height;
                 overrideDesc.depthBufferBits = (int)depthBufferBits;
@@ -478,7 +482,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS,
             bool useDynamicScale,
             VRTextureUsage vrUsage, // Todo remove?
-            bool renderStereoIfVRActive,
+            bool renderStereoIfVRActive, // true if texture is a screen-space texture
             RenderTextureMemoryless memoryless,
             string name
             )
@@ -512,6 +516,10 @@ namespace UnityEngine.Experimental.Rendering
             if (XRGraphics.enabled && renderStereoIfVRActive) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
                 RenderTextureDescriptor overrideDesc = XRGraphics.eyeTextureDesc;
+                // VRDevice's eye texture has authority over the following:
+                //  - dimension
+                //  - volumeDepth
+                //  - vrUsage
                 overrideDesc.width = width;
                 overrideDesc.height = height;
                 overrideDesc.depthBufferBits = (int)depthBufferBits;
