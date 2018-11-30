@@ -38,7 +38,7 @@ namespace UnityEditor.ShaderGraph
                 context.SetHlslFunction(node, new HlslFunctionDescriptor
                 {
                     source = m_Source,
-                    name = "CrossProduct",
+                    name = "Unity_CrossProduct",
                     arguments = new HlslArgumentList { m_InPortA, m_InPortB },
                     returnValue = m_OutPort
                 });
