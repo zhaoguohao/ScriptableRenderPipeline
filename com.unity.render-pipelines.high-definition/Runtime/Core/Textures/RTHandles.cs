@@ -30,7 +30,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
-            bool renderStereoIfVRActive = false,
+            bool requireStereoSupport = true,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -54,7 +54,7 @@ namespace UnityEngine.Experimental.Rendering
                 bindTextureMS,
                 useDynamicScale,
                 vrUsage,
-                renderStereoIfVRActive,
+                requireStereoSupport,
                 memoryless,
                 name
                 );
@@ -78,7 +78,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
-            bool renderStereoIfVRActive = false,
+            bool requireStereoSupport = true,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -101,7 +101,7 @@ namespace UnityEngine.Experimental.Rendering
                 bindTextureMS,
                 useDynamicScale,
                 vrUsage,
-                renderStereoIfVRActive,
+                requireStereoSupport,
                 memoryless,
                 name
                 );
@@ -125,7 +125,7 @@ namespace UnityEngine.Experimental.Rendering
             bool bindTextureMS = false,
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
-            bool renderStereoIfVRActive = false,
+            bool requireStereoSupport = true,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
             string name = ""
             )
@@ -148,7 +148,7 @@ namespace UnityEngine.Experimental.Rendering
                 bindTextureMS,
                 useDynamicScale,
                 vrUsage,
-                renderStereoIfVRActive,
+                requireStereoSupport,
                 memoryless,
                 name
                 );

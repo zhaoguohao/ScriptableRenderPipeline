@@ -688,12 +688,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             frameIndex &= 1;
 
-            return XRGraphics.enabled ? rtHandleSystem.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf,
+            return rtHandleSystem.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf,
                                             sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false,
-                                            name: string.Format("CameraColorBufferMipChain{0}", frameIndex), renderStereoIfVRActive: true)
-                                        : rtHandleSystem.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf,
-                                            sRGB: false, enableRandomWrite: true, useMipMap: true, autoGenerateMips: false,
-                                            name: string.Format("CameraColorBufferMipChain{0}", frameIndex), renderStereoIfVRActive: true);
+                                            name: string.Format("CameraColorBufferMipChain{0}", frameIndex));
         }
 
         // Pass all the systems that may want to initialize per-camera data here.
