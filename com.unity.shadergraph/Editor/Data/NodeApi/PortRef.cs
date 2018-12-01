@@ -2,6 +2,37 @@
 
 namespace UnityEditor.ShaderGraph
 {
+    // This should probably be replaced by INodeControlType
+    // or something similar... so it can be customized
+    public class ControlType
+    {
+        // stuff goes here
+        public float defaultValue;
+    };
+
+    public class Control
+    {
+        internal int id;
+        internal string displayName;
+        internal PortValueType valueType;
+        internal ControlType controlType;
+        internal int controlIndex;      // registered index
+
+        public Control(int id, string displayName, PortValueType valueType, ControlType controlType)
+        {
+            this.id = id;
+            this.displayName = displayName;
+            this.valueType = valueType;
+            this.controlType = controlType;
+            this.controlIndex = -1;     // not registered yet, invalid index
+        }
+
+        public static ControlType Slider(float defaultValue, float minValue, float maxValue)
+        {
+            return new ControlType() { defaultValue = defaultValue };
+        }
+    };
+
     public class InputPort
     {
         internal int id;

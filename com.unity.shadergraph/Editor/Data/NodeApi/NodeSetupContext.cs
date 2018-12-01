@@ -66,6 +66,16 @@ namespace UnityEditor.ShaderGraph
                 i++;
             }
 
+            if (typeDescriptor.controls != null)
+            {
+                i = 0;
+                foreach (Control control in typeDescriptor.controls)
+                {
+                    CreateControl(control);
+                    i++;
+                }
+            }
+
             m_TypeState.type.name = typeDescriptor.name;
             // Provide auto-generated name if one is not provided.
             if (string.IsNullOrWhiteSpace(m_TypeState.type.name))
@@ -88,10 +98,28 @@ namespace UnityEditor.ShaderGraph
                 m_TypeState.type.path = "Uncategorized";
             }
 
+            // copy port and control lists
             m_TypeState.type.inputs = new List<InputPort>(typeDescriptor.inputs);
             m_TypeState.type.outputs = new List<OutputPort>(typeDescriptor.outputs);
+            if (typeDescriptor.controls != null)
+                m_TypeState.type.controls = new List<Control>(typeDescriptor.controls);
+            else
+                m_TypeState.type.controls = new List<Control>();
 
             m_NodeTypeCreated = true;
+        }
+
+        internal void CreateControl(Control control)
+        {
+            var controlDescriptor = new ControlDescriptor
+            {
+                id = control.id,
+                displayName = control.displayName,
+                valueType = control.valueType,
+                controlType = control.controlType
+            };
+            m_TypeState.controlDescs.Add(controlDescriptor);
+            control.controlIndex = m_TypeState.controlDescs.Count - 1;
         }
 
         internal InputPortRef CreateInputPort(InputPort port)

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace UnityEditor.ShaderGraph
@@ -11,7 +11,12 @@ namespace UnityEditor.ShaderGraph
         public List<InputPortDescriptor> inputPorts = new List<InputPortDescriptor>();
         public List<OutputPortDescriptor> outputPorts = new List<OutputPortDescriptor>();
         public List<HlslSource> hlslSources = new List<HlslSource>();
+        public List<ControlDescriptor> controlDescs = new List<ControlDescriptor>();
+
+        // these are per-instance -- actual controls on nodes
         public List<ControlState> controls = new List<ControlState>();
+
+        // these are also per-instance -- actual values per node
         public List<HlslValue> hlslValues = new List<HlslValue>();
 
         #region Change lists for consumption by IShaderNode implementation
@@ -58,7 +63,11 @@ namespace UnityEditor.ShaderGraph
         {
             foreach (var node in addedNodes)
             {
-                nodeType.OnNodeAdded(context, new NodeRef(owner, owner.currentContextId, (ProxyShaderNode)owner.m_Nodes[node]));
+                // would be better to do this somewhere else, but easiest to hack it in here for now -- ctchou
+                ProxyShaderNode proxyNode = (ProxyShaderNode) owner.m_Nodes[node];
+                NodeRef nodeRef = new NodeRef(owner, owner.currentContextId, proxyNode);
+                proxyNode.InstantiateControls(nodeRef, context.m_CreatedControls);
+                nodeType.OnNodeAdded(context, nodeRef);
             }
             
             foreach (var node in modifiedNodes)

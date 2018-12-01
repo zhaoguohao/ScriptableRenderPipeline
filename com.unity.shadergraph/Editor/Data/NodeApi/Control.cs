@@ -1,4 +1,4 @@
-namespace UnityEditor.ShaderGraph
+﻿namespace UnityEditor.ShaderGraph
 {
     struct ControlState
     {
@@ -6,6 +6,7 @@ namespace UnityEditor.ShaderGraph
         public Identifier nodeId;
         public string label;
         public float value;
+        public int controlId;
     }
 
     struct ControlRefSlice

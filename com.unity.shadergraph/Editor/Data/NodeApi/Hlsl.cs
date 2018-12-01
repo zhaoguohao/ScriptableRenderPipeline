@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -9,8 +9,8 @@ namespace UnityEditor.ShaderGraph
 {
     public struct HlslSource
     {
-        public HlslSourceType type { get; private set; }
-        public string value { get; private set; }
+        internal HlslSourceType type { get; private set; }
+        internal string value { get; private set; }
 
         public static HlslSource File(string source)
         {
@@ -43,6 +43,14 @@ namespace UnityEditor.ShaderGraph
         public int outputPortID => m_Union.outputPort.id;
         public float vector1Value => m_Union.vector1Value;
         public HlslValueRef valueRef => m_Union.valueRef;
+        public int controlIndex => m_Union.control.controlIndex;
+        public int controlID => m_Union.control.id;
+
+        internal HlslArgument(Control control) : this()
+        {
+            type = HlslArgumentType.Control;
+            m_Union.control = control;
+        }
 
         internal HlslArgument(InputPort port) : this()
         {
@@ -79,6 +87,8 @@ namespace UnityEditor.ShaderGraph
             public float vector1Value;
             [FieldOffset(0)]
             public HlslValueRef valueRef;
+            [FieldOffset(0)]
+            public Control control;
         }
     }
 
@@ -87,7 +97,8 @@ namespace UnityEditor.ShaderGraph
         InputPort,
         OutputPort,
         Vector1,
-        Value
+        Value,
+        Control
     }
 
     struct HlslValue
@@ -122,6 +133,12 @@ namespace UnityEditor.ShaderGraph
     public struct HlslArgumentList : IEnumerable<HlslArgument>
     {
         List<HlslArgument> m_Arguments;
+
+        public void Add(Control control)
+        {
+            m_Arguments = m_Arguments ?? new List<HlslArgument>();
+            m_Arguments.Add(new HlslArgument(control));
+        }
 
         public void Add(InputPort port)
         {

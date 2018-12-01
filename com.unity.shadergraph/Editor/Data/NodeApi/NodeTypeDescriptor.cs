@@ -13,5 +13,7 @@ namespace UnityEditor.ShaderGraph
         public List<InputPort> inputs { get; set; }
 
         public List<OutputPort> outputs { get; set; }
+
+        public List<Control> controls { get; set; }
     }
 }

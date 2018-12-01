@@ -1,4 +1,4 @@
-namespace UnityEditor.ShaderGraph
+﻿namespace UnityEditor.ShaderGraph
 {
     public struct InputPortDescriptor
     {
@@ -11,6 +11,22 @@ namespace UnityEditor.ShaderGraph
         public override string ToString()
         {
             return $"id={id}, displayName={displayName}, {value}";
+        }
+    }
+
+    public struct ControlDescriptor
+    {
+        public int id { get; set; }
+
+        public string displayName { get; set; }
+
+        public PortValueType valueType { get; set; }
+
+        public ControlType controlType { get; set; }
+
+        public override string ToString()
+        {
+            return $"id={id}, displayName={displayName}, type={valueType}";
         }
     }
 }

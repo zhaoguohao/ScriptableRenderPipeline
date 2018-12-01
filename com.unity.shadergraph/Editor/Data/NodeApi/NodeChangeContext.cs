@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor.Graphing;
@@ -10,7 +10,7 @@ namespace UnityEditor.ShaderGraph
         readonly AbstractMaterialGraph m_Graph;
         readonly int m_Id;
         readonly NodeTypeState m_TypeState;
-        readonly List<ControlRef> m_CreatedControls;
+        internal readonly List<ControlRef> m_CreatedControls;
 
         internal NodeChangeContext(AbstractMaterialGraph graph, int id, NodeTypeState typeState, List<ControlRef> createdControls) : this()
         {
