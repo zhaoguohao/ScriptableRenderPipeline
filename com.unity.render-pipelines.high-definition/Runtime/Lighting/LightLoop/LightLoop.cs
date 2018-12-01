@@ -686,14 +686,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (GetFeatureVariantsEnabled())
             {
-                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags" : "TileLightListGen_FeatureFlags");
-                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags_Oblique" : "TileLightListGen_FeatureFlags_Oblique");
+                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile_FeatureFlags" : "TileLightListGen_SPI_FeatureFlags") :
+                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags" : "TileLightListGen_FeatureFlags"));
+                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile_FeatureFlags_Oblique" : "TileLightListGen_SPI_FeatureFlags_Oblique") :
+                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags_Oblique" : "TileLightListGen_FeatureFlags_Oblique"));
 
             }
             else
             {
-                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile" : "TileLightListGen");
-                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_Oblique" : "TileLightListGen_Oblique");
+                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile" : "TileLightListGen_SPI") :
+                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile" : "TileLightListGen"));
+                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile_Oblique" : "TileLightListGen_SPI_Oblique") :
+                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_Oblique" : "TileLightListGen_Oblique"));
             }
 
             m_CookieTexArray.NewFrame();
