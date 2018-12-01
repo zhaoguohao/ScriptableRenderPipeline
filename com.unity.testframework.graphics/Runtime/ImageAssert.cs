@@ -67,7 +67,9 @@ namespace UnityEngine.TestTools.Graphics
                 {
                     foreach (var camera in cameras)
                     {
-                        camera.pixelRect = readRect;
+                        if (XR.XRSettings.enabled)
+                            camera.pixelRect = readRect;
+
                         camera.targetTexture = rt;
                         camera.Render();
                         camera.targetTexture = null;
