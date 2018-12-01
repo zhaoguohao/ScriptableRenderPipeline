@@ -47,6 +47,10 @@ namespace UnityEngine.TestTools.Graphics
 
             int width = settings.TargetWidth;
             int height = settings.TargetHeight;
+            Rect readRect = new Rect(0, 0, width, height);
+
+            // Assert if < 1080p (hardcoded in VRTestMock.cpp)
+
             var format = expected != null ? expected.format : TextureFormat.ARGB32;
 
             var rt = RenderTexture.GetTemporary(width, height, 24);
@@ -55,15 +59,27 @@ namespace UnityEngine.TestTools.Graphics
             {
                 foreach (var camera in cameras)
                 {
-                    camera.targetTexture = rt;
+                    if (XR.XRSettings.enabled)
+                        camera.pixelRect = new Rect(0, 0, width, height);
+                    else
+                        camera.targetTexture = rt;
+                    
                     camera.Render();
                     camera.targetTexture = null;
                 }
 
                 actual = new Texture2D(width, height, format, false);
-                RenderTexture.active = rt;
-                actual.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                RenderTexture.active = null;
+
+				if (XR.XRSettings.enabled)
+				{
+					actual.ReadPixels(readRect, 0, 0);
+				}
+				else
+				{
+					RenderTexture.active = rt;
+					actual.ReadPixels(readRect, 0, 0);
+					RenderTexture.active = null;
+				}
 
                 actual.Apply();
 
