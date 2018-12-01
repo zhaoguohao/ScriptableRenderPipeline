@@ -2,6 +2,32 @@
 
 namespace UnityEditor.ShaderGraph
 {
+    public interface INodeControlType
+    {
+        void InstantiateControl(int id);
+    }
+
+    // this serves as the 'template' for a slider control -- it can instantiate the actual control on a node
+    public class NodeSliderControlType : INodeControlType
+    {
+        internal float minValue;
+        internal float maxValue;
+        internal float defaultValue;
+
+        public NodeSliderControlType(float minValue, float maxValue, float defaultValue)
+        {
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+            this.defaultValue = defaultValue;
+        }
+
+        void INodeControlType.InstantiateControl(int id)
+        {
+            // ... build the actual control on the actual node
+            // 
+        }
+    }
+
     // This should probably be replaced by INodeControlType
     // or something similar... so it can be customized
     public class ControlType
@@ -15,10 +41,10 @@ namespace UnityEditor.ShaderGraph
         internal int id;
         internal string displayName;
         internal PortValueType valueType;
-        internal ControlType controlType;
+        internal INodeControlType controlType;
         internal int controlIndex;      // registered index
 
-        public Control(int id, string displayName, PortValueType valueType, ControlType controlType)
+        public Control(int id, string displayName, PortValueType valueType, INodeControlType controlType)
         {
             this.id = id;
             this.displayName = displayName;
@@ -27,9 +53,9 @@ namespace UnityEditor.ShaderGraph
             this.controlIndex = -1;     // not registered yet, invalid index
         }
 
-        public static ControlType Slider(float defaultValue, float minValue, float maxValue)
+        public static INodeControlType Slider(float defaultValue, float minValue, float maxValue)
         {
-            return new ControlType() { defaultValue = defaultValue };
+            return new NodeSliderControlType(minValue, maxValue, defaultValue);
         }
     };
 

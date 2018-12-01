@@ -17,6 +17,11 @@ namespace UnityEditor.ShaderGraph
             {
                 path = "Artistic/Adjustment",
                 name = "New Hue",
+
+                // defaultHlslFunction = new HlslFunctionDescriptor(...)
+                //    then we don't need to implement OnNodeAdded, if it's always the same
+
+                // TODO: build these lists via reflection of NewHueNode type, if these lists are not directly specified...
                 inputs = new List<InputPort> { m_InPort, m_OffsetPort },
                 outputs = new List<OutputPort> { m_OutPort },
                 controls = new List<Control> { m_offsetFactor }
@@ -32,7 +37,8 @@ namespace UnityEditor.ShaderGraph
                     source = HlslSource.File("Packages/com.unity.shadergraph/Editor/Data/Nodes/Artistic/Adjustment/HueNode.hlsl"),
                     name = "Unity_Hue",
                     arguments = new HlslArgumentList { m_InPort, m_OffsetPort, m_offsetFactor },
-                    returnValue = m_OutPort
+                    returnValue = m_OutPort,
+//                    supportsPrecision = true      // indicates half/float variants exist in the HlslSource
                 });
         }
     }
@@ -40,6 +46,8 @@ namespace UnityEditor.ShaderGraph
     [Serializable]
     class HueData
     {
+        // nothing here now that Control can handle it's own serialization
+        // this is only needed if script logic needs to serialize something outside of a control...
     }
 
 // already defined in old HueNode file

@@ -22,7 +22,7 @@
 
         public PortValueType valueType { get; set; }
 
-        public ControlType controlType { get; set; }
+        public INodeControlType controlType { get; set; }
 
         public override string ToString()
         {

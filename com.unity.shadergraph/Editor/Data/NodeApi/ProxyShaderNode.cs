@@ -126,17 +126,23 @@ namespace UnityEditor.ShaderGraph
         {
             foreach(ControlDescriptor control in typeState.controlDescs)
             {
-                var controlState = new ControlState
+                // TODO: this is a hack
+                // really, we should use pass the interface down to whoever really builds the control
+                if (control.controlType.GetType() == typeof(NodeSliderControlType))
                 {
-                    nodeId = nodeRef.node.tempId,
-                    label = control.displayName,
-                    value = control.controlType.defaultValue,
-                    controlId = control.id
-                };
+                    NodeSliderControlType sliderControl = control.controlType as NodeSliderControlType;
+                    var controlState = new ControlState
+                    {
+                        nodeId = nodeRef.node.tempId,
+                        label = control.displayName,
+                        value = sliderControl.defaultValue,
+                        controlId = control.id
+                    };
 
-                var controlRef = new ControlRef(typeState.controls.Count);
-                typeState.controls.Add(controlState);
-                createdControls.Add(controlRef);
+                    var controlRef = new ControlRef(typeState.controls.Count);
+                    typeState.controls.Add(controlState);
+                    createdControls.Add(controlRef);
+                }
             }
         }
 
