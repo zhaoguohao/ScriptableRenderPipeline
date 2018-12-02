@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -533,6 +533,9 @@ namespace UnityEditor.ShaderGraph
             if (dependentNodes.Contains(fromNode))
                 return null;
 
+            fromNode.UpdatePortConnection();
+            toNode.UpdatePortConnection();
+
             var fromSlot = fromNode.FindSlot<ISlot>(fromSlotRef.slotId);
             var toSlot = toNode.FindSlot<ISlot>(toSlotRef.slotId);
 
@@ -827,6 +830,11 @@ namespace UnityEditor.ShaderGraph
                     m_AddedEdges.Remove(edge);
                 }
             }
+
+            // This really doesn't belong here at all, but right now, validate graph actually sets the concrete type of DynamicVector, which may be needed
+            // by code generation.
+            // Todo: split the functionality up and have a separate function for establishing port dimension, and doing graph validation.
+            DispatchNodeChangeEvents();
         }
 
         public void AddValidationError(Identifier id, string errorMessage)
@@ -1047,7 +1055,11 @@ namespace UnityEditor.ShaderGraph
             {
                 node.OnEnable();
             }
-            DispatchNodeChangeEvents();
+            // Right now, validate graph actually sets the concrete type of DynamicVector, which may be needed
+            // by code generation.
+            // Todo: split the functionality up and have a separate function for establishing port dimension, and doing graph validation.
+            //DispatchNodeChangeEvents is currently called after validate until this is addressed.
+            //DispatchNodeChangeEvents();
         }
     }
 

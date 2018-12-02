@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Graphing;
@@ -109,6 +109,30 @@ namespace UnityEditor.ShaderGraph
             }
 
             UpdateStateReference();
+        }
+
+        public override void UpdatePortDimension(int portId, int dimension)
+        {
+            for (int i=0; i< typeState.inputPorts.Count; ++i)
+            {
+                if (typeState.inputPorts[i].id == portId)
+                {
+                    var port = typeState.inputPorts[i];
+                    var portValue = port.value;
+                    // Not sure what to do here. Constructing a new object seems better than adding a function to set the dimension.
+                    if (portValue.type == PortValueType.DynamicVector)
+                    {
+                        port.value = PortValue.DynamicVector(portValue.vector4Value, dimension);
+                        typeState.inputPorts[i] = port;
+                    }
+                    return;
+                }
+            }
+        }
+
+        public override void UpdatePortConnection()
+        {
+            typeState.modifiedNodes.Add(tempId.index);
         }
 
         public void UpdateStateReference()

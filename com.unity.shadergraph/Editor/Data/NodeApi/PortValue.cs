@@ -17,6 +17,9 @@ namespace UnityEditor.ShaderGraph
         Matrix4x4 m_Matrix;
 
         [FieldOffset(24)]
+        int m_Dimension;
+
+        [FieldOffset(32)]
         Texture m_Texture;
 
         PortValue(PortValueType type)
@@ -25,35 +28,37 @@ namespace UnityEditor.ShaderGraph
             m_Type = type;
         }
 
-        public static PortValue Vector1(float value) => new PortValue(PortValueType.Vector1) { m_Vector = new Vector4(value, 0) };
+        public static PortValue Vector1(float value) => new PortValue(PortValueType.Vector1) { m_Vector = new Vector4(value, 0), m_Dimension = 1 };
 
-        public static PortValue Vector2(Vector2 value) => new PortValue(PortValueType.Vector2) { m_Vector = value };
+        public static PortValue Vector2(Vector2 value) => new PortValue(PortValueType.Vector2) { m_Vector = value, m_Dimension = 2 };
 
-        public static PortValue Vector3() => new PortValue(PortValueType.Vector3) { m_Vector = UnityEngine.Vector3.zero };
+        public static PortValue Vector3() => new PortValue(PortValueType.Vector3) { m_Vector = UnityEngine.Vector3.zero, m_Dimension = 3 };
 
-        public static PortValue Vector3(Vector3 value) => new PortValue(PortValueType.Vector3) { m_Vector = value };
+        public static PortValue Vector3(Vector3 value) => new PortValue(PortValueType.Vector3) { m_Vector = value, m_Dimension = 3 };
 
-        public static PortValue Vector4(Vector4 value) => new PortValue(PortValueType.Vector4) { m_Vector = value };
+        public static PortValue Vector4(Vector4 value) => new PortValue(PortValueType.Vector4) { m_Vector = value, m_Dimension = 4 };
         
-        public static PortValue DynamicVector(float value) => new PortValue(PortValueType.DynamicVector) { m_Vector = new Vector4(value, 0) };
+        public static PortValue DynamicVector(float value) => new PortValue(PortValueType.DynamicVector) { m_Vector = new Vector4(value, 0), m_Dimension = 1 };
 
-        public static PortValue Matrix2x2() => new PortValue(PortValueType.Matrix2x2) { m_Matrix = UnityEngine.Matrix4x4.identity };
+        public static PortValue DynamicVector(Vector4 value, int dimension) => new PortValue(PortValueType.DynamicVector) { m_Vector = value, m_Dimension = dimension };
 
-        public static PortValue Matrix3x3() => new PortValue(PortValueType.Matrix3x3) { m_Matrix = UnityEngine.Matrix4x4.identity };
+        public static PortValue Matrix2x2() => new PortValue(PortValueType.Matrix2x2) { m_Matrix = UnityEngine.Matrix4x4.identity, m_Dimension = 2 };
 
-        public static PortValue Matrix4x4() => new PortValue(PortValueType.Matrix4x4) { m_Matrix = UnityEngine.Matrix4x4.identity };
+        public static PortValue Matrix3x3() => new PortValue(PortValueType.Matrix3x3) { m_Matrix = UnityEngine.Matrix4x4.identity, m_Dimension = 3 };
 
-        public static PortValue DynamicMatrix() => new PortValue(PortValueType.DynamicMatrix) { m_Matrix = UnityEngine.Matrix4x4.identity };
+        public static PortValue Matrix4x4() => new PortValue(PortValueType.Matrix4x4) { m_Matrix = UnityEngine.Matrix4x4.identity, m_Dimension = 4 };
 
-        public static PortValue DynamicValue(float value) => new PortValue(PortValueType.DynamicValue) { m_Vector = new Vector4(value, 0) };
+        public static PortValue DynamicMatrix() => new PortValue(PortValueType.DynamicMatrix) { m_Matrix = UnityEngine.Matrix4x4.identity, m_Dimension = 1 };
 
-        public static PortValue Texture2D(Texture2D texture) => new PortValue(PortValueType.Texture2D) { m_Texture = texture };
+        public static PortValue DynamicValue(float value) => new PortValue(PortValueType.DynamicValue) { m_Vector = new Vector4(value, 0), m_Dimension = 1 };
 
-        public static PortValue Texture3D(Texture3D texture) => new PortValue(PortValueType.Texture3D) { m_Texture = texture };
+        public static PortValue Texture2D(Texture2D texture) => new PortValue(PortValueType.Texture2D) { m_Texture = texture, m_Dimension = 2 };
 
-        public static PortValue Texture2DArray(Texture2DArray texture) => new PortValue(PortValueType.Texture2DArray) { m_Texture = texture };
+        public static PortValue Texture3D(Texture3D texture) => new PortValue(PortValueType.Texture3D) { m_Texture = texture, m_Dimension = 3 };
 
-        public static PortValue Cubemap(Cubemap texture) => new PortValue(PortValueType.Cubemap) { m_Texture = texture };
+        public static PortValue Texture2DArray(Texture2DArray texture) => new PortValue(PortValueType.Texture2DArray) { m_Texture = texture, m_Dimension = 2 };
+
+        public static PortValue Cubemap(Cubemap texture) => new PortValue(PortValueType.Cubemap) { m_Texture = texture, m_Dimension = 1 };
 
         public static PortValue SamplerState() => new PortValue(PortValueType.SamplerState);
 
@@ -76,6 +81,8 @@ namespace UnityEditor.ShaderGraph
         public Texture2DArray texture2DArrayValue => (Texture2DArray)m_Texture;
 
         public Cubemap cubemapValue => (Cubemap)m_Texture;
+
+        public int dimension => m_Dimension;
 
         public override string ToString()
         {

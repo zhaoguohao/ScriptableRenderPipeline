@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor.Graphing;
@@ -95,6 +95,11 @@ namespace UnityEditor.ShaderGraph
             return controlRef;
         }
 
+        public int GetPortDimension(InputPort port)
+        {
+            return typeState.inputPorts[port.inputPortRef.index].value.dimension;
+        }
+
         public void DestroyControl(ControlRef controlRef)
         {
             Validate();
@@ -106,6 +111,12 @@ namespace UnityEditor.ShaderGraph
         {
             Validate();
             return typeState.controls[controlRef.index].wasModified;
+        }
+
+        public float GetControlValue(Control control)
+        {
+            Validate();
+            return typeState.controls[control.controlIndex].value;
         }
 
         public float GetControlValue(ControlRef controlRef)

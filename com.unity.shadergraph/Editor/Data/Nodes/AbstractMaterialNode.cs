@@ -399,9 +399,17 @@ namespace UnityEditor.ShaderGraph
             // from here set all the
             var dynamicType = ConvertDynamicInputTypeToConcrete(dynamicInputSlotsToCompare.Values);
             foreach (var dynamicKvP in dynamicInputSlotsToCompare)
+            {
                 dynamicKvP.Key.SetConcreteType(dynamicType);
+                UpdatePortDimension(dynamicKvP.Key.id, SlotValueHelper.GetChannelCount(dynamicType));
+                UpdatePortConnection();
+            }
             foreach (var skippedSlot in skippedDynamicSlots)
+            {
                 skippedSlot.SetConcreteType(dynamicType);
+                UpdatePortDimension(skippedSlot.id, SlotValueHelper.GetChannelCount(dynamicType));
+                UpdatePortConnection();
+            }
 
             // and now dynamic matrices
             var dynamicMatrixType = ConvertDynamicMatrixInputTypeToConcrete(dynamicMatrixInputSlotsToCompare.Values);
@@ -631,6 +639,12 @@ namespace UnityEditor.ShaderGraph
         }
 
         public virtual void UpdateNodeAfterDeserialization()
+        {}
+
+        public virtual void UpdatePortDimension(int portId, int dimension)
+        {}
+
+        public virtual void UpdatePortConnection()
         {}
 
         public bool IsSlotConnected(int slotId)
