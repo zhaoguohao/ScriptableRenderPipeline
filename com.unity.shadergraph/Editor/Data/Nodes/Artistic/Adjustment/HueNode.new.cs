@@ -1,91 +1,53 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewHueNode : IShaderNodeType
+    sealed class NewHueNode : ShaderNodeType
     {
-        InputPortRef m_InPort;
-        InputPortRef m_OffsetPort;
-        OutputPortRef m_OutPort;
+        InputPort m_InPort = new InputPort(0, "In", PortValue.Vector3());
+        InputPort m_OffsetPort = new InputPort(1, "Offset", PortValue.Vector1(0.5f));
+        OutputPort m_OutPort = new OutputPort(2, "Out", PortValueType.Vector3);
 
-        public void Setup(ref NodeSetupContext context)
+        Control m_offsetFactor = new Control(3, "Offset Factor", PortValueType.Vector1, Control.Slider(0.0f, 50.0f, 3.0f));
+        
+        public override void Setup(ref NodeSetupContext context)
         {
-            m_InPort = context.CreateInputPort(0, "In", PortValue.Vector3());
-            m_OffsetPort = context.CreateInputPort(1, "Offset", PortValue.Vector1(0.5f));
-            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.Vector3);
             var type = new NodeTypeDescriptor
             {
                 path = "Artistic/Adjustment",
                 name = "New Hue",
-                inputs = new List<InputPortRef> { m_InPort, m_OffsetPort },
-                outputs = new List<OutputPortRef> { m_OutPort }
+
+                // defaultHlslFunction = new HlslFunctionDescriptor(...)
+                //    then we don't need to implement OnNodeAdded, if it's always the same
+
+                // TODO: build these lists via reflection of NewHueNode type, if these lists are not directly specified...
+                inputs = new List<InputPort> { m_InPort, m_OffsetPort },
+                outputs = new List<OutputPort> { m_OutPort },
+                controls = new List<Control> { m_offsetFactor }
             };
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
-        HlslSourceRef m_Source;
-
-        public void OnChange(ref NodeTypeChangeContext context)
+        public override void OnNodeAdded(NodeChangeContext context, NodeRef node)
         {
-            // TODO: Figure out what should cause the user to create the hlsl source
-            // TODO: How does sharing files between multiple node types work?
-            if (!m_Source.isValid)
-            {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Artistic/Adjustment/HueNode.hlsl");
-            }
-
-            foreach (var node in context.addedNodes)
-            {
-                var data = (HueData) context.GetData(node);
-                if (data == null)
+            context.SetHlslFunction(node,
+               new HlslFunctionDescriptor
                 {
-                    data = new HueData { offsetFactor = 1f };
-                    context.SetData(node, data);
-                }
-
-                data.offsetFactorControl = context.CreateControl(node, "Offset Factor", data.offsetFactor);
-                data.offsetFactorValue = context.CreateHlslValue(data.offsetFactor);
-
-                context.SetHlslFunction(node, new HlslFunctionDescriptor
-                {
-                    source = m_Source,
+                    source = HlslSource.File("Packages/com.unity.shadergraph/Editor/Data/Nodes/Artistic/Adjustment/HueNode.hlsl"),
                     name = "Unity_Hue",
-                    arguments = new HlslArgumentList { m_InPort, m_OffsetPort, data.offsetFactorValue },
-                    returnValue = m_OutPort
+                    arguments = new HlslArgumentList { m_InPort, m_OffsetPort, m_offsetFactor },
+                    returnValue = m_OutPort,
+//                    supportsPrecision = true      // indicates half/float variants exist in the HlslSource
                 });
-            }
-
-            foreach (var node in context.modifiedNodes)
-            {
-                var data = (HueData) context.GetData(node);
-                if (context.WasControlModified(data.offsetFactorControl))
-                {
-                    data.offsetFactor = context.GetControlValue(data.offsetFactorControl);
-                    context.SetHlslValue(data.offsetFactorValue, data.offsetFactor);
-                }
-            }
         }
-
-//        float GetOffsetFactor(HueData data)
-//        {
-//            return data.mode == HueMode.Degrees ? 1 / 360f : 1;
-//        }
     }
 
     [Serializable]
     class HueData
     {
-//        public HueMode mode;
-        public float offsetFactor;
-
-        [NonSerialized]
-//        public HlslValueRef modeValue;
-        public HlslValueRef offsetFactorValue;
-
-        [NonSerialized]
-        public ControlRef offsetFactorControl;
+        // nothing here now that Control can handle it's own serialization
+        // this is only needed if script logic needs to serialize something outside of a control...
     }
 
 // already defined in old HueNode file

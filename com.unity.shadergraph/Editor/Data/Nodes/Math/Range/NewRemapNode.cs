@@ -1,3 +1,4 @@
+﻿/*
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,27 +7,22 @@ namespace UnityEditor.ShaderGraph
 {
     class NewRemapNode : IShaderNodeType
     {
-        InputPortRef m_InPort;
-        InputPortRef m_InMinMaxPort;
-        InputPortRef m_OutMinMaxPort;
-        OutputPortRef m_OutPort;
+        InputPort m_InPort = new InputPort(0, "In", PortValue.DynamicVector(.5f));
+        InputPort m_InMinMaxPort = new InputPort(1, "In Min Max", PortValue.Vector2(new Vector2(0, 1)));
+        InputPort m_OutMinMaxPort = new InputPort(2, "Out Min Max", PortValue.Vector2(new Vector2(0, 1)));
+        OutputPort m_OutPort = new OutputPort(3, "Out", PortValueType.DynamicVector);
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_InPort = context.CreateInputPort(0, "In", PortValue.DynamicVector(.5f));
-            m_InMinMaxPort = context.CreateInputPort(1, "In Min Max", PortValue.Vector2(new Vector2(0,1)));
-            m_OutMinMaxPort = context.CreateInputPort(2, "Out Min Max", PortValue.Vector2(new Vector2(0,1)));
-            m_OutPort = context.CreateOutputPort(3, "Out", PortValueType.DynamicVector);
-
             var type = new NodeTypeDescriptor
             {
                 path = "Math/Range",
                 name = "New Remap",
-                inputs = new List<InputPortRef> { m_InPort, m_InMinMaxPort, m_OutMinMaxPort },
-                outputs = new List<OutputPortRef> { m_OutPort }
+                inputs = new List<InputPort> { m_InPort, m_InMinMaxPort, m_OutMinMaxPort },
+                outputs = new List<OutputPort> { m_OutPort }
             };
 
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
         HlslSourceRef m_Source;
@@ -53,3 +49,4 @@ namespace UnityEditor.ShaderGraph
         }
     }
 }
+*/

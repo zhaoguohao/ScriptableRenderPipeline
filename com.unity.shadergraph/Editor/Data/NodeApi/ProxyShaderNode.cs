@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.Graphing;
@@ -30,7 +30,7 @@ namespace UnityEditor.ShaderGraph
             set
             {
                 m_TypeState = value;
-                m_ShaderNodeTypeName = value?.shaderNodeType.GetType().FullName;
+                m_ShaderNodeTypeName = value?.baseNodeType.GetType().FullName;
             }
         }
 
@@ -96,7 +96,7 @@ namespace UnityEditor.ShaderGraph
 
             if (typeState != null)
             {
-                m_ShaderNodeTypeName = typeState.shaderNodeType.GetType().FullName;
+                m_ShaderNodeTypeName = typeState.baseNodeType.GetType().FullName;
             }
         }
 
@@ -114,12 +114,36 @@ namespace UnityEditor.ShaderGraph
         public void UpdateStateReference()
         {
             var materialOwner = (AbstractMaterialGraph)owner;
-            typeState = materialOwner.nodeTypeStates.FirstOrDefault(x => x.shaderNodeType.GetType().FullName == shaderNodeTypeName);
+            typeState = materialOwner.nodeTypeStates.FirstOrDefault(x => x.baseNodeType.GetType().FullName == shaderNodeTypeName);
             if (typeState == null)
             {
-                throw new InvalidOperationException($"Cannot find an {nameof(IShaderNodeType)} with type name {shaderNodeTypeName}");
+                throw new InvalidOperationException($"Cannot find an {nameof(ShaderNodeType)} with type name {shaderNodeTypeName}");
             }
             UpdateSlots();
+        }
+
+        public void InstantiateControls(NodeRef nodeRef, List<ControlRef> createdControls)
+        {
+            foreach(ControlDescriptor control in typeState.controlDescs)
+            {
+                // TODO: this is a hack
+                // really, we should use pass the interface down to whoever really builds the control
+                if (control.controlType.GetType() == typeof(NodeSliderControlType))
+                {
+                    NodeSliderControlType sliderControl = control.controlType as NodeSliderControlType;
+                    var controlState = new ControlState
+                    {
+                        nodeId = nodeRef.node.tempId,
+                        label = control.displayName,
+                        value = sliderControl.defaultValue,
+                        controlId = control.id
+                    };
+
+                    var controlRef = new ControlRef(typeState.controls.Count);
+                    typeState.controls.Add(controlState);
+                    createdControls.Add(controlRef);
+                }
+            }
         }
 
         void UpdateSlots()
@@ -127,9 +151,10 @@ namespace UnityEditor.ShaderGraph
             var validSlotIds = new List<int>();
 
             // TODO: Properly handle shaderOutputName (i.e.
-            foreach (var portRef in typeState.type.inputs)
+            foreach (InputPort iport in typeState.type.inputs)
             {
-                var port = typeState.inputPorts[portRef.index];
+                // find matching port in registered values
+                var port = typeState.inputPorts[iport.inputPortRef.index];
                 var displayName = $"{NodeUtils.GetHLSLSafeName(port.displayName)}{port.id}";
                 switch (port.value.type)
                 {
@@ -184,9 +209,10 @@ namespace UnityEditor.ShaderGraph
                 validSlotIds.Add(port.id);
             }
 
-            foreach (var portRef in typeState.type.outputs)
+            foreach (var oport in typeState.type.outputs)
             {
-                var port = typeState.outputPorts[portRef.index];
+                // find matching port in registered values
+                var port = typeState.outputPorts[oport.outputPortRef.index];
                 var displayName = $"{NodeUtils.GetHLSLSafeName(port.displayName)}{port.id}";
                 switch (port.type)
                 {
@@ -249,14 +275,14 @@ namespace UnityEditor.ShaderGraph
             var builder = new ShaderStringBuilder();
 
             // Declare variables for output ports.
-            foreach (var argument in function.arguments)
+            foreach (HlslArgument argument in function.arguments)
             {
                 if (argument.type != HlslArgumentType.OutputPort)
                 {
                     continue;
                 }
 
-                var slotId = typeState.outputPorts[argument.outputPortRef.index].id;
+                var slotId = argument.outputPortID;
                 var slot = FindSlot<MaterialSlot>(slotId);
                 var typeStr = NodeUtils.ConvertConcreteSlotValueTypeToString(precision, slot.concreteValueType);
                 var variableStr = GetVariableNameForSlot(slotId);
@@ -264,9 +290,9 @@ namespace UnityEditor.ShaderGraph
             }
 
             // Declare variable for return value, and set it to the return value from the following function call.
-            if (function.returnValue.isValid)
+            if (function.returnValue.outputPortRef.isValid)
             {
-                var slotId = typeState.outputPorts[function.returnValue.index].id;
+                var slotId = function.returnValue.id;
                 var slot = FindSlot<MaterialSlot>(slotId);
                 var typeStr = NodeUtils.ConvertConcreteSlotValueTypeToString(precision, slot.concreteValueType);
                 builder.Append($"{typeStr} {GetVariableNameForSlot(slotId)} = ");
@@ -287,12 +313,23 @@ namespace UnityEditor.ShaderGraph
 
                 switch (argument.type)
                 {
+                    case HlslArgumentType.Control:
+                        if (generationMode == GenerationMode.Preview)
+                        {
+                            builder.Append($"{GetVariableNameForNode()}_c{argument.controlID}");
+                        }
+                        else
+                        {
+                            var controlState = GetControlState(argument.controlID);
+                            builder.Append(NodeUtils.FloatToShaderValue(controlState.value));
+                        }
+                        break;
                     case HlslArgumentType.InputPort:
-                        var inputSlotId = typeState.inputPorts[argument.inputPortRef.index].id;
+                        var inputSlotId = argument.inputPortID;
                         builder.Append(GetSlotValue(inputSlotId, generationMode));
                         break;
                     case HlslArgumentType.OutputPort:
-                        var outputSlotId = typeState.outputPorts[argument.outputPortRef.index].id;
+                        var outputSlotId = argument.outputPortID;
                         builder.Append(GetVariableNameForSlot(outputSlotId));
                         break;
                     case HlslArgumentType.Vector1:
@@ -322,27 +359,20 @@ namespace UnityEditor.ShaderGraph
         // TODO: This should be inserted at a higher level, but it will do for now
         public void GenerateNodeFunction(FunctionRegistry registry, GraphContext graphContext, GenerationMode generationMode)
         {
-            var i = 0;
-            foreach (var source in typeState.hlslSources)
+            registry.ProvideFunction(function.source.value, builder =>
             {
-                var name = $"{typeState.shaderNodeType.GetType().FullName?.Replace(".", "_")}_{i}";
-                registry.ProvideFunction(name, builder =>
+                switch (function.source.type)
                 {
-                    switch (source.type)
-                    {
-                        case HlslSourceType.File:
-                            builder.AppendLine($"#include \"{source.source}\"");
-                            break;
-                        case HlslSourceType.String:
-                            builder.AppendLines(source.source);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                });
-
-                i++;
-            }
+                    case HlslSourceType.File:
+                        builder.AppendLine($"#include \"{function.source.value}\"");
+                        break;
+                    case HlslSourceType.String:
+                        builder.AppendLines(function.source.value);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            });
         }
 
         public override void GetSourceAssetDependencies(List<string> paths)
@@ -351,7 +381,7 @@ namespace UnityEditor.ShaderGraph
             {
                 if (source.type == HlslSourceType.File)
                 {
-                    paths.Add(source.source);
+                    paths.Add(source.value);
                 }
             }
         }
@@ -367,14 +397,30 @@ namespace UnityEditor.ShaderGraph
 
             foreach (var argument in function.arguments)
             {
-                if (argument.type != HlslArgumentType.Value)
-                    continue;
-                properties.AddShaderProperty(new Vector1ShaderProperty
+                if (argument.type == HlslArgumentType.Value)
                 {
-                    overrideReferenceName = $"{GetVariableNameForNode()}_v{argument.valueRef.index}",
-                    generatePropertyBlock = false
-                });
+                    properties.AddShaderProperty(new Vector1ShaderProperty
+                    {
+                        // TODO: valueRef.index is per node instance, so this is different for every node... bug!
+                        overrideReferenceName = $"{GetVariableNameForNode()}_v{argument.valueRef.index}",
+                        generatePropertyBlock = false
+                    });
+                }
+                else if (argument.type == HlslArgumentType.Control)
+                {
+                    properties.AddShaderProperty(new Vector1ShaderProperty
+                    {
+                        overrideReferenceName = $"{GetVariableNameForNode()}_c{argument.controlID}",
+                        generatePropertyBlock = false
+                    });
+                }
             }
+        }
+
+        ControlState GetControlState(int controlID)
+        {
+            ControlState controlState = typeState.controls.Find(x => x.nodeId == tempId && x.controlId == controlID);
+            return controlState;
         }
 
         public override void CollectPreviewMaterialProperties(List<PreviewProperty> properties)
@@ -383,14 +429,28 @@ namespace UnityEditor.ShaderGraph
 
             foreach (var argument in function.arguments)
             {
-                if (argument.type != HlslArgumentType.Value)
-                    continue;
-                var hlslValue = typeState.hlslValues[argument.valueRef.index];
-                properties.Add(new PreviewProperty(PropertyType.Vector1)
+                if (argument.type == HlslArgumentType.Value)
                 {
-                    name = $"{GetVariableNameForNode()}_v{argument.valueRef.index}",
-                    floatValue = hlslValue.value
-                });
+                    var hlslValue = typeState.hlslValues[argument.valueRef.index];
+                    properties.Add(new PreviewProperty(PropertyType.Vector1)
+                    {
+                        // TODO: valueRef.index is per node instance, so this is different for every node... bug!
+                        name = $"{GetVariableNameForNode()}_v{argument.valueRef.index}",
+                        floatValue = hlslValue.value
+                    });
+                }
+                else if (argument.type == HlslArgumentType.Control)
+                {
+                    // find the control on this node that represents this control
+                    var controlState = GetControlState(argument.controlID);
+                    properties.Add(new PreviewProperty(PropertyType.Vector1)
+                    {
+                        name = $"{GetVariableNameForNode()}_c{argument.controlID}",
+                        floatValue = controlState.value
+                    });
+                }
+                else
+                    continue;
             }
         }
     }

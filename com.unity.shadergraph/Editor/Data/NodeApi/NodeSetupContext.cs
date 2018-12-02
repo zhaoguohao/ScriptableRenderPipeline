@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,7 +22,8 @@ namespace UnityEditor.ShaderGraph
             m_NodeTypeCreated = false;
         }
 
-        public void CreateType(NodeTypeDescriptor typeDescriptor)
+		// TODO: make NodeTypeDescriptor internal, just pass values here
+        public void CreateNodeType(NodeTypeDescriptor typeDescriptor)
         {
             Validate();
 
@@ -32,12 +33,15 @@ namespace UnityEditor.ShaderGraph
             // a single node type to be provided.
             if (m_NodeTypeCreated)
             {
-                throw new InvalidOperationException($"An {nameof(IShaderNodeType)} can only have 1 type.");
+                throw new InvalidOperationException($"An {nameof(ShaderNodeType)} can only have 1 type.");
             }
 
             var i = 0;
-            foreach (var portRef in typeDescriptor.inputs)
+            foreach (InputPort port in typeDescriptor.inputs)
             {
+                InputPortRef portRef = CreateInputPort(port);
+
+                // TODO: this is not really necessary anymore I think
                 // PortRef can be 0 if the user created an instance themselves. We cannot remove the default constructor
                 // in C#, so instead we let the default value represent an invalid state.
                 if (!portRef.isValid || portRef.index >= m_TypeState.inputPorts.Count)
@@ -49,14 +53,27 @@ namespace UnityEditor.ShaderGraph
             }
 
             i = 0;
-            foreach (var portRef in typeDescriptor.outputs)
+            foreach (OutputPort port in typeDescriptor.outputs)
             {
-                if (!portRef.isValid || portRef.index >= m_TypeState.outputPorts.Count)
+                CreateOutputPort(port);
+
+                // TODO: this is not really necessary anymore I think
+                if (!port.outputPortRef.isValid)
                 {
                     throw new InvalidOperationException($"{nameof(NodeTypeDescriptor)}.{nameof(NodeTypeDescriptor.inputs)} contains an invalid port at index {i}.");
                 }
 
                 i++;
+            }
+
+            if (typeDescriptor.controls != null)
+            {
+                i = 0;
+                foreach (Control control in typeDescriptor.controls)
+                {
+                    CreateControl(control);
+                    i++;
+                }
             }
 
             m_TypeState.type.name = typeDescriptor.name;
@@ -81,39 +98,65 @@ namespace UnityEditor.ShaderGraph
                 m_TypeState.type.path = "Uncategorized";
             }
 
-            m_TypeState.type.inputs = new List<InputPortRef>(typeDescriptor.inputs);
-            m_TypeState.type.outputs = new List<OutputPortRef>(typeDescriptor.outputs);
+            // copy port and control lists
+            m_TypeState.type.inputs = new List<InputPort>(typeDescriptor.inputs);
+            m_TypeState.type.outputs = new List<OutputPort>(typeDescriptor.outputs);
+            if (typeDescriptor.controls != null)
+                m_TypeState.type.controls = new List<Control>(typeDescriptor.controls);
+            else
+                m_TypeState.type.controls = new List<Control>();
 
             m_NodeTypeCreated = true;
         }
 
-        public InputPortRef CreateInputPort(int id, string displayName, PortValue value)
+        internal void CreateControl(Control control)
         {
-            if (m_TypeState.inputPorts.Any(x => x.id == id) || m_TypeState.outputPorts.Any(x => x.id == id))
+            var controlDescriptor = new ControlDescriptor
             {
-                throw new ArgumentException($"A port with id {id} already exists.", nameof(id));
-            }
-
-            m_TypeState.inputPorts.Add(new InputPortDescriptor { id = id, displayName = displayName, value = value });
-            return new InputPortRef(m_TypeState.inputPorts.Count);
+                id = control.id,
+                displayName = control.displayName,
+                valueType = control.valueType,
+                controlType = control.controlType
+            };
+            m_TypeState.controlDescs.Add(controlDescriptor);
+            control.controlIndex = m_TypeState.controlDescs.Count - 1;
         }
 
-        public OutputPortRef CreateOutputPort(int id, string displayName, PortValueType type)
+        internal InputPortRef CreateInputPort(InputPort port)
         {
-            if (m_TypeState.inputPorts.Any(x => x.id == id) || m_TypeState.outputPorts.Any(x => x.id == id))
+            if (!port.inputPortRef.isValid)
             {
-                throw new ArgumentException($"A port with id {id} already exists.", nameof(id));
-            }
+                if (m_TypeState.inputPorts.Any(x => x.id == port.id) || m_TypeState.outputPorts.Any(x => x.id == port.id))
+                {
+                    throw new ArgumentException($"A port with id {port.id} already exists.", nameof(port));
+                }
 
-            m_TypeState.outputPorts.Add(new OutputPortDescriptor { id = id, displayName = displayName, type = type });
-            return new OutputPortRef(m_TypeState.outputPorts.Count);
+                m_TypeState.inputPorts.Add(new InputPortDescriptor { id = port.id, displayName = port.displayName, value = port.defaultValue });
+                port.inputPortRef = new InputPortRef(m_TypeState.inputPorts.Count);
+            }
+            return port.inputPortRef;
+        }
+
+        internal OutputPortRef CreateOutputPort(OutputPort port)
+        {
+            if (!port.outputPortRef.isValid)
+            {
+                if (m_TypeState.inputPorts.Any(x => x.id == port.id) || m_TypeState.outputPorts.Any(x => x.id == port.id))
+                {
+                    throw new ArgumentException($"A port with id {port.id} already exists.", nameof(port));
+                }
+
+                m_TypeState.outputPorts.Add(new OutputPortDescriptor { id = port.id, displayName = port.displayName, type = port.portType });
+                port.outputPortRef = new OutputPortRef(m_TypeState.outputPorts.Count);
+            }
+            return port.outputPortRef;
         }
 
         void Validate()
         {
             if (m_CurrentSetupContextId != m_Graph.currentContextId)
             {
-                throw new InvalidOperationException($"{nameof(NodeSetupContext)} is only valid during the call to {nameof(IShaderNodeType)}.{nameof(IShaderNodeType.Setup)} it was provided for.");
+                throw new InvalidOperationException($"{nameof(NodeSetupContext)} is only valid during the call to {nameof(ShaderNodeType)}.{nameof(ShaderNodeType.Setup)} it was provided for.");
             }
         }
     }

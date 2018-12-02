@@ -1,28 +1,29 @@
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using UnityEditor.Experimental.UIElements.GraphView;
 
 namespace UnityEditor.ShaderGraph
 {
-    struct HlslSource
+    public struct HlslSource
     {
-        public HlslSourceType type;
-        public string source;
-    }
+        internal HlslSourceType type { get; private set; }
+        internal string value { get; private set; }
 
-    public struct HlslSourceRef
-    {
-        // TODO: Use versioning
-        readonly int m_Index;
-
-        internal int index => m_Index - 1;
-
-        public bool isValid => index > 0;
-
-        internal HlslSourceRef(int index)
+        public static HlslSource File(string source)
         {
-            m_Index = index + 1;
+            if (!System.IO.File.Exists(Path.GetFullPath(source)))
+            {
+                throw new ArgumentException($"Cannot open file at \"{source}\"");
+            }
+            
+            return new HlslSource
+            {
+                type = HlslSourceType.File,
+                value = source
+            };
         }
     }
 
@@ -36,21 +37,31 @@ namespace UnityEditor.ShaderGraph
     {
         ArgumentUnion m_Union;
         public HlslArgumentType type { get; }
-        public InputPortRef inputPortRef => m_Union.inputPortRef;
-        public OutputPortRef outputPortRef => m_Union.outputPortRef;
+        public InputPortRef inputPortRef => m_Union.inputPort.inputPortRef;
+        public int inputPortID => m_Union.inputPort.id;
+        public OutputPortRef outputPortRef => m_Union.outputPort.outputPortRef;
+        public int outputPortID => m_Union.outputPort.id;
         public float vector1Value => m_Union.vector1Value;
         public HlslValueRef valueRef => m_Union.valueRef;
+        public int controlIndex => m_Union.control.controlIndex;
+        public int controlID => m_Union.control.id;
 
-        internal HlslArgument(InputPortRef portRef) : this()
+        internal HlslArgument(Control control) : this()
         {
-            type = HlslArgumentType.InputPort;
-            m_Union.inputPortRef = portRef;
+            type = HlslArgumentType.Control;
+            m_Union.control = control;
         }
 
-        internal HlslArgument(OutputPortRef portRef) : this()
+        internal HlslArgument(InputPort port) : this()
+        {
+            type = HlslArgumentType.InputPort;
+            m_Union.inputPort = port;
+        }
+
+        internal HlslArgument(OutputPort port) : this()
         {
             type = HlslArgumentType.OutputPort;
-            m_Union.outputPortRef = portRef;
+            m_Union.outputPort = port;
         }
 
         internal HlslArgument(float vector1Value) : this()
@@ -69,13 +80,15 @@ namespace UnityEditor.ShaderGraph
         struct ArgumentUnion
         {
             [FieldOffset(0)]
-            public InputPortRef inputPortRef;
+            public InputPort inputPort;
             [FieldOffset(0)]
-            public OutputPortRef outputPortRef;
+            public OutputPort outputPort;
             [FieldOffset(0)]
             public float vector1Value;
             [FieldOffset(0)]
             public HlslValueRef valueRef;
+            [FieldOffset(0)]
+            public Control control;
         }
     }
 
@@ -84,7 +97,8 @@ namespace UnityEditor.ShaderGraph
         InputPort,
         OutputPort,
         Vector1,
-        Value
+        Value,
+        Control
     }
 
     struct HlslValue
@@ -110,26 +124,32 @@ namespace UnityEditor.ShaderGraph
 
     public struct HlslFunctionDescriptor
     {
-        public HlslSourceRef source { get; set; }
+        public HlslSource source { get; set; }
         public string name { get; set; }
         public HlslArgumentList arguments { get; set; }
-        public OutputPortRef returnValue { get; set; }
+        public OutputPort returnValue { get; set; }
     }
 
     public struct HlslArgumentList : IEnumerable<HlslArgument>
     {
         List<HlslArgument> m_Arguments;
 
-        public void Add(InputPortRef portRef)
+        public void Add(Control control)
         {
             m_Arguments = m_Arguments ?? new List<HlslArgument>();
-            m_Arguments.Add(new HlslArgument(portRef));
+            m_Arguments.Add(new HlslArgument(control));
         }
 
-        public void Add(OutputPortRef portRef)
+        public void Add(InputPort port)
         {
             m_Arguments = m_Arguments ?? new List<HlslArgument>();
-            m_Arguments.Add(new HlslArgument(portRef));
+            m_Arguments.Add(new HlslArgument(port));
+        }
+
+        public void Add(OutputPort port)
+        {
+            m_Arguments = m_Arguments ?? new List<HlslArgument>();
+            m_Arguments.Add(new HlslArgument(port));
         }
 
         public void Add(HlslValueRef valueRef)

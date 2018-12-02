@@ -1,3 +1,4 @@
+﻿/*
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,25 +7,21 @@ namespace UnityEditor.ShaderGraph
 {
     class NewMinimumNode : IShaderNodeType
     {
-        InputPortRef m_APort;
-        InputPortRef m_BPort;
-        OutputPortRef m_OutPort;
+        InputPort m_APort = new InputPort(0, "A", PortValue.DynamicVector(.5f));
+        InputPort m_BPort = new InputPort(1, "B", PortValue.DynamicVector(.5f));
+        OutputPort m_OutPort = new OutputPort(2, "Out", PortValueType.DynamicVector);
 
         public void Setup(ref NodeSetupContext context)
         {
-            m_APort = context.CreateInputPort(0, "A", PortValue.DynamicVector(.5f));
-            m_BPort = context.CreateInputPort(1, "B", PortValue.DynamicVector(.5f));
-            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.DynamicVector);
-
             var type = new NodeTypeDescriptor
             {
                 path = "Math/Range",
                 name = "New Minimum",
-                inputs = new List<InputPortRef> { m_APort, m_BPort },
-                outputs = new List<OutputPortRef> { m_OutPort }
+                inputs = new List<InputPort> { m_APort, m_BPort },
+                outputs = new List<OutputPort> { m_OutPort }
             };
 
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
         HlslSourceRef m_Source;
@@ -51,3 +48,4 @@ namespace UnityEditor.ShaderGraph
         }
     }
 }
+*/

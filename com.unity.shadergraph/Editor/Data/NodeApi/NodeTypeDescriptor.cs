@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace UnityEditor.ShaderGraph
@@ -10,8 +10,10 @@ namespace UnityEditor.ShaderGraph
 
         public string name { get; set; }
 
-        public List<InputPortRef> inputs { get; set; }
+        public List<InputPort> inputs { get; set; }
 
-        public List<OutputPortRef> outputs { get; set; }
+        public List<OutputPort> outputs { get; set; }
+
+        public List<Control> controls { get; set; }
     }
 }

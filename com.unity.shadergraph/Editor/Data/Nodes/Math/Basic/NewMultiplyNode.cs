@@ -1,53 +1,39 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class NewMultiplyNode : IShaderNodeType
+    sealed class NewMultiplyNode : ShaderNodeType
     {
-        InputPortRef m_aPort;
-        InputPortRef m_bPort;
-        OutputPortRef m_OutPort;
+        InputPort m_aPort = new InputPort(0, "A", PortValue.DynamicVector(0f));
+        InputPort m_bPort = new InputPort(1, "B", PortValue.DynamicVector(2f));
+        OutputPort m_OutPort = new OutputPort(2, "Out", PortValueType.DynamicVector);
 
-        public void Setup(ref NodeSetupContext context)
+        public override void Setup(ref NodeSetupContext context)
         {
-            m_aPort = context.CreateInputPort(0, "A", PortValue.DynamicVector(0f));
-            m_bPort = context.CreateInputPort(1, "B", PortValue.DynamicVector(2f));
-            m_OutPort = context.CreateOutputPort(2, "Out", PortValueType.DynamicVector);
-
             var type = new NodeTypeDescriptor
             {
                 path = "Math/Basic",
                 name = "New Multiply",
-                inputs = new List<InputPortRef> { m_aPort, m_bPort },
-                outputs = new List<OutputPortRef> { m_OutPort }
+                inputs = new List<InputPort> { m_aPort, m_bPort },
+                outputs = new List<OutputPort> { m_OutPort }
             };
 
-            context.CreateType(type);
+            context.CreateNodeType(type);
         }
 
-        HlslSourceRef m_Source;
+        HlslSource m_Source = HlslSource.File("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
 
-        public void OnChange(ref NodeTypeChangeContext context)
+        public override void OnNodeAdded(NodeChangeContext context, NodeRef node)
         {
-            // TODO: Figure out what should cause the user to create the hlsl source
-            // TODO: How does sharing files between multiple node types work?
-            if (!m_Source.isValid)
+            context.SetHlslFunction(node, new HlslFunctionDescriptor
             {
-                m_Source = context.CreateHlslSource("Packages/com.unity.shadergraph/Editor/Data/Nodes/Math/Basic/Math_Basic.hlsl");
-            }
-
-            foreach (var node in context.addedNodes)
-            {
-                context.SetHlslFunction(node, new HlslFunctionDescriptor
-                {
-                    source = m_Source,
-                    name = "Unity_Multiply",
-                    arguments = new HlslArgumentList { m_aPort, m_bPort },
-                    returnValue = m_OutPort
-                });
-            }
+                source = m_Source,
+                name = "Unity_Multiply",
+                arguments = new HlslArgumentList { m_aPort, m_bPort },
+                returnValue = m_OutPort
+            });
         }
     }
 }
