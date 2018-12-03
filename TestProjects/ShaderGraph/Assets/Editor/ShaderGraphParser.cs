@@ -116,7 +116,6 @@ public class ShaderGraphParser
         foreach (Type t in types)
         {
             // Exclude master nodes.
-            // bool masternode = t.GetInterfaces().Contains(typeof(IMasterNode));
             bool masternode = t.GetInterfaces().Contains(Type.GetType("IMasterNode"));
 
             if (!masternode)
