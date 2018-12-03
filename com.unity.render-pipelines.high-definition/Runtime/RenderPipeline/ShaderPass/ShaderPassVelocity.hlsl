@@ -72,7 +72,7 @@ VaryingsPassToDS InterpolateWithBaryCoordsPassToDS(VaryingsPassToDS input0, Vary
 
 // We will use custom attributes for this pass
 #define VARYINGS_NEED_PASS
-#include "VertMesh.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/VertMesh.hlsl"
 
 // Transforms normal from object to world space
 float3 TransformPreviousObjectToWorldNormal(float3 normalOS)
@@ -177,7 +177,7 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
     return packedVaryingsType;
 }
 
-#include "TessellationShare.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
 
 #endif // TESSELLATION_ON
 
