@@ -241,7 +241,7 @@ Shader "Hidden/HDRenderPipeline/DebugFullScreen"
                     // Reuse depth display function from DebugViewMaterial
                     int2 mipOffset = _DebugDepthPyramidOffsets[_DebugDepthPyramidMip];
                     uint2 pixCoord = (uint2)input.positionCS.xy >> _DebugDepthPyramidMip;
-                    float depth = LOAD_TEXTURE2D(_DepthPyramidTexture, pixCoord + mipOffset).r;
+                    float depth = LOAD_TEXTURE(_DepthPyramidTexture, pixCoord + mipOffset).r;
                     PositionInputs posInput = GetPositionInput(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V);
                     float linearDepth = frac(posInput.linearDepth * 0.1);
                     return float4(linearDepth.xxx, 1.0);
