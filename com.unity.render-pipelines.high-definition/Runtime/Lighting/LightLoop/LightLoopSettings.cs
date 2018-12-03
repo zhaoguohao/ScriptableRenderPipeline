@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -108,7 +109,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             aggregate.enableFptlForForwardOpaque = aggregate.enableFptlForForwardOpaque && !aggregateFrameSettings.enableMSAA;
 
             // disable FPTL for stereo for now
-            aggregate.enableFptlForForwardOpaque = aggregate.enableFptlForForwardOpaque && XRGraphics.enabled;
+            aggregate.enableFptlForForwardOpaque = aggregate.enableFptlForForwardOpaque && !XRGraphics.enabled;
 
             // If Deferred, enable Fptl. If we are forward renderer only and not using Fptl for forward opaque, disable Fptl
             aggregate.isFptlEnabled = aggregateFrameSettings.shaderLitMode == LitShaderMode.Deferred || aggregate.enableFptlForForwardOpaque;
