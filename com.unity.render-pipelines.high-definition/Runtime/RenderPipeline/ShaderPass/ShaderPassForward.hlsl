@@ -19,7 +19,7 @@ PackedVaryingsType Vert(AttributesMesh inputMesh)
 
 PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 {
-    UNITY_SETUP_INSTANCE_ID(inputMesh);
+    UNITY_SETUP_INSTANCE_ID(input);
     VaryingsToPS varyingsType;
     varyingsType.vmesh = VertMeshTesselation(input.vmesh);
     PackedVaryingsToPS packedVaryingsType = PackVaryingsToPS(varyingsType);

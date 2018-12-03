@@ -37,6 +37,7 @@ CBUFFER_END
 #define LOAD_TEXTURE(textureName, pixelCoord) LOAD_TEXTURE2D_ARRAY(textureName, pixelCoord, unity_StereoEyeIndex)
 #define LOAD_TEXTURE_MSAA(textureName, pixelCoord, sampleIndex) LOAD_TEXTURE2D_ARRAY_MSAA(textureName, pixelCoord, unity_StereoEyeIndex, sampleIndex)
 #define LOAD_TEXTURE_LOD(textureName, pixelCoord, lod) LOAD_TEXTURE2D_ARRAY_LOD(textureName, pixelCoord, unity_StereoEyeIndex, lod)
+#define SAMPLE_TEXTURE(textureName, samplerName, pixelCoord) SAMPLE_TEXTURE2D_ARRAY(textureName, samplerName, pixelCoord, unity_StereoEyeIndex)
 #define SAMPLE_TEXTURE_LOD(textureName, samplerName, pixelCoord, lod) SAMPLE_TEXTURE2D_ARRAY_LOD(textureName, samplerName, pixelCoord, unity_StereoEyeIndex, lod)
 #define INDEX_TEXTURE(pixelCoord) uint3(pixelCoord, unity_StereoEyeIndex)
 #else
@@ -51,6 +52,7 @@ CBUFFER_END
 #define LOAD_TEXTURE(textureName, pixelCoord) LOAD_TEXTURE2D(textureName, pixelCoord)
 #define LOAD_TEXTURE_MSAA(textureName, pixelCoord, sampleIndex) LOAD_TEXTURE2D_MSAA(textureName, pixelCoord, sampleIndex)
 #define LOAD_TEXTURE_LOD(textureName, pixelCoord, lod) LOAD_TEXTURE2D_LOD(textureName, pixelCoord, lod) 
+#define SAMPLE_TEXTURE(textureName, samplerName, pixelCoord) SAMPLE_TEXTURE2D(textureName, samplerName, pixelCoord)
 #define SAMPLE_TEXTURE_LOD(textureName, samplerName, pixelCoord, lod) SAMPLE_TEXTURE2D_LOD(textureName, samplerName, pixelCoord, lod)
 #define INDEX_TEXTURE(pixelCoord) uint2(pixelCoord)
 #endif // if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)

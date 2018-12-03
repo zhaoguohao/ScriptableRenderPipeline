@@ -104,6 +104,7 @@ void VelocityPositionZBias(VaryingsToPS input)
 PackedVaryingsType Vert(AttributesMesh inputMesh,
                         AttributesPass inputPass)
 {
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
 
@@ -150,23 +151,30 @@ PackedVaryingsType Vert(AttributesMesh inputMesh,
         varyingsType.vpass.previousPositionCS = mul(_PrevViewProjMatrix, float4(previousPositionRWS, 1.0));
     }
 
-    return PackVaryingsType(varyingsType);
+    PackedVaryingsType packedVaryingsType = PackVaryingsType(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
+    return packedVaryingsType;
 }
 
 #ifdef TESSELLATION_ON
 
 PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 {
-    VaryingsToPS output;
+    UNITY_SETUP_INSTANCE_ID(input);
+    VaryingsToPS varyingsType;
 
-    output.vmesh = VertMeshTesselation(input.vmesh);
+    varyingsType.vmesh = VertMeshTesselation(input.vmesh);
 
-    VelocityPositionZBias(output);
+    VelocityPositionZBias(varyingsType);
 
-    output.vpass.positionCS = input.vpass.positionCS;
-    output.vpass.previousPositionCS = input.vpass.previousPositionCS;
+    varyingsType.vpass.positionCS = input.vpass.positionCS;
+    varyingsType.vpass.previousPositionCS = input.vpass.previousPositionCS;
 
-    return PackVaryingsToPS(output);
+    PackedVaryingsToPS packedVaryingsType = PackVaryingsToPS(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
+    return packedVaryingsType;
 }
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
