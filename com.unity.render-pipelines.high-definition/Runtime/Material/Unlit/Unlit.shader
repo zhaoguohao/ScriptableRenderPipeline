@@ -36,6 +36,8 @@ Shader "HDRenderPipeline/Unlit"
         _AlphaCutoff("Alpha Cutoff", Range(0.0, 1.0)) = 0.5
         _TransparentSortPriority("_TransparentSortPriority", Float) = 0
 
+        [ToggleUI] _TransparentLowResolutionEnable("Low-Resolution", Float) = 0
+
         // Blending state
         [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0
         [HideInInspector] _BlendMode("__blendmode", Float) = 0.0

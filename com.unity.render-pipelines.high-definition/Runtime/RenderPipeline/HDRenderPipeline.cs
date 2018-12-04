@@ -16,21 +16,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             Opaque,
             PreRefraction,
-            Transparent
+            Transparent,
+            TransparentLowRes
         }
 
         static readonly string[] k_ForwardPassDebugName =
         {
             "Forward Opaque Debug",
             "Forward PreRefraction Debug",
-            "Forward Transparent Debug"
+            "Forward Transparent Debug",
+            "Forward Transparent Low-Res Debug"
         };
 
         static readonly string[] k_ForwardPassName =
         {
             "Forward Opaque",
             "Forward PreRefraction",
-            "Forward Transparent"
+            "Forward Transparent",
+            "Forward Transparent Low-Resolution",
         };
 
         readonly HDRenderPipelineAsset m_Asset;
@@ -108,6 +111,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // 'm_CameraColorBuffer' does not contain diffuse lighting of SSS materials until the SSS pass. It is stored within 'm_CameraSssDiffuseLightingBuffer'.
         RTHandleSystem.RTHandle m_CameraColorBuffer;
         RTHandleSystem.RTHandle m_CameraSssDiffuseLightingBuffer;
+        RTHandleSystem.RTHandle m_CameraColorBufferHalfResolution;
 
         RTHandleSystem.RTHandle m_ScreenSpaceShadowsBuffer;
         RTHandleSystem.RTHandle m_AmbientOcclusionBuffer;
@@ -121,6 +125,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // MSAA Versions of regular textures
         RTHandleSystem.RTHandle m_CameraColorMSAABuffer;
         RTHandleSystem.RTHandle m_CameraSssDiffuseLightingMSAABuffer;
+        RTHandleSystem.RTHandle m_CameraColorMSAABufferHalfResolution;
 
         // The current MSAA count
         MSAASamples m_MSAASamples;
@@ -371,6 +376,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColor");
             m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "CameraSSSDiffuseLighting");
+            m_CameraColorBufferHalfResolution = RTHandles.Alloc(0.5f * Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColorHalfResolution");
 
             if (settings.supportSSAO)
             {
@@ -406,6 +412,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 m_CameraColorMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "CameraColorMSAA");
                 m_CameraSssDiffuseLightingMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "CameraSSSDiffuseLightingMSAA");
+                m_CameraColorMSAABufferHalfResolution = RTHandles.Alloc(0.5f * Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "CameraColorHalfResolutionMSAA");
             }
         }
 
@@ -417,6 +424,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             RTHandles.Release(m_CameraColorBuffer);
             RTHandles.Release(m_CameraSssDiffuseLightingBuffer);
+            RTHandles.Release(m_CameraColorBufferHalfResolution);
 
             RTHandles.Release(m_AmbientOcclusionBuffer);
             RTHandles.Release(m_DistortionBuffer);
@@ -432,6 +440,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_CameraColorMSAABuffer);
             RTHandles.Release(m_MultiAmbientOcclusionBuffer);
             RTHandles.Release(m_CameraSssDiffuseLightingMSAABuffer);
+            RTHandles.Release(m_CameraColorMSAABufferHalfResolution);
 
             HDCamera.ClearAll();
         }
@@ -1398,6 +1407,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
                         RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.Transparent);
 
+                        // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
+                        RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.TransparentLowRes);
+
                         // Second resolve the color buffer for finishing the frame
                         m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraColorMSAABuffer, m_CameraColorBuffer);
 
@@ -2086,6 +2098,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         : m_ForwardOnlyPassNames;
                     RenderOpaqueRenderList(cullResults, hdCamera, renderContext, cmd, passNames, m_currentRendererConfigurationBakedLighting);
                 }
+                else if (pass == ForwardPass.TransparentLowRes)
+                {
+                    RTHandleSystem.RTHandle lowResolutionTarget = hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABufferHalfResolution : m_CameraColorBufferHalfResolution;
+                    HDUtils.SetRenderTarget(cmd, hdCamera, lowResolutionTarget, m_SharedRTManager.GetDepthStencilBufferHalfResolution(hdCamera.frameSettings.enableMSAA));
+                    if ((hdCamera.frameSettings.enableDecals) && (DecalSystem.m_DecalDatasCount > 0)) // enable d-buffer flag value is being interpreted more like enable decals in general now that we have clustered
+                                                                                                      // decal datas count is 0 if no decals affect transparency
+                    {
+                        DecalSystem.instance.SetAtlas(cmd); // for clustered decals
+                    }
+
+                    RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd,
+                            m_Asset.renderPipelineSettings.supportTransparentBackface ? m_AllTransparentPassNames : m_TransparentNoBackfaceNames,
+                            m_currentRendererConfigurationBakedLighting,
+                            HDRenderQueue.k_RenderQueue_TransparentLowRes);
+
+                    UpscaleTransparentLowResolutionBuffer(cmd, lowResolutionTarget, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer);
+                }
                 else
                 {
                     HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
@@ -2100,7 +2129,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         transparentRange = HDRenderQueue.k_RenderQueue_AllTransparent;
                     }
-                    RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd,  m_Asset.renderPipelineSettings.supportTransparentBackface ? m_AllTransparentPassNames : m_TransparentNoBackfaceNames, m_currentRendererConfigurationBakedLighting, transparentRange);
+                    RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, m_Asset.renderPipelineSettings.supportTransparentBackface ? m_AllTransparentPassNames : m_TransparentNoBackfaceNames, m_currentRendererConfigurationBakedLighting, transparentRange);
                 }
             }
         }
@@ -2330,6 +2359,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             PushFullScreenDebugTextureMip(hdCamera, cmd, m_SharedRTManager.GetDepthTexture(), mipCount, m_PyramidScale, debugMode);
         }
 
+        void    UpscaleTransparentLowResolutionBuffer(CommandBuffer cmd, RTHandleSystem.RTHandle source, RTHandleSystem.RTHandle target)
+        {
+            //@TODO
+        }
+
         void RenderPostProcess(HDCamera hdcamera, CommandBuffer cmd, PostProcessLayer layer)
         {
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
@@ -2483,13 +2517,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void PushFullScreenDebugTextureMip(HDCamera hdCamera, CommandBuffer cmd, RTHandleSystem.RTHandle texture, int lodCount, Vector4 scaleBias, FullScreenDebugMode debugMode)
         {
-            if (debugMode == m_CurrentDebugDisplaySettings.fullScreenDebugMode)
-            {
-                var mipIndex = Mathf.FloorToInt(m_CurrentDebugDisplaySettings.fullscreenDebugMip * (lodCount));
+            if (debugMode != m_CurrentDebugDisplaySettings.fullScreenDebugMode)
+                return;
 
-                m_FullScreenDebugPushed = true; // We need this flag because otherwise if no full screen debug is pushed (like for example if the corresponding pass is disabled), when we render the result in RenderDebug m_DebugFullScreenTempBuffer will contain potential garbage
-                HDUtils.BlitCameraTexture(cmd, hdCamera, texture, m_DebugFullScreenTempBuffer, scaleBias, mipIndex);
-            }
+            var mipIndex = Mathf.FloorToInt(m_CurrentDebugDisplaySettings.fullscreenDebugMip * (lodCount));
+
+            m_FullScreenDebugPushed = true; // We need this flag because otherwise if no full screen debug is pushed (like for example if the corresponding pass is disabled), when we render the result in RenderDebug m_DebugFullScreenTempBuffer will contain potential garbage
+//            HDUtils.BlitCameraTexture(cmd, hdCamera, texture, m_DebugFullScreenTempBuffer, scaleBias, mipIndex);
+
+texture = m_CameraColorBufferHalfResolution;
+            HDUtils.BlitCameraTexture(cmd, hdCamera, texture, m_DebugFullScreenTempBuffer, scaleBias, mipIndex);
         }
 
         void RenderDebug(HDCamera hdCamera, CommandBuffer cmd, CullingResults cullResults)
@@ -2607,6 +2644,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         HDUtils.SetRenderTarget(cmd, hdCamera, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), ClearFlag.Color, clearColor);
 
+                        // Also clear the half-resolution buffer
+                        RTHandleSystem.RTHandle halfResolutionBuffer = hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABufferHalfResolution : m_CameraColorBufferHalfResolution;
+                        if (halfResolutionBuffer != null)
+                        {
+                            HDUtils.SetRenderTarget(cmd, hdCamera, halfResolutionBuffer, m_SharedRTManager.GetDepthStencilBufferHalfResolution(hdCamera.frameSettings.enableMSAA), ClearFlag.Color, clearColor);
+                        }
                     }
                 }
 

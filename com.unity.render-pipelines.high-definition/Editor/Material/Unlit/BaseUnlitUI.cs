@@ -42,9 +42,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent alphaCutoffShadowText = new GUIContent("Alpha Cutoff Shadow", "Threshold for alpha cutoff in case of shadow pass");
             public static GUIContent alphaCutoffPrepassText = new GUIContent("Alpha Cutoff Prepass", "Threshold for alpha cutoff in case of depth prepass");
             public static GUIContent alphaCutoffPostpassText = new GUIContent("Alpha Cutoff Postpass", "Threshold for alpha cutoff in case of depth postpass");
-            public static GUIContent transparentDepthPrepassEnableText = new GUIContent("Enable transparent depth prepass", "It allow to to fill depth buffer to improve sorting");
-            public static GUIContent transparentDepthPostpassEnableText = new GUIContent("Enable transparent depth postpass", "It allow to fill depth buffer for postprocess effect like DOF");
-            public static GUIContent transparentBackfaceEnableText = new GUIContent("Enable back then front rendering", "It allow to better sort transparent mesh by first rendering back faces then front faces in two separate drawcall");
+            public static GUIContent transparentDepthPrepassEnableText = new GUIContent("Enable transparent depth prepass", "It allows to to fill depth buffer to improve sorting");
+            public static GUIContent transparentDepthPostpassEnableText = new GUIContent("Enable transparent depth postpass", "It allows to fill depth buffer for postprocess effect like DOF");
+            public static GUIContent transparentBackfaceEnableText = new GUIContent("Enable back then front rendering", "It allows to better sort transparent mesh by first rendering back faces then front faces in two separate drawcall");
+            public static GUIContent transparentLowResolutionEnableText = new GUIContent("Render in half resolution", "Low-resolution rendering makes particles render faster and is advised for low-frequency effects.");
 
             public static GUIContent transparentSortPriorityText = new GUIContent("Transparent Sort Priority", "Allow to define priority (from -100 to +100) to solve sorting issue with transparent");
             public static GUIContent enableTransparentFogText = new GUIContent("Enable fog", "Enable fog on transparent material");
@@ -136,6 +137,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kEnableFogOnTransparent = "_EnableFogOnTransparent";
         protected MaterialProperty enableBlendModePreserveSpecularLighting = null;
         protected const string kEnableBlendModePreserveSpecularLighting = "_EnableBlendModePreserveSpecularLighting";
+        protected MaterialProperty transparentLowResolutionEnable = null;
+        protected const string ktransparentLowResolutionEnable = "_TransparentLowResolutionEnable";
 
         protected MaterialProperty enableMotionVectorForVertexAnimation = null;
         protected const string kEnableMotionVectorForVertexAnimation = "_EnableMotionVectorForVertexAnimation";
@@ -174,6 +177,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             transparentDepthPrepassEnable = FindProperty(kTransparentDepthPrepassEnable, props, false);
             transparentDepthPostpassEnable = FindProperty(kTransparentDepthPostpassEnable, props, false);
             transparentBackfaceEnable = FindProperty(kTransparentBackfaceEnable, props, false);
+            transparentLowResolutionEnable = FindProperty(ktransparentLowResolutionEnable, props, false);
 
             transparentSortPriority = FindProperty(kTransparentSortPriority, props, false);
 
@@ -303,6 +307,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (transparentBackfaceEnable != null && surfaceTypeValue == SurfaceType.Transparent)
                 m_MaterialEditor.ShaderProperty(transparentBackfaceEnable, StylesBaseUnlit.transparentBackfaceEnableText);
 
+            if (transparentLowResolutionEnable != null && surfaceTypeValue == SurfaceType.Transparent)
+                m_MaterialEditor.ShaderProperty(transparentLowResolutionEnable, StylesBaseUnlit.transparentLowResolutionEnableText);
+
             if (transparentSortPriority != null && surfaceTypeValue == SurfaceType.Transparent)
             {
                 EditorGUI.BeginChangeCheck();
@@ -357,7 +364,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        // All Setup Keyword functions must be static. It allow to create script to automatically update the shaders with a script if ocde change
+        // All Setup Keyword functions must be static. It allows to create script to automatically update the shaders with a script if ocde change
         static public void SetupBaseUnlitKeywords(Material material)
         {
             bool alphaTestEnable = material.HasProperty(kAlphaCutoffEnabled) && material.GetFloat(kAlphaCutoffEnabled) > 0.0f;
@@ -406,8 +413,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 material.SetOverrideTag("RenderType", "Transparent");
                 material.SetInt("_ZWrite", 0);
-                var isPrepass = material.HasProperty(kPreRefractionPass) && material.GetFloat(kPreRefractionPass) > 0.0f;
-                material.renderQueue = (int)(isPrepass ? HDRenderQueue.Priority.PreRefraction : HDRenderQueue.Priority.Transparent) + (int)material.GetFloat(kTransparentSortPriority);
+                bool    isPrepass = material.HasProperty(kPreRefractionPass) && material.GetFloat(kPreRefractionPass) > 0.0f;
+                bool    isLowRes = material.HasProperty(ktransparentLowResolutionEnable) && material.GetFloat(ktransparentLowResolutionEnable) > 0.5f;
+                material.renderQueue = (int)(isPrepass ? HDRenderQueue.Priority.PreRefraction : (isLowRes ? HDRenderQueue.Priority.TransparentLowResolution : HDRenderQueue.Priority.Transparent))
+                                     + (int)material.GetFloat(kTransparentSortPriority);
 
                 if (material.HasProperty(kBlendMode))
                 {

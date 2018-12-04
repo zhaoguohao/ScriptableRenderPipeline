@@ -27,6 +27,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             TransparentFirst = UnityEngine.Rendering.RenderQueue.Transparent - k_TransparentPriorityQueueRange,
             Transparent = UnityEngine.Rendering.RenderQueue.Transparent,
             TransparentLast = UnityEngine.Rendering.RenderQueue.Transparent + k_TransparentPriorityQueueRange,
+
+            TransparentLowResolutionFirst = TransparentLowResolution - k_TransparentPriorityQueueRange,
+            TransparentLowResolution = 3250,
+            TransparentLowResolutionLast = TransparentLowResolution + k_TransparentPriorityQueueRange,
+
             Overlay = UnityEngine.Rendering.RenderQueue.Overlay
         }
 
@@ -37,6 +42,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly RenderQueueRange k_RenderQueue_PreRefraction = new RenderQueueRange { lowerBound = (int)Priority.PreRefractionFirst, upperBound = (int)Priority.PreRefractionLast };
         public static readonly RenderQueueRange k_RenderQueue_Transparent = new RenderQueueRange { lowerBound = (int)Priority.TransparentFirst, upperBound = (int)Priority.TransparentLast };
         public static readonly RenderQueueRange k_RenderQueue_AllTransparent = new RenderQueueRange { lowerBound = (int)Priority.PreRefractionFirst, upperBound = (int)Priority.TransparentLast };
+
+        public static readonly RenderQueueRange k_RenderQueue_TransparentLowRes = new RenderQueueRange { lowerBound = (int)Priority.TransparentLowResolutionFirst, upperBound = (int)Priority.TransparentLowResolutionLast };
 
         public static readonly RenderQueueRange k_RenderQueue_All = new RenderQueueRange { lowerBound = 0, upperBound = 5000 };
     }
