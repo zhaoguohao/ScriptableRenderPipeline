@@ -6,11 +6,10 @@ This HD Shadow Settings override comes as default when you create a __Scene Sett
 
 ![](Images/SceneSettingsHDShadowSettings1.png)
 
-
 | Property          | Description                                                  |
-| :---------------- | :----------------------------------------------------------- |
-| __Max Distance__  | The maximum distance at which the HDRP renders shadow. HDRP uses this for punctual Lights and as the last boundary for the final cascade. |
-| __Cascade Count__ | The number of cascades for Direction Lights that can cast shadows. Cascades work as a shadow LOD, shadows at distances |
-| __Split 1__       | The limit between the first and second cascade split (expressed as a percentage of Max Distance) |
-| __Solit 2__       | The limit between the second and third cascade split (expressed as a percentage of Max Distance) |
-| __Split 3__       | The limit between the third and final split (expressed as a percentage of Max Distance) |
+| ----------------- | ------------------------------------------------------------ |
+| **Max Distance**  | The maximum distance at which HDRP renders shadows. HDRP uses this for punctual Lights and as the last boundary for the final cascade. |
+| **Cascade Count** | The number of cascades for Direction Lights that can cast shadows. Cascades work as a shadow levels of detail (LOD). The quality loss in the cascades further from the Camera occur because each cascade has its own shadow map and the cascades get progressively larger. This means that HDRP spread the same resolution shadow map over a larger area. |
+| **Split 1**       | The limit between the first and second cascade split (expressed as a percentage of Max Distance). |
+| **Split 2**       | The limit between the second and third cascade split (expressed as a percentage of Max Distance). |
+| **Split 3**       | The limit between the third and final split (expressed as a percentage of Max Distance). |

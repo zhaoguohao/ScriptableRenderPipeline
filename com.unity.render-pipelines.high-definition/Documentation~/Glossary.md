@@ -1,6 +1,6 @@
 # High Definition Render Pipeline Glossary
 
-## General Rendering
+## General rendering terms
 
 <a name="RayMarching"></a>
 #### ray marching:
@@ -11,7 +11,15 @@ An iterative ray intersection test where your ray marches back and forth until i
 
 A texture atlas is a large texture containing several smaller textures packed together. HDRP uses texture atlases for shadow maps and decals.
 
-## Lighting:
+## General terms
+
+<a name="AtmosphericScattering"></a>
+#### atmospheric scattering
+Atmospheric scattering is the phenomena that occurs when particles suspended in the atmosphere diffuse (or scatter) a portion of the light, passing through them, in all directions.
+
+
+
+## Lighting terms
 
 <a name="Illuminance"></a>
 #### illuminance:
@@ -45,7 +53,7 @@ A light is considered to be punctual if it emits light from a single point. HDRP
 
 
 
-## Light intensity units
+### Light intensity units
 
 <a name="Candela"></a>
 #### candela:
