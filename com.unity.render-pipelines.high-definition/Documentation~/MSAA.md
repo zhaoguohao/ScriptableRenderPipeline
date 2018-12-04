@@ -1,4 +1,4 @@
-Multisampling anti-aliasing in HDRP
+# Multisampling anti-aliasing in HDRP
 
 [Aliasing](Glossary.html#Aliasing) is a side effect that appears when a digital sampler samples real-world information and attempts to digitize it. For example, when sampling audio or video, this causes the shape of the digital signal to not match the shape of the original signal. This is most obvious when comparing the original and digital signals for an audio source at its highest frequencies, or a visual source in its smallest details. Regular signal processing uses the [Nyquist rate](Glossary.html#NyquistRate) to avoid this pattern, however it is not practical for image rendering due to it being very resource intensive.
 
