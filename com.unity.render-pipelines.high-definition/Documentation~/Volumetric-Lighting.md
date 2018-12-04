@@ -8,7 +8,7 @@ Please note that the Volumetric Lighting system does not yet support area lights
 
 ## Enabling Volumetric Lighting
 
-To toggle and customize Volumetric Lighting in an [HDRP Asset](HDRPAsset.html) :
+To toggle and customize Volumetric Lighting in an [HDRP Asset](HDRP-Asset.html) :
 
  
 

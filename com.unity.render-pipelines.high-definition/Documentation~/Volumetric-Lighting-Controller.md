@@ -8,7 +8,7 @@ To control the size of the volumetric section of the frustum, add a **Volumetric
 
 Adjust the **Distance Range** on the Volumetric Lighting Controller component to define the maximum and minimum range for the volumetric fog relative to the Camera’s frustum. 
 
-![](https://github.com/Unity-Technologies/ScriptableRenderPipeline/wiki/Pages/HDRP/Images/VolumetricLightingController1.png)
+![](Images/SceneSettingsVolumetricLightingController1.png)
 
 The Volumetric Lighting Controller has two properties:
 |**Property**| **Description**|
