@@ -1,12 +1,12 @@
 Multisampling anti-aliasing in HDRP
 
-[Aliasing]() is a side effect that appears when a digital sampler samples real-world information and attempts to digitize it. For example, when sampling audio or video, this causes the shape of the digital signal to not match the shape of the original signal. This is most obvious when comparing the original and digital signals for an audio source at its highest frequencies, or a visual source in its smallest details. Regular signal processing uses the [Nyquist rate]() to avoid this pattern, however it is not practical for image rendering due to it being very resource intensive.
+[Aliasing](Glossary.html#Aliasing) is a side effect that appears when a digital sampler samples real-world information and attempts to digitize it. For example, when sampling audio or video, this causes the shape of the digital signal to not match the shape of the original signal. This is most obvious when comparing the original and digital signals for an audio source at its highest frequencies, or a visual source in its smallest details. Regular signal processing uses the [Nyquist rate](Glossary.html#NyquistRate) to avoid this pattern, however it is not practical for image rendering due to it being very resource intensive.
 
 ![](Images/MSAA1.png)
 
 An example of the rasterization process creating some aliasing.
 
-To limit this side effect, HDRP supports multisampling anti-aliasing (MSAA), [temporal anti-aliasing (TAA)]() and [fast approximate anti-aliasing (FXAA)](). MSAA is better at solving aliasing issues than the other techniques, but it is much more intrusive and more expensive. Crucially, MSAA solves [spatial aliasing]() issues.
+To limit this side effect, HDRP supports multisampling anti-aliasing (MSAA), [temporal anti-aliasing (TAA)](Glossary.html#TemporalAntiAliasing) and [fast approximate anti-aliasing (FXAA)](Glossary.html#FastApproximateAntiAliasing). MSAA is better at solving aliasing issues than the other techniques, but it is much more intrusive and more expensive. Crucially, MSAA solves [spatial aliasing](Glossary.html#SpatialAliasing) issues.
 
 To enable MSAA in your HDRP project, open your [HDRP Asset](HDRP-Asset) and, in the **Render Pipeline Supported Features** section enable the **Support Multi Sampling Anti-Aliasing** checkbox . If this option is grayed-out, set the **Supported Lit Shader Mode** to either **Both** or **Forward Only**. This is necessary because HDRP only supports MSAA for forward rendering. After you enable support for MSAA, you can select an **MSAA Sample Count** from the drop-down menu (**None, 2X, 4X, 8X**). This defines how many samples HDRP computes per pixel for evaluating the effect. 
 
