@@ -15,5 +15,9 @@ float4 _BaseColor;
 float _DecalMeshDepthBias;
 float _DecalSmoothnessRemapMin;
 float _DecalSmoothnessRemapMax;
+float _DecalMetalnessRemapMin;
+float _DecalMetalnessRemapMax;
+float _DecalAORemapMin;
+float _DecalAORemapMax;
 
 #endif

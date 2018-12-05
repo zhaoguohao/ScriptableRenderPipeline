@@ -23,8 +23,12 @@ Shader "HDRenderPipeline/Decal"
         [HideInInspector] _DecalStencilRef("_DecalStencilRef", Int) = 8 
         [HideInInspector] _DecalStencilWriteMask("_DecalStencilWriteMask", Int) = 8
         // Remapping
-        [HideInInspector] _DecalSmoothnessRemapMin("_DecalSmoothnessRemapMin", Float) = 0.0
-        [HideInInspector] _DecalSmoothnessRemapMax("_DecalSmoothnessRemapMax", Float) = 1.0
+        [HideInInspector] _DecalMetalnessRemapMin("_DecalMetalnessRemapMin", Range(0.0, 1.0)) = 0.0
+        [HideInInspector] _DecalMetalnessRemapMax("_DecalMetalnessRemapMax", Range(0.0, 1.0)) = 1.0
+        [HideInInspector] _DecalAORemapMin("_DecalAORemapMin", Range(0.0, 1.0)) = 0.0
+        [HideInInspector] _DecalAORemapMax("_DecalAORemapMax", Range(0.0, 1.0)) = 1.0
+        [HideInInspector] _DecalSmoothnessRemapMin("_DecalSmoothnessRemapMin", Range(0.0, 1.0)) = 0.0
+        [HideInInspector] _DecalSmoothnessRemapMax("_DecalSmoothnessRemapMax", Range(0.0, 1.0)) = 1.0
 
     }
 

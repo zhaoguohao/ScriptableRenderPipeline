@@ -52,9 +52,12 @@ void ApplyBlendDiffuse(inout float4 dst, inout int matMask, float2 texCoords, fl
 // decalBlend is decal blend with distance fade to be able to construct normal and mask blend if they come from mask map blue channel
 // normalBlend is calculated in this function and used later to blend the normal
 // blendParams are material settings to determing blend source and mode for normal and mask map
-void ApplyBlendMask(inout float4 dbuffer2, inout float2 dbuffer3, inout int matMask, float2 texCoords, int mapMask, float albedoBlend, float lod, float decalBlend, inout float normalBlend, float3 blendParams) // too many blends!!!
+void ApplyBlendMask(inout float4 dbuffer2, inout float2 dbuffer3, inout int matMask, float2 texCoords, int mapMask, float albedoBlend, float lod, float decalBlend, inout float normalBlend, float3 blendParams, float2 remapM, float2 remapAO, float2 remapS) // too many blends!!!
 {
     float4 src = SAMPLE_TEXTURE2D_LOD(_DecalAtlas2D, _trilinear_clamp_sampler_DecalAtlas2D, texCoords, lod);
+    src.x = lerp(remapM.x, remapM.y, src.x);
+    src.y = lerp(remapAO.x, remapAO.y, src.y);
+    src.w = lerp(remapS.x, remapS.y, src.w);
     float maskBlend;
     if (blendParams.x == 1.0f)	// normal blend source is mask blue channel
         normalBlend = src.z * decalBlend;
@@ -184,7 +187,7 @@ void EvalDecalMask(PositionInputs posInput, float3 positionRWSDdx, float3 positi
         float normalBlend = albedoBlend;
         if ((decalData.maskScaleBias.x > 0) && (decalData.maskScaleBias.y > 0))
         {
-            ApplyBlendMask(DBuffer2, DBuffer3, mask, sampleMask, DBUFFERHTILEBIT_MASK, albedoBlend, lodMask, decalData.normalToWorld[0][3], normalBlend, decalData.blendParams);
+            ApplyBlendMask(DBuffer2, DBuffer3, mask, sampleMask, DBUFFERHTILEBIT_MASK, albedoBlend, lodMask, decalData.normalToWorld[0][3], normalBlend, decalData.blendParams, decalData.remappingMAO.xy, decalData.remappingMAO.zw, decalData.remappingS.xy);
         }
 
         if ((decalData.normalScaleBias.x > 0) && (decalData.normalScaleBias.y > 0))

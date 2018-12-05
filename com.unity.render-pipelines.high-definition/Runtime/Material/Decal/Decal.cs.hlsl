@@ -37,6 +37,8 @@ struct DecalData
     float4 normalScaleBias;
     float4 maskScaleBias;
     float4 baseColor;
+    float4 remappingMAO;
+    float4 remappingS;
     float3 blendParams;
 };
 

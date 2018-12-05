@@ -26,6 +26,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
  			public static GUIContent meshDecalDepthBiasText = new GUIContent("Mesh decal depth bias", "prevents z-fighting");
 	 		public static GUIContent drawOrderText = new GUIContent("Draw order", "Controls draw order of decal projectors");
             public static GUIContent smoothnessRemappingText = new GUIContent("Smoothness Remapping", "Smoothness remapping");
+            public static GUIContent metalnessRemappingText = new GUIContent("Metalness Remapping", "Metalness remapping");
+            public static GUIContent aoRemappingText = new GUIContent("AO Remapping", "AO remapping");
 
             public static GUIContent[] maskMapText =
             {
@@ -100,6 +102,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected MaterialProperty decalSmoothnessRemapMax = new MaterialProperty();
         protected const string kDecalSmoothnessRemapMax = "_DecalSmoothnessRemapMax";
 
+        protected MaterialProperty decalMetalnessRemapMin = new MaterialProperty();
+        protected const string kDecalMetalnessRemapMin = "_DecalMetalnessRemapMin";
+
+        protected MaterialProperty decalMetalnessRemapMax = new MaterialProperty();
+        protected const string kDecalMetalnessRemapMax = "_DecalMetalnessRemapMax";
+
+        protected MaterialProperty decalAORemapMin = new MaterialProperty();
+        protected const string kDecalAORemapMin = "_DecalAORemapMin";
+
+        protected MaterialProperty decalAORemapMax = new MaterialProperty();
+        protected const string kDecalAORemapMax = "_DecalAORemapMax";
+
 
         protected MaterialEditor m_MaterialEditor;
 
@@ -121,6 +135,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             drawOrder = FindProperty(kDrawOrder, props);
             decalSmoothnessRemapMin = FindProperty(kDecalSmoothnessRemapMin, props);
             decalSmoothnessRemapMax = FindProperty(kDecalSmoothnessRemapMax, props);
+            decalMetalnessRemapMin = FindProperty(kDecalMetalnessRemapMin, props);
+            decalMetalnessRemapMax = FindProperty(kDecalMetalnessRemapMax, props);
+            decalAORemapMin = FindProperty(kDecalAORemapMin, props);
+            decalAORemapMax = FindProperty(kDecalAORemapMax, props);
 
             // always instanced
             SerializedProperty instancing = m_MaterialEditor.serializedObject.FindProperty("m_EnableInstancingVariants");
@@ -192,6 +210,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             float maskBlendSrcValue =  maskBlendSrc.floatValue;
             float decalSmoothnessRemapMinValue = decalSmoothnessRemapMin.floatValue;
             float decalSmoothnessRemapMaxValue = decalSmoothnessRemapMax.floatValue;
+            float decalMetalnessRemapMinValue = decalMetalnessRemapMin.floatValue;
+            float decalMetalnessRemapMaxValue = decalMetalnessRemapMax.floatValue;
+            float decalAORemapMinValue = decalAORemapMin.floatValue;
+            float decalAORemapMaxValue = decalAORemapMax.floatValue;
 
             Decal.MaskBlendFlags maskBlendFlags = (Decal.MaskBlendFlags)maskBlendMode.floatValue;              
 
@@ -251,6 +273,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                 maskBlendFlags = Decal.MaskBlendFlags.Smoothness;
                             }
                             EditorGUI.indentLevel--;
+                            EditorGUILayout.MinMaxSlider(Styles.aoRemappingText, ref decalAORemapMinValue, ref decalAORemapMaxValue, 0.0f, 1.0f);
+                            EditorGUILayout.MinMaxSlider(Styles.metalnessRemappingText, ref decalMetalnessRemapMinValue, ref decalMetalnessRemapMaxValue, 0.0f, 1.0f);
                             EditorGUILayout.MinMaxSlider(Styles.smoothnessRemappingText, ref decalSmoothnessRemapMinValue, ref decalSmoothnessRemapMaxValue, 0.0f, 1.0f);
                         }
 
@@ -272,6 +296,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         maskBlendMode.floatValue = (float)maskBlendFlags;
                         decalSmoothnessRemapMin.floatValue = decalSmoothnessRemapMinValue;
                         decalSmoothnessRemapMax.floatValue = decalSmoothnessRemapMaxValue;
+                        decalMetalnessRemapMin.floatValue = decalMetalnessRemapMinValue;
+                        decalMetalnessRemapMax.floatValue = decalMetalnessRemapMaxValue;
+                        decalAORemapMin.floatValue = decalAORemapMinValue;
+                        decalAORemapMax.floatValue = decalAORemapMaxValue;
 
                         foreach (var obj in m_MaterialEditor.targets)
                             SetupMaterialKeywordsAndPassInternal((Material)obj);
