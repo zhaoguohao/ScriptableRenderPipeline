@@ -2,14 +2,17 @@
 * [Getting started](Getting-started-with-HDRP)
   * [Upgrading to HDRP](Upgrading-To-HDRP)
 * Volume Components
-  * [HD Shadow Settings](HD-Shadow-Settings)
-  * [Indirect Lighting Controller](Indirect-Lighting-Controller)
   * [Visual Environment](Visual-Environment)
+  * [Gradient Sky](Gradient-Sky)
+  * [HDRI Sky](HDRI-Sky)
+  * [Procedural Sky](Procedural-Sky)
+  * [HD Shadow Settings](HD-Shadow-Settings)
   * [Volumetric Fog](Volumetric-Fog)
+  * [Indirect Lighting Controller](Indirect-Lighting-Controller)
   * [Volumetric Lighting Controller](Volumetric-Lighting-Controller)
 * Lighting
-  * [Atmospheric Scattering](Atmospheric-Scattering)
   * [Light Component](Light-Component)
+  * [Atmospheric Scattering](Atmospheric-Scattering)
   * [Volumetric Lighting](Volumetric-Lighting)
 * Object Sorting
   * [Material Rendering Priority](Material-Rendering-Priority)
