@@ -22,6 +22,10 @@ Shader "HDRenderPipeline/Decal"
         // Stencil state
         [HideInInspector] _DecalStencilRef("_DecalStencilRef", Int) = 8 
         [HideInInspector] _DecalStencilWriteMask("_DecalStencilWriteMask", Int) = 8
+        // Remapping
+        [HideInInspector] _DecalSmoothnessRemapMin("_DecalSmoothnessRemapMin", Float) = 0.0
+        [HideInInspector] _DecalSmoothnessRemapMax("_DecalSmoothnessRemapMax", Float) = 1.0
+
     }
 
     HLSLINCLUDE

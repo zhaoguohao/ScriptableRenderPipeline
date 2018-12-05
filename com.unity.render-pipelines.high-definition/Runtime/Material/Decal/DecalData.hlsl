@@ -5,6 +5,7 @@
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Sampling/SampleUVMapping.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
 
+
 #if (SHADERPASS == SHADERPASS_DBUFFER_PROJECTOR)
 void GetSurfaceData(float2 texCoordDS, float4x4 normalToWorld, out DecalSurfaceData surfaceData)
 #elif (SHADERPASS == SHADERPASS_DBUFFER_MESH)
@@ -44,7 +45,7 @@ void GetSurfaceData(FragInputs input, out DecalSurfaceData surfaceData)
 #if _MASKMAP
     surfaceData.mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, texCoords);
 	maskMapBlend *= surfaceData.mask.z;	// store before overwriting with smoothness
-    surfaceData.mask.z = surfaceData.mask.w;
+    surfaceData.mask.z = lerp(_DecalSmoothnessRemapMin, _DecalSmoothnessRemapMax, surfaceData.mask.w);
 	surfaceData.HTileMask |= DBUFFERHTILEBIT_MASK;
 	surfaceData.mask.w = _MaskBlendSrc ? maskMapBlend : albedoMapBlend;
 #endif

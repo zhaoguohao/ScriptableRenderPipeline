@@ -22,9 +22,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public static GUIContent baseColorText2 = new GUIContent("Opacity(A)", "Opacity (A)");
             public static GUIContent normalMapText = new GUIContent("Normal Map", "Normal Map (BC7/BC5/DXT5(nm))");
             public static GUIContent decalBlendText = new GUIContent("Global Opacity", "Whole decal Opacity");
-            public static GUIContent AlbedoModeText = new GUIContent("Affect BaseColor", "Base color + Opacity, Opacity only");
- 			public static GUIContent MeshDecalDepthBiasText = new GUIContent("Mesh decal depth bias", "prevents z-fighting");
-	 		public static GUIContent DrawOrderText = new GUIContent("Draw order", "Controls draw order of decal projectors");
+            public static GUIContent albedoModeText = new GUIContent("Affect BaseColor", "Base color + Opacity, Opacity only");
+ 			public static GUIContent meshDecalDepthBiasText = new GUIContent("Mesh decal depth bias", "prevents z-fighting");
+	 		public static GUIContent drawOrderText = new GUIContent("Draw order", "Controls draw order of decal projectors");
+            public static GUIContent smoothnessRemappingText = new GUIContent("Smoothness Remapping", "Smoothness remapping");
 
             public static GUIContent[] maskMapText =
             {
@@ -93,6 +94,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected const string kDecalStencilWriteMask = "_DecalStencilWriteMask";
         protected const string kDecalStencilRef = "_DecalStencilRef";
 
+        protected MaterialProperty decalSmoothnessRemapMin = new MaterialProperty();
+        protected const string kDecalSmoothnessRemapMin = "_DecalSmoothnessRemapMin";
+
+        protected MaterialProperty decalSmoothnessRemapMax = new MaterialProperty();
+        protected const string kDecalSmoothnessRemapMax = "_DecalSmoothnessRemapMax";
+
+
         protected MaterialEditor m_MaterialEditor;
 
         void FindMaterialProperties(MaterialProperty[] props)
@@ -111,6 +119,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             maskmapSmoothness = FindProperty(kMaskmapSmoothness, props);            
             decalMeshDepthBias = FindProperty(kDecalMeshDepthBias, props);            
             drawOrder = FindProperty(kDrawOrder, props);
+            decalSmoothnessRemapMin = FindProperty(kDecalSmoothnessRemapMin, props);
+            decalSmoothnessRemapMax = FindProperty(kDecalSmoothnessRemapMax, props);
 
             // always instanced
             SerializedProperty instancing = m_MaterialEditor.serializedObject.FindProperty("m_EnableInstancingVariants");
@@ -180,6 +190,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUIUtility.labelWidth = 0f;
             float normalBlendSrcValue = normalBlendSrc.floatValue;
             float maskBlendSrcValue =  maskBlendSrc.floatValue;
+            float decalSmoothnessRemapMinValue = decalSmoothnessRemapMin.floatValue;
+            float decalSmoothnessRemapMaxValue = decalSmoothnessRemapMax.floatValue;
 
             Decal.MaskBlendFlags maskBlendFlags = (Decal.MaskBlendFlags)maskBlendMode.floatValue;              
 
@@ -196,7 +208,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         m_MaterialEditor.TexturePropertySingleLine((material.GetFloat(kAlbedoMode) == 1.0f) ? Styles.baseColorText : Styles.baseColorText2, baseColorMap, baseColor);
                         // Currently always display Albedo contribution as we have an albedo tint that apply
                         EditorGUI.indentLevel++;
-                        m_MaterialEditor.ShaderProperty(albedoMode, Styles.AlbedoModeText);
+                        m_MaterialEditor.ShaderProperty(albedoMode, Styles.albedoModeText);
                         EditorGUI.indentLevel--;
 
                         m_MaterialEditor.TexturePropertySingleLine(Styles.normalMapText, normalMap);
@@ -239,10 +251,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                 maskBlendFlags = Decal.MaskBlendFlags.Smoothness;
                             }
                             EditorGUI.indentLevel--;
+                            EditorGUILayout.MinMaxSlider(Styles.smoothnessRemappingText, ref decalSmoothnessRemapMinValue, ref decalSmoothnessRemapMaxValue, 0.0f, 1.0f);
                         }
 
-                        m_MaterialEditor.ShaderProperty(drawOrder, Styles.DrawOrderText);
-                        m_MaterialEditor.ShaderProperty(decalMeshDepthBias, Styles.MeshDecalDepthBiasText);
+                        m_MaterialEditor.ShaderProperty(drawOrder, Styles.drawOrderText);
+                        m_MaterialEditor.ShaderProperty(decalMeshDepthBias, Styles.meshDecalDepthBiasText);
                         m_MaterialEditor.ShaderProperty(decalBlend, Styles.decalBlendText);
 
                         EditorGUI.indentLevel--;
@@ -257,6 +270,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         normalBlendSrc.floatValue = normalBlendSrcValue;
                         maskBlendSrc.floatValue = maskBlendSrcValue;
                         maskBlendMode.floatValue = (float)maskBlendFlags;
+                        decalSmoothnessRemapMin.floatValue = decalSmoothnessRemapMinValue;
+                        decalSmoothnessRemapMax.floatValue = decalSmoothnessRemapMaxValue;
+
                         foreach (var obj in m_MaterialEditor.targets)
                             SetupMaterialKeywordsAndPassInternal((Material)obj);
                     }
