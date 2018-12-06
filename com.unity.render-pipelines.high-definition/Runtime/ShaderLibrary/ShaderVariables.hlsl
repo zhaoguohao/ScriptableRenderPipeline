@@ -166,7 +166,6 @@ SAMPLER(s_trilinear_repeat_sampler);
 // ----------------------------------------------------------------------------
 
 UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthTexture);
-SAMPLER(sampler_CameraDepthTexture);
 
 // Main lightmap
 TEXTURE2D(unity_Lightmap);
