@@ -28,20 +28,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return null;
         }
         
-        public static Material GetFinalBlitMaterial()
-        {
-            HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
-            if (hdPipeline != null)
-            {
-                if (XRGraphics.enabled && !XRGraphics.usingTexArray())
-                    return hdPipeline.GetBlitFromDoubleWide();
-                else
-                    return hdPipeline.GetBlitFromTexArray();
-            }
-
-            return null;
-        }
-
         public static RenderPipelineSettings hdrpSettings
         {
             get
@@ -320,8 +306,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 offset.y = scale.y;
                 scale.y *= -1;
             }
+            cmd.SetRenderTarget(destination);
 
-            cmd.Blit(source, destination, scale, offset);
+            s_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, source);
+            s_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(scale.x, scale.y, offset.x, offset.y));
+            s_PropertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, 0);
+            cmd.DrawProcedural(Matrix4x4.identity, GetBlitMaterial(), 0, MeshTopology.Triangles, 3, 1, s_PropertyBlock);
+            //BlitTexture(cmd, source, destination, new Vector4(scale.x, scale.y, offset.x, offset.y), 0, 0);
+            //cmd.Blit(source, destination, scale, offset);
         }
 
         // This particular case is for blitting a non-scaled texture into a scaled texture. So we setup the partial viewport but don't scale the input UVs.
