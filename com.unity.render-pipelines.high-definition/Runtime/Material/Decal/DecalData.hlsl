@@ -47,9 +47,9 @@ void GetSurfaceData(FragInputs input, out DecalSurfaceData surfaceData)
     surfaceData.mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, texCoords);
     surfaceData.mask.z *= _DecalMaskMapBlueScale;
 	maskMapBlend *= surfaceData.mask.z;	// store before overwriting with smoothness
-    surfaceData.mask.x = lerp(_DecalMetalnessRemapMin, _DecalMetalnessRemapMax, surfaceData.mask.x);
-    surfaceData.mask.y = lerp(_DecalAORemapMin, _DecalAORemapMax, surfaceData.mask.y);
-    surfaceData.mask.z = lerp(_DecalSmoothnessRemapMin, _DecalSmoothnessRemapMax, surfaceData.mask.w);
+    surfaceData.mask.x = _Metallic * surfaceData.mask.x;
+    surfaceData.mask.y = lerp(_AORemapMin, _AORemapMax, surfaceData.mask.y);
+    surfaceData.mask.z = lerp(_SmoothnessRemapMin, _SmoothnessRemapMax, surfaceData.mask.w);
 	surfaceData.HTileMask |= DBUFFERHTILEBIT_MASK;
 	surfaceData.mask.w = _MaskBlendSrc ? maskMapBlend : albedoMapBlend;
 #endif
