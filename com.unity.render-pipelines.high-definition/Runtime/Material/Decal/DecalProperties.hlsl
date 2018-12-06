@@ -19,5 +19,8 @@ float _DecalMetalnessRemapMin;
 float _DecalMetalnessRemapMax;
 float _DecalAORemapMin;
 float _DecalAORemapMax;
+float _DecalColorMapAlphaScale;
+float _DecalMaskMapBlueScale;
+
 
 #endif

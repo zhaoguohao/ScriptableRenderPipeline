@@ -28,8 +28,9 @@ void GetSurfaceData(FragInputs input, out DecalSurfaceData surfaceData)
 #endif
 
 #if _COLORMAP
-    surfaceData.baseColor *= SAMPLE_TEXTURE2D(_BaseColorMap, sampler_BaseColorMap, texCoords);    
+    surfaceData.baseColor *= SAMPLE_TEXTURE2D(_BaseColorMap, sampler_BaseColorMap, texCoords);
 #endif
+    surfaceData.baseColor.w *= _DecalColorMapAlphaScale;
 	surfaceData.baseColor.w *= albedoMapBlend;
 	albedoMapBlend = surfaceData.baseColor.w;   
 // outside _COLORMAP because we still have base color
@@ -44,6 +45,7 @@ void GetSurfaceData(FragInputs input, out DecalSurfaceData surfaceData)
 
 #if _MASKMAP
     surfaceData.mask = SAMPLE_TEXTURE2D(_MaskMap, sampler_MaskMap, texCoords);
+    surfaceData.mask.z *= _DecalMaskMapBlueScale;
 	maskMapBlend *= surfaceData.mask.z;	// store before overwriting with smoothness
     surfaceData.mask.x = lerp(_DecalMetalnessRemapMin, _DecalMetalnessRemapMax, surfaceData.mask.x);
     surfaceData.mask.y = lerp(_DecalAORemapMin, _DecalAORemapMax, surfaceData.mask.y);

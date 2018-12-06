@@ -29,6 +29,8 @@ Shader "HDRenderPipeline/Decal"
         [HideInInspector] _DecalAORemapMax("_DecalAORemapMax", Range(0.0, 1.0)) = 1.0
         [HideInInspector] _DecalSmoothnessRemapMin("_DecalSmoothnessRemapMin", Range(0.0, 1.0)) = 0.0
         [HideInInspector] _DecalSmoothnessRemapMax("_DecalSmoothnessRemapMax", Range(0.0, 1.0)) = 1.0
+        [HideInInspector] _DecalColorMapAlphaScale("_DecalColorMapAlphaScale", Range(0.0, 1.0)) = 1.0
+        [HideInInspector] _DecalMaskMapBlueScale("_DecalMaskMapBlueScale", Range(0.0, 1.0)) = 1.0
 
     }
 
