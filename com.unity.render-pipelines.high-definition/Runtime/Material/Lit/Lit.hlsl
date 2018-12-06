@@ -37,16 +37,16 @@
 //-----------------------------------------------------------------------------
 
 // GBuffer texture declaration
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture0);
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture1);
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture2);
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture3); // Bake lighting and/or emissive
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture4); // Light layer or shadow mask
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_GBufferTexture5); // shadow mask
+TEXTURE2D_ARRAY(_GBufferTexture0);
+TEXTURE2D_ARRAY(_GBufferTexture1);
+TEXTURE2D_ARRAY(_GBufferTexture2);
+TEXTURE2D_ARRAY(_GBufferTexture3); // Bake lighting and/or emissive
+TEXTURE2D_ARRAY(_GBufferTexture4); // Light layer or shadow mask
+TEXTURE2D_ARRAY(_GBufferTexture5); // shadow mask
 
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_LightLayersTexture);
+TEXTURE2D_ARRAY(_LightLayersTexture);
 #ifdef SHADOWS_SHADOWMASK
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_ShadowMaskTexture); // Alias for shadow mask, so we don't need to know which gbuffer is used for shadow mask
+TEXTURE2D_ARRAY(_ShadowMaskTexture); // Alias for shadow mask, so we don't need to know which gbuffer is used for shadow mask
 #endif
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/LTCAreaLight/LTCAreaLight.hlsl"
@@ -632,17 +632,17 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
     // Isolate material features.
     tileFeatureFlags &= MATERIAL_FEATURE_MASK_FLAGS;
 
-    GBufferType0 inGBuffer0 = LOAD_TEXTURE(_GBufferTexture0, positionSS);
-    GBufferType1 inGBuffer1 = LOAD_TEXTURE(_GBufferTexture1, positionSS);
-    GBufferType2 inGBuffer2 = LOAD_TEXTURE(_GBufferTexture2, positionSS);
+    GBufferType0 inGBuffer0 = LOAD_TEXTURE2D_ARRAY(_GBufferTexture0, positionSS, unity_StereoEyeIndex);
+    GBufferType1 inGBuffer1 = LOAD_TEXTURE2D_ARRAY(_GBufferTexture1, positionSS, unity_StereoEyeIndex);
+    GBufferType2 inGBuffer2 = LOAD_TEXTURE2D_ARRAY(_GBufferTexture2, positionSS, unity_StereoEyeIndex);
 
     // BuiltinData
-    builtinData.bakeDiffuseLighting = LOAD_TEXTURE(_GBufferTexture3, positionSS).rgb;  // This also contain emissive (and * AO if no lightlayers)
+    builtinData.bakeDiffuseLighting = LOAD_TEXTURE2D_ARRAY(_GBufferTexture3, positionSS, unity_StereoEyeIndex).rgb;  // This also contain emissive (and * AO if no lightlayers)
 
     // Avoid to introduce a new variant for light layer as it is already long to compile
     if (_EnableLightLayers)
     {
-        float4 inGBuffer4 = LOAD_TEXTURE(_LightLayersTexture, positionSS);
+        float4 inGBuffer4 = LOAD_TEXTURE2D_ARRAY(_LightLayersTexture, positionSS, unity_StereoEyeIndex);
         // If we have light layers, take the opportunity to save AO and avoid double occlusion with SSAO
         bsdfData.ambientOcclusion = inGBuffer4.z;
         builtinData.renderingLayers = uint(inGBuffer4.w * 255.5);
@@ -655,7 +655,7 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
 
     // We know the GBufferType no need to use abstraction
 #ifdef SHADOWS_SHADOWMASK
-    float4 shadowMaskGbuffer = LOAD_TEXTURE(_ShadowMaskTexture, positionSS);
+    float4 shadowMaskGbuffer = LOAD_TEXTURE2D_ARRAY(_ShadowMaskTexture, positionSS, unity_StereoEyeIndex);
     builtinData.shadowMask0 = shadowMaskGbuffer.x;
     builtinData.shadowMask1 = shadowMaskGbuffer.y;
     builtinData.shadowMask2 = shadowMaskGbuffer.z;
@@ -1540,7 +1540,7 @@ IndirectLighting EvaluateBSDF_ScreenSpaceReflection(PositionInputs posInput,
     ZERO_INITIALIZE(IndirectLighting, lighting);
 
     // TODO: this texture is sparse (mostly black). Can we avoid reading every texel? How about using Hi-S?
-    float4 ssrLighting = LOAD_TEXTURE(_SsrLightingTexture, posInput.positionSS);
+    float4 ssrLighting = LOAD_TEXTURE2D_ARRAY(_SsrLightingTexture, posInput.positionSS, unity_StereoEyeIndex);
 
     // Note: RGB is already premultiplied by A.
     // TODO: we should multiply all indirect lighting by the FGD value only ONCE.
@@ -1610,9 +1610,9 @@ IndirectLighting EvaluateBSDF_ScreenspaceRefraction(LightLoopContext lightLoopCo
     samplingPositionNDC.x = 0.5f * (samplingPositionNDC.x + unity_StereoEyeIndex);
 #endif
 
-    float3 preLD = SAMPLE_TEXTURE_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler,
+    float3 preLD = SAMPLE_TEXTURE2D_ARRAY_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler,
                                         // Offset by half a texel to properly interpolate between this pixel and its mips
-                                        samplingPositionNDC * _ColorPyramidScale.xy, preLightData.transparentSSMipLevel).rgb;
+                                        samplingPositionNDC * _ColorPyramidScale.xy, unity_StereoEyeIndex, preLightData.transparentSSMipLevel).rgb;
 
 
     // We use specularFGD as an approximation of the fresnel effect (that also handle smoothness)

@@ -165,7 +165,7 @@ SAMPLER(s_trilinear_repeat_sampler);
 
 // ----------------------------------------------------------------------------
 
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraDepthTexture);
+TEXTURE2D_ARRAY(_CameraDepthTexture);
 SAMPLER(sampler_CameraDepthTexture);
 
 // Main lightmap
@@ -343,7 +343,7 @@ CBUFFER_END
 // Currently it's an atlas and it's layout can be found at ComputePackedMipChainInfo in HDUtils.cs
 float SampleCameraDepth(uint2 pixelCoords)
 {
-    return LOAD_TEXTURE_LOD(_CameraDepthTexture, pixelCoords, 0).r;
+    return LOAD_TEXTURE2D_ARRAY_LOD(_CameraDepthTexture, pixelCoords, unity_StereoEyeIndex, 0).r;
 }
 
 float SampleCameraDepth(float2 uv)

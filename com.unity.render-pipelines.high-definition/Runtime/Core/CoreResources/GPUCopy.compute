@@ -7,20 +7,26 @@ CBUFFER_START (UnityCBuffer)
   uint2 _RectOffset;
 CBUFFER_END
 
-#pragma kernel KSampleCopySPI4_1_x_8    KERNEL_NAME41=KSampleCopySPI4_1_x_8   KERNEL_SIZE=8   UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel KSampleCopySPI4_1_x_1    KERNEL_NAME41=KSampleCopySPI4_1_x_1   KERNEL_SIZE=1   UNITY_STEREO_INSTANCING_ENABLED=1
 #pragma kernel KSampleCopy4_1_x_8       KERNEL_NAME41=KSampleCopy4_1_x_8      KERNEL_SIZE=8   
 #pragma kernel KSampleCopy4_1_x_1       KERNEL_NAME41=KSampleCopy4_1_x_1      KERNEL_SIZE=1
 
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/StereoInstancingTextureDefines.hlsl"
+// Must include the following if ShaderVariables is not included
+#ifndef UNITY_SHADER_VARIABLES_INCLUDED
+#if SHADER_STAGE_COMPUTE
+CBUFFER_START(UnityPerPassStereoForCompute)
+float _ComputeEyeIndex;
+CBUFFER_END
+#define unity_StereoEyeIndex _ComputeEyeIndex
+#endif
+#endif
 
-RW_TEXTURE(float1, _Result1);
-TEXTURE_TYPE(float4, _Source4); 
+RW_TEXTURE2D_ARRAY(float1, _Result1);
+TEXTURE2D_ARRAY_TYPE(float4, _Source4); 
 
 [numthreads(KERNEL_SIZE, KERNEL_SIZE, 1)]
 void KERNEL_NAME41(uint2 dispatchThreadId : SV_DispatchThreadID)
 {
-    _Result1[INDEX_TEXTURE(_RectOffset + dispatchThreadId)] = LOAD_TEXTURE(_Source4, _RectOffset + dispatchThreadId).x;
+    _Result1[uint3(_RectOffset + dispatchThreadId, unity_StereoEyeIndex)] = LOAD_TEXTURE2D_ARRAY(_Source4, _RectOffset + dispatchThreadId, unity_StereoEyeIndex).x;
 }
 
 

@@ -4,12 +4,11 @@
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
 #pragma kernel KMain MAIN=KMain
-#pragma kernel KMainSPI MAIN=KMainSPI UNITY_STEREO_INSTANCING_ENABLED=1
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_DistortionTexture);
-RW_TEXTURE(float4, _Destination);
+TEXTURE2D_ARRAY(_DistortionTexture);
+RW_TEXTURE2D_ARRAY(float4, _Destination);
 
 CBUFFER_START(cb)
 float4 _Size;
@@ -24,7 +23,7 @@ void MAIN(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, ui
     const float _FetchBias = 0.9;
 
     // Get distortion values
-    float4 encodedDistortion = LOAD_TEXTURE(_DistortionTexture, dispatchThreadId);
+    float4 encodedDistortion = LOAD_TEXTURE2D_ARRAY(_DistortionTexture, dispatchThreadId, unity_StereoEyeIndex);
 
     float2 distortion;
     float distortionBlur;
@@ -51,7 +50,7 @@ void MAIN(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, ui
     float2 distordedDistortion;
     float distordedDistortionBlur;
     bool distordedIsSourceValid;
-    float4 encodedDistordedDistortion = LOAD_TEXTURE(_DistortionTexture, distortedEncodedDistortionId);
+    float4 encodedDistordedDistortion = LOAD_TEXTURE2D_ARRAY(_DistortionTexture, distortedEncodedDistortionId, unity_StereoEyeIndex);
     DecodeDistortion(encodedDistordedDistortion, distordedDistortion, distordedDistortionBlur, distordedIsSourceValid);
 
     if (!distordedIsSourceValid)
@@ -63,7 +62,7 @@ void MAIN(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, ui
     // Get source pixel for distortion
     float2 distordedUV = float2((dispatchThreadId + 0.5) + distortion * _FetchBias) * _Size.zw;
     float mip = (_ColorPyramidScale.z - 1) * clamp(distortionBlur, 0.0, 1.0);
-    float4 sampled = SAMPLE_TEXTURE_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, distordedUV * _ColorPyramidScale.xy, mip);
+    float4 sampled = SAMPLE_TEXTURE2D_ARRAY_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, distordedUV * _ColorPyramidScale.xy, unity_StereoEyeIndex, mip);
 
-    _Destination[INDEX_TEXTURE(dispatchThreadId)] = sampled;
+    _Destination[uint3(dispatchThreadId, unity_StereoEyeIndex)] = sampled;
 }

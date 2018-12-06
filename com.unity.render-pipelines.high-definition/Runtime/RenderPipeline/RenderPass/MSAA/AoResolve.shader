@@ -8,8 +8,8 @@ Shader "Hidden/HDRenderPipeline/AOResolve"
         #pragma enable_d3d11_debug_symbols
 
         // Target multivalues textures
-        TEXTURE_TYPE(float4, _DepthValuesTexture);
-        TEXTURE_TYPE(float2, _MultiAOTexture);
+        TEXTURE2D_ARRAY_TYPE(float4, _DepthValuesTexture);
+        TEXTURE2D_ARRAY_TYPE(float2, _MultiAOTexture);
 
         struct Attributes
         {
@@ -43,13 +43,13 @@ Shader "Hidden/HDRenderPipeline/AOResolve"
             int2 pixelCoords = int2(input.texcoord);
 
             // Read the multiple depth values
-            float4 depthValues = LOAD_TEXTURE(_DepthValuesTexture, pixelCoords);
+            float4 depthValues = LOAD_TEXTURE2D_ARRAY(_DepthValuesTexture, pixelCoords, unity_StereoEyeIndex);
 
             // Compute the lerp value between the max and min ao values (and saturate in case maxdepth == mindepth)
             float lerpVal = saturate((depthValues.z - depthValues.y) / (depthValues.x - depthValues.y));
 
             // Fetch the AO values
-            float2 aoValues = LOAD_TEXTURE(_MultiAOTexture, pixelCoords);
+            float2 aoValues = LOAD_TEXTURE2D_ARRAY(_MultiAOTexture, pixelCoords, unity_StereoEyeIndex);
 
             // Lerp between Both
             return lerp(aoValues.x, aoValues.y, lerpVal);

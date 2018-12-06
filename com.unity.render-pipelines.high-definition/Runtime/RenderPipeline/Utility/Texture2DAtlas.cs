@@ -148,7 +148,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     false,
                     false,
                     true,
-                    false);
+                    false,
+                    requireStereoSupport: false);
 
             m_AtlasAllocator = new AtlasAllocator(width, height);
         }

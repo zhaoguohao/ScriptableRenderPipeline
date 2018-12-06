@@ -22,10 +22,10 @@ Shader "Hidden/HDRenderPipeline/CopyStencilBuffer"
 #if defined(PLATFORM_SUPPORTS_EXPLICIT_BINDING)
     // Explicit binding is needed on D3D since we bind the UAV to slot 1 and we don't have a colour RT bound to fix a D3D warning.
     RW_TEXTURE2D(float, _HTile) : register(u1); // DXGI_FORMAT_R8_UINT is not supported by Unity
-    RW_TEXTURE2D(float, _StencilBufferCopy) : register(u1); // DXGI_FORMAT_R8_UINT is not supported by Unity
+    RW_TEXTURE2D_ARRAY(float, _StencilBufferCopy) : register(u1); // DXGI_FORMAT_R8_UINT is not supported by Unity
 #else
     RW_TEXTURE2D(float, _HTile); // DXGI_FORMAT_R8_UINT is not supported by Unity
-    RW_TEXTURE2D(float, _StencilBufferCopy); // DXGI_FORMAT_R8_UINT is not supported by Unity
+    RW_TEXTURE2D_ARRAY(float, _StencilBufferCopy); // DXGI_FORMAT_R8_UINT is not supported by Unity
 #endif
         
     struct Attributes
@@ -173,7 +173,7 @@ Shader "Hidden/HDRenderPipeline/CopyStencilBuffer"
                 [earlydepthstencil]
                 void Frag(Varyings input)// use SV_StencilRef in D3D 11.3+
                 {
-                    _StencilBufferCopy[(uint2)input.positionCS.xy] = PackByte(1);
+                    _StencilBufferCopy[uint3(input.positionCS.xy, unity_StereoEyeIndex)] = PackByte(1);
                 }
 
                 ENDHLSL
@@ -204,8 +204,8 @@ Shader "Hidden/HDRenderPipeline/CopyStencilBuffer"
                 void Frag(Varyings input) // use SV_StencilRef in D3D 11.3+
                 {
                     uint2 dstPixCoord = (uint2)input.positionCS.xy;
-                    uint oldStencilVal = UnpackByte(_StencilBufferCopy[dstPixCoord]);
-                    _StencilBufferCopy[dstPixCoord] = PackByte(oldStencilVal | _StencilRef);
+                    uint oldStencilVal = UnpackByte(_StencilBufferCopy[uint3(dstPixCoord, unity_StereoEyeIndex)]);
+                    _StencilBufferCopy[uint3(dstPixCoord, unity_StereoEyeIndex)] = PackByte(oldStencilVal | _StencilRef);
                 }
 
                 ENDHLSL

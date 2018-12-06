@@ -19,9 +19,9 @@ Shader "Hidden/HDRenderPipeline/Material/Decal/DecalNormalBuffer"
 
 #if defined(PLATFORM_NEEDS_UNORM_UAV_SPECIFIER) && defined(PLATFORM_SUPPORTS_EXPLICIT_BINDING)
         // Explicit binding is needed on D3D since we bind the UAV to slot 1 and we don't have a colour RT bound to fix a D3D warning.
-        RW_TEXTURE2D(unorm float4, _NormalBuffer) : register(u1);
+        RW_TEXTURE2D_ARRAY(unorm float4, _NormalBuffer) : register(u1);
 #else
-        RW_TEXTURE2D(float4, _NormalBuffer);
+        RW_TEXTURE2D_ARRAY(float4, _NormalBuffer);
 #endif
 
         struct Attributes
@@ -53,12 +53,12 @@ Shader "Hidden/HDRenderPipeline/Material/Decal/DecalNormalBuffer"
             DecalSurfaceData decalSurfaceData;
             DECODE_FROM_DBUFFER(DBuffer, decalSurfaceData);
 
-            float4 GBufferNormal = _NormalBuffer[input.texcoord * _ScreenSize.xy];
+            float4 GBufferNormal = _NormalBuffer[uint3(input.texcoord * _ScreenSize.xy, unity_StereoEyeIndex)];
             NormalData normalData;
             DecodeFromNormalBuffer(GBufferNormal, uint2(0, 0), normalData);
             normalData.normalWS.xyz = normalize(normalData.normalWS.xyz * decalSurfaceData.normalWS.w + decalSurfaceData.normalWS.xyz);
             EncodeIntoNormalBuffer(normalData, uint2(0, 0), GBufferNormal);
-            _NormalBuffer[input.texcoord * _ScreenSize.xy] = GBufferNormal;
+            _NormalBuffer[uint3(input.texcoord * _ScreenSize.xy, unity_StereoEyeIndex)] = GBufferNormal;
         }
 
     ENDHLSL

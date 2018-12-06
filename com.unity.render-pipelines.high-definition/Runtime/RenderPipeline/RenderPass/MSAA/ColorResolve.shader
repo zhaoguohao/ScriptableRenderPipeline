@@ -8,7 +8,7 @@ Shader "Hidden/HDRenderPipeline/ColorResolve"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
         #pragma enable_d3d11_debug_symbols
 
-        TEXTUREMS_TYPE(float4, _ColorTextureMS);
+        TEXTURE2DMS_ARRAY_TYPE(float4, _ColorTextureMS);
 
         struct Attributes
         {
@@ -39,32 +39,32 @@ Shader "Hidden/HDRenderPipeline/ColorResolve"
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0);
+            return LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 0);
         }
 
         float4 Frag2X(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 1))) * 0.5f);
+            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 0)) + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 1))) * 0.5f);
         }
 
         float4 Frag4X(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 1))
-                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 2)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 3))) * 0.25f);
+            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 0)) + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 1))
+                            + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 2)) + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 3))) * 0.25f);
         }
 
         float4 Frag8X(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             int2 pixelCoords = int2(TexCoordStereoOffset(input.texcoord));
-            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 0)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 1))
-                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 2)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 3))
-                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 4)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 5))
-                            + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 6)) + FastTonemap(LOAD_TEXTURE_MSAA(_ColorTextureMS, pixelCoords, 7))) * 0.125f);
+            return FastTonemapInvert((FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 0)) + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 1))
+                            + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 2)) + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 3))
+                            + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 4)) + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 5))
+                            + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 6)) + FastTonemap(LOAD_TEXTURE2D_ARRAY_MSAA(_ColorTextureMS, pixelCoords, unity_StereoEyeIndex, 7))) * 0.125f);
         }
     ENDHLSL
     SubShader

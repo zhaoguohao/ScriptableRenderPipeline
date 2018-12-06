@@ -2,17 +2,25 @@
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
-#pragma kernel KDepthDownsample8DualUavSPI  KERNEL_SIZE=8  KERNEL_NAME=KDepthDownsample8DualUavSPI UNITY_STEREO_INSTANCING_ENABLED=1
 #pragma kernel KDepthDownsample8DualUav     KERNEL_SIZE=8  KERNEL_NAME=KDepthDownsample8DualUav
 
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/StereoInstancingTextureDefines.hlsl"
-
-RW_TEXTURE(float, _DepthMipChain);
+RW_TEXTURE2D_ARRAY(float, _DepthMipChain);
 
 CBUFFER_START(cb)
     uint4 _SrcOffsetAndLimit; // {x, y, w - 1, h - 1}
     uint4 _DstOffset;         // {x, y, 0, 0}
 CBUFFER_END
+
+// Must include the following if ShaderVariables is not included
+#ifndef UNITY_SHADER_VARIABLES_INCLUDED
+#if SHADER_STAGE_COMPUTE
+CBUFFER_START(UnityPerPassStereoForCompute)
+float _ComputeEyeIndex;
+CBUFFER_END
+#define unity_StereoEyeIndex _ComputeEyeIndex
+#endif
+#endif
+
 
 #if UNITY_REVERSED_Z
 # define MIN_DEPTH(l, r) max(l, r)
@@ -32,16 +40,16 @@ void KERNEL_NAME(uint2 dispatchThreadId : SV_DispatchThreadID)
     // Upper-left pixel coordinate of quad that this thread will read
     uint2 srcPixelUL = srcOffset + (dispatchThreadId << 1);
 
-    float p00 = _DepthMipChain[INDEX_TEXTURE(min(srcPixelUL + uint2(0u, 0u), srcLimit))];
-    float p10 = _DepthMipChain[INDEX_TEXTURE(min(srcPixelUL + uint2(1u, 0u), srcLimit))];
-    float p01 = _DepthMipChain[INDEX_TEXTURE(min(srcPixelUL + uint2(0u, 1u), srcLimit))];
-    float p11 = _DepthMipChain[INDEX_TEXTURE(min(srcPixelUL + uint2(1u, 1u), srcLimit))];
+    float p00 = _DepthMipChain[uint3(min(srcPixelUL + uint2(0u, 0u), srcLimit), unity_StereoEyeIndex)];
+    float p10 = _DepthMipChain[uint3(min(srcPixelUL + uint2(1u, 0u), srcLimit), unity_StereoEyeIndex)];
+    float p01 = _DepthMipChain[uint3(min(srcPixelUL + uint2(0u, 1u), srcLimit), unity_StereoEyeIndex)];
+    float p11 = _DepthMipChain[uint3(min(srcPixelUL + uint2(1u, 1u), srcLimit), unity_StereoEyeIndex)];
     float4 depths = float4(p00, p10, p01, p11);
 
     // Select the closest sample
     float minDepth = MIN_DEPTH(MIN_DEPTH(depths.x, depths.y), MIN_DEPTH(depths.z, depths.w));
 
-    _DepthMipChain[INDEX_TEXTURE(dstOffset + dispatchThreadId)] = minDepth;
+    _DepthMipChain[uint3(dstOffset + dispatchThreadId, unity_StereoEyeIndex)] = minDepth;
 }
 
 #undef MIN_DEPTH

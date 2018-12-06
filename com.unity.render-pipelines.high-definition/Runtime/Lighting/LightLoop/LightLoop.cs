@@ -321,19 +321,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Count = 3,
         }
 
-        static string[,] s_ClusterKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count * 2] // Additional kernels for SPI
+        static string[,] s_ClusterKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count] // Additional kernels for SPI
         {
-            { "TileLightListGen_NoDepthRT", "TileLightListGen_DepthRT", "TileLightListGen_DepthRT_MSAA",
-                "TileLightListGen_SPI_NoDepthRT", "TileLightListGen_SPI_DepthRT", "TileLightListGen_SPI_DepthRT_MSAA" },
-            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile", "TileLightListGen_DepthRT_MSAA_SrcBigTile",
-                "TileLightListGen_SPI_NoDepthRT_SrcBigTile", "TileLightListGen_SPI_DepthRT_SrcBigTile", "TileLightListGen_SPI_DepthRT_MSAA_SrcBigTile"}
+            { "TileLightListGen_NoDepthRT", "TileLightListGen_DepthRT", "TileLightListGen_DepthRT_MSAA" },
+            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile", "TileLightListGen_DepthRT_MSAA_SrcBigTile"}
         };
-        static string[,] s_ClusterObliqueKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count * 2]
+        static string[,] s_ClusterObliqueKernelNames = new string[(int)ClusterPrepassSource.Count, (int)ClusterDepthSource.Count]
         {
-            { "TileLightListGen_NoDepthRT ", "TileLightListGen_DepthRT_Oblique", "TileLightListGen_DepthRT_MSAA_Oblique",
-                "TileLightListGen_SPI_NoDepthRT ", "TileLightListGen_SPI_DepthRT_Oblique", "TileLightListGen_SPI_DepthRT_MSAA_Oblique"},
-            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile_Oblique", "TileLightListGen_DepthRT_MSAA_SrcBigTile_Oblique",
-                "TileLightListGen_SPI_NoDepthRT_SrcBigTile", "TileLightListGen_SPI_DepthRT_SrcBigTile_Oblique", "TileLightListGen_SPI_DepthRT_MSAA_SrcBigTile_Oblique"}
+            { "TileLightListGen_NoDepthRT ", "TileLightListGen_DepthRT_Oblique", "TileLightListGen_DepthRT_MSAA_Oblique"},
+            { "TileLightListGen_NoDepthRT_SrcBigTile", "TileLightListGen_DepthRT_SrcBigTile_Oblique", "TileLightListGen_DepthRT_MSAA_SrcBigTile_Oblique"}
         };
         // clustered light list specific buffers and data end
 
@@ -677,8 +673,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     else
                         clustDepthSourceIdx = ClusterDepthSource.Depth;
                 }
-                var kernelName = s_ClusterKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + (XRGraphics.usingTexArray() ? (int)ClusterDepthSource.Count : 0)];
-                var kernelObliqueName = s_ClusterObliqueKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx + (XRGraphics.usingTexArray() ? (int)ClusterDepthSource.Count : 0)];
+                var kernelName = s_ClusterKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx];
+                var kernelObliqueName = s_ClusterObliqueKernelNames[(int)clustPrepassSourceIdx, (int)clustDepthSourceIdx];
 
                 s_GenListPerVoxelKernel = buildPerVoxelLightListShader.FindKernel(kernelName);
                 s_GenListPerVoxelKernelOblique = buildPerVoxelLightListShader.FindKernel(kernelObliqueName);
@@ -686,18 +682,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (GetFeatureVariantsEnabled())
             {
-                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile_FeatureFlags" : "TileLightListGen_SPI_FeatureFlags") :
-                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags" : "TileLightListGen_FeatureFlags"));
-                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile_FeatureFlags_Oblique" : "TileLightListGen_SPI_FeatureFlags_Oblique") :
-                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags_Oblique" : "TileLightListGen_FeatureFlags_Oblique"));
+                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags" : "TileLightListGen_FeatureFlags");
+                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_FeatureFlags_Oblique" : "TileLightListGen_FeatureFlags_Oblique");
 
             }
             else
             {
-                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile" : "TileLightListGen_SPI") :
-                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile" : "TileLightListGen"));
-                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(XRGraphics.usingTexArray() ? (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SPI_SrcBigTile_Oblique" : "TileLightListGen_SPI_Oblique") :
-                    (m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_Oblique" : "TileLightListGen_Oblique"));
+                s_GenListPerTileKernel = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile" : "TileLightListGen");
+                s_GenListPerTileKernel_Oblique = buildPerTileLightListShader.FindKernel(m_FrameSettings.lightLoopSettings.enableBigTilePrepass ? "TileLightListGen_SrcBigTile_Oblique" : "TileLightListGen_Oblique");
             }
 
             m_CookieTexArray.NewFrame();

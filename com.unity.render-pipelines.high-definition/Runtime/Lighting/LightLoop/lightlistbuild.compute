@@ -10,27 +10,29 @@
 #pragma kernel TileLightListGen_FeatureFlags_Oblique                LIGHTLISTGEN=TileLightListGen_FeatureFlags_Oblique                  USE_FEATURE_FLAGS				USE_OBLIQUE_MODE
 #pragma kernel TileLightListGen_SrcBigTile_FeatureFlags_Oblique     LIGHTLISTGEN=TileLightListGen_SrcBigTile_FeatureFlags_Oblique       USE_TWO_PASS_TILED_LIGHTING     USE_FEATURE_FLAGS	 USE_OBLIQUE_MODE
 
-#pragma kernel TileLightListGen_SPI                             LIGHTLISTGEN=TileLightListGen_SPI                                                                                                                       UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel TileLightListGen_SPI_SrcBigTile                  LIGHTLISTGEN=TileLightListGen_SPI_SrcBigTile							USE_TWO_PASS_TILED_LIGHTING                                                     UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel TileLightListGen_SPI_FeatureFlags                LIGHTLISTGEN=TileLightListGen_SPI_FeatureFlags							USE_FEATURE_FLAGS                                                               UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel TileLightListGen_SPI_SrcBigTile_FeatureFlags     LIGHTLISTGEN=TileLightListGen_SPI_SrcBigTile_FeatureFlags				USE_TWO_PASS_TILED_LIGHTING     USE_FEATURE_FLAGS                               UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel TileLightListGen_SPI_Oblique                             LIGHTLISTGEN=TileLightListGen_SPI_Oblique								USE_OBLIQUE_MODE                                                        UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel TileLightListGen_SPI_SrcBigTile_Oblique                  LIGHTLISTGEN=TileLightListGen_SPI_SrcBigTile_Oblique                    USE_TWO_PASS_TILED_LIGHTING		USE_OBLIQUE_MODE                        UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel TileLightListGen_SPI_FeatureFlags_Oblique                LIGHTLISTGEN=TileLightListGen_SPI_FeatureFlags_Oblique                  USE_FEATURE_FLAGS				USE_OBLIQUE_MODE                        UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel TileLightListGen_SPI_SrcBigTile_FeatureFlags_Oblique     LIGHTLISTGEN=TileLightListGen_SPI_SrcBigTile_FeatureFlags_Oblique       USE_TWO_PASS_TILED_LIGHTING     USE_FEATURE_FLAGS	 USE_OBLIQUE_MODE   UNITY_STEREO_INSTANCING_ENABLED=1
-
-
 //#pragma #pragma enable_d3d11_debug_symbols
 
+
+
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/StereoInstancingTextureDefines.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/ShaderBase.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightLoop.cs.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/LightingConvexHullUtils.hlsl"
 
 #if !defined(SHADER_API_XBOXONE) && !defined(SHADER_API_PSSL)
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/SortingComputeUtils.hlsl"
 #endif
+
+// Must include the following if ShaderVariables is not included
+#ifndef UNITY_SHADER_VARIABLES_INCLUDED
+#if SHADER_STAGE_COMPUTE
+CBUFFER_START(UnityPerPassStereoForCompute)
+float _ComputeEyeIndex;
+CBUFFER_END
+#define unity_StereoEyeIndex _ComputeEyeIndex
+#endif
+#endif
+
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/LightLoop/ShaderBase.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
@@ -47,7 +49,7 @@ uniform int _EnvLightIndexShift;
 uniform int _DecalIndexShift;
 uniform uint g_BaseFeatureFlags;
 
-UNITY_DECLARE_SCREENSPACE_TEXTURE(g_depth_tex) : register( t0 );
+TEXTURE2D_ARRAY(g_depth_tex) : register( t0 );
 StructuredBuffer<float4> g_vBoundsBuffer : register( t1 );
 StructuredBuffer<LightVolumeData> _LightVolumeData : register(t2);
 StructuredBuffer<SFiniteLightBound> g_data : register( t3 );

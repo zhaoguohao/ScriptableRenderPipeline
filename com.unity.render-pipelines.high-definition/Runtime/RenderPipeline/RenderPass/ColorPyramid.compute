@@ -27,20 +27,24 @@
 #pragma kernel KColorDownsample          KERNEL_SIZE=8  MAIN_DOWNSAMPLE=KColorDownsample
 #pragma kernel KColorDownsampleCopyMip0  KERNEL_SIZE=8  MAIN_DOWNSAMPLE=KColorDownsampleCopyMip0  COPY_MIP_0
 
-#pragma kernel KColorGaussianSPI            KERNEL_SIZE=8  MAIN_GAUSSIAN=KColorGaussianSPI                          UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel KColorDownsampleSPI          KERNEL_SIZE=8  MAIN_DOWNSAMPLE=KColorDownsampleSPI                      UNITY_STEREO_INSTANCING_ENABLED=1
-#pragma kernel KColorDownsampleCopyMip0SPI  KERNEL_SIZE=8  MAIN_DOWNSAMPLE=KColorDownsampleCopyMip0SPI  COPY_MIP_0  UNITY_STEREO_INSTANCING_ENABLED=1
-
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/StereoInstancingTextureDefines.hlsl"
-
-#if COPY_MIP_0
-TEXTURE_TYPE(float4, _Source);
-RW_TEXTURE(float4, _Mip0);
-#else
-RW_TEXTURE(float4, _Source);
+// Must include the following if ShaderVariables is not included
+#ifndef UNITY_SHADER_VARIABLES_INCLUDED
+#if SHADER_STAGE_COMPUTE
+CBUFFER_START(UnityPerPassStereoForCompute)
+float _ComputeEyeIndex;
+CBUFFER_END
+#define unity_StereoEyeIndex _ComputeEyeIndex
+#endif
 #endif
 
-RW_TEXTURE(float4, _Destination);
+#if COPY_MIP_0
+TEXTURE2D_ARRAY_TYPE(float4, _Source);
+RW_TEXTURE2D_ARRAY(float4, _Mip0);
+#else
+RW_TEXTURE2D_ARRAY(float4, _Source);
+#endif
+
+RW_TEXTURE2D_ARRAY(float4, _Destination);
 
 SamplerState sampler_LinearClamp;
 
@@ -127,7 +131,7 @@ void BlurVertically(uint2 pixelCoord, uint topMostIndex)
     float4 blurred = BlurPixels(s0, s1, s2, s3, s4, s5, s6, s7, s8);
 
     // Write to the final target
-    _Destination[INDEX_TEXTURE(pixelCoord)] = blurred;
+    _Destination[uint3(pixelCoord, unity_StereoEyeIndex)] = blurred;
 }
 
 [numthreads(KERNEL_SIZE, KERNEL_SIZE, 1)]
@@ -138,10 +142,10 @@ void MAIN_GAUSSIAN(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThr
     uint2 uthreadUL = uint2(max(0, threadUL));
 
     uint2 size = uint2(_Size.xy) - 1u;
-    float4 p00 = _Source[INDEX_TEXTURE(min(uthreadUL + uint2(0u, 0u), size))];
-    float4 p10 = _Source[INDEX_TEXTURE(min(uthreadUL + uint2(1u, 0u), size))];
-    float4 p11 = _Source[INDEX_TEXTURE(min(uthreadUL + uint2(1u, 1u), size))];
-    float4 p01 = _Source[INDEX_TEXTURE(min(uthreadUL + uint2(0u, 1u), size))];
+    float4 p00 = _Source[uint3(min(uthreadUL + uint2(0u, 0u), size), unity_StereoEyeIndex)];
+    float4 p10 = _Source[uint3(min(uthreadUL + uint2(1u, 0u), size), unity_StereoEyeIndex)];
+    float4 p11 = _Source[uint3(min(uthreadUL + uint2(1u, 1u), size), unity_StereoEyeIndex)];
+    float4 p01 = _Source[uint3(min(uthreadUL + uint2(0u, 1u), size), unity_StereoEyeIndex)];
 
     // Store the 4 downsampled pixels in LDS
     uint destIdx = groupThreadId.x + (groupThreadId.y << 4u);
@@ -170,17 +174,17 @@ void MAIN_DOWNSAMPLE(uint2 dispatchThreadId : SV_DispatchThreadID)
     uint2 c10 = min(offset + uint2(1u, 0u), size);
     uint2 c11 = min(offset + uint2(1u, 1u), size);
     uint2 c01 = min(offset + uint2(0u, 1u), size);
-    float4 p00 = _Source[INDEX_TEXTURE(c00)];
-    float4 p10 = _Source[INDEX_TEXTURE(c10)];
-    float4 p11 = _Source[INDEX_TEXTURE(c11)];
-    float4 p01 = _Source[INDEX_TEXTURE(c01)];
+    float4 p00 = _Source[uint3(c00, unity_StereoEyeIndex)];
+    float4 p10 = _Source[uint3(c10, unity_StereoEyeIndex)];
+    float4 p11 = _Source[uint3(c11, unity_StereoEyeIndex)];
+    float4 p01 = _Source[uint3(c01, unity_StereoEyeIndex)];
 
     #if COPY_MIP_0
-    _Mip0[INDEX_TEXTURE(c00)] = p00;
-    _Mip0[INDEX_TEXTURE(c10)] = p10;
-    _Mip0[INDEX_TEXTURE(c11)] = p11;
-    _Mip0[INDEX_TEXTURE(c01)] = p01;
+    _Mip0[uint3(c00, unity_StereoEyeIndex)] = p00;
+    _Mip0[uint3(c10, unity_StereoEyeIndex)] = p10;
+    _Mip0[uint3(c11, unity_StereoEyeIndex)] = p11;
+    _Mip0[uint3(c01, unity_StereoEyeIndex)] = p01;
     #endif
 
-    _Destination[INDEX_TEXTURE(dispatchThreadId)] = (p00 + p01 + p11 + p10) * 0.25;
+    _Destination[uint3(dispatchThreadId, unity_StereoEyeIndex)] = (p00 + p01 + p11 + p10) * 0.25;
 }

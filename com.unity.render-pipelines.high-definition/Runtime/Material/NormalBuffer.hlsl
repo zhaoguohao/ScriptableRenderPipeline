@@ -12,7 +12,7 @@ struct NormalData
 };
 
 // SSSBuffer texture declaration
-UNITY_DECLARE_SCREENSPACE_TEXTURE(_NormalBufferTexture);
+TEXTURE2D_ARRAY(_NormalBufferTexture);
 
 void EncodeIntoNormalBuffer(NormalData normalData, uint2 positionSS, out float4 outNormalBuffer0)
 {
@@ -42,7 +42,7 @@ void DecodeFromNormalBuffer(float4 normalBuffer, uint2 positionSS, out NormalDat
 
 void DecodeFromNormalBuffer(uint2 positionSS, out NormalData normalData)
 {
-    float4 normalBuffer = LOAD_TEXTURE(_NormalBufferTexture, positionSS);
+    float4 normalBuffer = LOAD_TEXTURE2D_ARRAY(_NormalBufferTexture, positionSS, unity_StereoEyeIndex);
     DecodeFromNormalBuffer(normalBuffer, positionSS, normalData);
 }
 

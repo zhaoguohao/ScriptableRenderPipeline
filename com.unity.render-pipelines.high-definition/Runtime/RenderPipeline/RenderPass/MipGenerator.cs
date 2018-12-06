@@ -15,13 +15,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         MaterialPropertyBlock m_PropertyBlock;
 
         int m_DepthDownsampleKernel;
-        int m_DepthDownsampleSPIKernel;
         int m_ColorDownsampleKernel;
         int m_ColorDownsampleKernelCopyMip0;
         int m_ColorGaussianKernel;
-        int m_ColorDownsampleSPIKernel;
-        int m_ColorDownsampleSPIKernelCopyMip0;
-        int m_ColorGaussianSPIKernel;
 
         int[] m_SrcOffset;
         int[] m_DstOffset;
@@ -32,13 +28,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ColorPyramidCS = asset.renderPipelineResources.shaders.colorPyramidCS;
 
             m_DepthDownsampleKernel = m_DepthPyramidCS.FindKernel("KDepthDownsample8DualUav");
-            m_DepthDownsampleSPIKernel = m_DepthPyramidCS.FindKernel("KDepthDownsample8DualUavSPI");
             m_ColorDownsampleKernel = m_ColorPyramidCS.FindKernel("KColorDownsample");
             m_ColorDownsampleKernelCopyMip0 = m_ColorPyramidCS.FindKernel("KColorDownsampleCopyMip0");
             m_ColorGaussianKernel = m_ColorPyramidCS.FindKernel("KColorGaussian");
-            m_ColorDownsampleSPIKernel = m_ColorPyramidCS.FindKernel("KColorDownsampleSPI");
-            m_ColorDownsampleSPIKernelCopyMip0 = m_ColorPyramidCS.FindKernel("KColorDownsampleCopyMip0SPI");
-            m_ColorGaussianSPIKernel = m_ColorPyramidCS.FindKernel("KColorGaussianSPI");
             m_SrcOffset = new int[4];
             m_DstOffset = new int[4];
             m_ColorPyramidPS = asset.renderPipelineResources.shaders.colorPyramidPS;
@@ -60,7 +52,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             
             var cs     = m_DepthPyramidCS;
             // Texture will be arrayed even when rendering scene view if SPI is enabled, so bind SPI kernels, but dispatch only once
-            int kernel = (texture.dimension == TextureDimension.Tex2DArray) ? m_DepthDownsampleSPIKernel : m_DepthDownsampleKernel; 
+            int kernel = m_DepthDownsampleKernel; 
 
             // TODO: Do it 1x MIP at a time for now. In the future, do 4x MIPs per pass, or even use a single pass.
             // Note: Gather() doesn't take a LOD parameter and we cannot bind an SRV of a MIP level,
@@ -114,7 +106,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     enableMSAA: false,
                     name: "Temp Gaussian Pyramid Target",
                     dimension: source.dimension,
-                    slices: (source.dimension == TextureDimension.Tex2DArray) ? 2 : 1 // VR TODO generalize to more eyes
+                    slices: (XRGraphics.usingTexArray() ? XRGraphics.eyeTextureDesc.volumeDepth : 1 )
                 );
             }
 
@@ -182,9 +174,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 var cs = m_ColorPyramidCS;
                 // Texture will be arrayed even when rendering scene view if SPI is enabled, so bind SPI kernels, but dispatch only once
-                int downsampleKernel = (source.dimension == TextureDimension.Tex2DArray) ? m_ColorDownsampleSPIKernel : m_ColorDownsampleKernel;
-                int downsampleKernelMip0 = (source.dimension == TextureDimension.Tex2DArray) ? m_ColorDownsampleSPIKernelCopyMip0 : m_ColorDownsampleKernelCopyMip0;
-                int gaussianKernel = (source.dimension == TextureDimension.Tex2DArray) ? m_ColorGaussianSPIKernel : m_ColorGaussianKernel;
+                int downsampleKernel = m_ColorDownsampleKernel;
+                int downsampleKernelMip0 = m_ColorDownsampleKernelCopyMip0;
+                int gaussianKernel = m_ColorGaussianKernel;
 
                 while (srcMipWidth >= 8 || srcMipHeight >= 8)
                 {

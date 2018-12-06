@@ -3,11 +3,11 @@
 #else
     // Rough refraction texture
     // Color pyramid (width, height, lodcount, Unused)
-    UNITY_DECLARE_SCREENSPACE_TEXTURE(_ColorPyramidTexture);
+    TEXTURE2D_ARRAY(_ColorPyramidTexture);
     // Depth pyramid (width, height, lodcount, Unused)
-    UNITY_DECLARE_SCREENSPACE_TEXTURE(_DepthPyramidTexture);
+    TEXTURE2D_ARRAY(_DepthPyramidTexture);
     // Ambient occlusion texture
-    UNITY_DECLARE_SCREENSPACE_TEXTURE(_AmbientOcclusionTexture);
-    UNITY_DECLARE_SCREENSPACE_TEXTURE(_CameraMotionVectorsTexture);
-    UNITY_DECLARE_SCREENSPACE_TEXTURE(_SsrLightingTexture);
+    TEXTURE2D_ARRAY(_AmbientOcclusionTexture);
+    TEXTURE2D_ARRAY(_CameraMotionVectorsTexture);
+    TEXTURE2D_ARRAY(_SsrLightingTexture);
 #endif

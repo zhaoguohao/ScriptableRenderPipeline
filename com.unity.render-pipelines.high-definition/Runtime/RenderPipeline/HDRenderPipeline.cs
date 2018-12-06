@@ -101,6 +101,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Material m_DebugFullScreen;
         Material m_DebugColorPicker;
         Material m_Blit;
+        Material m_BlitFromTexArray;
+        Material m_BlitFromDoubleWide;
         Material m_ErrorMaterial;
 
         RenderTargetIdentifier[] m_MRTCache2 = new RenderTargetIdentifier[2];
@@ -212,6 +214,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Vector4 m_PyramidScale = new Vector4();
 
         public Material GetBlitMaterial() { return m_Blit; }
+        public Material GetBlitFromDoubleWide() { return m_BlitFromDoubleWide; }
+        public Material GetBlitFromTexArray() { return m_BlitFromTexArray; }
+
 
         ComputeBuffer m_DepthPyramidMipLevelOffsetsBuffer = null;
 
@@ -279,7 +284,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SharedRTManager.Build(asset);
 
             // Initialize various compute shader resources
-            m_applyDistortionKernel = (XRGraphics.usingTexArray()) ? m_applyDistortionCS.FindKernel("KMainSPI") : m_applyDistortionCS.FindKernel("KMain");
+            m_applyDistortionKernel = m_applyDistortionCS.FindKernel("KMain");
             m_SsrTracingKernel      = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsTracing");
             m_SsrReprojectionKernel = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsReprojection");
 
@@ -552,6 +557,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DebugFullScreen = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.debugFullScreenPS);
             m_DebugColorPicker = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.debugColorPickerPS);
             m_Blit = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.blitPS);
+            m_BlitFromTexArray = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.blitFromTexArrayPS);
+            m_BlitFromDoubleWide = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.blitFromDoubleWidePS);
             m_ErrorMaterial = CoreUtils.CreateEngineMaterial("Hidden/InternalErrorShader");
         }
 

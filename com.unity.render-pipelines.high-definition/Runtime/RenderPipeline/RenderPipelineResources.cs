@@ -54,6 +54,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Shader copyStencilBufferPS;
             public Shader copyDepthBufferPS;
             public Shader blitPS;
+            public Shader blitFromTexArrayPS;
+            public Shader blitFromDoubleWidePS;
 
             // Sky
             public Shader blitCubemapPS;

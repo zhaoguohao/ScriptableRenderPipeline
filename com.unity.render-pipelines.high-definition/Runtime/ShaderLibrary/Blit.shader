@@ -7,7 +7,7 @@ Shader "Hidden/HDRenderPipeline/Blit"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
-        TEXTURE2D(_BlitTexture);
+        TEXTURE2D_ARRAY(_BlitTexture);
         SamplerState sampler_PointClamp;
         SamplerState sampler_LinearClamp;
         uniform float4 _BlitScaleBias;
@@ -49,7 +49,7 @@ Shader "Hidden/HDRenderPipeline/Blit"
             uv.x = (uv.x + unity_StereoEyeIndex) * 0.5;
             uv.y = 1.0 - uv.y; // Always flip Y when rendering stereo since HDRP doesn't support OpenGL
 #endif
-            return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, uv, _BlitMipLevel);
+            return SAMPLE_TEXTURE2D_ARRAY_LOD(_BlitTexture, sampler_PointClamp, uv, unity_StereoEyeIndex, _BlitMipLevel);
         }
 
         float4 FragBilinear(Varyings input) : SV_Target
@@ -59,7 +59,7 @@ Shader "Hidden/HDRenderPipeline/Blit"
             uv.x = (uv.x + unity_StereoEyeIndex) * 0.5;
             uv.y = 1.0 - uv.y; // Always flip Y when rendering stereo since HDRP doesn't support OpenGL
 #endif
-            return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_LinearClamp, uv, _BlitMipLevel);
+            return SAMPLE_TEXTURE2D_ARRAY_LOD(_BlitTexture, sampler_LinearClamp, uv, unity_StereoEyeIndex, _BlitMipLevel);
         }
 
     ENDHLSL

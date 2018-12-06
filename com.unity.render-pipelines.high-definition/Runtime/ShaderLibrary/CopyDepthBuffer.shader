@@ -34,7 +34,7 @@ Shader "Hidden/HDRenderPipeline/CopyDepthBuffer"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
-            TEXTURE2D_FLOAT(_InputDepthTexture);
+            TEXTURE2D_ARRAY_FLOAT(_InputDepthTexture);
 
             struct Attributes
             {
@@ -58,7 +58,7 @@ Shader "Hidden/HDRenderPipeline/CopyDepthBuffer"
             float Frag(Varyings input) : SV_Depth
             {
                 PositionInputs posInputs = GetPositionInput(input.positionCS.xy, _ScreenSize.zw);
-                return LOAD_TEXTURE2D(_InputDepthTexture, (_FlipY == 0) ? posInputs.positionSS : float2(posInputs.positionNDC.x, 1.0 - posInputs.positionNDC.y) * _ScreenSize.xy).x;
+                return LOAD_TEXTURE2D_ARRAY(_InputDepthTexture, ((_FlipY == 0) ? posInputs.positionSS.xy : float2(posInputs.positionNDC.x, 1.0 - posInputs.positionNDC.y) * _ScreenSize.xy), unity_StereoEyeIndex).x;
             }
 
             ENDHLSL

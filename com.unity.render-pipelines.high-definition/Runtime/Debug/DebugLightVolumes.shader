@@ -67,7 +67,7 @@ Shader "Hidden/HDRenderPipeline/DebugLightVolumes"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
 
-            TEXTURE2D(_BlitTexture);
+            TEXTURE2D_ARRAY(_BlitTexture);
             SamplerState sampler_PointClamp;
 
             struct Attributes
@@ -95,7 +95,7 @@ Shader "Hidden/HDRenderPipeline/DebugLightVolumes"
                 {
                     input.texcoord.y = 1.0 - input.texcoord.y;
                 }
-                return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, input.texcoord, 0);
+                return SAMPLE_TEXTURE2D_ARRAY_LOD(_BlitTexture, sampler_PointClamp, input.texcoord, unity_StereoEyeIndex, 0);
             }
             ENDHLSL
         }

@@ -9,14 +9,10 @@ namespace UnityEngine.Experimental.Rendering
         ComputeShader m_Shader;
         int k_SampleKernel_xyzw2x_8;
         int k_SampleKernel_xyzw2x_1;
-        int k_SampleKernelSPI_xyzw2x_8;
-        int k_SampleKernelSPI_xyzw2x_1;
 
         public GPUCopy(ComputeShader shader)
         {
             m_Shader = shader;
-            k_SampleKernelSPI_xyzw2x_8 = m_Shader.FindKernel("KSampleCopySPI4_1_x_8");
-            k_SampleKernelSPI_xyzw2x_1 = m_Shader.FindKernel("KSampleCopySPI4_1_x_1");
             k_SampleKernel_xyzw2x_8 = m_Shader.FindKernel("KSampleCopy4_1_x_8");
             k_SampleKernel_xyzw2x_1 = m_Shader.FindKernel("KSampleCopy4_1_x_1");
         }
@@ -106,10 +102,7 @@ namespace UnityEngine.Experimental.Rendering
         }
         public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect, int numEyes = 1)
           {
-            if (XRGraphics.usingTexArray()) // Even when rendering scene camera, the textures being used will be arrayed, so we still need to use the SPI kernels, but we will only dispatch once.
-                SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernelSPI_xyzw2x_8, k_SampleKernelSPI_xyzw2x_1, numEyes);
-            else
-                SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1);
+            SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1, numEyes);
           }
 
     }

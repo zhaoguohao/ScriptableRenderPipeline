@@ -13,7 +13,7 @@ Shader "Hidden/BlitNoAlpha"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            UNITY_DECLARE_SCREENSPACE_TEXTURE(_MainTex);
+            TEXTURE2D_ARRAY(_MainTex);
             uniform float4 _MainTex_ST;
 
             struct appdata_t {
@@ -41,7 +41,7 @@ Shader "Hidden/BlitNoAlpha"
             fixed4 frag (v2f i) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-                return half4(UNITY_SAMPLE_SCREENSPACE_TEXTURE(_MainTex, i.texcoord).xyz, 1.0);
+                return half4(SAMPLE_TEXTURE2D_ARRAY(_MainTex, sampler##_MainTex, i.texcoord, unity_StereoEyeIndex).xyz, 1.0);
             }
             ENDCG
 

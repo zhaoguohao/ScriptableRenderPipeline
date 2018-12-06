@@ -27,6 +27,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             return null;
         }
+        
+        public static Material GetFinalBlitMaterial()
+        {
+            HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+            if (hdPipeline != null)
+            {
+                if (XRGraphics.enabled && !XRGraphics.usingTexArray())
+                    return hdPipeline.GetBlitFromDoubleWide();
+                else
+                    return hdPipeline.GetBlitFromTexArray();
+            }
+
+            return null;
+        }
 
         public static RenderPipelineSettings hdrpSettings
         {
@@ -306,6 +320,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 offset.y = scale.y;
                 scale.y *= -1;
             }
+
             cmd.Blit(source, destination, scale, offset);
         }
 

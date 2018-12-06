@@ -17,7 +17,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/AtmosphericScattering/AtmosphericScattering.hlsl"
 
         
-        TEXTUREMS(_DepthTextureMS);
+        TEXTURE2DMS_ARRAY(_DepthTextureMS);
 
         struct Attributes
         {
@@ -69,7 +69,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 positionSS = input.positionCS.xy;
             float3 V          = normalize(mul(float3(positionSS, 1.0), (float3x3)_PixelCoordToViewDirWS));
-            float  depth      = LOAD_TEXTURE(_CameraDepthTexture, (int2)positionSS).x;
+            float  depth      = LOAD_TEXTURE2D_ARRAY(_CameraDepthTexture, (int2)positionSS, unity_StereoEyeIndex).x;
 
             return AtmosphericScatteringCompute(input, V, depth);
         }
@@ -79,7 +79,7 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 positionSS = input.positionCS.xy;
             float3 V          = normalize(mul(float3(positionSS, 1.0), (float3x3)_PixelCoordToViewDirWS));
-            float  depth      = LOAD_TEXTURE_MSAA(_DepthTextureMS, (int2)positionSS, sampleIndex).x;
+            float  depth      = LOAD_TEXTURE2D_ARRAY_MSAA(_DepthTextureMS, (int2)positionSS, unity_StereoEyeIndex, sampleIndex).x;
 
             return AtmosphericScatteringCompute(input, V, depth);
         }
