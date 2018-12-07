@@ -36,7 +36,7 @@ CBUFFER_END
 #undef SAMPLE_DEPTH_TEXTURE // Conflict with API.hlsl files
 #define SAMPLE_DEPTH_TEXTURE(tex, uv2) SAMPLE_RAW_DEPTH_TEXTURE(tex, uv2).r
 #define SAMPLE_DEPTH_TEXTURE_PROJ(tex, uv4) SAMPLE_RAW_DEPTH_TEXTURE_PROJ(tex, uv4).r
-#undef SAMPLE_DEPTH_TEXTURE // Conflict with API.hlsl files
+#undef SAMPLE_DEPTH_TEXTURE_LOD // Conflict with API.hlsl files
 #define SAMPLE_DEPTH_TEXTURE_LOD(tex, uv4) SAMPLE_RAW_DEPTH_TEXTURE_LOD(tex, uv4).r
 #define UNITY_DECLARE_SCREENSPACE_SHADOWMAP Texture2DArray tex; SamplerState sampler##tex
 #define UNITY_SAMPLE_SCREEN_SHADOW(tex, uv2) tex.Sample(sampler##tex, float3(uv2.xy, (float)unity_StereoEyeIndex))
