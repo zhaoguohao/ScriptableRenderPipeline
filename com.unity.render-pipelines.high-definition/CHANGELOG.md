@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.0.0-preview] - 2018-11-xx
+
+### Changed
+- Color pyramid generation now use regular shader version instead of compute shader on all platforms. It fix an issue on Intel card and on Switch.
+
 ## [5.3.0-preview] - 2018-11-xx
 
 ### Added

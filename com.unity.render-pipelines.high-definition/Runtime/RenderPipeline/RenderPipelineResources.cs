@@ -26,9 +26,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Lighting
             public Shader deferredPS;
-            public ComputeShader colorPyramidCS;
             public Shader colorPyramidPS;
-            public ComputeShader depthPyramidCS;
+            public ComputeShader depthPyramidCS;            
             public ComputeShader copyChannelCS;
             public ComputeShader applyDistortionCS;
             public ComputeShader screenSpaceReflectionsCS;
@@ -150,7 +149,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 debugLightVolumeCS = Load<ComputeShader>(HDRenderPipelinePath + "Debug/DebugLightVolumes.compute"),
                 // Lighting
                 deferredPS = Load<Shader>(HDRenderPipelinePath + "Lighting/Deferred.Shader"),
-                colorPyramidCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/ColorPyramid.compute"),
                 colorPyramidPS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/ColorPyramidPS.Shader"),
                 depthPyramidCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/DepthPyramid.compute"),
                 copyChannelCS = Load<ComputeShader>(CorePath + "CoreResources/GPUCopy.compute"),

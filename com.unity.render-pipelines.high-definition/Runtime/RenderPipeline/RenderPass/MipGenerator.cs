@@ -9,15 +9,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RTHandle m_TempColorTarget;
 
         ComputeShader m_DepthPyramidCS;
-        ComputeShader m_ColorPyramidCS;
         Shader m_ColorPyramidPS;
         Material m_ColorPyramidPSMat;
         MaterialPropertyBlock m_PropertyBlock;
 
         int m_DepthDownsampleKernel;
-        int m_ColorDownsampleKernel;
-        int m_ColorDownsampleKernelCopyMip0;
-        int m_ColorGaussianKernel;
 
         int[] m_SrcOffset;
         int[] m_DstOffset;
@@ -25,12 +21,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public MipGenerator(HDRenderPipelineAsset asset)
         {
             m_DepthPyramidCS = asset.renderPipelineResources.shaders.depthPyramidCS;
-            m_ColorPyramidCS = asset.renderPipelineResources.shaders.colorPyramidCS;
 
             m_DepthDownsampleKernel = m_DepthPyramidCS.FindKernel("KDepthDownsample8DualUav");
-            m_ColorDownsampleKernel = m_ColorPyramidCS.FindKernel("KColorDownsample");
-            m_ColorDownsampleKernelCopyMip0 = m_ColorPyramidCS.FindKernel("KColorDownsampleCopyMip0");
-            m_ColorGaussianKernel = m_ColorPyramidCS.FindKernel("KColorGaussian");
             m_SrcOffset = new int[4];
             m_DstOffset = new int[4];
             m_ColorPyramidPS = asset.renderPipelineResources.shaders.colorPyramidPS;
@@ -103,104 +95,60 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 );
             }
 
-            #if UNITY_SWITCH
-            bool preferFragment = true;
-            #else
-            bool preferFragment = false;
-            #endif
-
             int srcMipLevel  = 0;
             int srcMipWidth  = size.x;
             int srcMipHeight = size.y;
 
-            if (preferFragment)
-            {
-                int tempTargetWidth = srcMipWidth >> 1;
-                int tempTargetHeight = srcMipHeight >> 1;
+            int tempTargetWidth = srcMipWidth >> 1;
+            int tempTargetHeight = srcMipHeight >> 1;
 
-                // Copies src mip0 to dst mip0
-                m_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, source);
+            // Copies src mip0 to dst mip0
+            m_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, source);
+            m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1f, 1f, 0f,0f));
+            m_PropertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, 0f);
+            cmd.SetRenderTarget(destination, 0);
+            cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 0, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
+
+            // Note: We don't do compute version of this shader because the shader version is faster on Switch and equivalent time than compute shader on PS4/XBoxOne
+            // + due to DX11 specification that don't allow to read write in UAV of float format, Intel card produce NaN with compute shader version.
+            // So we use solely the pixel shader version.
+
+            // Note: smaller mips are excluded as we don't need them and the gaussian compute works
+            // on 8x8 blocks
+            // TODO: Could be further optimized by merging the smaller mips to reduce the amount of dispatches
+            // Specifically, levels 2x2 and 1x1 (or their variations, depending on the aspect ratio) should not be used.
+            while (srcMipWidth >= 8 || srcMipHeight >= 8)
+            {
+                int dstMipWidth  = Mathf.Max(1, srcMipWidth  >> 1);
+                int dstMipHeight = Mathf.Max(1, srcMipHeight >> 1);
+
+                // Downsample.
+                m_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, destination);
                 m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1f, 1f, 0f,0f));
-                m_PropertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, 0f);
-                cmd.SetRenderTarget(destination, 0);
-                cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 0, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
+                m_PropertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, srcMipLevel);
+                cmd.SetRenderTarget(destination, srcMipLevel + 1);
+                cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 1, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
 
-                // Note: smaller mips are excluded as we don't need them and the gaussian compute works
-                // on 8x8 blocks
-                // TODO: Could be further optimized by merging the smaller mips to reduce the amount of dispatches
-                // Specifically, levels 2x2 and 1x1 (or their variations, depending on the aspect ratio) should not be used.
-                while (srcMipWidth >= 8 || srcMipHeight >= 8)
-                {
-                    int dstMipWidth  = Mathf.Max(1, srcMipWidth  >> 1);
-                    int dstMipHeight = Mathf.Max(1, srcMipHeight >> 1);
+                // Blur horizontal.
+                m_PropertyBlock.SetTexture(HDShaderIDs._Source, destination);
+                m_PropertyBlock.SetVector(HDShaderIDs._SrcScaleBias, new Vector4(1f, 1f, 0f, 0f));
+                m_PropertyBlock.SetVector(HDShaderIDs._SrcUvLimits, new Vector4(1f, 1f, 1f / dstMipWidth, 0f));
+                m_PropertyBlock.SetFloat(HDShaderIDs._SourceMip, srcMipLevel + 1);
+                cmd.SetRenderTarget(m_TempColorTarget, 0);
+                cmd.SetViewport(new Rect(0, 0, dstMipWidth, dstMipHeight));
+                cmd.DrawProcedural(Matrix4x4.identity, m_ColorPyramidPSMat, 0, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
 
-                    // Downsample.
-                    m_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, destination);
-                    m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1f, 1f, 0f,0f));
-                    m_PropertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, srcMipLevel);
-                    cmd.SetRenderTarget(destination, srcMipLevel + 1);
-                    cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 1, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
+                // Blur vertical.
+                m_PropertyBlock.SetTexture(HDShaderIDs._Source, m_TempColorTarget);
+                m_PropertyBlock.SetVector(HDShaderIDs._SrcScaleBias, new Vector4((float)dstMipWidth / tempTargetWidth, (float)dstMipHeight / tempTargetHeight, 0f, 0f));
+                m_PropertyBlock.SetVector(HDShaderIDs._SrcUvLimits, new Vector4((dstMipWidth - 0.5f) /  tempTargetWidth, (dstMipHeight - 0.5f) /  tempTargetHeight, 0f, 1f / tempTargetHeight));
+                m_PropertyBlock.SetFloat(HDShaderIDs._SourceMip, 0);
+                cmd.SetRenderTarget(destination, srcMipLevel + 1);
+                cmd.DrawProcedural(Matrix4x4.identity, m_ColorPyramidPSMat, 0, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
 
-                    // Blur horizontal.
-                    m_PropertyBlock.SetTexture(HDShaderIDs._Source, destination);
-                    m_PropertyBlock.SetVector(HDShaderIDs._SrcScaleBias, new Vector4(1f, 1f, 0f, 0f));
-                    m_PropertyBlock.SetVector(HDShaderIDs._SrcUvLimits, new Vector4(1f, 1f, 1f / dstMipWidth, 0f));
-                    m_PropertyBlock.SetFloat(HDShaderIDs._SourceMip, srcMipLevel + 1);
-                    cmd.SetRenderTarget(m_TempColorTarget, 0);
-                    cmd.SetViewport(new Rect(0, 0, dstMipWidth, dstMipHeight));
-                    cmd.DrawProcedural(Matrix4x4.identity, m_ColorPyramidPSMat, 0, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
-
-                    // Blur vertical.
-                    m_PropertyBlock.SetTexture(HDShaderIDs._Source, m_TempColorTarget);
-                    m_PropertyBlock.SetVector(HDShaderIDs._SrcScaleBias, new Vector4((float)dstMipWidth / tempTargetWidth, (float)dstMipHeight / tempTargetHeight, 0f, 0f));
-                    m_PropertyBlock.SetVector(HDShaderIDs._SrcUvLimits, new Vector4((dstMipWidth - 0.5f) /  tempTargetWidth, (dstMipHeight - 0.5f) /  tempTargetHeight, 0f, 1f / tempTargetHeight));
-                    m_PropertyBlock.SetFloat(HDShaderIDs._SourceMip, 0);
-                    cmd.SetRenderTarget(destination, srcMipLevel + 1);
-                    cmd.DrawProcedural(Matrix4x4.identity, m_ColorPyramidPSMat, 0, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
-
-                    srcMipLevel++;
-                    srcMipWidth  = srcMipWidth  >> 1;
-                    srcMipHeight = srcMipHeight >> 1;
-                }
-            }
-            else
-            {
-                var cs = m_ColorPyramidCS;
-                int downsampleKernel = m_ColorDownsampleKernel;
-                int downsampleKernelMip0 = m_ColorDownsampleKernelCopyMip0;
-                int gaussianKernel = m_ColorGaussianKernel;
-
-                while (srcMipWidth >= 8 || srcMipHeight >= 8)
-                {
-                    int dstMipWidth  = Mathf.Max(1, srcMipWidth  >> 1);
-                    int dstMipHeight = Mathf.Max(1, srcMipHeight >> 1);
-
-                    cmd.SetComputeVectorParam(cs, HDShaderIDs._Size, new Vector4(srcMipWidth, srcMipHeight, 0f, 0f));
-
-                    // First dispatch also copies src to dst mip0
-                    if (srcMipLevel == 0)
-                    {
-                        cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Source, source, 0);
-                        cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Mip0, destination, 0);
-                        cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Destination, m_TempColorTarget);
-                        cmd.DispatchCompute(cs, downsampleKernelMip0, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
-                    }
-                    else
-                    {
-                        cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Source, destination, srcMipLevel);
-                        cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Destination, m_TempColorTarget);
-                        cmd.DispatchCompute(cs, downsampleKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
-                    }
-
-                    cmd.SetComputeVectorParam(cs, HDShaderIDs._Size, new Vector4(dstMipWidth, dstMipHeight, 0f, 0f));
-                    cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Source, m_TempColorTarget);
-                    cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Destination, destination, srcMipLevel + 1);
-                    cmd.DispatchCompute(cs, gaussianKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
-
-                    srcMipLevel++;
-                    srcMipWidth  = srcMipWidth  >> 1;
-                    srcMipHeight = srcMipHeight >> 1;
-                }
+                srcMipLevel++;
+                srcMipWidth  = srcMipWidth  >> 1;
+                srcMipHeight = srcMipHeight >> 1;
             }
 
             return srcMipLevel + 1;
