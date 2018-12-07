@@ -9,20 +9,27 @@ namespace UnityEngine.Experimental.Rendering
         ComputeShader m_Shader;
         int k_SampleKernel_xyzw2x_8;
         int k_SampleKernel_xyzw2x_1;
+        int k_SampleKernel_x2x_8;
+        int k_SampleKernel_x2x_1;
 
         public GPUCopy(ComputeShader shader)
         {
             m_Shader = shader;
             k_SampleKernel_xyzw2x_8 = m_Shader.FindKernel("KSampleCopy4_1_x_8");
             k_SampleKernel_xyzw2x_1 = m_Shader.FindKernel("KSampleCopy4_1_x_1");
+            k_SampleKernel_x2x_8 = m_Shader.FindKernel("KSampleCopy1_1_x_8");
+            k_SampleKernel_x2x_1 = m_Shader.FindKernel("KSampleCopy1_1_x_1");
         }
 
         static readonly int _RectOffset = Shader.PropertyToID("_RectOffset");
+        static readonly int _RectOffsetSource = Shader.PropertyToID("_RectOffsetSource");
         static readonly int _Result1 = Shader.PropertyToID("_Result1");
         static readonly int _Source4 = Shader.PropertyToID("_Source4");
+        static readonly int _Source1 = Shader.PropertyToID("_Source1");
         void SampleCopyChannel(
             CommandBuffer cmd,
             RectInt rect,
+            Vector2Int sourceOffset,
             int _source,
             RenderTargetIdentifier source,
             int _target,
@@ -78,6 +85,7 @@ namespace UnityEngine.Experimental.Rendering
                     var r = dispatch8Rect;
                     // Caution: passing parameters to SetComputeIntParams() via params generate 48B several times at each frame here !
                     cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
+                    cmd.SetComputeIntParams(m_Shader, _RectOffsetSource, (int)r.x + sourceOffset.x, (int)r.y + sourceOffset.y);
                     cmd.DispatchCompute(m_Shader, kernel8, (int)Mathf.Max(r.width / 8, 1), (int)Mathf.Max(r.height / 8, 1), 1);
                 }
 
@@ -86,14 +94,30 @@ namespace UnityEngine.Experimental.Rendering
                     var r = dispatch1Rects[i];
                     // Caution: passing parameters to SetComputeIntParams() via params generate 48B several times at each frame here !
                     cmd.SetComputeIntParams(m_Shader, _RectOffset, (int)r.x, (int)r.y);
+                    cmd.SetComputeIntParams(m_Shader, _RectOffsetSource, (int)r.x + sourceOffset.x, (int)r.y + sourceOffset.y);
                     cmd.DispatchCompute(m_Shader, kernel1, (int)Mathf.Max(r.width, 1), (int)Mathf.Max(r.height, 1), 1);
                 }
             }
         }
 
+        // 4 CHANNELS => 1 CHANNEL
         public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect)
         {
-            SampleCopyChannel(cmd, rect, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1);
+            SampleCopyChannel_xyzw2x(cmd, source, target, rect, Vector2Int.zero);
+        }
+        public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect, Vector2Int sourceOffset)
+        {
+            SampleCopyChannel(cmd, rect, sourceOffset, _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1);
+        }
+
+        // 1 CHANNEL => 1 CHANNEL
+        public void SampleCopyChannel_x2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect)
+        {
+            SampleCopyChannel_x2x(cmd, source, target, rect, Vector2Int.zero);
+        }
+        public void SampleCopyChannel_x2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect, Vector2Int sourceOffset)
+        {
+            SampleCopyChannel(cmd, rect, sourceOffset, _Source1, source, _Result1, target, k_SampleKernel_x2x_8, k_SampleKernel_x2x_1);
         }
     }
 }

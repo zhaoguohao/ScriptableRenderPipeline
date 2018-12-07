@@ -2101,7 +2101,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 else if (pass == ForwardPass.TransparentLowRes)
                 {
                     RTHandleSystem.RTHandle lowResolutionTarget = hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABufferHalfResolution : m_CameraColorBufferHalfResolution;
-                    HDUtils.SetRenderTarget(cmd, hdCamera, lowResolutionTarget, m_SharedRTManager.GetDepthStencilBufferHalfResolution(hdCamera.frameSettings.enableMSAA));
+                    HDUtils.SetRenderTarget(cmd, hdCamera, lowResolutionTarget, m_SharedRTManager.GetDepthStencilBufferHalfResolution());
                     if ((hdCamera.frameSettings.enableDecals) && (DecalSystem.m_DecalDatasCount > 0)) // enable d-buffer flag value is being interpreted more like enable decals in general now that we have clustered
                                                                                                       // decal datas count is 0 if no decals affect transparency
                     {
@@ -2339,17 +2339,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             CopyDepthBufferIfNeeded(cmd);
 
-            int mipCount = m_SharedRTManager.GetDepthBufferMipChainInfo().mipLevelCount;
+            int     mipCount = m_SharedRTManager.GetDepthBufferMipChainInfo().mipLevelCount;
 
             // GC.Alloc
             // String.Format
             using (new ProfilingSample(cmd, "Generate Depth Buffer MIP Chain", CustomSamplerId.DepthPyramid))
             {
                 m_MipGenerator.RenderMinDepthPyramid(cmd, m_SharedRTManager.GetDepthTexture(), m_SharedRTManager.GetDepthBufferMipChainInfo());
+
+                // Copy first mip to the half-resolution depth stencil buffer for low-resolution transparent rendering
+RTHandleSystem.RTHandle pipoTarget = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain);
+                m_MipGenerator.CopyDepthPyramidMipToDepthStencil(cmd, m_SharedRTManager, 1, m_SharedRTManager.GetDepthStencilBufferHalfResolution(), pipoTarget);
+
+
+// var destinationDepthStencil = m_SharedRTManager.GetDepthStencilBufferHalfResolution();
+// 
+// #if false
+// m_CopyDepth.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetDepthStencilBuffer());
+// m_CopyDepth.SetInt("_FlipY", 0);
+// //cmd.Blit(null, BuiltinRenderTextureType.CameraTarget, m_CopyDepth);
+// cmd.DrawProcedural(Matrix4x4.identity, m_CopyDepth, 0, MeshTopology.Quads, 4);
+// #else
+// cmd.SetGlobalTexture("_BlitTextureDepth", m_SharedRTManager.GetDepthStencilBuffer());
+// cmd.SetGlobalVector("_BlitScaleBias", new Vector4( 1, 1, 0, 0 ));
+// cmd.SetGlobalVector("_BlitScaleBiasRt", new Vector4( 1, 1, 0, 0 ));
+// cmd.SetGlobalInt("_BlitMipLevel", 0);
+// cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
+// cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 4, MeshTopology.Quads, 4);
+// #endif
             }
 
-            float scaleX = hdCamera.actualWidth / (float)m_SharedRTManager.GetDepthTexture().rt.width;
-            float scaleY = hdCamera.actualHeight / (float)m_SharedRTManager.GetDepthTexture().rt.height;
+            float   rcpWidth = 1.0f / (float)m_SharedRTManager.GetDepthTexture().rt.width;
+            float   rcpHeight = 1.0f / (float)m_SharedRTManager.GetDepthTexture().rt.height;
+            float scaleX = hdCamera.actualWidth * rcpWidth;
+            float scaleY = hdCamera.actualHeight * rcpHeight;
             m_PyramidSizeV4F.Set(hdCamera.actualWidth, hdCamera.actualHeight, 1f / hdCamera.actualWidth, 1f / hdCamera.actualHeight);
             m_PyramidScaleLod.Set(scaleX, scaleY, mipCount, 0.0f);
             m_PyramidScale.Set(scaleX, scaleY, 0f, 0f);
@@ -2526,6 +2549,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 //            HDUtils.BlitCameraTexture(cmd, hdCamera, texture, m_DebugFullScreenTempBuffer, scaleBias, mipIndex);
 
 texture = m_CameraColorBufferHalfResolution;
+texture = m_SharedRTManager.GetDepthStencilBufferHalfResolution();
             HDUtils.BlitCameraTexture(cmd, hdCamera, texture, m_DebugFullScreenTempBuffer, scaleBias, mipIndex);
         }
 
@@ -2648,7 +2672,7 @@ texture = m_CameraColorBufferHalfResolution;
                         RTHandleSystem.RTHandle halfResolutionBuffer = hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABufferHalfResolution : m_CameraColorBufferHalfResolution;
                         if (halfResolutionBuffer != null)
                         {
-                            HDUtils.SetRenderTarget(cmd, hdCamera, halfResolutionBuffer, m_SharedRTManager.GetDepthStencilBufferHalfResolution(hdCamera.frameSettings.enableMSAA), ClearFlag.Color, clearColor);
+                            HDUtils.SetRenderTarget(cmd, hdCamera, halfResolutionBuffer, m_SharedRTManager.GetDepthStencilBufferHalfResolution(), ClearFlag.Color, clearColor);
                         }
                     }
                 }

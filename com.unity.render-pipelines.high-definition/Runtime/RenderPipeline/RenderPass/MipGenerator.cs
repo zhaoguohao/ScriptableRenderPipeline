@@ -205,5 +205,50 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             return srcMipLevel + 1;
         }
+
+        public void     CopyDepthPyramidMipToDepthStencil(CommandBuffer cmd, SharedRTManager sharedRTManager, int sourceMipLevel, RenderTexture destinationDepthStencil, RenderTexture pipoTarget)
+        {
+            RenderTexture               depthStencilAtlas = sharedRTManager.GetDepthTexture( false );
+            HDUtils.PackedMipChainInfo  depthMipChain = sharedRTManager.GetDepthBufferMipChainInfo();
+
+            float       rcpWidth = 1.0f / (float) sharedRTManager.GetDepthTexture().rt.width;
+            float       rcpHeight = 1.0f / (float) sharedRTManager.GetDepthTexture().rt.height;
+            Vector2Int  mip1Offset = depthMipChain.mipLevelOffsets[sourceMipLevel];
+            Vector2Int  mip1Size = depthMipChain.mipLevelSizes[sourceMipLevel];
+            Vector4     scaleBias = new Vector4( mip1Size.x * rcpWidth, mip1Size.y * rcpHeight, mip1Offset.x * rcpWidth, mip1Offset.y * rcpHeight );
+//            HDUtils.BlitCameraTexture(cmd, hdCamera, m_SharedRTManager.GetDepthTexture(), m_SharedRTManager.GetDepthStencilBufferHalfResolution(hdCamera.frameSettings.enableMSAA), scaleBias, 0);
+//HDUtils.BlitCameraTexture(cmd, hdCamera, m_SharedRTManager.GetDepthTexture(), m_CameraColorBufferHalfResolution, scaleBias, 0);   // Debug depth
+//m_GPUCopy.SampleCopyChannel_x2x(cmd, m_SharedRTManager.GetDepthTexture(), m_SharedRTManager.GetDepthStencilBufferHalfResolution(), new RectInt(0, 0, mip1Size.x, mip1Size.y), new Vector2Int(mip1Offset.x, mip1Offset.y));
+
+            // Here we don't have much choice than to use the special Depth blit pass that outputs a texture to SV_DEPTH
+            //  • We can't use regular Blit() functions as they don't work with DSV as a target
+            //  • We can't use a compute shader because DSV can't be used directly or cast into UAVs
+            //
+#if true
+//            m_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, depthStencilAtlas);
+//m_PropertyBlock.SetTexture(HDShaderIDs._BlitTexture, sharedRTManager.GetDepthStencilBuffer());
+//            m_PropertyBlock.SetTexture(HDShaderIDs._BlitTextureDepth, sharedRTManager.GetDepthStencilBuffer());
+            m_PropertyBlock.SetTexture(HDShaderIDs._BlitTextureDepth, depthStencilAtlas);
+            m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, scaleBias);
+            m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4( 1, 1, 0, 0 ));
+            m_PropertyBlock.SetInt(HDShaderIDs._BlitMipLevel, 0);
+
+//            cmd.SetRenderTarget(-1, destinationDepthStencil, 0);
+//cmd.SetRenderTarget(pipoTarget, destinationDepthStencil, 0);
+cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
+//Graphics.SetRenderTarget(null, destinationDepthStencil.depthBuffer);
+//Graphics.SetRenderTarget(pipoTarget, destinationDepthStencil.depthBuffer);
+            cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 4, MeshTopology.Quads, 4, 1, m_PropertyBlock);
+#else
+// cmd.SetGlobalTexture("_BlitTextureDepth", sharedRTManager.GetDepthStencilBuffer());
+// cmd.SetGlobalVector("_BlitScaleBias", new Vector4( 1, 1, 0, 0 ));
+cmd.SetGlobalTexture("_BlitTextureDepth", depthStencilAtlas);
+cmd.SetGlobalVector(HDShaderIDs._BlitScaleBias, scaleBias);
+cmd.SetGlobalVector("_BlitScaleBiasRt", new Vector4( 1, 1, 0, 0 ));
+cmd.SetGlobalInt("_BlitMipLevel", 0);
+cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
+cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 4, MeshTopology.Quads, 4);
+#endif
+        }
     }
 }

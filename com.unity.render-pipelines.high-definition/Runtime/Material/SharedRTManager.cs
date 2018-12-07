@@ -20,7 +20,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // This texture must be used because reading directly from an MSAA Depth buffer is way to expensive. The solution that we went for is writing the depth in an additional color buffer (10x cheaper to solve on ps4)
         RTHandleSystem.RTHandle m_DepthAsColorMSAART = null;
         RTHandleSystem.RTHandle m_CameraDepthStencilMSAABuffer;
-        RTHandleSystem.RTHandle m_CameraDepthStencilMSAABufferHalfResolution = null;
         // This texture stores a set of depth values that are required for evaluating a bunch of effects in MSAA mode (R = Samples Max Depth, G = Samples Min Depth, G =  Samples Average Depth)
         RTHandleSystem.RTHandle m_CameraDepthValuesBuffer = null;
 
@@ -80,7 +79,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // Let's create the MSAA textures
                 m_CameraDepthStencilMSAABuffer = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth24, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, name: "CameraDepthStencilMSAA");
-                m_CameraDepthStencilMSAABufferHalfResolution = RTHandles.Alloc(0.5f * Vector2.one, depthBufferBits: DepthBits.Depth24, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, name: "CameraDepthStencilHalfResolutionMSAA");
                 m_CameraDepthValuesBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, name: "DepthValuesBuffer");
                 m_DepthAsColorMSAART = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RFloat, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "DepthAsColorMSAA");
 
@@ -196,17 +194,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Request the half-resolution depth stencil buffer (MSAA or not)
-        public RTHandleSystem.RTHandle GetDepthStencilBufferHalfResolution(bool isMSAA = false)
+        public RTHandleSystem.RTHandle GetDepthStencilBufferHalfResolution()
         {
-            if (isMSAA)
-            {
-                Debug.Assert(m_MSAASupported);
-                return m_CameraDepthStencilMSAABufferHalfResolution;
-            }
-            else
-            {
-                return m_CameraDepthStencilBufferHalfResolution;
-            }
+            return m_CameraDepthStencilBufferHalfResolution;
         }
 
         // Request the depth texture (MSAA or not)
@@ -278,7 +268,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_MSAASupported)
             {
                 RTHandles.Release(m_CameraDepthStencilMSAABuffer);
-                RTHandles.Release(m_CameraDepthStencilMSAABufferHalfResolution);
                 RTHandles.Release(m_CameraDepthValuesBuffer);
 
                 RTHandles.Release(m_NormalMSAART);
