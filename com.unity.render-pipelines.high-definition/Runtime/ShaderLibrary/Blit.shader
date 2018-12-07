@@ -67,9 +67,6 @@ Shader "Hidden/HDRenderPipeline/Blit"
         float FragNearestDepth(Varyings input) : SV_Depth
         {
             float2 uv = input.texcoord.xy;
-//return input.positionCS.x / 1000.0;
-//return uv.x;
-//return 0.8;
 #if UNITY_SINGLE_PASS_STEREO
             uv.x = uv.x / 2.0 + unity_StereoEyeIndex * 0.5;
             uv.y = 1.0 - uv.y; // Always flip Y when rendering stereo since HDRP doesn't support OpenGL
@@ -138,61 +135,6 @@ return 10.0 * SAMPLE_TEXTURE2D_LOD(_BlitTextureDepth, sampler_PointClamp, input.
             HLSLPROGRAM
                 #pragma vertex VertQuad
                 #pragma fragment FragNearestDepth
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "Copy Depth"
-
-//            Cull   Off
-//            ZTest  Always
-//            ZWrite On
-//            Blend  Off
-//            ColorMask 0
-            ZWrite On ZTest Always Blend Off Cull Off
-            ColorMask 0 // Don't write to color target
-
-            HLSLPROGRAM
-//            #pragma target 4.5
-//            #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
-//            #pragma fragment Frag2
-            #pragma fragment FragNearestDepth
-            #pragma vertex VertQuad
-            // #pragma enable_d3d11_debug_symbols
-
-//            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-//            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-//
-//            TEXTURE2D_FLOAT(_InputDepthTexture);
-//
-////            struct Attributes
-////            {
-////                uint vertexID : SV_VertexID;
-////            };
-//
-////            struct Varyings
-////            {
-////                float4 positionCS : SV_Position;
-////            };
-//
-//            int _FlipY;
-//
-//            Varyings Vert2(Attributes input)
-//            {
-//                Varyings output;
-//                output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
-//                output.texcoord = 0;
-//                return output;
-//            }
-//
-//            float Frag2(Varyings input) : SV_Depth
-//            {
-//return input.positionCS.x * _ScreenSize.z;
-//                PositionInputs posInputs = GetPositionInput(input.positionCS.xy, _ScreenSize.zw);
-//                return LOAD_TEXTURE2D(_InputDepthTexture, (_FlipY == 0) ? posInputs.positionSS : float2(posInputs.positionNDC.x, 1.0 - posInputs.positionNDC.y) * _ScreenSize.xy).x;
-//            }
-
             ENDHLSL
         }
     }

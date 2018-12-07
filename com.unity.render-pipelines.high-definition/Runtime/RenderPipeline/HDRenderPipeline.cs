@@ -2348,25 +2348,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_MipGenerator.RenderMinDepthPyramid(cmd, m_SharedRTManager.GetDepthTexture(), m_SharedRTManager.GetDepthBufferMipChainInfo());
 
                 // Copy first mip to the half-resolution depth stencil buffer for low-resolution transparent rendering
-RTHandleSystem.RTHandle pipoTarget = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain);
-                m_MipGenerator.CopyDepthPyramidMipToDepthStencil(cmd, m_SharedRTManager, 1, m_SharedRTManager.GetDepthStencilBufferHalfResolution(), pipoTarget);
-
-
-// var destinationDepthStencil = m_SharedRTManager.GetDepthStencilBufferHalfResolution();
-// 
-// #if false
-// m_CopyDepth.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetDepthStencilBuffer());
-// m_CopyDepth.SetInt("_FlipY", 0);
-// //cmd.Blit(null, BuiltinRenderTextureType.CameraTarget, m_CopyDepth);
-// cmd.DrawProcedural(Matrix4x4.identity, m_CopyDepth, 0, MeshTopology.Quads, 4);
-// #else
-// cmd.SetGlobalTexture("_BlitTextureDepth", m_SharedRTManager.GetDepthStencilBuffer());
-// cmd.SetGlobalVector("_BlitScaleBias", new Vector4( 1, 1, 0, 0 ));
-// cmd.SetGlobalVector("_BlitScaleBiasRt", new Vector4( 1, 1, 0, 0 ));
-// cmd.SetGlobalInt("_BlitMipLevel", 0);
-// cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
-// cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 4, MeshTopology.Quads, 4);
-// #endif
+                m_MipGenerator.CopyDepthPyramidMipToDepthStencil(cmd, m_SharedRTManager, 1, m_SharedRTManager.GetDepthStencilBufferHalfResolution());
             }
 
             float   rcpWidth = 1.0f / (float)m_SharedRTManager.GetDepthTexture().rt.width;
@@ -2549,7 +2531,7 @@ RTHandleSystem.RTHandle pipoTarget = hdCamera.GetCurrentFrameRT((int)HDCameraFra
 //            HDUtils.BlitCameraTexture(cmd, hdCamera, texture, m_DebugFullScreenTempBuffer, scaleBias, mipIndex);
 
 texture = m_CameraColorBufferHalfResolution;
-texture = m_SharedRTManager.GetDepthStencilBufferHalfResolution();
+//texture = m_SharedRTManager.GetDepthStencilBufferHalfResolution();
             HDUtils.BlitCameraTexture(cmd, hdCamera, texture, m_DebugFullScreenTempBuffer, scaleBias, mipIndex);
         }
 
