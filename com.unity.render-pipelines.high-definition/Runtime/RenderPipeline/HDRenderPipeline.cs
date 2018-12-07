@@ -2113,7 +2113,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             m_currentRendererConfigurationBakedLighting,
                             HDRenderQueue.k_RenderQueue_TransparentLowRes);
 
-                    UpscaleTransparentLowResolutionBuffer(cmd, lowResolutionTarget, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer);
+                    // Upscale using bilateral filtering
+                    m_MipGenerator.Upscale(cmd, lowResolutionTarget, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA),
+                                            hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer);
                 }
                 else
                 {
@@ -2362,11 +2364,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalVector(HDShaderIDs._DepthPyramidSize, m_PyramidSizeV4F);
             cmd.SetGlobalVector(HDShaderIDs._DepthPyramidScale, m_PyramidScaleLod);
             PushFullScreenDebugTextureMip(hdCamera, cmd, m_SharedRTManager.GetDepthTexture(), mipCount, m_PyramidScale, debugMode);
-        }
-
-        void    UpscaleTransparentLowResolutionBuffer(CommandBuffer cmd, RTHandleSystem.RTHandle source, RTHandleSystem.RTHandle target)
-        {
-            //@TODO
         }
 
         void RenderPostProcess(HDCamera hdcamera, CommandBuffer cmd, PostProcessLayer layer)

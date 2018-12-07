@@ -228,5 +228,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
             cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 4, MeshTopology.Quads, 4, 1, m_PropertyBlock);
         }
+
+        public void     Upscale(CommandBuffer cmd, Texture sourceColorHalfResolution, Texture sourceDepthStencilFullResolution, RenderTexture targetColorFullResolution)
+        {
+            m_PropertyBlock.SetTexture("_BlitTexture", sourceColorHalfResolution);
+            m_PropertyBlock.SetTexture("_BlitTextureDepth", sourceDepthStencilFullResolution);
+            m_PropertyBlock.SetVector("_SourceSize", new Vector4(sourceColorHalfResolution.width, sourceColorHalfResolution.height, 1.0f / sourceColorHalfResolution.width, 1.0f / sourceColorHalfResolution.height));
+            m_PropertyBlock.SetVector("_TargetSize", new Vector4(targetColorFullResolution.width, targetColorFullResolution.height, 1.0f / targetColorFullResolution.width, 1.0f / targetColorFullResolution.height));
+            cmd.SetRenderTarget(targetColorFullResolution);
+            cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 5, MeshTopology.Quads, 4, 1, m_PropertyBlock);
+        }
     }
 }

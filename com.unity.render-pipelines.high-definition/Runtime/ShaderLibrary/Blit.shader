@@ -136,6 +136,27 @@ Shader "Hidden/HDRenderPipeline/Blit"
                 #pragma fragment FragNearestDepth
             ENDHLSL
         }
+
+        // 5: Bilateral Upscaling
+        Pass
+        {
+            ZWrite Off ZTest Always Cull Off
+            Blend One OneMinusSrcAlpha      // Pre-multiplied alpha
+
+            HLSLPROGRAM
+                #pragma vertex VertQuad
+                #pragma fragment Frag
+
+                uniform float4  _SourceSize;
+                uniform float4  _TargetSize;
+
+                float4 Frag(Varyings input) : SV_Target
+                {
+                    float2  targetUV = input.positionCS.xy * _TargetSize.zw;
+                    return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_LinearClamp, targetUV, 0);
+                }
+            ENDHLSL
+        }
     }
 
     Fallback Off
