@@ -16,7 +16,6 @@
 #define CBUFFER_END };
 
 #define PLATFORM_SUPPORTS_EXPLICIT_BINDING 1
-#define PLATFORM_NEEDS_UNORM_UAV_SPECIFIER 1
 
 // flow control attributes
 #define UNITY_BRANCH        [branch]
