@@ -273,6 +273,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         static int s_BuildMaterialFlagsWriteKernel;
         static int s_BuildMaterialFlagsOrKernel;
 
+        static int s_DummyDeferredForSPI;
         static int s_shadeOpaqueDirectFptlKernel;
         static int s_shadeOpaqueDirectFptlDebugDisplayKernel;
         static int s_shadeOpaqueDirectShadowMaskFptlKernel;
@@ -522,6 +523,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             s_BuildMaterialFlagsOrKernel = buildMaterialFlagsShader.FindKernel("MaterialFlagsGen_Or");
             s_BuildMaterialFlagsWriteKernel = buildMaterialFlagsShader.FindKernel("MaterialFlagsGen_Write");
+
+            s_DummyDeferredForSPI = deferredComputeShader.FindKernel("Deferred_Dummy_For_SPI");
 
             s_shadeOpaqueDirectFptlKernel = deferredComputeShader.FindKernel("Deferred_Direct_Fptl");
             s_shadeOpaqueDirectFptlDebugDisplayKernel = deferredComputeShader.FindKernel("Deferred_Direct_Fptl_DebugDisplay");
@@ -2587,7 +2590,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         int kernel;
 
-                        if (enableFeatureVariants)
+                        if (XRGraphics.usingTexArray())
+                        {
+                            kernel = s_DummyDeferredForSPI; // Deferred is not supported for SPI. Build a dummy kernel instead. 
+                        }
+                        else if (enableFeatureVariants)
                         {
                             if (m_enableBakeShadowMask)
                                 kernel = s_shadeOpaqueIndirectShadowMaskFptlKernels[variant];
