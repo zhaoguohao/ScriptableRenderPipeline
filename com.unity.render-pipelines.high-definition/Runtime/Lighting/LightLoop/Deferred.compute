@@ -60,7 +60,7 @@
 #pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant25      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant25      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=25
 #pragma kernel Deferred_Indirect_ShadowMask_Fptl_Variant26      SHADE_OPAQUE_ENTRY=Deferred_Indirect_ShadowMask_Fptl_Variant26      USE_INDIRECT    SHADOWS_SHADOWMASK  VARIANT=26
 
-// VR todo add variants for SPI... 
+#pragma kernel Deferred_Dummy_For_SPI   SHADE_OPAQUE_ENTRY=Deferred_Dummy_For_SPI   UNITY_STEREO_INSTANCING_ENABLED=1
 
 #ifdef DEBUG_DISPLAY
     // Don't care about this warning in debug
@@ -150,8 +150,11 @@ void SHADE_OPAQUE_ENTRY(uint2 dispatchThreadId : SV_DispatchThreadID, uint2 grou
 #endif
 
     // This need to stay in sync with deferred.shader
-
+#ifdef UNITY_STEREO_INSTANCING_ENABLED // To prevent deferred shaders from breaking SPI build despite SPI not supporting deferred
+    float depth = 0;
+#else
     float depth = LOAD_TEXTURE2D(_CameraDepthTexture, pixelCoord.xy).x;
+#endif
     PositionInputs posInput = GetPositionInput_Stereo(pixelCoord.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, tileCoord, unity_StereoEyeIndex);
 
     // For indirect case: we can still overlap inside a tile with the sky/background, reject it

@@ -6,12 +6,9 @@
 
 PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
-    UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
     PackedVaryingsType packedVaryingsType = PackVaryingsType(varyingsType);
-    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
-    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
     return packedVaryingsType;
 }
 
@@ -19,12 +16,9 @@ PackedVaryingsType Vert(AttributesMesh inputMesh)
 
 PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 {
-    UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsToPS varyingsType;
     varyingsType.vmesh = VertMeshTesselation(input.vmesh);
     PackedVaryingsToPS packedVaryingsType = PackVaryingsToPS(varyingsType);
-    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
-    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
     return packedVaryingsType;
 }
 
@@ -39,8 +33,6 @@ void Frag(  PackedVaryingsToPS packedInput,
             #endif
             )
 {
-    UNITY_SETUP_INSTANCE_ID(packedInput);
-    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
     // input.positionSS is SV_Position
