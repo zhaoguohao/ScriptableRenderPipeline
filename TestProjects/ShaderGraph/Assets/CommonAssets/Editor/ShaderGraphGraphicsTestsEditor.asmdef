@@ -1,13 +1,15 @@
 {
-    "name": "ShaderGraphGraphicsTests",
+    "name": "ShaderGraphGraphicsTestsEditor",
     "references": [
-        "UnityEngine.TestTools.Graphics",
+        "UnityEditor.TestTools.Graphics",
         "Unity.ShaderGraph.Editor"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

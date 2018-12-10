@@ -1,3 +1,5 @@
+// using Unity.ShaderGraph.Editor;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,6 +14,7 @@ using UnityEditor.Graphing;
 public class ShaderGraphParser
 {
     private const string _NodeNamePrefix = "\"fullName\": \"UnityEditor.ShaderGraph.";
+    private const string _NodeNamePrefixSubGraphs = "\"fullName\":\"UnityEditor.ShaderGraph."; // Hooray for minor sub graph differences
 
     // Combining each missing/contained node into a string would cause strings that are too long
     // for Debug.Log to print, so I'll just give you three options instead.
@@ -36,14 +39,22 @@ public class ShaderGraphParser
 
     private static void CountNodes(bool listMissing, bool listContained)
     {
-        string[] filePaths = GetShaderGraphFilePaths();
+        // Get shader graph & sub graphs
+        string searchablePath = Application.dataPath + "/Testing/IntegrationTests";
+        string[] filePaths = Directory.GetFiles(searchablePath, "*ShaderGraph", SearchOption.AllDirectories);
+        string[] fileSubPaths = Directory.GetFiles(searchablePath, "*ShaderSubGraph", SearchOption.AllDirectories);
+
         Dictionary<string, int> nodeDict = CreateNodeDictionary();
 
         if (!listMissing && !listContained) Debug.Log("# of ShaderGraph files: " + filePaths.Length);
 
         foreach (string s in filePaths)
         {
-            ReadShaderGraphFile(s, nodeDict);
+            ReadShaderGraphFile(s, nodeDict, false);
+        }
+        foreach (string s in fileSubPaths)
+        {
+            ReadShaderGraphFile(s, nodeDict, true);
         }
 
         // Sort based on # of times node is declared, then alphabetically
@@ -96,29 +107,30 @@ public class ShaderGraphParser
         }
     }
 
-    private static string[] GetShaderGraphFilePaths()
-    {
-        return Directory.GetFiles(Application.dataPath + "/Testing/IntegrationTests",
-                                  "*ShaderGraph",
-                                  SearchOption.AllDirectories);
-    }
-
     private static Dictionary<string, int> CreateNodeDictionary()
     {
+        // Non-asmdef way
         Assembly sga = Assembly.LoadFile(UnityEngine.Application.dataPath + "/../Library/ScriptAssemblies/Unity.ShaderGraph.Editor.dll");
         Type abstractMatNode = sga.GetType("UnityEditor.ShaderGraph.AbstractMaterialNode");
+        Type masterNodeType = sga.GetType("UnityEditor.ShaderGraph.IMasterNode");
         List<Type> types = sga.GetTypes()
                                .Where(myType => myType.IsClass &&
                                !myType.IsAbstract
                                && myType.IsSubclassOf(abstractMatNode)).ToList();
+        
+        // Need assembly
+        // Type abstractMatNode = typeof(AbstractMaterialNode);
+        // Type masterNodeType = typeof(IMasterNode);
+        // List<Type> types = Assembly.GetAssembly(abstractMatNode).GetTypes()
+        //                         .Where(myType => myType.IsClass &&
+        //                         !myType.IsAbstract
+        //                         && myType.IsSubclassOf(abstractMatNode)).ToList();
 
         Dictionary<string, int> dict = new Dictionary<string, int>();
         foreach (Type t in types)
         {
             // Exclude master nodes.
-            bool masternode = t.GetInterfaces().Contains(Type.GetType("IMasterNode"));
-
-            if (!masternode)
+            if (!t.GetInterfaces().Contains(masterNodeType))
             {
                 dict.Add(t.Name, 0);
             }
@@ -126,23 +138,29 @@ public class ShaderGraphParser
         return dict;
     }
 
-    private static void ReadShaderGraphFile(string path, Dictionary<string, int> dict)
+    private static void ReadShaderGraphFile(string path, Dictionary<string, int> dict, bool subGraph)
     {
         StreamReader reader = File.OpenText(path);
+
+        string prefix;
+        if (!subGraph) prefix = _NodeNamePrefix;
+        else prefix = _NodeNamePrefixSubGraphs;
 
         string line;
         while ((line = reader.ReadLine()) != null)
         {
-            if (line.Contains(_NodeNamePrefix))
+            while (line.Contains(prefix))
             {
-                line = line.Substring(line.IndexOf(_NodeNamePrefix,
-                                                   StringComparison.CurrentCulture) + _NodeNamePrefix.Length);
-                line = line.Substring(0, line.IndexOf('"'));
+                string nodeName = line.Substring(line.IndexOf(prefix,
+                                                   StringComparison.CurrentCulture) + prefix.Length);
+                nodeName = nodeName.Substring(0, nodeName.IndexOf('"'));
 
-                if (dict.ContainsKey(line))
+                if (dict.ContainsKey(nodeName))
                 {
-                    dict[line]++;
+                    dict[nodeName]++;
                 }
+
+                line = line.Substring(line.IndexOf(prefix) + prefix.Length);
             }
         }
     }
