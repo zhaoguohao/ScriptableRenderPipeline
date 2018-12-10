@@ -69,6 +69,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Misc
         VolumeUpdate,
 
+        DownsampleMip,
+        CopyMip0,
+
         Max
     }
 
