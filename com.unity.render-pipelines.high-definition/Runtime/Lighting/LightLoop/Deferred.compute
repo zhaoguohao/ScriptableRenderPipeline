@@ -116,8 +116,8 @@
 // variable declaration
 //-------------------------------------------------------------------------------------
 
-RW_TEXTURE(float3, diffuseLightingUAV);
-RW_TEXTURE(float4, specularLightingUAV);
+RW_TEXTURE2D(float3, diffuseLightingUAV);
+RW_TEXTURE2D(float4, specularLightingUAV);
 
 CBUFFER_START(UnityDeferredCompute)
     uint g_TileListOffset;
