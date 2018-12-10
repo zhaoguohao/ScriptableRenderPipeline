@@ -1,16 +1,16 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor.Experimental.UIElements;
+using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEngine.UIElements;
 using UnityEditor.Graphing.Util;
+using UnityEditor.ShaderGraph;
+using UnityEditor.ShaderGraph.Drawing;
 using UnityEditor.ShaderGraph.Drawing.Controls;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
-namespace UnityEditor.ShaderGraph.Drawing
+namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
 {
-    public class FabricSettingsView : VisualElement
+    class FabricSettingsView : VisualElement
     {
         FabricMasterNode m_Node;
 
@@ -37,7 +37,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 row.Add(new EnumField(SurfaceType.Opaque), (field) =>
                 {
                     field.value = m_Node.surfaceType;
-                    field.OnValueChanged(ChangeSurfaceType);
+                    field.RegisterValueChangedCallback(ChangeSurfaceType);
                 });
             });
 
@@ -78,7 +78,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     row.Add(m_SortPiorityField, (field) =>
                     {
                         field.value = m_Node.sortPriority;
-                        field.OnValueChanged(ChangeSortPriority);
+                        field.RegisterValueChangedCallback(ChangeSortPriority);
                     });
                 });
                 --indentLevel;
@@ -121,7 +121,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 row.Add(new EnumField(DoubleSidedMode.Disabled), (field) =>
                 {
                     field.value = m_Node.doubleSidedMode;
-                    field.OnValueChanged(ChangeDoubleSidedMode);
+                    field.RegisterValueChangedCallback(ChangeDoubleSidedMode);
                 });
             });
 
@@ -139,7 +139,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 row.Add(new EnumField(FabricMasterNode.MaterialType.CottonWool), (field) =>
                 {
                     field.value = m_Node.materialType;
-                    field.OnValueChanged(ChangeMaterialType);
+                    field.RegisterValueChangedCallback(ChangeMaterialType);
                 });
             });
 
@@ -153,18 +153,21 @@ namespace UnityEditor.ShaderGraph.Drawing
             });
 
 
-            ps.Add(new PropertyRow(CreateLabel("Subsurface Scattering", indentLevel)), (row) =>
+            if (m_Node.surfaceType != SurfaceType.Transparent)
             {
-                row.Add(new Toggle(), (toggle) =>
+                ps.Add(new PropertyRow(CreateLabel("Subsurface Scattering", indentLevel)), (row) =>
                 {
-                    toggle.value = m_Node.subsurfaceScattering.isOn;
-                    toggle.OnToggleChanged(ChangeSubsurfaceScattering);
+                    row.Add(new Toggle(), (toggle) =>
+                    {
+                        toggle.value = m_Node.subsurfaceScattering.isOn;
+                        toggle.OnToggleChanged(ChangeSubsurfaceScattering);
+                    });
                 });
-            });
+            }
 
-                
 
-            ps.Add(new PropertyRow(CreateLabel("Receive Decals", indentLevel)), (row) =>
+
+           ps.Add(new PropertyRow(CreateLabel("Receive Decals", indentLevel)), (row) =>
             {
                 row.Add(new Toggle(), (toggle) =>
                 {
@@ -187,7 +190,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 row.Add(new EnumField(SpecularOcclusionMode.Off), (field) =>
                 {
                     field.value = m_Node.specularOcclusionMode;
-                    field.OnValueChanged(ChangeSpecularOcclusionMode);
+                    field.RegisterValueChangedCallback(ChangeSpecularOcclusionMode);
                 });
             });
 
@@ -356,7 +359,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                         Debug.LogWarning("Not supported: " + alphaModeLit);
                         return AlphaMode.Alpha;
                     }
-                    
+
             }
         }
 
@@ -374,7 +377,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     {
                         Debug.LogWarning("Not supported: " + alphaMode);
                         return FabricMasterNode.AlphaModeFabric.Alpha;
-                    }                    
+                    }
             }
         }
     }

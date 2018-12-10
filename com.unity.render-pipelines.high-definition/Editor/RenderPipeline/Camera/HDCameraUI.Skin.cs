@@ -1,8 +1,9 @@
+using UnityEditor.Rendering;
 using UnityEngine;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    partial class HDCameraUI
+    static partial class HDCameraUI
     {
         const string generalSettingsHeaderContent = "General";
         const string physicalSettingsHeaderContent = "Physical Settings";
