@@ -18,6 +18,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int[] m_SrcOffset;
         int[] m_DstOffset;
 
+        static string[] DownsampleMip =
+        {
+            "Downsample Mip 0",
+            "Downsample Mip 1",
+            "Downsample Mip 2",
+            "Downsample Mip 3",
+            "Downsample Mip 4",
+            "Downsample Mip 5",
+            "Downsample Mip 6",
+            "Downsample Mip 7",
+            "Downsample Mip 8",
+            "Downsample Mip 9",
+            "Downsample Mip 10",
+            "Downsample Mip 11",
+            "Downsample Mip 12",
+            "Downsample Mip 13",
+            "Downsample Mip 14",
+            "Downsample Mip 15",
+            "Downsample Mip 16",
+            "Downsample Mip 17",
+            "Downsample Mip 18",
+            "Downsample Mip 19",
+            "Downsample Mip 20"
+        };
+
         public MipGenerator(HDRenderPipelineAsset asset)
         {
             m_DepthPyramidCS = asset.renderPipelineResources.shaders.depthPyramidCS;
@@ -73,31 +98,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.DispatchCompute(cs, kernel, HDUtils.DivRoundUp(dstSize.x, 8), HDUtils.DivRoundUp(dstSize.y, 8), 1);
             }
         }
-
-        static string[] DownsampleMip =
-        {
-            "Downsample Mip 0",
-            "Downsample Mip 1",
-            "Downsample Mip 2",
-            "Downsample Mip 3",
-            "Downsample Mip 4",
-            "Downsample Mip 5",
-            "Downsample Mip 6",
-            "Downsample Mip 7",
-            "Downsample Mip 8",
-            "Downsample Mip 9",
-            "Downsample Mip 10",
-            "Downsample Mip 11",
-            "Downsample Mip 12",
-            "Downsample Mip 13",
-            "Downsample Mip 14",
-            "Downsample Mip 15",
-            "Downsample Mip 16",
-            "Downsample Mip 17",
-            "Downsample Mip 18",
-            "Downsample Mip 19",
-            "Downsample Mip 20"
-        };
 
         // Generates the gaussian pyramid of source into destination
         // We can't do it in place as the color pyramid has to be read while writing to the color
