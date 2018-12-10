@@ -82,7 +82,7 @@ A function that describes a wave that represents the human eye’s relative sens
 #### punctual lights: 
 A light is considered to be punctual if it emits light from a single point. HDRPs Spot and Point Lights are punctual.
 
-
+<a name="LightIntensityUnits"></a>
 
 
 ### Light intensity units
@@ -108,7 +108,7 @@ Measures the apparent brightness of light either emitted from a light source, or
 <a name="EV"></a>
 #### exposure value (EV):
 
-A value that represents a combination of a camera's shutter speed and f-number. It is essentially a measurement of exposure such that all combinations of shutter speed and f-number that yield the same level of exposure have the same EV. HDRP Lights can use Ev 100, which is Ev with a 100 International Standards Organisation (ISO) film.
+A value that represents a combination of a camera's shutter speed and f-number. It is essentially a measurement of exposure such that all combinations of shutter speed and f-number that yield the same level of exposure have the same EV. HDRP Lights can use **Ev 100**, which is EV with a 100 International Standards Organisation (ISO) film.
 
 
 
