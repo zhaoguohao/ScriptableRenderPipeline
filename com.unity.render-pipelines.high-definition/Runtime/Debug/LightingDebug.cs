@@ -82,6 +82,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool                 showAreaLight = true;
         public bool                 showReflectionProbe = true;
 
+
+public float                upscaleSigmaRange = 1.0f;
+public float                upscaleSigmaDepth = 0.1f;
+
+
+
         public LightLoop.TileClusterDebug tileClusterDebug = LightLoop.TileClusterDebug.None;
         public LightLoop.TileClusterCategoryDebug tileClusterDebugByCategory = LightLoop.TileClusterCategoryDebug.Punctual;
     }

@@ -8,7 +8,6 @@ Shader "Hidden/HDRenderPipeline/Blit"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
         TEXTURE2D(_BlitTexture);
-        TEXTURE2D_FLOAT(_BlitTextureDepth);
         SamplerState sampler_PointClamp;
         SamplerState sampler_LinearClamp;
         uniform float4 _BlitScaleBias;
@@ -62,18 +61,6 @@ Shader "Hidden/HDRenderPipeline/Blit"
 #endif
             return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_LinearClamp, uv, _BlitMipLevel);
         }
-
-        // Blits source texture into depth map
-        float FragNearestDepth(Varyings input) : SV_Depth
-        {
-            float2 uv = input.texcoord.xy;
-#if UNITY_SINGLE_PASS_STEREO
-            uv.x = uv.x / 2.0 + unity_StereoEyeIndex * 0.5;
-            uv.y = 1.0 - uv.y; // Always flip Y when rendering stereo since HDRP doesn't support OpenGL
-#endif
-
-            return SAMPLE_TEXTURE2D_LOD(_BlitTextureDepth, sampler_PointClamp, input.texcoord, _BlitMipLevel).x;
-        }
             
     ENDHLSL
 
@@ -122,39 +109,6 @@ Shader "Hidden/HDRenderPipeline/Blit"
             HLSLPROGRAM
                 #pragma vertex VertQuad
                 #pragma fragment FragBilinear
-            ENDHLSL
-        }
-
-        // 4: Depth quad
-        Pass
-        {
-            ZWrite On ZTest Always Blend Off Cull Off
-            ColorMask 0 // Don't write to color target
-
-            HLSLPROGRAM
-                #pragma vertex VertQuad
-                #pragma fragment FragNearestDepth
-            ENDHLSL
-        }
-
-        // 5: Bilateral Upscaling
-        Pass
-        {
-            ZWrite Off ZTest Always Cull Off
-            Blend One OneMinusSrcAlpha      // Pre-multiplied alpha
-
-            HLSLPROGRAM
-                #pragma vertex VertQuad
-                #pragma fragment Frag
-
-                uniform float4  _SourceSize;
-                uniform float4  _TargetSize;
-
-                float4 Frag(Varyings input) : SV_Target
-                {
-                    float2  targetUV = input.positionCS.xy * _TargetSize.zw;
-                    return SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_LinearClamp, targetUV, 0);
-                }
             ENDHLSL
         }
     }

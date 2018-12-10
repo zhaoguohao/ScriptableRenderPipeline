@@ -534,6 +534,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (DebugNeedsExposure())
                 list.Add(new DebugUI.FloatField { displayName = "Debug Exposure", getter = () => lightingDebugSettings.debugExposure, setter = value => lightingDebugSettings.debugExposure = value });
 
+list.Add(new DebugUI.FloatField
+{
+    displayName = "Upscale Sigma Range",
+    getter = () => lightingDebugSettings.upscaleSigmaRange,
+    setter = (v) => lightingDebugSettings.upscaleSigmaRange = v,
+    min = () => 0.0001f,
+    max = () => 2.0f,
+});
+
+list.Add(new DebugUI.FloatField
+{
+    displayName = "Upscale Sigma Depth",
+    getter = () => lightingDebugSettings.upscaleSigmaDepth,
+    setter = (v) => lightingDebugSettings.upscaleSigmaDepth = v,
+    min = () => 0.0001f,
+    max = () => 2.0f,
+});
+
 
             m_DebugLightingItems = list.ToArray();
             var panel = DebugManager.instance.GetPanel(k_PanelLighting, true);

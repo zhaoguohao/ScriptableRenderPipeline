@@ -376,7 +376,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColor");
             m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "CameraSSSDiffuseLighting");
-            m_CameraColorBufferHalfResolution = RTHandles.Alloc(0.5f * Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColorHalfResolution");
+//            m_CameraColorBufferHalfResolution = RTHandles.Alloc(0.5f * Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColorHalfResolution");
+m_CameraColorBufferHalfResolution = RTHandles.Alloc(0.25f * Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "CameraColorHalfResolution");
 
             if (settings.supportSSAO)
             {
@@ -2115,7 +2116,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // Upscale using bilateral filtering
                     m_MipGenerator.Upscale(cmd, lowResolutionTarget, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA),
-                                            hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer);
+                                            hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer,
+                                            m_CurrentDebugDisplaySettings);
                 }
                 else
                 {

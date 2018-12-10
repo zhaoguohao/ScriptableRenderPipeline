@@ -55,7 +55,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Create the depth/stencil buffer
             m_CameraDepthStencilBuffer = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencil");
-            m_CameraDepthStencilBufferHalfResolution = RTHandles.Alloc(0.5f * Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencilHalfResolution");
+//            m_CameraDepthStencilBufferHalfResolution = RTHandles.Alloc(0.5f * Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencilHalfResolution");
+m_CameraDepthStencilBufferHalfResolution = RTHandles.Alloc(0.25f * Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencilHalfResolution");
 
             // Create the mip chain buffer
             m_CameraDepthBufferMipChainInfo = new HDUtils.PackedMipChainInfo();

@@ -208,35 +208,50 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void     CopyDepthPyramidMipToDepthStencil(CommandBuffer cmd, SharedRTManager sharedRTManager, int sourceMipLevel, RenderTexture destinationDepthStencil)
         {
-            RenderTexture               depthStencilAtlas = sharedRTManager.GetDepthTexture( false );
-            HDUtils.PackedMipChainInfo  depthMipChain = sharedRTManager.GetDepthBufferMipChainInfo();
+            #if true
+                RenderTexture   depthStencilFullRes = sharedRTManager.GetDepthStencilBuffer( false );
 
-            float       rcpWidth = 1.0f / (float) sharedRTManager.GetDepthTexture().rt.width;
-            float       rcpHeight = 1.0f / (float) sharedRTManager.GetDepthTexture().rt.height;
-            Vector2Int  mip1Offset = depthMipChain.mipLevelOffsets[sourceMipLevel];
-            Vector2Int  mip1Size = depthMipChain.mipLevelSizes[sourceMipLevel];
-            Vector4     scaleBias = new Vector4( mip1Size.x * rcpWidth, mip1Size.y * rcpHeight, mip1Offset.x * rcpWidth, mip1Offset.y * rcpHeight );
+                // We need the MAX of the depth values for the 2x2 texels of our half-resolution depth buffer
+                // 
+                m_PropertyBlock.SetTexture(HDShaderIDs._BlitTextureDepth, depthStencilFullRes);
+                m_PropertyBlock.SetVector(HDShaderIDs._SrcScaleBias, new Vector4( 1.0f / destinationDepthStencil.width, 1.0f / destinationDepthStencil.height, 0, 0 ));
+                cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
+                cmd.DrawProcedural(Matrix4x4.identity, m_ColorPyramidPSMat, 1, MeshTopology.Triangles, 3, 1, m_PropertyBlock);
+            #else
+                RenderTexture               depthStencilAtlas = sharedRTManager.GetDepthTexture( false );
+                HDUtils.PackedMipChainInfo  depthMipChain = sharedRTManager.GetDepthBufferMipChainInfo();
 
-            // Here we don't have much choice than to use the special Depth blit pass that outputs a texture to SV_DEPTH
-            //  • We can't use regular Blit() functions as they don't work with DSV as a target
-            //  • We can't use a compute shader because DSV can't be used directly or cast into UAVs
-            //
-            m_PropertyBlock.SetTexture(HDShaderIDs._BlitTextureDepth, depthStencilAtlas);
-            m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, scaleBias);
-            m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4( 1, 1, 0, 0 ));
-            m_PropertyBlock.SetInt(HDShaderIDs._BlitMipLevel, 0);
-            cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
-            cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 4, MeshTopology.Quads, 4, 1, m_PropertyBlock);
+                float       rcpWidth = 1.0f / (float) sharedRTManager.GetDepthTexture().rt.width;
+                float       rcpHeight = 1.0f / (float) sharedRTManager.GetDepthTexture().rt.height;
+                Vector2Int  mip1Offset = depthMipChain.mipLevelOffsets[sourceMipLevel];
+                Vector2Int  mip1Size = depthMipChain.mipLevelSizes[sourceMipLevel];
+                Vector4     scaleBias = new Vector4( mip1Size.x * rcpWidth, mip1Size.y * rcpHeight, mip1Offset.x * rcpWidth, mip1Offset.y * rcpHeight );
+
+                // Here we don't have much choice than to use the special Depth blit pass that outputs a texture to SV_DEPTH
+                //  • We can't use regular Blit() functions as they don't work with DSV as a target
+                //  • We can't use a compute shader because DSV can't be used directly or cast into UAVs
+                //
+                m_PropertyBlock.SetTexture(HDShaderIDs._BlitTextureDepth, depthStencilAtlas);
+                m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, scaleBias);
+                m_PropertyBlock.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4( 1, 1, 0, 0 ));
+                m_PropertyBlock.SetInt(HDShaderIDs._BlitMipLevel, 0);
+                cmd.SetRenderTarget(destinationDepthStencil, destinationDepthStencil, 0);
+                cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 4, MeshTopology.Quads, 4, 1, m_PropertyBlock);
+            #endif
         }
 
-        public void     Upscale(CommandBuffer cmd, Texture sourceColorHalfResolution, Texture sourceDepthStencilFullResolution, RenderTexture targetColorFullResolution)
+        public void     Upscale(CommandBuffer cmd, Texture sourceColorHalfResolution, Texture sourceDepthStencilFullResolution, RenderTexture targetColorFullResolution, DebugDisplaySettings debugSettings)
         {
             m_PropertyBlock.SetTexture("_BlitTexture", sourceColorHalfResolution);
             m_PropertyBlock.SetTexture("_BlitTextureDepth", sourceDepthStencilFullResolution);
             m_PropertyBlock.SetVector("_SourceSize", new Vector4(sourceColorHalfResolution.width, sourceColorHalfResolution.height, 1.0f / sourceColorHalfResolution.width, 1.0f / sourceColorHalfResolution.height));
             m_PropertyBlock.SetVector("_TargetSize", new Vector4(targetColorFullResolution.width, targetColorFullResolution.height, 1.0f / targetColorFullResolution.width, 1.0f / targetColorFullResolution.height));
+
+m_PropertyBlock.SetFloat("sigma_range", debugSettings.lightingDebugSettings.upscaleSigmaRange);
+m_PropertyBlock.SetFloat("sigma_depth", debugSettings.lightingDebugSettings.upscaleSigmaDepth);
+
             cmd.SetRenderTarget(targetColorFullResolution);
-            cmd.DrawProcedural(Matrix4x4.identity, HDUtils.GetBlitMaterial(), 5, MeshTopology.Quads, 4, 1, m_PropertyBlock);
+            cmd.DrawProcedural(Matrix4x4.identity, m_ColorPyramidPSMat, 2, MeshTopology.Quads, 4, 1, m_PropertyBlock);
         }
     }
 }
