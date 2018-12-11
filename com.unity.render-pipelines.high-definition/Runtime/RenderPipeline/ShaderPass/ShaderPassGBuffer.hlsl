@@ -6,12 +6,11 @@
 
 PackedVaryingsType Vert(AttributesMesh inputMesh)
 {
-    // Despite deferred not being supported for SPI, this macro is still required in order for instancing to be handled correctly
-    // since the PackedVaryingsTypes have been modified to support SPI.
     UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
     PackedVaryingsType packedVaryingsType = PackVaryingsType(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
     return packedVaryingsType;
 }
 
@@ -19,12 +18,11 @@ PackedVaryingsType Vert(AttributesMesh inputMesh)
 
 PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 {
-    // Despite deferred not being supported for SPI, this macro is still required in order for instancing to be handled correctly
-    // since the PackedVaryingsTypes have been modified to support SPI.
     UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsToPS varyingsType;
     varyingsType.vmesh = VertMeshTesselation(input.vmesh);
     PackedVaryingsToPS packedVaryingsType = PackVaryingsToPS(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
     return packedVaryingsType;
 }
 
@@ -39,6 +37,7 @@ void Frag(  PackedVaryingsToPS packedInput,
             #endif
             )
 {
+    UNITY_SETUP_INSTANCE_ID(packedInput);
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
 
     // input.positionSS is SV_Position
