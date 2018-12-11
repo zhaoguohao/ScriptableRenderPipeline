@@ -26,7 +26,7 @@ Shader "Hidden/HDRenderPipeline/CameraMotionVectors"
 
         Varyings Vert(Attributes input)
         {
-            UNITY_SETUP_INSTANCE_ID(inputMesh);
+            UNITY_SETUP_INSTANCE_ID(input);
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
             UNITY_TRANSFER_INSTANCE_ID(input, output);
