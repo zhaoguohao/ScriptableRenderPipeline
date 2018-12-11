@@ -14,22 +14,29 @@ Shader "Hidden/HDRenderPipeline/CameraMotionVectors"
         struct Attributes
         {
             uint vertexID : SV_VertexID;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
         struct Varyings
         {
             float4 positionCS : SV_POSITION;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
+            UNITY_VERTEX_OUTPUT_STEREO
         };
 
         Varyings Vert(Attributes input)
         {
+            UNITY_SETUP_INSTANCE_ID(inputMesh);
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
+            UNITY_TRANSFER_INSTANCE_ID(input, output);
+            UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
             return output;
         }
 
         void Frag(Varyings input, out float4 outColor : SV_Target0)
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float depth = LOAD_TEXTURE(_CameraDepthTexture, input.positionCS.xy).x;
 
             PositionInputs posInput = GetPositionInput_Stereo(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
