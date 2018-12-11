@@ -4,7 +4,9 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.4.0-preview] - 2018-XX-XX
+## [4.7.0-preview] - 2018-XX-XX
+
+## [4.6.0-preview] - 2018-12-07
 
 ### Added
 
@@ -15,8 +17,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed Distortion blend mode for shader graph master node (Lit, StackLit)
 - Fixed bent Normal for Fabric master node in shader graph
 - Fixed PBR master node lightlayers
+- Fixed stacklit transmission and sun highlight
+- Fixed logic to disable FPTL with stereo rendering
+- Fixed an issue with flipped depth buffer during postprocessing
+- Fixed decals with stereo rendering
+- Fixed flip logic for postprocessing + VR
+- Fixed copyStencilBuffer pass for Switch
+- Fixed point light shadow map culling that wasn't taking into account far plane
+- Fixed usage of SSR with transparent on all master node
+- Fixed SSR and microshadowing on fabric material
+- Fixed shader stripping for built-in lit shaders.
 
 ### Changed
+- Removing the simple lightloop used by the simple lit shader
 - Added a StackLit master node replacing the InspectorUI version. IMPORTANT: All previously authored StackLit Materials will be lost. You need to recreate them with the master node.
 
 ## [4.3.0-preview] - 2018-11-23
