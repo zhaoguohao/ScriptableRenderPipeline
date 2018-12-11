@@ -93,7 +93,7 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ShowResolutionOverlay: 1
     m_ExportTrainingData: 0
-  m_LightingDataAsset: {fileID: 112000002, guid: 927a4d7f61a4bc74a9b35fa393284ef9,
+  m_LightingDataAsset: {fileID: 112000004, guid: 927a4d7f61a4bc74a9b35fa393284ef9,
     type: 2}
   m_UseShadowmask: 0
 --- !u!196 &4
@@ -203,7 +203,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &198834642
 Transform:
   m_ObjectHideFlags: 0
@@ -677,7 +677,10 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1918344774}
-  m_Text: HDLit
+  m_Text: 'Lit
+
+
+'
   m_OffsetZ: 0
   m_CharacterSize: 0.01
   m_LineSpacing: 1
