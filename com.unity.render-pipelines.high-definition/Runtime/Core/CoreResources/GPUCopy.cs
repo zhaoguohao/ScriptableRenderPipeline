@@ -45,12 +45,12 @@ namespace UnityEngine.Experimental.Rendering
                 RectInt dispatch8Rect = RectInt.zero;
 
                 if (TileLayoutUtils.TryLayoutByTiles(
-                        rect,
-                        8,
-                        out main,
-                        out topRow,
-                        out rightCol,
-                        out topRight))
+                    rect,
+                    8,
+                    out main,
+                    out topRow,
+                    out rightCol,
+                    out topRight))
                 {
                     if (topRow.width > 0 && topRow.height > 0)
                     {

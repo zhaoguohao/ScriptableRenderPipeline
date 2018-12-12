@@ -262,8 +262,8 @@ int mipIndex = 2;
             Vector2Int  mipSize = mipChainInfo.mipLevelSizes[mipIndex];
             m_PropertyBlock.SetVector("_DepthAtlasScaleBias", new Vector4( recWidth * mipOffset.x, recHeight * mipOffset.y, recWidth * mipSize.x, recHeight * mipSize.y ));
 
-m_PropertyBlock.SetFloat("sigma_range", debugSettings.lightingDebugSettings.upscaleSigmaRange);
-m_PropertyBlock.SetFloat("sigma_depth", debugSettings.lightingDebugSettings.upscaleSigmaDepth);
+m_PropertyBlock.SetFloat("sigma_range", debugSettings.data.lightingDebugSettings.upscaleSigmaRange);
+m_PropertyBlock.SetFloat("sigma_depth", debugSettings.data.lightingDebugSettings.upscaleSigmaDepth);
 
             cmd.SetRenderTarget(targetColorFullResolution);
             cmd.DrawProcedural(Matrix4x4.identity, m_ColorPyramidPSMat, 2, MeshTopology.Quads, 4, 1, m_PropertyBlock);
