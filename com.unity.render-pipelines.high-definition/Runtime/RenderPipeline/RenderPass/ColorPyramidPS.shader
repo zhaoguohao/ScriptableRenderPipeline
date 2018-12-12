@@ -168,7 +168,7 @@ Shader "ColorPyramidPS"
 
             HLSLPROGRAM
                 #pragma vertex VertQuad
-                #pragma fragment FragUpscale
+                #pragma fragment FragUpscale3
 
                 uniform float4  _SourceSize;
                 uniform float4  _TargetSize;
@@ -192,9 +192,13 @@ Shader "ColorPyramidPS"
                     UV = _DepthAtlasScaleBias.xy + _DepthAtlasScaleBias.zw * UV;
                     return LinearDepth( SAMPLE_TEXTURE2D_LOD(_BlitTextureDepthLowResMin, sampler_PointClamp, UV, 0).x );
                 }
-                float   SampleDepthLowResMax(float2 UV)
+                float   SampleDepthLowResMaxPoint(float2 UV)
                 {
                     return LinearDepth( SAMPLE_TEXTURE2D_LOD(_BlitTextureDepthLowResMax, sampler_PointClamp, UV, 0).x );
+                }
+                float   SampleDepthLowResMaxLinear(float2 UV)
+                {
+                    return LinearDepth( SAMPLE_TEXTURE2D_LOD(_BlitTextureDepthLowResMax, sampler_LinearClamp, UV, 0).x );
                 }
 
                 float   SampleDepthLowResPixels(uint2 pixelPosition)
@@ -218,7 +222,7 @@ Shader "ColorPyramidPS"
 
                     float   centerDepth = SampleDepth( targetUV );
                     float   centerDepthLowResMin = SampleDepthLowResMin( targetUV );
-                    float   centerDepthLowResMax = SampleDepthLowResMax( targetUV );
+                    float   centerDepthLowResMax = SampleDepthLowResMaxPoint( targetUV );
 //                    float   centerDepthLowResMax = SampleDepthLowResPixels( uint2( floor( input.positionCS.xy - 0.5 ) ) >> 2 );
 
 const float MIP_PIXEL_SIZE = 4.0;
@@ -324,6 +328,99 @@ float   weightDepth = exp( k_depth * Sq( depth - centerDepth ) ); // Weight when
 //                    float3  color = 10.0 * SAMPLE_TEXTURE2D_LOD(_BlitTextureDepth, sampler_LinearClamp, targetUV, 0);
 //                    return float4( color, V.w );
                 }
+
+                float4 FragUpscale2(Varyings input) : SV_Target
+                {
+                    float2  targetUV = input.positionCS.xy * _TargetSize.zw;
+                    float2  sourcedUV = _SourceSize.zw;
+
+                    float   centerDepth = SampleDepth( targetUV );
+                    float   centerDepthLowRes = SampleDepthLowResMaxLinear( targetUV );
+
+                    const float k_range = -0.5 / Sq( sigma_range );
+                    const float k_depth = -0.5 / Sq( sigma_depth );
+
+                    float4  sumColor = 0.0;
+
+                    float2  sourceUV;
+                    sourceUV.y = targetUV.y - 2.0 * sourcedUV.y;
+                    for ( uint y=0; y < 5; y++ )
+                    {
+                        sourceUV.x = targetUV.x - 2.0 * sourcedUV.x;
+                        for ( uint x=0; x < 5; x++ )
+                        {
+                            float2  dUV = sourceUV - targetUV;
+                            float2  dPixels = dUV * _SourceSize.xy;
+                            float   sqRange = dot( dPixels, dPixels );
+
+                            float4  color = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+                            float   depth = SampleDepth( sourceUV );
+
+                            float   weightRange = exp( k_range * sqRange );
+                            float   weightDepth = exp( k_depth * Sq( depth - centerDepth ) ); // Normal weight
+weightDepth = 1;//exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Weight when comparing to low-resolution depth
+//weightDepth *= step( depth, centerDepth );
+//weightRange = 1;
+//weightDepth = 1;
+                            float   weight = color.w * weightRange * weightDepth;
+
+                            sumColor += weight * float4( color.xyz, 1 );
+
+                            sourceUV.x += sourcedUV.x;
+                        }
+
+                        sourceUV.y += sourcedUV.y;
+                    }
+
+                    return sumColor.w > 0.0 ? sumColor / sumColor.w : 0.0;
+               }
+
+                float4 FragUpscale3(Varyings input) : SV_Target
+                {
+                    float2  targetPixelPosition = input.positionCS.xy;          // With 0.5 pixel offset
+                    float2  sourcePixelPosition = 0.25 * targetPixelPosition;   // Quarter resolution
+                            sourcePixelPosition -= 0.5;                         // Half-pixel offset for bilinear interpolation
+
+                    float2  sourcePixelIndex = floor( sourcePixelPosition );
+                    float2  uv = sourcePixelPosition - sourcePixelIndex;
+                    float2  sourceUV = sourcePixelIndex * _SourceSize.zw;
+
+                    // Sample the 4 corner values for our bilinear interpolation
+                    float4  C00 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+                    float   Z00 = SampleDepthLowResMaxPoint( sourceUV );
+                            sourceUV.x += _SourceSize.z;
+                    float4  C10 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+                    float   Z10 = SampleDepthLowResMaxPoint( sourceUV );
+                            sourceUV.y += _SourceSize.w;
+                    float4  C11 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+                    float   Z11 = SampleDepthLowResMaxPoint( sourceUV );
+                            sourceUV.x -= _SourceSize.z;
+                    float4  C01 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+                    float   Z01 = SampleDepthLowResMaxPoint( sourceUV );
+                            sourceUV.y -= _SourceSize.w;
+
+
+                    #if 1
+                        // Pre-multiply by alpha for correct blending
+                        C00.xyz *= C00.w;
+                        C01.xyz *= C01.w;
+                        C11.xyz *= C11.w;
+                        C10.xyz *= C10.w;
+                    #endif
+
+
+                    // Sample center value
+                    float   Z = SampleDepth( targetPixelPosition * _TargetSize.zw );
+
+
+                    // Perform custom bilinear interpolation
+//                    float4  C = 0.25 * (C00 + C01 + C10 + C11);
+                    float4  C = 0;
+                    C = lerp( lerp( C00, C10, uv.x ), lerp( C01, C11, uv.x ), uv.y );
+//                    C = float4( uv, 0, 1 );
+
+                    return C.w > 0.0 ? C / C.w : 0.0;
+               }
             ENDHLSL
         }
     }
