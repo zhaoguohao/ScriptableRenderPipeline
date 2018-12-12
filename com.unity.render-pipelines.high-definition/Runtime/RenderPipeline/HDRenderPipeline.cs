@@ -2115,8 +2115,7 @@ m_CameraColorBufferHalfResolution = RTHandles.Alloc(0.25f * Vector2.one, filterM
                             HDRenderQueue.k_RenderQueue_TransparentLowRes);
 
                     // Upscale using bilateral filtering
-                    m_MipGenerator.Upscale(cmd, lowResolutionTarget, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA),
-                                            hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer,
+                    m_MipGenerator.Upscale(cmd, m_SharedRTManager, lowResolutionTarget, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer, hdCamera.frameSettings.enableMSAA,
                                             m_CurrentDebugDisplaySettings);
                 }
                 else

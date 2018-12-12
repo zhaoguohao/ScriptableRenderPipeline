@@ -240,12 +240,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             #endif
         }
 
-        public void     Upscale(CommandBuffer cmd, Texture sourceColorHalfResolution, Texture sourceDepthStencilFullResolution, RenderTexture targetColorFullResolution, DebugDisplaySettings debugSettings)
+        public void     Upscale(CommandBuffer cmd, SharedRTManager sharedRTManager, Texture sourceColorHalfResolution, RenderTexture targetColorFullResolution, bool enableMSAA, DebugDisplaySettings debugSettings)
         {
+            HDUtils.PackedMipChainInfo  mipChainInfo = sharedRTManager.GetDepthBufferMipChainInfo();
+            Texture sourceDepthStencilHalfResolutionMin = sharedRTManager.GetDepthTexture(enableMSAA);
+            Texture sourceDepthStencilHalfResolutionMax = sharedRTManager.GetDepthStencilBufferHalfResolution();
+            Texture sourceDepthStencilFullResolution = sharedRTManager.GetDepthStencilBuffer(enableMSAA);
+
             m_PropertyBlock.SetTexture("_BlitTexture", sourceColorHalfResolution);
             m_PropertyBlock.SetTexture("_BlitTextureDepth", sourceDepthStencilFullResolution);
+            m_PropertyBlock.SetTexture("_BlitTextureDepthLowResMin", sourceDepthStencilHalfResolutionMin);
+            m_PropertyBlock.SetTexture("_BlitTextureDepthLowResMax", sourceDepthStencilHalfResolutionMax);
             m_PropertyBlock.SetVector("_SourceSize", new Vector4(sourceColorHalfResolution.width, sourceColorHalfResolution.height, 1.0f / sourceColorHalfResolution.width, 1.0f / sourceColorHalfResolution.height));
             m_PropertyBlock.SetVector("_TargetSize", new Vector4(targetColorFullResolution.width, targetColorFullResolution.height, 1.0f / targetColorFullResolution.width, 1.0f / targetColorFullResolution.height));
+
+///            int mipIndex = 1;
+int mipIndex = 2;
+            float       recWidth = 1.0f / sourceDepthStencilHalfResolutionMin.width;
+            float       recHeight = 1.0f / sourceDepthStencilHalfResolutionMin.height;
+            Vector2Int  mipOffset = mipChainInfo.mipLevelOffsets[mipIndex];
+            Vector2Int  mipSize = mipChainInfo.mipLevelSizes[mipIndex];
+            m_PropertyBlock.SetVector("_DepthAtlasScaleBias", new Vector4( recWidth * mipOffset.x, recHeight * mipOffset.y, recWidth * mipSize.x, recHeight * mipSize.y ));
 
 m_PropertyBlock.SetFloat("sigma_range", debugSettings.lightingDebugSettings.upscaleSigmaRange);
 m_PropertyBlock.SetFloat("sigma_depth", debugSettings.lightingDebugSettings.upscaleSigmaDepth);
