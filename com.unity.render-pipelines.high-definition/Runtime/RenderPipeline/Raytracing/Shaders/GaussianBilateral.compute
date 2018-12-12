@@ -48,8 +48,8 @@ void GaussianBilateralFilter(uint2 groupThreadId : SV_GroupThreadID, uint2 group
 
     // Based on the smoothness value, we need to estimate the size of the kernel
     // int DenoiseRadius = normalData.perceptualRoughness >= 0.01 ? lerp(20, 25, normalData.perceptualRoughness) : 1;
-    int DenoiseRadius = false ? lerp(5, 5, normalData.perceptualRoughness) : 1;
-    float GaussianSigma = DenoiseRadius / 3.0f;
+    int DenoiseRadius = _DenoiseRadius;
+    float GaussianSigma = _GaussianSigma;
 
 
     float totalWeight = 0;
