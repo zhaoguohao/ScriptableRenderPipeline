@@ -168,7 +168,7 @@ Shader "ColorPyramidPS"
 
             HLSLPROGRAM
                 #pragma vertex VertQuad
-                #pragma fragment FragUpscale3
+                #pragma fragment FragUpscale4
 
                 uniform float4  _SourceSize;
                 uniform float4  _TargetSize;
@@ -303,12 +303,12 @@ weight = 1;
                             float   depth = SampleDepth( sourceUV );
 
                             float   weightRange = exp( k_range * sqRange );
-//                            float   weightDepth = exp( k_depth * Sq( depth - centerDepth ) ); // Normal weight
-float   weightDepth = exp( k_depth * Sq( depth - centerDepth ) ); // Weight when comparing to low-resolution depth
-//float   weightDepth = 1.0 - exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Weight when comparing to low-resolution depth
-//float   weightDepth = step( centerDepth - depth, 0.1 );
-        weightDepth *= step( depth, centerDepth );
-                            float   weight = weightRange * weightDepth;
+//                            float   depthWeights = exp( k_depth * Sq( depth - centerDepth ) ); // Normal weight
+float   depthWeights = exp( k_depth * Sq( depth - centerDepth ) ); // Weight when comparing to low-resolution depth
+//float   depthWeights = 1.0 - exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Weight when comparing to low-resolution depth
+//float   depthWeights = step( centerDepth - depth, 0.1 );
+        depthWeights *= step( depth, centerDepth );
+                            float   weight = weightRange * depthWeights;
 
                             sumColor += weight * color;
                             sumWeights += weight;
@@ -357,12 +357,12 @@ float   weightDepth = exp( k_depth * Sq( depth - centerDepth ) ); // Weight when
                             float   depth = SampleDepth( sourceUV );
 
                             float   weightRange = exp( k_range * sqRange );
-                            float   weightDepth = exp( k_depth * Sq( depth - centerDepth ) ); // Normal weight
-weightDepth = 1;//exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Weight when comparing to low-resolution depth
-//weightDepth *= step( depth, centerDepth );
+                            float   depthWeights = exp( k_depth * Sq( depth - centerDepth ) ); // Normal weight
+depthWeights = 1;//exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Weight when comparing to low-resolution depth
+//depthWeights *= step( depth, centerDepth );
 //weightRange = 1;
-//weightDepth = 1;
-                            float   weight = color.w * weightRange * weightDepth;
+//depthWeights = 1;
+                            float   weight = color.w * weightRange * depthWeights;
 
                             sumColor += weight * float4( color.xyz, 1 );
 
@@ -373,17 +373,26 @@ weightDepth = 1;//exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Wei
                     }
 
                     return sumColor.w > 0.0 ? sumColor / sumColor.w : 0.0;
-               }
+                }
+
+                float   DepthWeight( float fullZ, float lowZ )
+                {
+//                    return exp( -sigma_depth * Sq( fullZ - lowZ ) );   // Works both ways
+//                    return exp( -sigma_depth * Sq( max( 0.0, lowZ - fullZ ) ) );  // Blocks what's behind full-res depth (preferred)
+                    return step( max( 0.0, lowZ - fullZ ), 10.0 );
+                }
 
                 float4 FragUpscale3(Varyings input) : SV_Target
                 {
                     float2  targetPixelPosition = input.positionCS.xy;          // With 0.5 pixel offset
                     float2  sourcePixelPosition = 0.25 * targetPixelPosition;   // Quarter resolution
-                            sourcePixelPosition -= 0.5;                         // Half-pixel offset for bilinear interpolation
+//                            sourcePixelPosition -= 0.5;                         // Half-pixel offset for bilinear interpolation
+                            sourcePixelPosition += 0.5;                         // Half-pixel offset for bilinear interpolation
 
                     float2  sourcePixelIndex = floor( sourcePixelPosition );
                     float2  uv = sourcePixelPosition - sourcePixelIndex;
                     float2  sourceUV = sourcePixelIndex * _SourceSize.zw;
+//return float4( uv, 0, 1 );
 
                     // Sample the 4 corner values for our bilinear interpolation
                     float4  C00 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
@@ -400,6 +409,23 @@ weightDepth = 1;//exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Wei
                             sourceUV.y -= _SourceSize.w;
 
 
+                    // Sample center value
+                    float   Z = SampleDepth( targetPixelPosition * _TargetSize.zw );
+
+
+float4  depthWeights = float4(  DepthWeight( Z, Z00 ),
+                                DepthWeight( Z, Z01 ),
+                                DepthWeight( Z, Z11 ),
+                                DepthWeight( Z, Z10 )
+                            );
+float   sumWeights = dot( depthWeights, 0.25 );
+//C00.w *= depthWeights.x;
+//C01.w *= depthWeights.y;
+//C11.w *= depthWeights.z;
+//C10.w *= depthWeights.w;
+                    
+
+
                     #if 1
                         // Pre-multiply by alpha for correct blending
                         C00.xyz *= C00.w;
@@ -408,10 +434,19 @@ weightDepth = 1;//exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Wei
                         C10.xyz *= C10.w;
                     #endif
 
+//// Replace invalid colors with default color
+//float4  defaultColor = float4( 1, 0, 0, 1 );//C00;
+//C01 = lerp( defaultColor, C01, depthWeights.y );
+//C11 = lerp( defaultColor, C11, depthWeights.z );
+//C10 = lerp( defaultColor, C10, depthWeights.w );
 
-                    // Sample center value
-                    float   Z = SampleDepth( targetPixelPosition * _TargetSize.zw );
-
+//                    #if 0
+//                        // Pre-multiply by depth weight
+//                        C00.xyz *= depthWeights.x;
+//                        C01.xyz *= depthWeights.y;
+//                        C11.xyz *= depthWeights.z;
+//                        C10.xyz *= depthWeights.w;
+//                    #endif
 
                     // Perform custom bilinear interpolation
 //                    float4  C = 0.25 * (C00 + C01 + C10 + C11);
@@ -419,7 +454,217 @@ weightDepth = 1;//exp( k_depth * Sq( max( 0.0, centerDepth - depth ) ) ); // Wei
                     C = lerp( lerp( C00, C10, uv.x ), lerp( C01, C11, uv.x ), uv.y );
 //                    C = float4( uv, 0, 1 );
 
-                    return C.w > 0.0 ? C / C.w : 0.0;
+//                    return sumWeights > 0.0 ? float4( C.xyz / sumWeights, C.w ) : C;
+                    return C;
+                    return C.w > 0.0 ? float4( C.xyz / C.w, 0 ) : 0.0;
+                }
+
+                // Version with edge cases
+                float4 FragUpscale4(Varyings input) : SV_Target
+                {
+                    float2  targetPixelPosition = input.positionCS.xy;          // With 0.5 pixel offset
+                    float2  sourcePixelPosition = 0.25 * targetPixelPosition;   // Quarter resolution
+                            sourcePixelPosition -= 0.5;                         // Half-pixel offset for bilinear interpolation
+//                            sourcePixelPosition += 0.5;                         // Half-pixel offset for bilinear interpolation
+
+                    float2  sourcePixelIndex = floor( sourcePixelPosition );
+                    float2  uv = sourcePixelPosition - sourcePixelIndex;
+                    float2  sourceUV = sourcePixelIndex * _SourceSize.zw;
+//return float4( uv, 0, 1 );
+//return float4( sourceUV, 0, 1 );
+
+                    // Sample the 9 values for our bilinear interpolation
+//sourceUV += 0.5 * _SourceSize.zw;
+//                    float4  C00 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+//                    float   Z00 = SampleDepthLowResMaxPoint( sourceUV );
+                    float4  C00 = _BlitTexture[sourcePixelPosition];
+                    float   Z00 = LinearDepth( _BlitTextureDepthLowResMax[sourcePixelPosition].x );
+                            sourceUV.x += _SourceSize.z;
+                            sourcePixelPosition.x++;
+//                    float4  C10 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+//                    float   Z10 = SampleDepthLowResMaxPoint( sourceUV );
+                    float4  C10 = _BlitTexture[sourcePixelPosition];
+                    float   Z10 = LinearDepth( _BlitTextureDepthLowResMax[sourcePixelPosition].x );
+                            sourceUV.y += _SourceSize.w;
+                            sourcePixelPosition.y++;
+//                    float4  C11 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+//                    float   Z11 = SampleDepthLowResMaxPoint( sourceUV );
+                    float4  C11 = _BlitTexture[sourcePixelPosition];
+                    float   Z11 = LinearDepth( _BlitTextureDepthLowResMax[sourcePixelPosition].x );
+                            sourceUV.x -= _SourceSize.z;
+                            sourcePixelPosition.x--;
+//                    float4  C01 = SAMPLE_TEXTURE2D_LOD(_BlitTexture, sampler_PointClamp, sourceUV, 0);
+//                    float   Z01 = SampleDepthLowResMaxPoint( sourceUV );
+                    float4  C01 = _BlitTexture[sourcePixelPosition];
+                    float   Z01 = LinearDepth( _BlitTextureDepthLowResMax[sourcePixelPosition].x );
+
+                            sourceUV.y -= _SourceSize.w;
+                            sourcePixelPosition.y--;
+
+
+                    // Sample depth values
+                    float   Zc = SampleDepth( targetPixelPosition * _TargetSize.zw );
+
+                    float4  depthWeights = float4(  DepthWeight( Zc, Z00 ),
+                                                    DepthWeight( Zc, Z01 ),
+                                                    DepthWeight( Zc, Z11 ),
+                                                    DepthWeight( Zc, Z10 )
+                                                );
+
+                    #if 1
+                        // Pre-multiply by alpha for correct blending
+                        C00.xyz *= C00.w;
+                        C01.xyz *= C01.w;
+                        C11.xyz *= C11.w;
+                        C10.xyz *= C10.w;
+                    #endif
+
+#if 1
+                    float4  sC00 = C00;
+                    float4  sC01 = C01;
+                    float4  sC11 = C11;
+                    float4  sC10 = C10;
+                    float   sZ00 = C00.w * Z00;
+                    float   sZ01 = C01.w * Z01;
+                    float   sZ11 = C11.w * Z11;
+                    float   sZ10 = C10.w * Z10;
+
+                    // Blend colors / depths as either fully themselves, or the sum of their valid neighbors
+                    const float DIAGONAL_WEIGHT = 0;
+
+                    C00 = lerp( sC01 + sC10 + DIAGONAL_WEIGHT * sC11, sC00, sC00.w );
+                    C01 = lerp( sC00 + DIAGONAL_WEIGHT * sC10 + sC11, sC01, sC01.w );
+                    C11 = lerp( DIAGONAL_WEIGHT * sC00 + sC01 + sC10, sC11, sC11.w );
+                    C10 = lerp( sC00 + DIAGONAL_WEIGHT * sC01 + sC11, sC10, sC10.w );
+                    Z00 = lerp( sZ01 + sZ10 + DIAGONAL_WEIGHT * sZ11, sZ00, sC00.w );
+                    Z01 = lerp( sZ00 + DIAGONAL_WEIGHT * sZ10 + sZ11, sZ01, sC01.w );
+                    Z11 = lerp( DIAGONAL_WEIGHT * sZ00 + sZ01 + sZ10, sZ11, sC11.w );
+                    Z10 = lerp( sZ00 + DIAGONAL_WEIGHT * sZ01 + sZ11, sZ10, sC10.w );
+
+                    // Normalize by the amount of summed pixels
+                    float   f = C00.w > 0.0 ? 1.0 / C00.w : 1.0;
+                    Z00 *= f;
+                    C00 *= f;
+
+                    f = C01.w > 0.0 ? 1.0 / C01.w : 1.0;
+                    Z01 *= f;
+                    C01 *= f;
+
+                    f = C11.w > 0.0 ? 1.0 / C11.w : 1.0;
+                    Z11 *= f;
+                    C11 *= f;
+
+                    f = C10.w > 0.0 ? 1.0 / C10.w : 1.0;
+                    Z10 *= f;
+                    C10 *= f;
+
+#else
+                    // Handle cases
+                    const float ALPHA_TEST = 0.001;
+                    uint    present = (C00.w > ALPHA_TEST ? 1 : 0)
+                                    | (C10.w > ALPHA_TEST ? 2 : 0)
+                                    | (C11.w > ALPHA_TEST ? 4 : 0)
+                                    | (C01.w > ALPHA_TEST ? 8 : 0);
+
+#define ALL(a) (C00 = C01 = C10 = C11 = a)
+
+//return float4( present.xxx / 16.0, 1 );
+
+                    switch ( present )
+                    {
+                        case 0: // No color
+                            break;
+                        case 1: // Top-left only
+                            C10 = C11 = C01 = C00;
+                                Z10 = Z11 = Z01 = Z00;
+                            break;
+                        case 2: // Top-right only
+                            C00 = C11 = C01 = C10;
+                                Z00 = Z11 = Z01 = Z10;
+                            break;
+                        case 3: // Top only
+                            C01 = C00;
+                            C11 = C10;
+                                Z01 = Z00;
+                                Z11 = Z10;
+                            break;
+                        case 4: // Bottom-right only
+                            C00 = C10 = C01 = C11;
+                                Z00 = Z10 = Z01 = Z11;
+//ALL(float4(1,0,1,1));
+                            break;
+                        case 5: // Top-left and Bottom-right only
+                            C01 = C10 = 0.5 * (C00 + C11);
+                                Z01 = Z10 = 0.5 * (Z00 + Z11);
+                            break;
+                        case 6: // Right only
+                            C00 = C10;
+                            C01 = C11;
+                                Z00 = Z10;
+                                Z01 = Z11;
+                            break;
+                        case 7: // Complement bottom-left
+                            C01 = 0.3333 * (C00 + C10 + C11);
+                                Z01 = 0.3333 * (Z00 + Z10 + Z11);
+                            break;
+                        case 8: // Bottom-left only
+                            C00 = C10 = C11 = C01;
+                                Z00 = Z10 = Z11 = Z01;
+//ALL(float4(1,0,1,1));
+                            break;
+                        case 9: // Left only
+                            C10 = C00;
+                            C11 = C01;
+                                Z10 = Z00;
+                                Z11 = Z01;
+                            break;
+                        case 10: // Top-right and Bottom-left only
+                            C00 = C11 = 0.5 * (C10 + C01);
+                                Z00 = Z11 = 0.5 * (Z10 + Z01);
+                            break;
+                        case 11: // Complement bottom-right
+                            C11 = 0.3333 * (C00 + C10 + C01);
+                                Z11 = 0.3333 * (Z00 + Z10 + Z01);
+                            break;
+                        case 12: // Bottom only
+                            C00 = C01;
+                            C10 = C11;
+                                Z00 = Z01;
+                                Z10 = Z11;
+//ALL(float4(1,0,1,1));
+                            break;
+                        case 13: // Complement top-right
+                            C10 = 0.3333 * (C00 + C11 + C01);
+                                Z10 = 0.3333 * (Z00 + Z11 + Z01);
+                            break;
+                        case 14: // Complement top-left
+                            C00 = 0.3333 * (C10 + C11 + C01);
+                                Z00 = 0.3333 * (Z10 + Z11 + Z01);
+                            break;
+                        case 15:    // All colors
+//ALL(float4(1,0,1,1));
+//return float4( 0, 1, 1, 1 );
+                            break;
+                    }
+#endif
+
+
+                    // Perform custom bilinear interpolation
+//                    float4  C = 0.25 * (C00 + C01 + C10 + C11);
+                    float4  C = lerp( lerp( C00, C10, uv.x ), lerp( C01, C11, uv.x ), uv.y );
+                    float   Z = lerp( lerp( Z00, Z10, uv.x ), lerp( Z01, Z11, uv.x ), uv.y );
+
+//return float4( DepthWeight( Zc, Z ).xxx, 1 );
+//return float4( 0.1 * Z.xxx, 1 );
+//return float4( 0.1 * Zc.xxx, 1 );
+//return float4( 1.0 * (Zc - Z).xxx, 1 );
+
+                    C *= DepthWeight( Zc, Z );
+//                    C *= step( Z, Zc );
+
+//                    return sumWeights > 0.0 ? float4( C.xyz / sumWeights, C.w ) : C;
+                    return C;
+                    return C.w > 0.0 ? float4( C.xyz / C.w, 0 ) : 0.0;
                }
             ENDHLSL
         }
