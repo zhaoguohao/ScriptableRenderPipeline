@@ -131,6 +131,8 @@ CBUFFER_END
     // Currently the Unity engine doesn't automatically update stereo indices, offsets, and matrices for compute shaders.
     // Instead, we manually update _ComputeEyeIndex in SRP code. 
     #define unity_StereoEyeIndex _ComputeEyeIndex
+#elif defined(FORCE_MULTIPASS)
+    #define unity_StereoEyeIndex _ForceEyeIndex
 #else
     CBUFFER_START(UnityStereoEyeIndex)
         int unity_StereoEyeIndex;
@@ -324,6 +326,8 @@ float3  _PrevCamPosRWSStereo[2];
 // Currently the Unity engine doesn't automatically update stereo indices, offsets, and matrices for compute shaders.
 // Instead, we manually update _ComputeEyeIndex in SRP code. 
 float _ComputeEyeIndex;
+// To force multipass on screenspace effects, we override unity_StereoEyeIndex with _ForceEyeIndex when keyword FORCE_MULTIPASS is set
+int _ForceEyeIndex;
 #endif
 CBUFFER_END
 

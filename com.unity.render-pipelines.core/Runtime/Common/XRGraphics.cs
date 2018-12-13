@@ -160,5 +160,18 @@ namespace UnityEngine.Rendering
             }
         }
 
+        public static bool usingTexArray()
+        {
+            if (!enabled)
+                return false;
+            return (stereoRenderingMode == StereoRenderingMode.SinglePassInstanced) || (stereoRenderingMode == StereoRenderingMode.SinglePassMultiView);
+        }
+
+        public static int numPass()
+        {
+            if (!usingTexArray()) // Fixme add multipass
+                return 1;
+            return eyeTextureDesc.volumeDepth;
+        }
     }
 }

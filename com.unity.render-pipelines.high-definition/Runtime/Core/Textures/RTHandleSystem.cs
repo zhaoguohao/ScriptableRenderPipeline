@@ -251,7 +251,9 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            bool requireStereoSupport = true,
+            bool useInstancing = false
             )
         {
             bool enableMSAA = msaaSamples != MSAASamples.None;
@@ -260,26 +262,65 @@ namespace UnityEngine.Experimental.Rendering
                 Debug.LogWarning("RTHandle allocated without MSAA but with bindMS set to true, forcing bindMS to false.");
                 bindTextureMS = false;
             }
-
-            var rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+            RenderTexture rt;
+            if (XRGraphics.enabled && requireStereoSupport) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
-                hideFlags = HideFlags.HideAndDontSave,
-                volumeDepth = slices,
-                filterMode = filterMode,
-                wrapMode = wrapMode,
-                dimension = dimension,
-                enableRandomWrite = enableRandomWrite,
-                useMipMap = useMipMap,
-                autoGenerateMips = autoGenerateMips,
-                anisoLevel = anisoLevel,
-                mipMapBias = mipMapBias,
-                antiAliasing = (int)msaaSamples,
-                bindTextureMS = bindTextureMS,
-                useDynamicScale = useDynamicScale,
-                vrUsage = vrUsage,
-                memorylessMode = memoryless,
-                name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples)
-            };
+                RenderTextureDescriptor overrideDesc = XRGraphics.eyeTextureDesc;
+                // VRDevice's eye texture has authority over the following:
+                //  - dimension
+                //  - volumeDepth
+                //  - vrUsage
+                overrideDesc.width = width;
+                overrideDesc.height = height;
+                overrideDesc.depthBufferBits = (int)depthBufferBits;
+                overrideDesc.colorFormat = colorFormat;
+                overrideDesc.sRGB = sRGB;
+                overrideDesc.enableRandomWrite = enableRandomWrite;
+                overrideDesc.useMipMap = useMipMap;
+                overrideDesc.autoGenerateMips = autoGenerateMips;
+                overrideDesc.msaaSamples = (int)msaaSamples;
+                overrideDesc.bindMS = bindTextureMS;
+                overrideDesc.memoryless = memoryless;
+
+                if (XRGraphics.usingTexArray() && !useInstancing) // VR TODO add multipass to this conditional if it ever gets supported
+                { // If SPI is enabled but the texture isn't going to be used as a target for expensive 
+                  // renders that traverse the scene graph, allocate as two separate textures instead of
+                  // a texture array.
+                    overrideDesc.dimension = TextureDimension.Tex2D;
+                    overrideDesc.volumeDepth = 1;
+                    overrideDesc.vrUsage = VRTextureUsage.OneEye;
+                }
+
+                rt = new RenderTexture(overrideDesc);
+                rt.name = CoreUtils.GetRenderTargetAutoName(width, height, overrideDesc.volumeDepth, colorFormat, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples);
+                rt.mipMapBias = mipMapBias;
+                rt.filterMode = filterMode;
+                rt.wrapMode = wrapMode;
+                rt.anisoLevel = anisoLevel;
+                rt.useDynamicScale = useDynamicScale;
+            }
+            else
+            {
+                rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+                {
+                    hideFlags = HideFlags.HideAndDontSave,
+                    volumeDepth = slices,
+                    filterMode = filterMode,
+                    wrapMode = wrapMode,
+                    dimension = dimension,
+                    enableRandomWrite = enableRandomWrite,
+                    useMipMap = useMipMap,
+                    autoGenerateMips = autoGenerateMips,
+                    anisoLevel = anisoLevel,
+                    mipMapBias = mipMapBias,
+                    antiAliasing = (int)msaaSamples,
+                    bindTextureMS = bindTextureMS,
+                    useDynamicScale = useDynamicScale,
+                    vrUsage = vrUsage,
+                    memorylessMode = memoryless,
+                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples)
+                };
+            }
             rt.Create();
 
             RTCategory category = enableMSAA ? RTCategory.MSAA : RTCategory.Regular;
@@ -318,7 +359,9 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            bool requireStereoSupport = true,
+            bool useInstancing = false
             )
         {
             // If an MSAA target is requested, make sure the support was on
@@ -347,7 +390,9 @@ namespace UnityEngine.Experimental.Rendering
                     useDynamicScale,
                     vrUsage,
                     memoryless,
-                    name
+                    name,
+                    requireStereoSupport,
+                    useInstancing
                     );
 
             rth.referenceSize = new Vector2Int(width, height);
@@ -385,7 +430,9 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            bool requireStereoSupport = true,
+            bool useInstancing = false
             )
         {
             var scaleFactor = scaleFunc(new Vector2Int(GetMaxWidth(), GetMaxHeight()));
@@ -411,7 +458,9 @@ namespace UnityEngine.Experimental.Rendering
                     useDynamicScale,
                     vrUsage,
                     memoryless,
-                    name
+                    name,
+                    requireStereoSupport,
+                    useInstancing
                     );
 
             rth.referenceSize = new Vector2Int(width, height);
@@ -441,7 +490,9 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale,
             VRTextureUsage vrUsage,
             RenderTextureMemoryless memoryless,
-            string name
+            string name,
+            bool requireStereoSupport = true,
+            bool useInstancing = false
             )
         {
             // Here user made a mistake in setting up msaa/bindMS, hence the warning
@@ -468,26 +519,65 @@ namespace UnityEngine.Experimental.Rendering
 
             int msaaSamples = allocForMSAA ? (int)m_ScaledRTCurrentMSAASamples : 1;
             RTCategory category = allocForMSAA ? RTCategory.MSAA : RTCategory.Regular;
-
-            var rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+            RenderTexture rt;
+            if (XRGraphics.enabled && requireStereoSupport) // Only use eyeTextureDesc texture if texture must be rendered in stereo
             {
-                hideFlags = HideFlags.HideAndDontSave,
-                volumeDepth = slices,
-                filterMode = filterMode,
-                wrapMode = wrapMode,
-                dimension = dimension,
-                enableRandomWrite = UAV,
-                useMipMap = useMipMap,
-                autoGenerateMips = autoGenerateMips,
-                anisoLevel = anisoLevel,
-                mipMapBias = mipMapBias,
-                antiAliasing = msaaSamples,
-                bindTextureMS = bindTextureMS,
-                useDynamicScale = useDynamicScale,
-                vrUsage = vrUsage,
-                memorylessMode = memoryless,
-                name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: allocForMSAA, msaaSamples: m_ScaledRTCurrentMSAASamples)
-            };
+                RenderTextureDescriptor overrideDesc = XRGraphics.eyeTextureDesc;
+                // VRDevice's eye texture has authority over the following:
+                //  - dimension
+                //  - volumeDepth
+                //  - vrUsage
+                overrideDesc.width = width;
+                overrideDesc.height = height;
+                overrideDesc.depthBufferBits = (int)depthBufferBits;
+                overrideDesc.colorFormat = colorFormat;
+                overrideDesc.sRGB = sRGB;
+                overrideDesc.enableRandomWrite = UAV;
+                overrideDesc.useMipMap = useMipMap;
+                overrideDesc.autoGenerateMips = autoGenerateMips;
+                overrideDesc.msaaSamples = msaaSamples;
+                overrideDesc.bindMS = bindTextureMS;
+                overrideDesc.memoryless = memoryless;
+
+                if (XRGraphics.usingTexArray() && !useInstancing) // VR TODO add multipass to this conditional if it ever gets supported
+                { // If SPI is enabled but the texture isn't going to be used as a target for expensive 
+                  // renders that traverse the scene graph, allocate as two separate textures instead of
+                  // a texture array.
+                    overrideDesc.dimension = TextureDimension.Tex2D;
+                    overrideDesc.volumeDepth = 1;
+                    overrideDesc.vrUsage = VRTextureUsage.OneEye;
+                }
+
+                rt = new RenderTexture(overrideDesc);
+                rt.name = CoreUtils.GetRenderTargetAutoName(width, height, overrideDesc.volumeDepth, colorFormat, name, mips: useMipMap, enableMSAA: allocForMSAA, msaaSamples: m_ScaledRTCurrentMSAASamples);
+                rt.mipMapBias = mipMapBias;
+                rt.filterMode = filterMode;
+                rt.wrapMode = wrapMode;
+                rt.anisoLevel = anisoLevel;
+                rt.useDynamicScale = useDynamicScale;
+            }
+            else
+            {
+                rt = new RenderTexture(width, height, (int)depthBufferBits, colorFormat, sRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear)
+                {
+                    hideFlags = HideFlags.HideAndDontSave,
+                    volumeDepth = slices,
+                    filterMode = filterMode,
+                    wrapMode = wrapMode,
+                    dimension = dimension,
+                    enableRandomWrite = UAV,
+                    useMipMap = useMipMap,
+                    autoGenerateMips = autoGenerateMips,
+                    anisoLevel = anisoLevel,
+                    mipMapBias = mipMapBias,
+                    antiAliasing = msaaSamples,
+                    bindTextureMS = bindTextureMS,
+                    useDynamicScale = useDynamicScale,
+                    vrUsage = vrUsage,
+                    memorylessMode = memoryless,
+                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, colorFormat, name, mips: useMipMap, enableMSAA: allocForMSAA, msaaSamples: m_ScaledRTCurrentMSAASamples)
+                };
+            }
             rt.Create();
 
             var rth = new RTHandle(this);

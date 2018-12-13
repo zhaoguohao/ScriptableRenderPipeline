@@ -30,7 +30,9 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            bool requireStereoSupport = true,
+            bool useInstancing = false
             )
         {
             return s_DefaultInstance.Alloc(
@@ -53,7 +55,9 @@ namespace UnityEngine.Experimental.Rendering
                 useDynamicScale,
                 vrUsage,
                 memoryless,
-                name
+                name,
+                requireStereoSupport,
+                useInstancing
                 );
         }
 
@@ -76,7 +80,9 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            bool requireStereoSupport = true,
+            bool useInstancing = false
             )
         {
             return s_DefaultInstance.Alloc(
@@ -98,7 +104,9 @@ namespace UnityEngine.Experimental.Rendering
                 useDynamicScale,
                 vrUsage,
                 memoryless,
-                name
+                name,
+                requireStereoSupport,
+                useInstancing
                 );
         }
 
@@ -121,7 +129,9 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             VRTextureUsage vrUsage = VRTextureUsage.None,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            bool requireStereoSupport = true,
+            bool useInstancing = false
             )
         {
             return s_DefaultInstance.Alloc(
@@ -143,7 +153,9 @@ namespace UnityEngine.Experimental.Rendering
                 useDynamicScale,
                 vrUsage,
                 memoryless,
-                name
+                name,
+                requireStereoSupport,
+                useInstancing
                 );
         }
 
