@@ -9,8 +9,11 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         // #pragma enable_d3d11_debug_symbols
 
         float4x4 _PixelCoordToViewDirWS; // Actually just 3x3, but Unity can only set 4x4
+        float _ForceEyeIndex;
 
         Texture2DMS<float> _DepthTextureMS;
+
+        Texture2DMSArray<float> _InstancedDepthTextureMS;
         
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
@@ -36,9 +39,12 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
 
         inline float4 AtmosphericScatteringCompute(Varyings input, float3 V, float depth)
         {
+#if defined (UNITY_STEREO_INSTANCING_ENABLED)
+            unity_StereoEyeIndex = _ForceEyeIndex;
+#endif
             PositionInputs posInput = GetPositionInput_Stereo(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
 
-#if defined(UNITY_SINGLE_PASS_STEREO)
+#if defined(USING_STEREO_MATRICES)
             // XRTODO: fixup and consolidate stereo code relying on _PixelCoordToViewDirWS
             V = -normalize(posInput.positionWS);
 #endif

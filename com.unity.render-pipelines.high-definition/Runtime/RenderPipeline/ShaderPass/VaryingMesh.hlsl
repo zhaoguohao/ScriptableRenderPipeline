@@ -51,9 +51,7 @@ struct VaryingsMeshToPS
 #ifdef VARYINGS_NEED_COLOR
     float4 color;
 #endif
-
-UNITY_VERTEX_INPUT_INSTANCE_ID
-
+    
 };
 
 struct PackedVaryingsMeshToPS
@@ -85,9 +83,7 @@ struct PackedVaryingsMeshToPS
 #ifdef VARYINGS_NEED_COLOR
     float4 interpolators5 : TEXCOORD5;
 #endif
-
-    UNITY_VERTEX_INPUT_INSTANCE_ID // Must be declare before FRONT_FACE_SEMANTIC
-
+    
 #if defined(VARYINGS_NEED_CULLFACE) && SHADER_STAGE_FRAGMENT
     FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
 #endif
@@ -97,9 +93,7 @@ struct PackedVaryingsMeshToPS
 PackedVaryingsMeshToPS PackVaryingsMeshToPS(VaryingsMeshToPS input)
 {
     PackedVaryingsMeshToPS output;
-
-    UNITY_TRANSFER_INSTANCE_ID(input, output);
-
+    
     output.positionCS = input.positionCS;
 
 #ifdef VARYINGS_NEED_POSITION_WS
@@ -135,9 +129,7 @@ FragInputs UnpackVaryingsMeshToFragInputs(PackedVaryingsMeshToPS input)
 {
     FragInputs output;
     ZERO_INITIALIZE(FragInputs, output);
-
-    UNITY_SETUP_INSTANCE_ID(input);
-
+    
     // Init to some default value to make the computer quiet (else it output "divide by zero" warning even if value is not used).
     // TODO: this is a really poor workaround, but the variable is used in a bunch of places
     // to compute normals which are then passed on elsewhere to compute other values...
@@ -226,8 +218,6 @@ struct VaryingsMeshToDS
 #ifdef VARYINGS_DS_NEED_COLOR
     float4 color;
 #endif
-
-    UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 struct PackedVaryingsMeshToDS
@@ -255,8 +245,6 @@ struct PackedVaryingsMeshToDS
 #ifdef VARYINGS_DS_NEED_COLOR
     float4 interpolators5 : TEXCOORD2;
 #endif
-
-     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 // Functions to pack data to use as few interpolator as possible, the ShaderGraph should generate these functions

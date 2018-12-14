@@ -4,27 +4,37 @@
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/VertMesh.hlsl"
 
-PackedVaryingsType Vert(AttributesMesh inputMesh)
+InstancedPackedVaryingsType Vert(AttributesMesh inputMesh)
 {
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
-    return PackVaryingsType(varyingsType);
+    InstancedPackedVaryingsType outVaryings;
+    outVaryings.packedVaryingsType = PackVaryingsType(varyingsType);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, outVaryings);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(outVaryings);
+    return outVaryings;
 }
 
 #ifdef TESSELLATION_ON
 
-PackedVaryingsToPS VertTesselation(VaryingsToDS input)
+InstancedPackedVaryingsToPS VertTesselation(VaryingsToDS input)
 {
-    VaryingsToPS output;
-    output.vmesh = VertMeshTesselation(input.vmesh);
-    return PackVaryingsToPS(output);
+    UNITY_SETUP_INSTANCE_ID(inputMesh);
+    VaryingsToPS varyingsToPS;
+    varyingsToPS.vmesh = VertMeshTesselation(input.vmesh);
+    InstancedPackedVaryingsToPS outVaryings;
+    outVaryings.packedVaryingsType = PackVaryingsToPS(varyingsToPS);
+    UNITY_TRANSFER_INSTANCE_ID(inputMesh, outVaryings);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(outVaryings);
+    return outVaryings;
 }
 
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/TessellationShare.hlsl"
 
 #endif // TESSELLATION_ON
 
-void Frag(PackedVaryingsToPS packedInput,
+void Frag(InstancedPackedVaryingsToPS packedInput,
         #ifdef OUTPUT_SPLIT_LIGHTING
             out float4 outColor : SV_Target0,  // outSpecularLighting
             out float4 outDiffuseLighting : SV_Target1,
@@ -37,7 +47,8 @@ void Frag(PackedVaryingsToPS packedInput,
         #endif
           )
 {
-    FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.vmesh);
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
+    FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.packedVaryingsType.vmesh);
 
     uint2 tileIndex = uint2(input.positionSS.xy) / GetTileSize();
 #if defined(UNITY_SINGLE_PASS_STEREO)

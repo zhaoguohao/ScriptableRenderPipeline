@@ -10,6 +10,15 @@
 // As I haven't change the variables name yet, I simply don't define anything, and I put the transform function at the end of the file outside the guard header.
 // This need to be fixed.
 
+// Early defines for UNITY_STEREO_INSTANCING_ENABLED and UNITY_STEREO_MULTIVIEW_ENABLED
+#if defined(STEREO_MULTIVIEW_ON) && (defined(SHADER_API_GLES3) || defined(SHADER_API_GLCORE)) && !(defined(SHADER_API_SWITCH))
+#define UNITY_STEREO_MULTIVIEW_ENABLED
+#endif
+#if (defined(SHADER_API_D3D11) || defined(SHADER_API_PSSL) || defined(SHADER_API_GLCORE) || defined(SHADER_API_GLES3)) && defined(STEREO_INSTANCING_ON)
+#define UNITY_STEREO_INSTANCING_ENABLED
+#endif
+
+
 #if defined(UNITY_SINGLE_PASS_STEREO) || defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
     #define USING_STEREO_MATRICES
 #endif
@@ -125,7 +134,11 @@ CBUFFER_END
     #define unity_StereoEyeIndex UNITY_VIEWID
     UNITY_DECLARE_MULTIVIEW(2);
 #elif defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
-    static uint unity_StereoEyeIndex;
+#if defined(FORCE_MULTIPASS)
+#define unity_StereoEyeIndex _ForceEyeIndex
+#else
+static uint unity_StereoEyeIndex;
+#endif
 #elif defined(UNITY_SINGLE_PASS_STEREO)
 #if SHADER_STAGE_COMPUTE
     // Currently the Unity engine doesn't automatically update stereo indices, offsets, and matrices for compute shaders.

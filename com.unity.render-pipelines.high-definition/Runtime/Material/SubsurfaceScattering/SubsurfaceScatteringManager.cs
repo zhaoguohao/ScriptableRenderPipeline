@@ -8,11 +8,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Currently we only support SSSBuffer with one buffer. If the shader code change, it may require to update the shader manager
         public const int k_MaxSSSBuffer = 1;
 
-        public int sssBufferCount { get { return k_MaxSSSBuffer * XRGraphics.numPass(); } } // Fixme cache this?
+        public int sssBufferCount { get { return k_MaxSSSBuffer; } } 
 
-        RTHandleSystem.RTHandle[] m_ColorMRTs;
-        RTHandleSystem.RTHandle[] m_ColorMSAAMRTs;
-        bool[] m_ReuseGBufferMemory;
+        RTHandleSystem.RTHandle[] m_ColorMRTs = new RTHandleSystem.RTHandle[k_MaxSSSBuffer];
+        RTHandleSystem.RTHandle[] m_ColorMSAAMRTs = new RTHandleSystem.RTHandle[k_MaxSSSBuffer];
+        bool[] m_ReuseGBufferMemory = new bool[k_MaxSSSBuffer];
 
         // Disney SSS Model
         ComputeShader m_SubsurfaceScatteringCS;
@@ -20,7 +20,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int m_SubsurfaceScatteringKernelMSAA;
         Material m_CombineLightingPass;
 
-        RTHandleSystem.RTHandle m_HTile;
+        RTHandleSystem.RTHandle[] m_HTile;
         // End Disney SSS Model
 
         // Need an extra buffer on some platforms
@@ -37,60 +37,59 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void InitSSSBuffers(GBufferManager gbufferManager, RenderPipelineSettings settings)
         {
-            m_ColorMRTs = new RTHandleSystem.RTHandle[sssBufferCount];
-            m_ColorMSAAMRTs = new RTHandleSystem.RTHandle[sssBufferCount];
-            m_ReuseGBufferMemory = new bool[sssBufferCount];
             m_CameraFilteringBuffer = new RTHandleSystem.RTHandle[XRGraphics.numPass()];
             // Reset the msaa flag
             m_MSAASupport = settings.supportMSAA;
+            m_HTile = new RTHandleSystem.RTHandle[XRGraphics.numPass()];
+
+            for (int i = 0; i < k_MaxSSSBuffer; ++i)
+            {
+                if (settings.supportedLitShaderMode == RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly) //forward only
+                {
+                    // In case of full forward we must allocate the render target for forward SSS (or reuse one already existing)
+                    // TODO: Provide a way to reuse a render target
+                    m_ColorMRTs[i] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: true, name: "SSSBuffer", useInstancing: true);
+                    m_ReuseGBufferMemory[i] = false;
+                }
+
+                // We need to allocate the texture if we are in forward or both in case one of the cameras is in enable forward only mode
+                if (m_MSAASupport)
+                {
+                    m_ColorMSAAMRTs[i] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, enableMSAA: true, bindTextureMS: true, sRGB: true, name: "SSSBufferMSAA", useInstancing: true);
+                }
+                if ((settings.supportedLitShaderMode & RenderPipelineSettings.SupportedLitShaderMode.DeferredOnly) != 0) //deferred or both
+                {
+                    Debug.Assert(!XRGraphics.usingTexArray()); // Deferred is unsupported with SPI
+                                                   // In case of deferred, we must be in sync with SubsurfaceScattering.hlsl and lit.hlsl files and setup the correct buffers
+                    m_ColorMRTs[i] = gbufferManager.GetSubsurfaceScatteringBuffer(i); // Note: This buffer must be sRGB (which is the case with Lit.shader)
+                    m_ReuseGBufferMemory[i] = true;
+                }
+            }
+
+            // We use 8x8 tiles in order to match the native GCN HTile as closely as possible.
+
             for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
             {
-                for (int i = 0; i < k_MaxSSSBuffer; ++i)
-                {
-                    int combinedIndex = i + stereoPass * k_MaxSSSBuffer;
-                    if (settings.supportedLitShaderMode == RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly) //forward only
-                    {
-                        // In case of full forward we must allocate the render target for forward SSS (or reuse one already existing)
-                        // TODO: Provide a way to reuse a render target
-                        m_ColorMRTs[combinedIndex] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: true, name: "SSSBuffer");
-                        m_ReuseGBufferMemory[combinedIndex] = false;
-                    }
-
-                    // We need to allocate the texture if we are in forward or both in case one of the cameras is in enable forward only mode
-                    if (m_MSAASupport)
-                    {
-                        m_ColorMSAAMRTs[combinedIndex] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, enableMSAA: true, bindTextureMS: true, sRGB: true, name: "SSSBufferMSAA");
-                    }
-                    if ((settings.supportedLitShaderMode & RenderPipelineSettings.SupportedLitShaderMode.DeferredOnly) != 0) //deferred or both
-                    {
-                        Debug.Assert(stereoPass == 0); // Deferred is unsupported with SPI
-                        // In case of deferred, we must be in sync with SubsurfaceScattering.hlsl and lit.hlsl files and setup the correct buffers
-                        m_ColorMRTs[i] = gbufferManager.GetSubsurfaceScatteringBuffer(i); // Note: This buffer must be sRGB (which is the case with Lit.shader)
-                        m_ReuseGBufferMemory[i] = true;
-                    }
-                }
+                m_HTile[stereoPass] = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "SSSHtile"); // Enable UAV
 
                 if (NeedTemporarySubsurfaceBuffer() || settings.supportMSAA)
                 {
                     // Caution: must be same format as m_CameraSssDiffuseLightingBuffer
                     m_CameraFilteringBuffer[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "SSSCameraFiltering"); // Enable UAV
                 }
-
-                // We use 8x8 tiles in order to match the native GCN HTile as closely as possible.
-                m_HTile = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "SSSHtile"); // Enable UAV
             }
         }
 
-        public RTHandleSystem.RTHandle GetSSSBuffer(int index, int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetSSSBuffer(int index)
         {
-            Debug.Assert(index < sssBufferCount);
-            return m_ColorMRTs[index + stereoPass * k_MaxSSSBuffer];
+            Debug.Assert(index < k_MaxSSSBuffer);
+            return m_ColorMRTs[index];
         }
 
-        public RTHandleSystem.RTHandle GetSSSBufferMSAA(int index, int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetSSSBufferMSAA(int index)
         {
-            Debug.Assert(index < sssBufferCount);
-            return m_ColorMSAAMRTs[index + stereoPass * k_MaxSSSBuffer];
+            Debug.Assert(index < k_MaxSSSBuffer);
+            return m_ColorMSAAMRTs[index];
         }
 
         public void Build(HDRenderPipelineAsset hdAsset)
@@ -113,25 +112,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             CoreUtils.Destroy(m_CombineLightingPass);
             CoreUtils.Destroy(m_CopyStencilForSplitLighting);
-            for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+            for (int i = 0; i < k_MaxSSSBuffer; ++i)
             {
-                for (int i = 0; i < k_MaxSSSBuffer; ++i)
+                if (!m_ReuseGBufferMemory[i])
                 {
-                    int combinedIndex = i + stereoPass * k_MaxSSSBuffer;
-                    if (!m_ReuseGBufferMemory[combinedIndex])
-                    {
-                        RTHandles.Release(m_ColorMRTs[combinedIndex]);
-                    }
-
-                    if (m_MSAASupport)
-                    {
-                        RTHandles.Release(m_ColorMSAAMRTs[combinedIndex]);
-                    }
+                    RTHandles.Release(m_ColorMRTs[i]);
                 }
-                RTHandles.Release(m_CameraFilteringBuffer[stereoPass]);
+
+                if (m_MSAASupport)
+                {
+                    RTHandles.Release(m_ColorMSAAMRTs[i]);
+                }
             }
 
-            RTHandles.Release(m_HTile);
+            for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+            {
+                RTHandles.Release(m_CameraFilteringBuffer[stereoPass]);
+                RTHandles.Release(m_HTile[stereoPass]);
+            }
+
         }
 
         public void PushGlobalParams(HDCamera hdCamera, CommandBuffer cmd, DiffusionProfileSettings sssParameters)
@@ -195,10 +194,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Therefore, it's computed in a pixel shader, and optimized to only contain the SSS bit.
 
                     // Clear the HTile texture. TODO: move this to ClearBuffers(). Clear operations must be batched!
-                    HDUtils.SetRenderTarget(cmd, hdCamera, m_HTile, ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                    HDUtils.SetRenderTarget(cmd, hdCamera, m_HTile[stereoPass], ClearFlag.Color, CoreUtils.clearColorAllBlack);
 
                     HDUtils.SetRenderTarget(cmd, hdCamera, depthStencilBufferRT); // No need for color buffer here
-                    cmd.SetRandomWriteTarget(1, m_HTile); // This need to be done AFTER SetRenderTarget
+                    cmd.SetRandomWriteTarget(1, m_HTile[stereoPass]); // This need to be done AFTER SetRenderTarget
                     // Generate HTile for the split lighting stencil usage. Don't write into stencil texture (shaderPassId = 2)
                     // Use ShaderPassID 1 => "Pass 2 - Export HTILE for stencilRef to output"
                     CoreUtils.DrawFullScreen(cmd, m_CopyStencilForSplitLighting, null, 2);
@@ -220,7 +219,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int sssKernel = hdCamera.frameSettings.enableMSAA ? m_SubsurfaceScatteringKernelMSAA : m_SubsurfaceScatteringKernel;
 
                 cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._DepthTexture,       depthTextureRT);
-                cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._SSSHTile,           m_HTile);
+                cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._SSSHTile,           m_HTile[stereoPass]);
                 cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._IrradianceSource,   diffuseBufferRT);
 
                 for (int i = 0; i < sssBufferCount; ++i)
