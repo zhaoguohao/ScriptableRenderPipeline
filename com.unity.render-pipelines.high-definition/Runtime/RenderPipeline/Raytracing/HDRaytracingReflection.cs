@@ -136,14 +136,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             float pixelSpreadAngle = Mathf.Atan(2.0f * Mathf.Tan(hdCamera.camera.fieldOfView * Mathf.PI / 360.0f) / Mathf.Min(hdCamera.actualWidth, hdCamera.actualHeight));
             cmd.SetRaytracingFloatParam(reflectionShader, _PixelSpreadAngle, pixelSpreadAngle);
 
-            // LightLoop data
-            cmd.SetGlobalBuffer(_RaytracingLightCluster, m_LightCluster.GetCluster());
-            cmd.SetGlobalBuffer(_LightDatasRT, m_LightCluster.GetLightDatas());
-            cmd.SetGlobalVector(_MinClusterPos, m_LightCluster.GetMinClusterPos());
-            cmd.SetGlobalVector(_MaxClusterPos, m_LightCluster.GetMaxClusterPos());
-            cmd.SetGlobalInt(_LightPerCellCount, rtEnvironement.maxNumLightsPercell);
-            cmd.SetGlobalInt(_PunctualLightCountRT, m_LightCluster.GetPunctualLightCount());
-            cmd.SetGlobalInt(_AreaLightCountRT, m_LightCluster.GetAreaLightCount());
+            if(lightData.Count != 0)
+            {
+                // LightLoop data
+                cmd.SetGlobalBuffer(_RaytracingLightCluster, m_LightCluster.GetCluster());
+                cmd.SetGlobalBuffer(_LightDatasRT, m_LightCluster.GetLightDatas());
+                cmd.SetGlobalVector(_MinClusterPos, m_LightCluster.GetMinClusterPos());
+                cmd.SetGlobalVector(_MaxClusterPos, m_LightCluster.GetMaxClusterPos());
+                cmd.SetGlobalInt(_LightPerCellCount, rtEnvironement.maxNumLightsPercell);
+                cmd.SetGlobalInt(_PunctualLightCountRT, m_LightCluster.GetPunctualLightCount());
+                cmd.SetGlobalInt(_AreaLightCountRT, m_LightCluster.GetAreaLightCount());
+            }
 
             // Set the data for the ray miss
             cmd.SetRaytracingTextureParam(reflectionShader, m_MissShaderName, HDShaderIDs._SkyTexture, m_SkyManager.skyReflection);

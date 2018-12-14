@@ -1256,7 +1256,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if (!hdCamera.frameSettings.ContactShadowsRunAsync())
                         {
                             #if ENABLE_RAYTRACING
-                            using (new ProfilingSample(cmd, "Raytraced Shadows", CustomSamplerId.ScreenSpaceShadows.GetSampler()))
+                            using (new ProfilingSample(cmd, "Raytraced Shadows", CustomSamplerId.Raytracing.GetSampler()))
                             {
                                 // Let's render the screen space area light shadows
                                 bool shadowsRendered = m_RaytracingShadows.RenderAreaShadows(hdCamera, cmd, renderContext);
@@ -1962,8 +1962,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void RenderSSAO(CommandBuffer cmd, HDCamera hdCamera, ScriptableRenderContext renderContext, PostProcessLayer postProcessLayer)
         {
-            SSAODispatch(cmd, hdCamera, renderContext, postProcessLayer);
-            SSAOPostDispatchWork(cmd, hdCamera, renderContext, postProcessLayer);
+            if (!hdCamera.frameSettings.enableSSAO) return;
+
+#if ENABLE_RAYTRACING
+            HDRaytracingEnvironment rtEnvironement = m_RayTracingManager.CurrentEnvironment();
+            if (m_Asset.renderPipelineSettings.supportRayTracing && rtEnvironement != null && rtEnvironement.raytracedAO)
+            {
+                m_RaytracingAmbientOcclusion.RenderAO(hdCamera, cmd, m_AmbientOcclusionBuffer, renderContext);
+                cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionBuffer);
+                PushFullScreenDebugTexture(hdCamera, cmd, m_AmbientOcclusionBuffer, FullScreenDebugMode.SSAO);
+            }
+            else
+#endif
+            {
+                SSAODispatch(cmd, hdCamera, renderContext, postProcessLayer);
+                SSAOPostDispatchWork(cmd, hdCamera, renderContext, postProcessLayer);
+            }
         }
 
         void SSAODispatch(CommandBuffer cmd, HDCamera hdCamera, ScriptableRenderContext renderContext, PostProcessLayer postProcessLayer)
@@ -1971,38 +1985,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var camera = hdCamera.camera;
 
             // Apply SSAO from PostProcessLayer
-            if (hdCamera.frameSettings.enableSSAO)
+            if (postProcessLayer != null && postProcessLayer.enabled)
             {
-#if ENABLE_RAYTRACING
-                HDRaytracingEnvironment rtEnvironement = m_RayTracingManager.CurrentEnvironment();
+                var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
 
-                if (m_Asset.renderPipelineSettings.supportRayTracing && rtEnvironement != null && rtEnvironement.raytracedAO)
+                if (settings.IsEnabledAndSupported(null))
                 {
-                    m_RaytracingAmbientOcclusion.RenderAO(hdCamera, cmd, m_AmbientOcclusionBuffer, renderContext);
-                }
-                else if (postProcessLayer != null && postProcessLayer.enabled)
-#else
-
-                if (postProcessLayer != null && postProcessLayer.enabled)
-#endif
-                {
-                    var settings = postProcessLayer.GetSettings<AmbientOcclusion>();
-
-                    if (settings.IsEnabledAndSupported(null))
+                    using (new ProfilingSample(cmd, "Render SSAO", CustomSamplerId.RenderSSAO.GetSampler()))
                     {
-                        using (new ProfilingSample(cmd, "Render SSAO", CustomSamplerId.RenderSSAO.GetSampler()))
-                        {
-                            // In case we are in an MSAA frame, we need to feed both min and max depth of the pixel so that we compute ao values for both depths and resolve the AO afterwards
-                            var aoTarget = hdCamera.frameSettings.enableMSAA ? m_MultiAmbientOcclusionBuffer : m_AmbientOcclusionBuffer;
-                            var depthTexture = hdCamera.frameSettings.enableMSAA ? m_SharedRTManager.GetDepthValuesTexture() : m_SharedRTManager.GetDepthTexture();
+                        // In case we are in an MSAA frame, we need to feed both min and max depth of the pixel so that we compute ao values for both depths and resolve the AO afterwards
+                        var aoTarget = hdCamera.frameSettings.enableMSAA ? m_MultiAmbientOcclusionBuffer : m_AmbientOcclusionBuffer;
+                        var depthTexture = hdCamera.frameSettings.enableMSAA ? m_SharedRTManager.GetDepthValuesTexture() : m_SharedRTManager.GetDepthTexture();
 
-                            HDUtils.CheckRTCreated(aoTarget.rt);
-                            postProcessLayer.BakeMSVOMap(cmd, camera, aoTarget, depthTexture, true, hdCamera.frameSettings.enableMSAA);
-                        }
+                        HDUtils.CheckRTCreated(aoTarget.rt);
+                        postProcessLayer.BakeMSVOMap(cmd, camera, aoTarget, depthTexture, true, hdCamera.frameSettings.enableMSAA);
                     }
                 }
             }
-
         }
 
         void SSAOPostDispatchWork(CommandBuffer cmd, HDCamera hdCamera, ScriptableRenderContext renderContext, PostProcessLayer postProcessLayer)
@@ -2265,6 +2264,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_Asset.renderPipelineSettings.supportRayTracing && rtEnvironement != null && rtEnvironement.raytracedReflections)
             {
                 m_RaytracingReflections.RenderReflections(hdCamera, cmd, m_SsrLightingTexture, renderContext);
+                PushFullScreenDebugTexture(hdCamera, cmd, m_SsrLightingTexture, FullScreenDebugMode.ScreenSpaceReflections);
                 PushFullScreenDebugTexture(hdCamera, cmd, m_RaytracingReflections.m_LightCluster.m_DebugLightClusterTexture, FullScreenDebugMode.LightCluster);
 
             }

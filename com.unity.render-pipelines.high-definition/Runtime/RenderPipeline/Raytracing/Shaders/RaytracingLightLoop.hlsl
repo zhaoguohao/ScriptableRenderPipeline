@@ -168,6 +168,8 @@ void LightLoop( float3 V, PositionInputs posInput, PreLightData preLightData, BS
 
     // TODO: Support properly the sky env lights
    	EnvLightData envLightSky = InitSkyEnvLightData(0);
+    // The sky is a single cubemap texture separate from the reflection probe texture array (different resolution and compression)
+    context.sampleReflection = SINGLE_PASS_CONTEXT_SAMPLE_SKY;
     float val = 0.0f;
     IndirectLighting lighting = EvaluateBSDF_Env(context, V, posInput, preLightData, envLightSky, bsdfData, envLightSky.influenceShapeType, 0, val);
     AccumulateIndirectLighting(lighting, aggregateLighting);

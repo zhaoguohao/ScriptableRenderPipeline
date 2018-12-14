@@ -72,10 +72,6 @@ void RayGenAmbientOcclusion()
     NormalData normalData;	
     DecodeFromNormalBuffer(currentPixelCoord, normalData);
 	
-    // Create the local ortho basis
-	float3 b1, b2;
-	CreatePixarOrthoNormalBasis(normalData.normalWS, b1, b2);
-
 	// the number of samples based on the roughness
 	int numSamples = 4;
 

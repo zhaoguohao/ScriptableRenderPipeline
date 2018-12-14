@@ -608,6 +608,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void EvaluateLightClusters(CommandBuffer cmd, HDCamera hdCamera, List<HDAdditionalLightData> lightArray)
         {
+            // If there is no area light to process, nothing to do here
+            if (lightArray.Count == 0)
+                return;
+
             // Grab the current ray-tracing environment, if no environment available stop right away
             HDRaytracingEnvironment currentEnv = m_RaytracingManager.CurrentEnvironment();
             if (currentEnv == null) return;

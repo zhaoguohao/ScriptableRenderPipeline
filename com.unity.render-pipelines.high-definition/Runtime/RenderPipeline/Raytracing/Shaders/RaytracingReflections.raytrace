@@ -1,5 +1,5 @@
 // We need 2 bounces given that we want to see the direct lighting of the reflected surfaces
-#pragma max_recursion_depth 2
+#pragma max_recursion_depth 1
 
 // HDRP include
 #include "UnityShaderVariables.cginc"
