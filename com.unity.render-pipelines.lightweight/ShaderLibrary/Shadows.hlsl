@@ -38,7 +38,6 @@ half4       _MainLightShadowOffset0;
 half4       _MainLightShadowOffset1;
 half4       _MainLightShadowOffset2;
 half4       _MainLightShadowOffset3;
-half4       _MainLightShadowData;    // (x: shadowStrength)
 float4      _MainLightShadowmapSize; // (xy: 1/width and 1/height, zw: width and height)
 CBUFFER_END
 
@@ -93,7 +92,7 @@ ShadowSamplingData GetAdditionalLightShadowSamplingData()
 
 half GetMainLightShadowStrength()
 {
-    return _MainLightShadowData.x;
+    return unity_LightData.w;
 }
 
 half GetAdditionalLightShadowStrenth(int lightIndex)
