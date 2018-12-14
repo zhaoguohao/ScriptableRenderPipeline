@@ -90,30 +90,6 @@ void GetScreenSpaceAmbientOcclusionMultibounce(float2 positionSS, float NdotV, f
     aoFactor.directAmbientOcclusion = GTAOMultiBounce(directAmbientOcclusion, diffuseColor);
 }
 
-// Get ambient occlusion (indirect) from given data and screenspace one using the high quality GTAOMultiBounce version
-float3 GetDiffuseOcclusionGTAOMultiBounce(float diffuseOcclusionFromData, float screenSpaceDiffuseOcclusion, float3 diffuseColor)
-{
-    return GTAOMultiBounce(min(diffuseOcclusionFromData, screenSpaceDiffuseOcclusion), diffuseColor);
-}
-
-// Get and Apply screen space diffuse occlusion only from SSAO on direct lighting
-// (Note: mostly artistic parameter, also no data-based AO is used):
-void GetApplyScreenSpaceDiffuseOcclusionForDirect(float3 diffuseColor, float screenSpaceDiffuseOcclusion, out float3 directAmbientOcclusion, inout AggregateLighting lighting)
-{
-    // Ambient occlusion use for direct lighting (directional, punctual, area)
-    float directDiffuseOcclusion = lerp(1.0, screenSpaceDiffuseOcclusion, _AmbientOcclusionParam.w);
-    directAmbientOcclusion = GTAOMultiBounce(directDiffuseOcclusion, diffuseColor);
-    lighting.direct.diffuse *= directAmbientOcclusion;
-}
-
-// Get/fill aoFactor from field values
-void GetAmbientOcclusionFactor(float3 indirectAmbientOcclusion, float3 indirectSpecularOcclusion, float3 directAmbientOcclusion, out AmbientOcclusionFactor aoFactor)
-{
-    aoFactor.indirectAmbientOcclusion = indirectAmbientOcclusion;
-    aoFactor.indirectSpecularOcclusion = indirectSpecularOcclusion;
-    aoFactor.directAmbientOcclusion = directAmbientOcclusion;
-}
-
 void ApplyAmbientOcclusionFactor(AmbientOcclusionFactor aoFactor, inout BuiltinData builtinData, inout AggregateLighting lighting)
 {
     // Note: In case of deferred Lit, builtinData.bakeDiffuseLighting contains indirect diffuse * surfaceData.ambientOcclusion + emissive,
