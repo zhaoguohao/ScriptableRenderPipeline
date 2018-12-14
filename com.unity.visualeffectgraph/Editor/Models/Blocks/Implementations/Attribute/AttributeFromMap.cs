@@ -19,7 +19,7 @@ namespace UnityEditor.VFX.Block
             Sample2DLOD,
             Sample3DLOD,
             Random,
-            RandomUniformPerParticle,
+            RandomConstantPerParticle,
         }
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), StringProvider(typeof(ReadWritableAttributeProvider)), Tooltip("Target Attribute")]
@@ -29,13 +29,29 @@ namespace UnityEditor.VFX.Block
         public AttributeCompositionMode Composition = AttributeCompositionMode.Overwrite;
 
         [VFXSetting, Tooltip("How to sample inside the AttributeMap")]
-        public AttributeMapSampleMode SampleMode = AttributeMapSampleMode.RandomUniformPerParticle;
+        public AttributeMapSampleMode SampleMode = AttributeMapSampleMode.RandomConstantPerParticle;
 
         [VFXSetting]
         public VariadicChannelOptions channels = VariadicChannelOptions.XYZ;
         private static readonly char[] channelNames = new char[] { 'x', 'y', 'z' };
 
-        public override string name { get { return string.Format("{0} {1} from Map", VFXBlockUtility.GetNameString(Composition), ObjectNames.NicifyVariableName(attribute)); } }
+        public override string libraryName
+        {
+            get
+            {
+                return string.Format("{0} {1} from Map", VFXBlockUtility.GetNameString(Composition), ObjectNames.NicifyVariableName(attribute));
+            }
+        }
+
+        public override string name
+        {
+            get
+            {
+                string variadicName = (currentAttribute.variadic == VFXVariadic.True) ? "." + channels.ToString() : "";
+                return string.Format("{0} {1} from Map", VFXBlockUtility.GetNameString(Composition), ObjectNames.NicifyVariableName(attribute) + variadicName);
+            }
+        }
+
         public override VFXContextType compatibleContexts { get { return VFXContextType.kInitAndUpdateAndOutput; } }
         public override VFXDataType compatibleData { get { return VFXDataType.kParticle; } }
         public override IEnumerable<VFXAttributeInfo> attributes
@@ -57,23 +73,14 @@ namespace UnityEditor.VFX.Block
 
                 if (SampleMode == AttributeMapSampleMode.Sequential) yield return new VFXAttributeInfo(VFXAttribute.ParticleId, VFXAttributeMode.Read);
                 if (SampleMode == AttributeMapSampleMode.Random) yield return new VFXAttributeInfo(VFXAttribute.Seed, VFXAttributeMode.ReadWrite);
-                if (SampleMode == AttributeMapSampleMode.RandomUniformPerParticle) yield return new VFXAttributeInfo(VFXAttribute.ParticleId, VFXAttributeMode.Read);
+                if (SampleMode == AttributeMapSampleMode.RandomConstantPerParticle) yield return new VFXAttributeInfo(VFXAttribute.ParticleId, VFXAttributeMode.Read);
             }
         }
 
         public override void Sanitize(int version)
         {
-            string newAttrib;
-            VariadicChannelOptions channel;
-
-            // Changes attribute to variadic version
-            if (VFXBlockUtility.ConvertToVariadicAttributeIfNeeded(attribute, out newAttrib, out channel))
-            {
-                Debug.Log(string.Format("Sanitizing AttributeFromMap: Convert {0} to variadic attribute {1} with channel {2}", attribute, newAttrib, channel));
-                attribute = newAttrib;
-                channels = channel;
+            if (VFXBlockUtility.SanitizeAttribute(ref attribute, ref channels, version))
                 Invalidate(InvalidationCause.kSettingChanged);
-            }
 
             base.Sanitize(version);
         }
@@ -188,7 +195,7 @@ namespace UnityEditor.VFX.Block
                         case AttributeMapSampleMode.Index: samplePos = "index % count"; break;
                         case AttributeMapSampleMode.Sequential: samplePos = "particleId % count"; break;
                         case AttributeMapSampleMode.Random: samplePos = "RAND * count"; break;
-                        case AttributeMapSampleMode.RandomUniformPerParticle: samplePos = "FIXED_RAND(0x8ef09666) * count"; break; // TODO expose hash
+                        case AttributeMapSampleMode.RandomConstantPerParticle: samplePos = "FIXED_RAND(0x8ef09666) * count"; break; // TODO expose hash
                     }
 
                     output += string.Format(@"

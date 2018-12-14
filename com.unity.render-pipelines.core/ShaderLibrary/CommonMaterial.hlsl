@@ -56,7 +56,6 @@ void ConvertValueAnisotropyToValueTB(real value, real anisotropy, out real value
 void ConvertAnisotropyToRoughness(real perceptualRoughness, real anisotropy, out real roughnessT, out real roughnessB)
 {
     real roughness = PerceptualRoughnessToRoughness(perceptualRoughness);
-
     ConvertValueAnisotropyToValueTB(roughness, anisotropy, roughnessT, roughnessB);
 }
 
