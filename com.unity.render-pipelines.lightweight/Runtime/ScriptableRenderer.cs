@@ -112,6 +112,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         const string k_ReleaseResourcesTag = "Release Resources";
         readonly Material[] m_Materials;
+        readonly ComputeShader[] m_ComputeShaders; //seongdae;vxsm
 
         public ScriptableRenderer(LightweightRenderPipelineAsset pipelineAsset)
         {
@@ -126,6 +127,13 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 CoreUtils.CreateEngineMaterial(pipelineAsset.blitShader),
                 CoreUtils.CreateEngineMaterial(pipelineAsset.screenSpaceShadowShader),
             };
+
+            //seongdae;vxsm
+            m_ComputeShaders = new[]
+            {
+                pipelineAsset.screenSpaceShadowComputeShader,
+            };
+            //seongdae;vxsm
 
             postProcessingContext = new PostProcessRenderContext();
         }
@@ -174,6 +182,13 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
             return m_Materials[handleID];
         }
+
+        //seongdae;vxsm
+        public ComputeShader GetComputeShader(/*arguments*/)
+        {
+            return m_ComputeShaders[0];
+        }
+        //seongdae;vxsm
 
         public void Clear()
         {

@@ -8,6 +8,7 @@ using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.Experimental.Rendering.LWRP;
 using Lightmapping = UnityEngine.Experimental.GlobalIllumination.Lightmapping;
+using UnityEngine.Experimental.VoxelizedShadowMaps;
 
 namespace UnityEngine.Rendering.LWRP
 {
@@ -244,8 +245,12 @@ namespace UnityEngine.Rendering.LWRP
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures()
             {
                 reflectionProbeModes = SupportedRenderingFeatures.ReflectionProbeModes.None,
-                defaultMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeModes.Subtractive,
-                mixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeModes.Subtractive,
+                //seongdae;vxsm
+                defaultMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeModes.IndirectOnly,
+                mixedLightingModes =
+                    SupportedRenderingFeatures.LightmapMixedBakeModes.IndirectOnly |
+                    SupportedRenderingFeatures.LightmapMixedBakeModes.Subtractive,
+                //seongdae;vxsm
                 lightmapBakeTypes = LightmapBakeType.Baked | LightmapBakeType.Mixed,
                 lightmapsModes = LightmapsMode.CombinedDirectional | LightmapsMode.NonDirectional,
                 lightProbeProxyVolumes = false,
@@ -382,6 +387,13 @@ namespace UnityEngine.Rendering.LWRP
             // Until we can have keyword stripping forcing single cascade hard shadows on gles2
             bool supportsScreenSpaceShadows = SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES2;
 
+            //seongdae;vxsm
+            // compute shader for screen space shadows.
+            bool supportsComputeScreenSpaceShadows =
+                SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES2 &&
+                SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES3;
+            //seongdae;vxsm
+
             shadowData.supportsMainLightShadows = settings.supportsMainLightShadows && mainLightCastShadows;
 
             // we resolve shadows in screenspace when cascades are enabled to save ALU as computing cascade index + shadowCoord on fragment is expensive
@@ -402,6 +414,25 @@ namespace UnityEngine.Rendering.LWRP
                     shadowCascadesCount = 1;
                     break;
             }
+
+            //seongdae;vxsm
+            if (shadowData.supportsMainLightShadows)
+            {
+                int mainLightIndex = GetMainLightIndex(settings, visibleLights);
+                var mainLight = visibleLights[mainLightIndex].light;
+                var vxShadowMap = mainLight.GetComponent<DirectionalVxShadowMap>();
+
+                bool vxShadowMapIsValid = vxShadowMap != null && vxShadowMap.IsValid();
+
+                shadowData.requiresScreenSpaceShadowCompute = vxShadowMapIsValid;
+                shadowData.mainLightVxShadowMap = vxShadowMap;
+            }
+            else
+            {
+                shadowData.requiresScreenSpaceShadowCompute = false;
+                shadowData.mainLightVxShadowMap = null;
+            }
+            //seongdae;vxsm
 
             shadowData.mainLightShadowCascadesCount = (shadowData.requiresScreenSpaceShadowResolve) ? shadowCascadesCount : 1;
             shadowData.mainLightShadowmapWidth = settings.mainLightShadowmapResolution;

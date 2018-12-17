@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections;
+using UnityEngine.Experimental.VoxelizedShadowMaps;
 using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Rendering.LWRP
@@ -57,6 +58,7 @@ namespace UnityEngine.Rendering.LWRP
     {
         public bool supportsMainLightShadows;
         public bool requiresScreenSpaceShadowResolve;
+        public bool requiresScreenSpaceShadowCompute; //seongdae;vxsm
         public int mainLightShadowmapWidth;
         public int mainLightShadowmapHeight;
         public int mainLightShadowCascadesCount;
@@ -67,6 +69,7 @@ namespace UnityEngine.Rendering.LWRP
         public bool supportsSoftShadows;
         public int shadowmapDepthBufferBits;
         public List<Vector4> bias;
+        public DirectionalVxShadowMap mainLightVxShadowMap; //seongdae;vxsm
     }
 
     public static class ShaderKeywordStrings

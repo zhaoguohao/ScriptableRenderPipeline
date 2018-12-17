@@ -462,6 +462,13 @@ namespace UnityEngine.Rendering.LWRP
             get { return resources != null ? resources.samplingShader : null; }
         }
 
+        //seongdae;vxsm
+        public ComputeShader screenSpaceShadowComputeShader
+        {
+            get { return resources != null ? resources.screenSpaceShadowComputeShader : null; }
+        }
+        //seongdae;vxsm
+
 
         public void OnBeforeSerialize()
         {

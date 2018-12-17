@@ -12,6 +12,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         private AdditionalLightsShadowCasterPass m_AdditionalLightsShadowCasterPass;
         private SetupForwardRenderingPass m_SetupForwardRenderingPass;
         private ScreenSpaceShadowResolvePass m_ScreenSpaceShadowResolvePass;
+        private ScreenSpaceShadowComputePass m_ScreenSpaceShadowComputePass; //seongdae;vxsm
         private CreateLightweightRenderTexturesPass m_CreateLightweightRenderTexturesPass;
         private BeginXRRenderingPass m_BeginXrRenderingPass;
         private SetupLightweightConstanstPass m_SetupLightweightConstants;
@@ -58,6 +59,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             m_AdditionalLightsShadowCasterPass = new AdditionalLightsShadowCasterPass();
             m_SetupForwardRenderingPass = new SetupForwardRenderingPass();
             m_ScreenSpaceShadowResolvePass = new ScreenSpaceShadowResolvePass();
+            m_ScreenSpaceShadowComputePass = new ScreenSpaceShadowComputePass(); //seongdae;vxsm
             m_CreateLightweightRenderTexturesPass = new CreateLightweightRenderTexturesPass();
             m_BeginXrRenderingPass = new BeginXRRenderingPass();
             m_SetupLightweightConstants = new SetupLightweightConstanstPass();
@@ -122,11 +124,11 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             RenderTextureDescriptor shadowDescriptor = baseDescriptor;
             shadowDescriptor.dimension = TextureDimension.Tex2D;
 
-            bool mainLightShadows = false;
+            bool mainLightDynamicShadows = false; //seongdae;vxsm
             if (renderingData.shadowData.supportsMainLightShadows)
             {
-                mainLightShadows = m_MainLightShadowCasterPass.Setup(m_MainLightShadowmap, ref renderingData);
-                if (mainLightShadows)
+                mainLightDynamicShadows = m_MainLightShadowCasterPass.Setup(m_MainLightShadowmap, ref renderingData); //seongdae;vxsm
+                if (mainLightDynamicShadows) //seongdae;vxsm
                     renderer.EnqueuePass(m_MainLightShadowCasterPass);
             }
 
@@ -137,7 +139,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                     renderer.EnqueuePass(m_AdditionalLightsShadowCasterPass);
             }
 
-            bool resolveShadowsInScreenSpace = mainLightShadows && renderingData.shadowData.requiresScreenSpaceShadowResolve;
+            bool resolveShadowsInScreenSpace = mainLightDynamicShadows && renderingData.shadowData.requiresScreenSpaceShadowResolve; //seongdae;vxsm
+            bool computeShadowsInScreenSpace = renderingData.shadowData.requiresScreenSpaceShadowCompute; //seongdae;vxsm
             bool requiresDepthPrepass = resolveShadowsInScreenSpace || renderingData.cameraData.isSceneViewCamera ||
                                         (renderingData.cameraData.requiresDepthTexture && (!CanCopyDepth(ref renderingData.cameraData)));
 
@@ -162,6 +165,13 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                     renderer.EnqueuePass(pass.GetPassToEnqueue(m_DepthOnlyPass.descriptor, m_DepthTexture));
             }
 
+            //seongdae;vxsm
+            if (computeShadowsInScreenSpace)
+            {
+                m_ScreenSpaceShadowComputePass.Setup(baseDescriptor, m_ScreenSpaceShadowmap, mainLightDynamicShadows);
+                renderer.EnqueuePass(m_ScreenSpaceShadowComputePass);
+            } else
+            //seongdae;vxsm
             if (resolveShadowsInScreenSpace)
             {
                 m_ScreenSpaceShadowResolvePass.Setup(baseDescriptor, m_ScreenSpaceShadowmap);
