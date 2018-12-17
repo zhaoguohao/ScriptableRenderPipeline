@@ -323,9 +323,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     pass.BlendOverride = "Blend One One, One One";
                     pass.BlendOpOverride = "BlendOp Add, Add";
                 }
-                else // if (masterNode.distortionMode == DistortionMode.Multiply)
+                else if (masterNode.distortionMode == DistortionMode.Multiply)
                 {
                     pass.BlendOverride = "Blend DstColor Zero, DstAlpha Zero";
+                    pass.BlendOpOverride = "BlendOp Add, Add";
+                }
+                else // (masterNode.distortionMode == DistortionMode.Replace)
+                {
+                    pass.BlendOverride = "Blend One Zero, One Zero";
                     pass.BlendOpOverride = "BlendOp Add, Add";
                 }
             }
@@ -705,7 +710,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 activeFields.Add("Material.Iridescence");
             }
-            if (masterNode.subsurfaceScattering.isOn)
+            if (masterNode.subsurfaceScattering.isOn && masterNode.surfaceType != SurfaceType.Transparent)
             {
                 activeFields.Add("Material.SubsurfaceScattering");
             }
@@ -749,7 +754,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Note here we combine an "enable"-like predicate and the $SurfaceDescription.(slotname) predicate
             // into a single $GeometricSpecularAA pedicate.
             //
-            // ($SurfaceDescription.* pedicates are useful to make sure the field is present in the struct in the template.
+            // ($SurfaceDescription.* predicates are useful to make sure the field is present in the struct in the template.
             // The field will be present if both the master node and pass have the slotid, see this set intersection we make
             // in GenerateSurfaceDescriptionStruct(), with HDSubShaderUtilities.FindMaterialSlotsOnNode().)
             //
