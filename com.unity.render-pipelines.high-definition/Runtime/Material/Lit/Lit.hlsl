@@ -1433,6 +1433,28 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
                                                 lightData.rangeAttenuationBias);
     #endif
 
+        float  shadow = 1.0;
+        float  shadowMask = 1.0;
+    #ifdef SHADOWS_SHADOWMASK
+        // shadowMaskSelector.x is -1 if there is no shadow mask
+        // Note that we override shadow value (in case we don't have any dynamic shadow)
+        shadow = shadowMask = (lightData.shadowMaskSelector.x >= 0.0) ? dot(BUILTIN_DATA_SHADOW_MASK, lightData.shadowMaskSelector) : 1.0;
+    #endif
+
+        if ((lightData.shadowIndex >= 0) && (lightData.shadowDimmer > 0))
+        {
+            // shadow = ; TODO: realtime shadow
+
+    #ifdef SHADOWS_SHADOWMASK
+            // See comment for punctual light shadow mask
+            shadow = lightData.nonLightMappedOnly ? min(shadowMask, shadow) : shadow;
+    #endif
+
+            shadow = lerp(shadowMask, shadow, lightData.shadowDimmer);
+        }
+
+        intensity *= shadow;
+
         // Terminate if the shaded point is too far away.
         if (intensity != 0.0)
         {

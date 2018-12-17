@@ -262,7 +262,7 @@ void EvaluateLight_Punctual(LightLoopContext lightLoopContext, PositionInputs po
         // The second case for blend with distance is handled with ShadowDimmer. ShadowDimmer is define manually and by shadowDistance by light.
         // With distance, ShadowDimmer become one and only the ShadowMask appear, we get the blend with distance behavior.
         shadow = light.nonLightMappedOnly ? min(shadowMask, shadow) : shadow;
-    #endif
+#endif
 
         shadow = lerp(shadowMask, shadow, light.shadowDimmer);
     }

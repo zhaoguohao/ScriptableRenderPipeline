@@ -19,8 +19,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             //Area, <= offline base type not displayed in our case but used for GI of our area light
             Rectangle,
             Tube,
+            Disc,
             //Sphere,
-            //Disc,
         }
 
         internal enum DirectionalLightUnit
@@ -129,7 +129,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     DrawEmissionAdvancedContent
                     ),
                 CED.FoldoutGroup(s_Styles.volumetricHeader, Expandable.Volumetric, k_ExpandedState, DrawVolumetric),
-                CED.Conditional((serialized, owner) => serialized.editorLightShape != LightShape.Rectangle && serialized.editorLightShape != LightShape.Tube,
+                CED.Conditional((serialized, owner) => serialized.editorLightShape != LightShape.Tube,
                     CED.AdvancedFoldoutGroup(s_Styles.shadowHeader, Expandable.Shadows, k_ExpandedState,
                         (serialized, owner) => GetAdvanced(Advanceable.Shadow, serialized, owner),
                         (serialized, owner) => SwitchAdvanced(Advanceable.Shadow, serialized, owner),
@@ -144,7 +144,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                 CED.FoldoutGroup(s_Styles.mediumShadowQualitySubHeader, Expandable.ShadowQuality, k_ExpandedState, FoldoutOption.SubFoldout | FoldoutOption.Indent, DrawMediumShadowSettingsContent)),
                             CED.Conditional((serialized, owner) => HasShadowQualitySettingsUI(HDShadowQuality.Low, serialized, owner),
                                 CED.FoldoutGroup(s_Styles.lowShadowQualitySubHeader, Expandable.ShadowQuality, k_ExpandedState, FoldoutOption.SubFoldout | FoldoutOption.Indent, DrawLowShadowSettingsContent)),
-                            CED.FoldoutGroup(s_Styles.contactShadowsSubHeader, Expandable.ContactShadow, k_ExpandedState, FoldoutOption.SubFoldout | FoldoutOption.Indent | FoldoutOption.NoSpaceAtEnd, DrawContactShadowsContent),
+                             CED.Conditional((serialized, owner) => serialized.editorLightShape != LightShape.Rectangle && serialized.editorLightShape != LightShape.Tube && serialized.editorLightShape != LightShape.Disc,
+                                CED.FoldoutGroup(s_Styles.contactShadowsSubHeader, Expandable.ContactShadow, k_ExpandedState, FoldoutOption.SubFoldout | FoldoutOption.Indent | FoldoutOption.NoSpaceAtEnd, DrawContactShadowsContent)),
                             CED.Conditional((serialized, owner) => serialized.settings.isBakedOrMixed || serialized.settings.isCompletelyBaked,
                                 CED.space,
                                 CED.FoldoutGroup(s_Styles.bakedShadowsSubHeader, Expandable.BakedShadow, k_ExpandedState, FoldoutOption.SubFoldout | FoldoutOption.Indent | FoldoutOption.NoSpaceAtEnd, DrawBakedShadowsContent))
@@ -282,6 +283,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     }
                     break;
 
+                case LightShape.Disc:
+                    EditorGUI.BeginChangeCheck();
+                    EditorGUILayout.PropertyField(serialized.serializedLightData.shapeWidth, s_Styles.shapeDiscRadius);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        // Fake line with a small rectangle in vanilla unity for GI
+                        serialized.settings.areaSizeX.floatValue = serialized.serializedLightData.shapeRadius.floatValue;
+                        serialized.settings.areaSizeY.floatValue = 0.0f;
+                    }
+                    break;
+
                 case (LightShape)(-1):
                     // don't do anything, this is just to handle multi selection
                     break;
@@ -311,6 +323,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 case LightShape.Point:
                 case LightShape.Rectangle:
                 case LightShape.Tube:
+                case LightShape.Disc:
                 // no advanced parameters
                 case (LightShape)(-1):
                     // don't do anything, this is just to handle multi selection
@@ -694,7 +707,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // In case of change, think to update InitDefaultHDAdditionalLightData()
                     serialized.settings.lightType.enumValueIndex = (int)LightType.Point;
                     serialized.serializedLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Tube;
-                    serialized.settings.shadowsType.enumValueIndex = (int)LightShadows.None;
+                    serialized.settings.shadowsType.enumValueIndex = (int)LightShadows.None; // No shadow for tube currently
+                    break;
+                case LightShape.Disc:
+                    // TODO: Currently if we use Area type as it is offline light in legacy, the light will not exist at runtime
+                    //m_BaseData.type.enumValueIndex = (int)LightType.Rectangle;
+                    // In case of change, think to update InitDefaultHDAdditionalLightData()
+                    serialized.settings.lightType.enumValueIndex = (int)LightType.Point;
+                    serialized.serializedLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Disc;
+                    if (serialized.settings.isRealtime)
+                        serialized.settings.shadowsType.enumValueIndex = (int)LightShadows.None;
                     break;
                 case (LightShape)(-1):
                     // don't do anything, this is just to handle multi selection

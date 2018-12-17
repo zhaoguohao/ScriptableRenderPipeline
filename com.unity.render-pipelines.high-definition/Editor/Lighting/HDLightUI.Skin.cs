@@ -53,6 +53,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent spotInnerPercent = new GUIContent("Inner Angle (%)", "Controls size of the angular attenuation in percent of the base angle of the Spot light's cone.");
             public readonly GUIContent spotLightShape = new GUIContent("Shape", "The shape use for the spotlight. Has an impact on the cookie transformation and light angular attenuation.");
             public readonly GUIContent shapeWidthTube = new GUIContent("Length", "Length of the tube light");
+            public readonly GUIContent shapeDiscRadius = new GUIContent("Radius", "Radius of the disc light");            
             public readonly GUIContent shapeWidthRect = new GUIContent("Size X", "SizeX of the rectangle light");
             public readonly GUIContent shapeHeightRect = new GUIContent("Size Y", "SizeY of the rectangle light");
             public readonly GUIContent aspectRatioPyramid = new GUIContent("Aspect ratio", "");

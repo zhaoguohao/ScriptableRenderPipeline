@@ -200,6 +200,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 case LightTypeExtent.Tube:
                     editorLightShape = LightShape.Tube;
                     break;
+                case LightTypeExtent.Disc:
+                    editorLightShape = LightShape.Disc;
+                    break;
             }
         }
     }

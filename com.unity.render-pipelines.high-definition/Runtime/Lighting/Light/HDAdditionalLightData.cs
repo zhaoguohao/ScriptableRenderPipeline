@@ -15,8 +15,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Punctual, // Fallback on LightShape type
         Rectangle,
         Tube,
+        Disc,
         // Sphere,
-        // Disc,
     };
 
     public enum SpotLightShape { Cone, Pyramid, Box };
@@ -737,10 +737,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     break;
             }
 
-            // Sanity check: lightData.lightTypeExtent is init to LightTypeExtent.Punctual (in case for unknow reasons we recreate additional data on an existing line)
+            // Sanity check: lightData.lightTypeExtent is init to LightTypeExtent.Punctual (in case for unknown reasons we recreate additional data on an existing light)
             if (light.type == LightType.Rectangle && lightData.lightTypeExtent == LightTypeExtent.Punctual)
             {
                 lightData.lightTypeExtent = LightTypeExtent.Rectangle;
+                light.type = LightType.Point; // Same as in HDLightEditor
+#if UNITY_EDITOR
+                light.lightmapBakeType = LightmapBakeType.Realtime;
+#endif
+            }
+            else if (light.type == LightType.Disc && lightData.lightTypeExtent == LightTypeExtent.Punctual)
+            {
+                lightData.lightTypeExtent = LightTypeExtent.Disc;
                 light.type = LightType.Point; // Same as in HDLightEditor
 #if UNITY_EDITOR
                 light.lightmapBakeType = LightmapBakeType.Realtime;
