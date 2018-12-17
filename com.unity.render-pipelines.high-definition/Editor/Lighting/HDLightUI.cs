@@ -288,9 +288,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUILayout.PropertyField(serialized.serializedLightData.shapeWidth, s_Styles.shapeDiscRadius);
                     if (EditorGUI.EndChangeCheck())
                     {
+                        serialized.serializedLightData.shapeHeight.floatValue = serialized.serializedLightData.shapeWidth.floatValue;
                         // Fake line with a small rectangle in vanilla unity for GI
                         serialized.settings.areaSizeX.floatValue = serialized.serializedLightData.shapeRadius.floatValue;
-                        serialized.settings.areaSizeY.floatValue = 0.0f;
+                        serialized.settings.areaSizeY.floatValue = serialized.serializedLightData.shapeRadius.floatValue;
                     }
                     break;
 
@@ -341,7 +342,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 (serialized.editorLightShape == LightShape.Spot && ((SpotLightShape)serialized.serializedLightData.spotLightShape.enumValueIndex == SpotLightShape.Box)))
             {
                 serialized.serializedLightData.lightUnit.enumValueIndex = (int)DirectionalLightUnit.Lux;
-                // We need to reset luxAtDistance to neutral when changing to (local) directional light, otherwise first display value ins't correct
+                // We need to reset luxAtDistance to neutral when changing to (local) directional light, otherwise first display value isn't correct
                 serialized.serializedLightData.luxAtDistance.floatValue = 1.0f;
             }
             else

@@ -1751,6 +1751,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                     lightVolumeType = LightVolumeType.Box;
                                     break;
 
+                                case LightTypeExtent.Disc:
+                                    if (areaLightCount >= m_MaxAreaLightsOnScreen)
+                                        continue;
+                                    // TODO: Implement disc light
+                                    gpuLightType = GPULightType.Rectangle;
+                                    lightVolumeType = LightVolumeType.Box;
+                                    break;
+
                                 default:
                                     Debug.Assert(false, "Encountered an unknown LightType.");
                                     break;

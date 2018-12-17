@@ -209,6 +209,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return LightUtils.CalculateLineLightLumenToLuminance(lumen, width);
                 case LightTypeExtent.Rectangle:
                     return LightUtils.ConvertRectLightLumenToLuminance(lumen, width, height);
+                case LightTypeExtent.Disc:
+                    return LightUtils.ConvertDiscLightLumenToLuminance(lumen, width); // width is use as radius in this context
             }
 
             return lumen;
@@ -222,6 +224,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return LightUtils.CalculateLineLightLuminanceToLumen(luminance, width);
                 case LightTypeExtent.Rectangle:
                     return LightUtils.ConvertRectLightLuminanceToLumen(luminance, width, height);
+                case LightTypeExtent.Disc:
+                    return LightUtils.ConvertDiscLightLuminanceToLumen(luminance, width); // width is use as radius in this context
             }
 
             return luminance;

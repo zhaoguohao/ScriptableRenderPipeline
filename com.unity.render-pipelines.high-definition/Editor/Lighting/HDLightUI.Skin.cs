@@ -47,7 +47,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent lightRadius = new GUIContent("Emission Radius", "Can be used to soften the core of the punctual light to create fill lighting.");
             public readonly GUIContent affectDiffuse = new GUIContent("Affect Diffuse", "This will disable diffuse lighting for this light. Doesn't save performance, diffuse lighting is still computed.");
             public readonly GUIContent affectSpecular = new GUIContent("Affect Specular", "This will disable specular lighting for this light. Doesn't save performance, specular lighting is still computed.");
-            public readonly GUIContent nonLightmappedOnly = new GUIContent("Shadowmask Mode", "Sets the shadowmask behaviour when using Shadowmask Mixed Lighting mode. Distance Shadowmask: Realtime shadows are used up to Shadow Distance, baked shadows after. Shadowmask: Static shadow casters always use baked shadows. Refer to documentation for further details.");
+            public readonly GUIContent nonLightmappedOnly = new GUIContent("Shadowmask Mode", "Sets the shadowmask behavior when using Shadowmask Mixed Lighting mode. Distance Shadowmask: Realtime shadows are used up to Shadow Distance, baked shadows after. Shadowmask: Static shadow casters always use baked shadows. Refer to documentation for further details.");
             public readonly GUIContent lightDimmer = new GUIContent("Dimmer", "Aim to be used with script, timeline or animation. It allows dimming one or multiple lights of heterogeneous intensity easily (without needing to know the intensity of each light).");
             public readonly GUIContent fadeDistance = new GUIContent("Fade Distance", "The distance at which the light will smoothly fade before being culled to minimize popping.");
             public readonly GUIContent spotInnerPercent = new GUIContent("Inner Angle (%)", "Controls size of the angular attenuation in percent of the base angle of the Spot light's cone.");
@@ -66,7 +66,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent sunDiskSize = new GUIContent("Sun Highlight Disk Size", "Controls the size of the highlight of the sun disk. It's the angle of the sun cone in degrees.");
             public readonly GUIContent sunHaloSize = new GUIContent("Sun Highlight Halo Size", "Controls the size of the halo around the highlight of the sun disk.");
 
-            public readonly GUIContent shape = new GUIContent("Type", "Specifies the current type of light. Possible types are Directional, Spot, Point, Rectangle and Tube lights.");
+            public readonly GUIContent shape = new GUIContent("Type", "Specifies the current type of light. Possible types are Directional, Spot, Point, Rectangle, Tube and Disc lights.");
             public readonly GUIContent[] shapeNames;
             public readonly GUIContent enableSpotReflector = new GUIContent("Reflector", "When true it simulate a spot light with reflector (mean the intensity of the light will be more focus with narrower angle), otherwise light outside of the cone is simply absorbed (mean intensity is constent whatever the size of the cone).");
             public readonly GUIContent luxAtDistance = new GUIContent("At", "Distance in meter where a surface receive an amount of lighting equivalent to the provided number of lux");

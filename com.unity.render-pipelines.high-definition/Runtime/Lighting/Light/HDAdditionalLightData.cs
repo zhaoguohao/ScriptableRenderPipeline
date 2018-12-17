@@ -805,6 +805,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 break;
                         }
                         break;
+                    case LightTypeExtent.Disc:
                     case LightTypeExtent.Tube:
                     case LightTypeExtent.Rectangle:
                         lightUnit = LightUnit.Lumen;
