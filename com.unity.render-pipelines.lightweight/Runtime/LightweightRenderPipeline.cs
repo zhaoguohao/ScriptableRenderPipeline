@@ -209,6 +209,10 @@ namespace UnityEngine.Rendering.LWRP
                 {
                     cullingParameters.cullingOptions |= CullingOptions.DisablePerObjectCulling;
                 }
+                else
+                {
+                    cullingParameters.maxPerObjectLights = (uint)settings.maxAdditionalLights;
+                }
 
                 cullingParameters.shadowDistance = Mathf.Min(cameraData.maxShadowDistance, camera.farClipPlane);
 

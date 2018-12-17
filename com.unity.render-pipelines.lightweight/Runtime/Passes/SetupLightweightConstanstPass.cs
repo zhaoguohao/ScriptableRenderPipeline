@@ -20,7 +20,6 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             public static int _MainLightPosition;
             public static int _MainLightColor;
 
-            public static int _AdditionalLightsCount;
             public static int _AdditionalLightsPosition;
             public static int _AdditionalLightsColor;
             public static int _AdditionalLightsAttenuation;
@@ -52,7 +51,6 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         {
             LightConstantBuffer._MainLightPosition = Shader.PropertyToID("_MainLightPosition");
             LightConstantBuffer._MainLightColor = Shader.PropertyToID("_MainLightColor");
-            LightConstantBuffer._AdditionalLightsCount = Shader.PropertyToID("_AdditionalLightsCount");
             LightConstantBuffer._AdditionalLightsPosition = Shader.PropertyToID("_AdditionalLightsPosition");
             LightConstantBuffer._AdditionalLightsColor = Shader.PropertyToID("_AdditionalLightsColor");
             LightConstantBuffer._AdditionalLightsAttenuation = Shader.PropertyToID("_AdditionalLightsAttenuation");
@@ -224,17 +222,10 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                     }
                 }
 
-                cmd.SetGlobalVector(LightConstantBuffer._AdditionalLightsCount, new Vector4(lightData.maxPerObjectAdditionalLightsCount,
-                    0.0f, 0.0f, 0.0f));
-
                 // if not using a compute buffer, engine will set indices in 2 vec4 constants
                 // unity_4LightIndices0 and unity_4LightIndices1
                 if (perObjectLightIndices != null)
                     cmd.SetGlobalBuffer(LightConstantBuffer._AdditionalLightsBuffer, perObjectLightIndices);
-            }
-            else
-            {
-                cmd.SetGlobalVector(LightConstantBuffer._AdditionalLightsCount, Vector4.zero);
             }
 
             cmd.SetGlobalVectorArray(LightConstantBuffer._AdditionalLightsPosition, m_AdditionalLightPositions);
