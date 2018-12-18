@@ -1118,6 +1118,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Configure all the keywords
                     ConfigureKeywords(enableBakeShadowMask, hdCamera, cmd);
 
+                    ClearBuffers(hdCamera, cmd);
+
+                    StartStereoRendering(cmd, renderContext, camera);
+                    bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
+                    
+                    StopStereoRendering(cmd, renderContext, camera);
+                    using (new ProfilingSample(cmd, "Copy Depth and Normal for SPI", CustomSamplerId.CopyDepth.GetSampler()))
+                    {
+                        // Copy MSAA buffers and normals
+                        m_SharedRTManager.BlitInstancedPrepassBuffersRTI(hdCamera.frameSettings, cmd);
+                        // Copy depth from texarray to multiple textures
+                        m_CopyDepthArrayPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetInstancedDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
+                        for (int eye = 0; eye < XRGraphics.numPass(); eye++)
+                        {
+                            m_CopyDepthArrayPropertyBlock.SetInt("_DepthSlice", eye);
+                            cmd.SetRenderTarget(m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA, eye));
+                            CoreUtils.DrawFullScreen(cmd, m_CopyDepthArray, m_CopyDepthArrayPropertyBlock);
+                        }
+                    }
+
+
                     ////////////////////////////
                     // VR Begin stereo passes
                     uint numStereoPasses = XRGraphics.usingTexArray() ? hdCamera.numEyes : 1;
@@ -1127,30 +1148,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     for (int stereoPass = 0; stereoPass < numStereoPasses; stereoPass++)
                     {
                         cmd.SetGlobalInt("_ForceEyeIndex", stereoPass);
+
+
                         StartStereoRendering(cmd, renderContext, camera);
-                        if (stereoPass == 0)
-                            ClearBuffers(hdCamera, cmd);
-
-                        // TODO: Add stereo occlusion mask
-                        bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd, stereoPass);
-
-
-                        StopStereoRendering(cmd, renderContext, camera);
-                        using (new ProfilingSample(cmd, "Copy Depth and Normal for SPI", CustomSamplerId.CopyDepth.GetSampler()))
-                        {
-                            // Copy MSAA buffers and normals
-                            m_SharedRTManager.BlitInstancedPrepassBuffersRTI(hdCamera.frameSettings, cmd);
-                            // Copy depth from texarray to multiple textures
-                            m_CopyDepthArrayPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetInstancedDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
-                            for (int eye = 0; eye < XRGraphics.numPass(); eye++)
-                            {
-                                m_CopyDepthArrayPropertyBlock.SetInt("_DepthSlice", eye);
-                                cmd.SetRenderTarget(m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA, eye));
-                                CoreUtils.DrawFullScreen(cmd, m_CopyDepthArray, m_CopyDepthArrayPropertyBlock);
-                            }
-                        }
-                        StartStereoRendering(cmd, renderContext, camera);
-
                         if (!shouldRenderMotionVectorAfterGBuffer)
                         {
                             // If objects velocity if enabled, this will render the objects with motion vector into the target buffers (in addition to the depth)
@@ -1203,7 +1203,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         GenerateDepthPyramid(hdCamera, cmd, FullScreenDebugMode.DepthPyramid, stereoPass);
                         // Depth texture is now ready, bind it (Depth buffer could have been bind before if DBuffer is enable)
                         cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthTexture(false, 0));
-                        cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture_Right, m_SharedRTManager.GetDepthTexture(false, 1)); // Mipchain isn't fully ready but it's good enough for atmospheric scattering which needs it early
+                        if (XRGraphics.usingTexArray())
+                            cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture_Right, m_SharedRTManager.GetDepthTexture(false, 1)); // Mipchain isn't fully ready but it's good enough for atmospheric scattering which needs it early
+
 
                         if (shouldRenderMotionVectorAfterGBuffer)
                         {
@@ -1214,10 +1216,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderCameraVelocity(cullingResults, hdCamera, renderContext, cmd);
 
                         StopStereoRendering(cmd, renderContext, camera);
-                        // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
-                        // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
-                        UpdateSkyEnvironment(hdCamera, cmd);
+                    }
 
+                    // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
+                    // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
+                    UpdateSkyEnvironment(hdCamera, cmd);
+
+                    StartStereoRendering(cmd, renderContext, camera);
+                    RenderSky(hdCamera, cmd);
+                    StopStereoRendering(cmd, renderContext, camera);
+
+                    for (int stereoPass = 0; stereoPass < numStereoPasses; stereoPass++)
+                    {
 
                         if (m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                         {
@@ -1351,7 +1361,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             {
                                 SSAOTask.Start(cmd, renderContext, (CommandBuffer asyncCmd) =>
                                 {
-                                    SSAODispatch(asyncCmd, hdCamera, renderContext, postProcessLayer);
+                                    SSAODispatch(asyncCmd, hdCamera, renderContext, postProcessLayer, stereoPass);
                                 }, !haveAsyncTaskWithShadows);
 
                                 haveAsyncTaskWithShadows = true;
@@ -1441,39 +1451,41 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 SSRTask.End(cmd);
                             }
 
+
                             // Might float this higher if we enable stereo w/ deferred
                             StartStereoRendering(cmd, renderContext, camera);
 
                             RenderDeferredLighting(hdCamera, cmd);
 
-                            bool renderInstanced = !XRGraphics.usingTexArray() || (stereoPass == XRGraphics.numPass() - 1);
-                            // Can't RenderForward on the 0th pass otherwise OpaqueAtmosphericScattering will draw on top of transparent objects.
-                            // Also, we need the AO buffer to be completed. 
-                            if (renderInstanced)
-                            {
-                                cmd.DisableShaderKeyword("FORCE_MULTIPASS");
-                                RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.Opaque);
-                                cmd.EnableShaderKeyword("FORCE_MULTIPASS");
-                            }
+                        }
+                    }
 
+                    if (!m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
+                    {
+                        cmd.DisableShaderKeyword("FORCE_MULTIPASS");
+                        RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.Opaque);
+
+                        cmd.EnableShaderKeyword("FORCE_MULTIPASS");
+                        for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+                        {
                             m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraSssDiffuseLightingMSAABuffer, m_CameraSssDiffuseLightingBuffer);
                             m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_SSSBufferManager.GetSSSBufferMSAA(0), m_SSSBufferManager.GetSSSBuffer(0));
 
                             // SSS pass here handle both SSS material from deferred and forward
                             m_SSSBufferManager.SubsurfaceScatteringPass(hdCamera, cmd, diffusionProfileSettings, hdCamera.frameSettings.enableMSAA ? m_CameraColorMSAABuffer : m_CameraColorBuffer,
                                 m_CameraSssDiffuseLightingBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA, stereoPass), m_SharedRTManager.GetDepthTexture(), stereoPass);
-                            RenderSky(hdCamera, cmd, stereoPass);
+                        }
 
-                            RenderTransparentDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
+                        cmd.DisableShaderKeyword("FORCE_MULTIPASS");
+                        RenderTransparentDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
-                            // Render pre refraction objects
-                            if (renderInstanced)
-                            {
-                                cmd.DisableShaderKeyword("FORCE_MULTIPASS");
-                                RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.PreRefraction);
-                                cmd.EnableShaderKeyword("FORCE_MULTIPASS");
-                            }
+                        // Render pre refraction objects
+                        RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.PreRefraction);
 
+                        cmd.EnableShaderKeyword("FORCE_MULTIPASS");
+
+                        for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+                        {
                             if (hdCamera.frameSettings.enableRoughRefraction)
                             {
                                 // First resolution of the color buffer for the color pyramid
@@ -1481,18 +1493,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                                 RenderColorPyramid(hdCamera, cmd, true, stereoPass);
                             }
+                        }
 
-                            // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
-                            if (renderInstanced)
-                            {
-                                cmd.DisableShaderKeyword("FORCE_MULTIPASS");
-                                RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.Transparent);
-                                cmd.EnableShaderKeyword("FORCE_MULTIPASS");
-                            }
+                        // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
+                        cmd.DisableShaderKeyword("FORCE_MULTIPASS");
+                        RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.Transparent);
+                        cmd.EnableShaderKeyword("FORCE_MULTIPASS");
 
-                        // Second resolve the color buffer for finishing the frame
-                            if (renderInstanced)
-                                m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraColorMSAABuffer, m_CameraColorBuffer);
+                        for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+                        {
+                            // Second resolve the color buffer for finishing the frame
+                            m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraColorMSAABuffer, m_CameraColorBuffer);
 
 #if UNITY_EDITOR
                             // Render gizmos that should be affected by post processes
@@ -1511,51 +1522,53 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             RenderDistortion(hdCamera, cmd, stereoPass);
 
                             StopStereoRendering(cmd, renderContext, camera);
-                            if (XRGraphics.usingTexArray() && stereoPass == XRGraphics.numPass() - 1)
+                        }
+
+                        
+                        PushFullScreenDebugTexture(hdCamera, cmd, m_CameraColorBuffer, FullScreenDebugMode.NanTracker);
+                        PushFullScreenLightingDebugTexture(hdCamera, cmd, m_CameraColorBuffer);
+                        PushColorPickerDebugTexture(cmd, m_CameraColorBuffer, hdCamera);
+
+                        // The final pass either postprocess of Blit will flip the screen (as it is reverse by default due to Unity openGL legacy)
+                        // Postprocess system (that doesn't use cmd.Blit) handle it with configuration (and do not flip in SceneView) or it is automatically done in Blit
+
+                        StartStereoRendering(cmd, renderContext, camera);
+
+                        // Final blit
+                        if (hdCamera.frameSettings.enablePostprocess)
+                        {
+                            RenderPostProcess(hdCamera, cmd, postProcessLayer);
+                        }
+                        else
+                        {
+                            using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
                             {
-                                PushFullScreenDebugTexture(hdCamera, cmd, m_CameraColorBuffer, FullScreenDebugMode.NanTracker);
-                                PushFullScreenLightingDebugTexture(hdCamera, cmd, m_CameraColorBuffer);
-                                PushColorPickerDebugTexture(cmd, m_CameraColorBuffer, hdCamera);
-
-                                // The final pass either postprocess of Blit will flip the screen (as it is reverse by default due to Unity openGL legacy)
-                                // Postprocess system (that doesn't use cmd.Blit) handle it with configuration (and do not flip in SceneView) or it is automatically done in Blit
-
-                                StartStereoRendering(cmd, renderContext, camera);
-
-                                // Final blit
-                                if (hdCamera.frameSettings.enablePostprocess)
+                                // This Blit will flip the screen on anything other than openGL
+                                if (camera.stereoEnabled && (XRGraphics.eyeTextureDesc.dimension == TextureDimension.Tex2D))
                                 {
-                                    RenderPostProcess(hdCamera, cmd, postProcessLayer);
+#if UNITY_2019_1_OR_NEWER
+                                    Material finalDoubleWideBlit = GetBlitMaterial();
+                                    finalDoubleWideBlit.SetTexture(HDShaderIDs._BlitTexture, m_CameraColorBuffer);
+                                    finalDoubleWideBlit.SetFloat(HDShaderIDs._BlitMipLevel, 0.0f);
+                                    finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
+                                    finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
+                                    int pass = 1; // triangle, bilinear (from Blit.shader)
+                                    cmd.Blit(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, finalDoubleWideBlit, pass);
+#else
+                            cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // Prior to 2019.1's y-flip fixes, we didn't need a flip in the shader
+#endif
                                 }
                                 else
                                 {
-                                    using (new ProfilingSample(cmd, "Blit to final RT", CustomSamplerId.BlitToFinalRT.GetSampler()))
-                                    {
-                                        // This Blit will flip the screen on anything other than openGL
-                                        if (camera.stereoEnabled && (XRGraphics.eyeTextureDesc.dimension == TextureDimension.Tex2D))
-                                        {
-#if UNITY_2019_1_OR_NEWER
-                                            Material finalDoubleWideBlit = GetBlitMaterial();
-                                            finalDoubleWideBlit.SetTexture(HDShaderIDs._BlitTexture, m_CameraColorBuffer);
-                                            finalDoubleWideBlit.SetFloat(HDShaderIDs._BlitMipLevel, 0.0f);
-                                            finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBiasRt, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
-                                            finalDoubleWideBlit.SetVector(HDShaderIDs._BlitScaleBias, new Vector4(1.0f, 1.0f, 0.0f, 0.0f));
-                                            int pass = 1; // triangle, bilinear (from Blit.shader)
-                                            cmd.Blit(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, finalDoubleWideBlit, pass);
-#else
-                                    cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // Prior to 2019.1's y-flip fixes, we didn't need a flip in the shader
-#endif
-                                        }
-                                        else
-                                        {
-                                            HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, hdCamera.flipYMode == HDAdditionalCameraData.FlipYMode.ForceFlipY);
-                                        }
-                                    }
+                                    HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, hdCamera.flipYMode == HDAdditionalCameraData.FlipYMode.ForceFlipY);
                                 }
-                                StopStereoRendering(cmd, renderContext, camera);
-                            }                            
+                            }
+                            
                         }
-                    } // VR End stereo passes
+
+                        StopStereoRendering(cmd, renderContext, camera);
+                    }
+
                     // Pushes to XR headset and/or display mirror
                     if (camera.stereoEnabled)
                         renderContext.StereoEndRender(camera);
@@ -2078,6 +2091,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // No AO applied - neutral is black, see the comment in the shaders
             cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, RuntimeUtilities.blackTexture);
+            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture_Right, RuntimeUtilities.blackTexture);
             cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
         }
 
@@ -2241,7 +2255,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Render transparent depth prepass after opaque one
                 using (new ProfilingSample(cmd, "Transparent Depth Prepass", CustomSamplerId.TransparentDepthPrepass.GetSampler()))
                 {
-                    HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                    HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), depthSlice: XRGraphics.usingTexArray() ? -1 : 0);
                     RenderTransparentRenderList(cull, hdCamera, renderContext, cmd, m_TransparentDepthPrepassNames);
                 }
             }
@@ -2254,7 +2268,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "Render Transparent Depth Post ", CustomSamplerId.TransparentDepthPostpass.GetSampler()))
             {
-                HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer());
+                HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), depthSlice: XRGraphics.usingTexArray() ? -1 : 0);
                 RenderTransparentRenderList(cullResults, hdCamera, renderContext, cmd, m_TransparentDepthPostpassNames);
             }
         }
