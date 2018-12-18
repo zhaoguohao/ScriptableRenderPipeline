@@ -32,14 +32,14 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             using (var changeCheckScope = new EditorGUI.ChangeCheckScope())
             {
-                var listTitle = string.Format("{0} Slots", m_DynamicSlotList.type.ToString());
+                var listTitle = string.Format("{0} Slots", m_DynamicSlotList.slotType.ToString());
                 m_ReorderableList = DynamicSlotUtils.CreateReorderableList(m_DynamicSlotList, listTitle, true, true, true, true);
                 m_ReorderableList.onAddCallback += Redraw;
                 m_ReorderableList.DoLayoutList();
 
                 if (changeCheckScope.changed)
                 {
-                    m_DynamicSlotList.list = m_DynamicSlotList.list;
+                    m_DynamicSlotList.UpdateSlots();
                     m_Node.Dirty(ModificationScope.Node);
                 }
             }

@@ -54,7 +54,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
         void OnChange(ChangeEvent<string> evt)
         {
-            m_Node.owner.owner.RegisterCompleteObjectUndo("Color Change");
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Text Change");
             m_String = evt.newValue;
             m_PropertyInfo.SetValue(m_Node, m_String, null);
             this.MarkDirtyRepaint();

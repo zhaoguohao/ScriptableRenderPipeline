@@ -52,7 +52,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             using (var changeCheckScope = new EditorGUI.ChangeCheckScope())
             {
                 m_DynamicSlotList = (DynamicSlotList)m_PropertyInfo.GetValue(m_Node, null);
-                var listTitle = string.Format("{0} Slots", m_DynamicSlotList.type.ToString());
+                var listTitle = string.Format("{0} Slots", m_DynamicSlotList.slotType.ToString());
                 m_ReorderableList = DynamicSlotUtils.CreateReorderableList(m_DynamicSlotList, listTitle, true, true, true, true);
                 
                 m_ReorderableList.onAddCallback += Redraw;
@@ -65,7 +65,8 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 if (changeCheckScope.changed)
                 {
                     m_Node.owner.owner.RegisterCompleteObjectUndo("Change " + m_Node.name);
-                    m_DynamicSlotList.list = m_DynamicSlotList.list;
+                    m_DynamicSlotList.UpdateSlots();
+				    m_Node.Dirty(ModificationScope.Node); 
                     m_PropertyInfo.SetValue(m_Node, m_DynamicSlotList, null);
                 }
             }
