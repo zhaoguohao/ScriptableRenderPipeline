@@ -147,6 +147,11 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             // For now VR requires a depth prepass until we figure out how to properly resolve texture2DMS in stereo
             requiresDepthPrepass |= renderingData.cameraData.isStereoEnabled;
 
+            //seongdae;vxsm
+            // For screen space shadows on compute shader, depth prepass is needed
+            requiresDepthPrepass |= computeShadowsInScreenSpace;
+            //seongdae;vxsm
+
             renderer.EnqueuePass(m_SetupForwardRenderingPass);
 
             camera.GetComponents(m_AfterDepthpasses);

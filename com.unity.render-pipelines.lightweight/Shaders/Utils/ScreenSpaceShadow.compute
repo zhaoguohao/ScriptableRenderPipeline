@@ -1,4 +1,4 @@
-﻿
+
 #pragma kernel ScreenSpaceShadowWithoutDynamicShadowsNoFiltering     CSMain=ScreenSpaceShadowWithoutDynamicShadowsNoFiltering     NO_FILTERING
 #pragma kernel ScreenSpaceShadowWithoutDynamicShadowsBiFiltering     CSMain=ScreenSpaceShadowWithoutDynamicShadowsBiFiltering     BI_FILTERING
 //#pragma kernel ScreenSpaceShadowWithoutDynamicShadowsPCF9x9Filtering CSMain=ScreenSpaceShadowWithoutDynamicShadowsPCF9x9Filtering PCF9x9_FILTERING
@@ -557,7 +557,7 @@ float ComputeVxShadowMapAttenuationNoFiltering(float3 positionWS)
     if (lessThanBounds || greaterThanBounds)
         return 1.0;
 
-    float3 posP = posLS * (float)_VoxelResolution + 0.5;
+    float3 posP = posLS * (float)_VoxelResolution;
 
     uint3 posQ = (uint3)posP;
     posQ.z -= _VoxelBias;
@@ -588,7 +588,7 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
     if (lessThanBounds || greaterThanBounds)
         return 1.0;
 
-    float3 posP = posLS * (float)_VoxelResolution;
+    float3 posP = posLS * (float)_VoxelResolution - 0.5;
     float3 posF = floor(posP);
 
     uint3 posQ = (uint3)posP;

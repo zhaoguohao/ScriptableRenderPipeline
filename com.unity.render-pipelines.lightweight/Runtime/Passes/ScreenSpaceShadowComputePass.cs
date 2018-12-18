@@ -48,7 +48,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             
             m_ColorFormat = R8 ? RenderTextureFormat.R8 : RenderTextureFormat.RFloat;
 
-            Debug.Log("Format = " + m_ColorFormat);
+            Debug.Log("Screen Space Shadow Target format = " + m_ColorFormat);
         }
 
         private RenderTargetHandle colorAttachmentHandle { get; set; }
@@ -103,6 +103,14 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
             cmd.DispatchCompute(computeShader, kernel, x, y, 1);
 
+            // even if the main light doesn't have dynamic shadows,
+            // cascades keyword is needed for screen space shadow map texture in opaque rendering pass.
+            if (mainLightDynamicShadows == false)
+            {
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadowCascades, true);
+            }
+
             if (renderingData.cameraData.isStereoEnabled)
             {
                 Camera camera = renderingData.cameraData.camera;
@@ -133,13 +141,18 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         {
             float screenSizeX = (float)camera.pixelWidth;
             float screenSizeY = (float)camera.pixelHeight;
+            float invScreenSizeX = 1.0f / screenSizeX;
+            float invScreenSizeY = 1.0f / screenSizeY;
 
-            Matrix4x4 viewMatrix = camera.worldToCameraMatrix;
-            Matrix4x4 projMatrix = GL.GetGPUProjectionMatrix(camera.projectionMatrix, true);
-            Matrix4x4 viewProjMatrix = projMatrix * viewMatrix;
+            var gpuView = camera.worldToCameraMatrix;
+            var gpuProj = GL.GetGPUProjectionMatrix(camera.projectionMatrix, true);
+
+            var viewMatrix = gpuView;
+            var projMatrix = gpuProj;
+            var viewProjMatrix = projMatrix * viewMatrix;
 
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._InvViewProjMatrixID, viewProjMatrix.inverse);
-            cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, 1.0f / screenSizeX, 1.0f / screenSizeY));
+            cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY));
 
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelResolutionID, vxShadowMap.voxelResolutionInt);
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelBiasID, vxShadowMap.voxelBias);

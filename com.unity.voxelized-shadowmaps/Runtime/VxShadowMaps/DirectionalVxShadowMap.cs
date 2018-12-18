@@ -56,7 +56,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
 
             if (light != null)
             {
-                Gizmos.color = Color.red;
+                Gizmos.color = new Color(1.0f, 0.0f, 0.0f, 0.3f);
                 Gizmos.matrix = light.transform.localToWorldMatrix;
                 Gizmos.DrawCube(Vector3.zero, new Vector3(volumeScale, volumeScale, volumeScale));
             }
