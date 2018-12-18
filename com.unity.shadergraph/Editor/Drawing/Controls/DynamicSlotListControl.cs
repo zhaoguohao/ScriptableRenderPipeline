@@ -9,18 +9,19 @@ using UnityEditorInternal;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
-    using SlotListType = DynamicSlotList.SlotListType;
-
     [AttributeUsage(AttributeTargets.Property)]
     class DynamicSlotListControlAttribute : Attribute, IControlAttribute
     {
-        public DynamicSlotListControlAttribute()
+        SlotType m_Type;
+
+        public DynamicSlotListControlAttribute(SlotType type)
         {
+            m_Type = type;
         }
 
         public VisualElement InstantiateControl(AbstractMaterialNode node, PropertyInfo propertyInfo)
         {
-            return new DynamicSlotListControlView(node, propertyInfo);
+            return new DynamicSlotListControlView(node, propertyInfo, m_Type);
         }
     }
 
@@ -29,14 +30,10 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         AbstractMaterialNode m_Node;
         PropertyInfo m_PropertyInfo;
         DynamicSlotList m_DynamicSlotList;
+        IMGUIContainer m_Container;
+        ReorderableList m_ReorderableList;
 
-        IMGUIContainer m_InputContainer;
-        ReorderableList m_InputList;
-
-        IMGUIContainer m_OutputContainer;
-        ReorderableList m_OutputList;
-
-        public DynamicSlotListControlView(AbstractMaterialNode node, PropertyInfo propertyInfo)
+        public DynamicSlotListControlView(AbstractMaterialNode node, PropertyInfo propertyInfo, SlotType type)
         {
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/DynamicSlotListControlView"));
             m_Node = node;
@@ -46,67 +43,30 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             if (propertyInfo.PropertyType != typeof(DynamicSlotList))
                 throw new ArgumentException("Property must be an DynamicSlotList.", "propertyInfo");
 
-            if(m_DynamicSlotList.type != DynamicSlotList.SlotListType.Output)
-            {   
-                m_InputContainer = new IMGUIContainer(() => CreateReorderableList (SlotListType.Input)) { name = "ListContainer" };
-                Add(m_InputContainer);
-            }
-
-            if(m_DynamicSlotList.type != DynamicSlotList.SlotListType.Input)
-            {
-                m_OutputContainer = new IMGUIContainer(() => CreateReorderableList (SlotListType.Output)) { name = "ListContainer" };
-                Add(m_OutputContainer);
-            }
+            m_Container = new IMGUIContainer(() => CreateReorderableList ()) { name = "ListContainer" };
+            Add(m_Container);
         }
 
-        void CreateReorderableList(SlotListType type)
+        void CreateReorderableList()
         {
             using (var changeCheckScope = new EditorGUI.ChangeCheckScope())
             {
                 m_DynamicSlotList = (DynamicSlotList)m_PropertyInfo.GetValue(m_Node, null);
+                var listTitle = string.Format("{0} Slots", m_DynamicSlotList.type.ToString());
+                m_ReorderableList = DynamicSlotUtils.CreateReorderableList(m_DynamicSlotList, listTitle, true, true, true, true);
+                
+                m_ReorderableList.onAddCallback += Redraw;
+                m_ReorderableList.onRemoveCallback += Redraw;
+                m_ReorderableList.onSelectCallback += SelectItem;// Redraw;
+                m_ReorderableList.onReorderCallback += SelectItem;
 
-                switch(type)
+                m_ReorderableList.DoLayoutList();
+
+                if (changeCheckScope.changed)
                 {
-                    case SlotListType.Input:
-                        {
-                            var list = m_DynamicSlotList.inputList;
-                            m_InputList = DynamicSlotUtils.CreateDynamicSlotList(list, "Input Slots", true, true, true, true);
-                            
-                            m_InputList.onAddCallback += Redraw;
-                            m_InputList.onRemoveCallback += Redraw;
-                            m_InputList.onSelectCallback += SelectItem;// Redraw;
-                            m_InputList.onReorderCallback += SelectItem;
-
-                            m_InputList.DoLayoutList();
-
-                            if (changeCheckScope.changed)
-                            {
-                                m_Node.owner.owner.RegisterCompleteObjectUndo("Change " + m_Node.name);
-                                m_DynamicSlotList.inputList = list;
-                                m_PropertyInfo.SetValue(m_Node, m_DynamicSlotList, null);
-                            }
-                        }
-                        break;
-                    case SlotListType.Output:
-                        {
-                            var list = m_DynamicSlotList.outputList;
-                            m_OutputList = DynamicSlotUtils.CreateDynamicSlotList(list, "Output Slots", true, true, true, true);
-
-                            m_OutputList.onAddCallback += Redraw;
-                            m_OutputList.onRemoveCallback += Redraw;
-                            m_OutputList.onSelectCallback += Redraw;
-                            m_OutputList.onReorderCallback += Redraw;
-
-                            m_OutputList.DoLayoutList();
-
-                            if (changeCheckScope.changed)
-                            {
-                                m_Node.owner.owner.RegisterCompleteObjectUndo("Change " + m_Node.name);
-                                m_DynamicSlotList.outputList = list;
-                                m_PropertyInfo.SetValue(m_Node, m_DynamicSlotList, null);
-                            }
-                        }
-                        break;
+                    m_Node.owner.owner.RegisterCompleteObjectUndo("Change " + m_Node.name);
+                    m_DynamicSlotList.list = m_DynamicSlotList.list;
+                    m_PropertyInfo.SetValue(m_Node, m_DynamicSlotList, null);
                 }
             }
         }
@@ -120,33 +80,19 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         private void SelectItem(ReorderableList list)
         {
             Repaint(list);
-            m_InputContainer.Focus();
+            m_Container.Focus();
         }
 
         void Repaint(ReorderableList list)
         {
-            if(m_DynamicSlotList.type != DynamicSlotList.SlotListType.Output)
-                m_InputContainer.MarkDirtyRepaint();
-
-            if(m_DynamicSlotList.type != DynamicSlotList.SlotListType.Input)
-                m_OutputContainer.MarkDirtyRepaint();
+            m_Container.MarkDirtyRepaint();
         }
 
         void Redraw(ReorderableList list)
         {
-            if(m_DynamicSlotList.type != DynamicSlotList.SlotListType.Output)
-            {   
-                Remove(m_InputContainer);
-                m_InputContainer = new IMGUIContainer(() => CreateReorderableList (SlotListType.Input)) { name = "ListContainer" };
-                Add(m_InputContainer);
-            }
-
-            if(m_DynamicSlotList.type != DynamicSlotList.SlotListType.Input)
-            {
-                Remove(m_OutputContainer);
-                m_OutputContainer = new IMGUIContainer(() => CreateReorderableList (SlotListType.Output)) { name = "ListContainer" };
-                Add(m_OutputContainer);
-            }
+            Remove(m_Container);
+            m_Container = new IMGUIContainer(() => CreateReorderableList ()) { name = "ListContainer" };
+            Add(m_Container);
         }
     }
 }

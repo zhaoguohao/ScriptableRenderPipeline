@@ -1,5 +1,6 @@
 TextFieldControlView {
-    flex-direction: row;
+    flex-direction: column;
+    flex-grow: 1;
     padding-left: 8;
     padding-right: 8;
     padding-top: 4;
@@ -13,8 +14,9 @@ TextFieldControlView > Label {
 }
 
 TextFieldControlView > TextField {
+    flex-direction: column;
+    flex-grow: 1;
     margin-left: 0;
     margin-right: 0;
     min-width: 30;
-    flex-grow: 1;
 }

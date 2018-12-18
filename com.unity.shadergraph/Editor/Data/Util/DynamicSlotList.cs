@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using UnityEngine;
 using UnityEditor.Graphing;
 using UnityEngine.UIElements;
@@ -18,8 +19,6 @@ namespace UnityEditor.ShaderGraph
 	[Serializable]
 	class DynamicSlotList
 	{
-		public enum SlotListType { Input, Output, All }
-
         [Serializable]
 		public class Entry
 		{
@@ -33,101 +32,78 @@ namespace UnityEditor.ShaderGraph
             }
 		}
 
-		public DynamicSlotList(AbstractMaterialNode node, SlotListType type)
+		public DynamicSlotList(AbstractMaterialNode node, SlotType type)
 		{
 			m_Node = node;
 			m_Type = type;
 		}
 
 		private AbstractMaterialNode m_Node;
-		private SlotListType m_Type;
-		public SlotListType type
+		private SlotType m_Type;
+		public SlotType type
 		{
 			get { return m_Type; }
 		}
 
-		public List<Entry> m_InputList = new List<Entry>();
+		public List<Entry> m_List = new List<Entry>();
 
-		public List<Entry> inputList
+		public List<Entry> list
 		{
-			get { return m_InputList; }
+			get { return m_List; }
 			set 
 			{ 
-				m_InputList = value;
+				m_List = value;
 				UpdateSlots();
 				m_Node.Dirty(ModificationScope.Topological); 
 			}
 		}
 
-		public List<Entry> m_OutputList = new List<Entry>();
+        private List<int> m_ActiveSlots = new List<int>();
 
-		public List<Entry> outputList
-		{
-			get { return m_OutputList; }
-			set 
-			{ 
-				m_OutputList = value;
-				UpdateSlots();
-				m_Node.Dirty(ModificationScope.Topological); 
-			}
-		}
-
-        private List<int> m_ActiveInputSlots = new List<int>();
-
-        public List<int> activeInputSlots
+        public List<int> activeSlots
         {
-            get { return m_ActiveInputSlots; }
-            set { m_ActiveInputSlots = value; }
-        }
-
-        private List<int> m_ActiveOutputSlots = new List<int>();
-
-        public List<int> activeOutputSlots
-        {
-            get { return m_ActiveOutputSlots; }
-            set { m_ActiveOutputSlots = value; }
+            get { return m_ActiveSlots; }
+            set { m_ActiveSlots = value; }
         }
 
         public void UpdateSlots()
         {
-            List<int> validNames = new List<int>();
+            List<int> validIDs = new List<int>();
+            List<MaterialSlot> slots = new List<MaterialSlot>();
+            m_Node.GetSlots(slots);
 
-            for(int i = 0; i < inputList.Count; i++)
+            // TODO - This tries to add slots from other sources (other dynamic lists) into the valid list
+            // Otherwise this slot list will destroy all other slots
+            var otherValidSlots = slots.Where(x => !list.Any(y => y.slotId == x.id)).ToArray();
+            var otherValidIDs = new int[otherValidSlots.Length];
+            for(int i = 0; i < otherValidIDs.Length; i++)
+                otherValidIDs[i] = otherValidSlots[i].id; 
+
+            for(int i = 0; i < list.Count; i++)
             {
-                if(inputList[i].slotId == -1)
-                    inputList[i].slotId = GetNewSlotID();
+                if(list[i].slotId == -1)
+                    list[i].slotId = GetNewSlotID();
                 
-                MaterialSlot slot = MaterialSlot.CreateMaterialSlot(inputList[i].type, inputList[i].slotId, inputList[i].name, inputList[i].name, 
-                    SlotType.Input, Vector4.zero, ShaderStageCapability.All);
+                MaterialSlot slot = MaterialSlot.CreateMaterialSlot(list[i].type, list[i].slotId, list[i].name, list[i].name, 
+                    m_Type, Vector4.zero, ShaderStageCapability.All);
 
                 m_Node.AddSlot(slot);
-                validNames.Add(inputList[i].slotId);
+                validIDs.Add(list[i].slotId);
             }
 
-            for(int i = 0; i < outputList.Count; i++)
-            {
-                if(outputList[i].slotId == -1)
-                    outputList[i].slotId = GetNewSlotID();
-                
-                MaterialSlot slot = MaterialSlot.CreateMaterialSlot(outputList[i].type, outputList[i].slotId, outputList[i].name, outputList[i].name, 
-                    SlotType.Output, Vector4.zero, ShaderStageCapability.All);
-                    
-                m_Node.AddSlot(slot);
-                validNames.Add(outputList[i].slotId);
-            }
-
-            m_Node.RemoveSlotsNameNotMatching(validNames);
+            validIDs.AddRange(otherValidIDs);
+            m_Node.RemoveSlotsNameNotMatching(validIDs);
         }
 
         private int GetNewSlotID()
         {
             int ceiling = -1;
-
-            foreach(Entry e in inputList)
-                ceiling = e.slotId > ceiling ? e.slotId : ceiling;
             
-            foreach(Entry e in outputList)
-                ceiling = e.slotId > ceiling ? e.slotId : ceiling;
+            List<MaterialSlot> slots = new List<MaterialSlot>();
+            m_Node.GetSlots(slots);
+
+            foreach(MaterialSlot slot in slots)
+                ceiling = slot.id > ceiling ? slot.id : ceiling;
 
             return ceiling + 1;
         }
@@ -150,9 +126,9 @@ namespace UnityEditor.ShaderGraph
 
     static class DynamicSlotUtils
     {
-        public static ReorderableList CreateDynamicSlotList(List<DynamicSlotList.Entry> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
+        public static ReorderableList CreateReorderableList(DynamicSlotList list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
         {
-            var reorderableList = new ReorderableList(list, typeof(DynamicSlotList.Entry), draggable, displayHeader, displayAddButton, displayRemoveButton);
+            var reorderableList = new ReorderableList(list.list, typeof(DynamicSlotList.Entry), draggable, displayHeader, displayAddButton, displayRemoveButton);
 
             reorderableList.drawHeaderCallback = (Rect rect) => 
             {  
@@ -162,9 +138,9 @@ namespace UnityEditor.ShaderGraph
 
             reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => 
             {
-                var element = list[index];
+                var element = list.list[index];
                 rect.y += 2;
-                CreateEntry(list, index, element, new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight));
+                CreateEntry(list.list, index, element, new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight));
             };
 
             reorderableList.elementHeightCallback = (int indexer) => 
