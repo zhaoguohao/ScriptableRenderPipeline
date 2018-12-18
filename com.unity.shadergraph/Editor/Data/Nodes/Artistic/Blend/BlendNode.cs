@@ -6,7 +6,7 @@ using UnityEditor.Graphing;
 namespace UnityEditor.ShaderGraph
 {
     [Title("Artistic", "Blend", "Blend")]
-    public class BlendNode : CodeFunctionNode
+    class BlendNode : CodeFunctionNode
     {
         public BlendNode()
         {
@@ -357,6 +357,19 @@ namespace UnityEditor.ShaderGraph
     Out = lerp(Base, Out, Opacity);
 }
 ";
+        }
+        
+        static string Unity_Blend_Overwrite(
+            [Slot(0, Binding.None)] DynamicDimensionVector Base,
+            [Slot(1, Binding.None)] DynamicDimensionVector Blend,
+            [Slot(3, Binding.None, 1, 1, 1, 1)] Vector1 Opacity,
+            [Slot(2, Binding.None)] out DynamicDimensionVector Out)
+        {
+            return
+                @"
+{
+    Out = lerp(Base, Blend, Opacity);
+}";
         }
     }
 }

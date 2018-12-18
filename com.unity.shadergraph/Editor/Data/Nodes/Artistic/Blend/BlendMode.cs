@@ -1,6 +1,6 @@
 namespace UnityEditor.ShaderGraph
 {
-    public enum BlendMode
+    enum BlendMode
     {
         Burn,
         Darken,
@@ -22,6 +22,7 @@ namespace UnityEditor.ShaderGraph
         Screen,
         SoftLight,
         Subtract,
-        VividLight
+        VividLight,
+        Overwrite
     }
 }
