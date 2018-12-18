@@ -72,24 +72,30 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             this.mainLightDynamicShadows = mainLightDynamicShadows;
         }
 
+        private int GetComputeShaderKernel(ref ComputeShader computeShader)
+        {
+            int kernel = -1;
+
+            if (computeShader != null)
+            {
+                //if (mainLightDynamicShadows)
+                //    kernel = computeShader.FindKernel("ScreenSpaceShadowWithDynamicShadowsBiFiltering");
+                //    //kernel = computeShader.FindKernel("ScreenSpaceShadowWithDynamicShadowsNoFiltering");
+                //else
+                    kernel = computeShader.FindKernel("ScreenSpaceShadowWithoutDynamicShadowsBiFiltering");
+                    //kernel = computeShader.FindKernel("ScreenSpaceShadowWithoutDynamicShadowsNoFiltering");
+            }
+
+            return kernel;
+        }
+
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
             if (renderingData.shadowData.mainLightVxShadowMap == null)
                 return;
 
-            var computeShader = renderer.GetComputeShader();
-            int kernel = -1;
-
-            if (computeShader != null)
-            {
-                if (mainLightDynamicShadows)
-                    kernel = computeShader.FindKernel("ScreenSpaceShadowWithDynamicShadowsBiFiltering");
-                    //kernel = computeShader.FindKernel("ScreenSpaceShadowWithDynamicShadowsNoFiltering");
-                else
-                    kernel = computeShader.FindKernel("ScreenSpaceShadowWithoutDynamicShadowsBiFiltering");
-                    //kernel = computeShader.FindKernel("ScreenSpaceShadowWithoutDynamicShadowsNoFiltering");
-            }
-
+            var computeShader = renderer.GetComputeShader(ComputeShaderHandle.ScreenSpaceShadow);
+            int kernel = GetComputeShaderKernel(ref computeShader);
             if (kernel == -1)
                 return;
 
@@ -108,6 +114,10 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (mainLightDynamicShadows == false)
             {
                 CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
+                CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadowCascades, true);
+            }
+            else if (renderingData.shadowData.mainLightShadowCascadesCount == 1)
+            {
                 CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadowCascades, true);
             }
 

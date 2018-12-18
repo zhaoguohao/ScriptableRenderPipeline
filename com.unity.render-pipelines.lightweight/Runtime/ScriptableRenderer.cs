@@ -184,9 +184,17 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         }
 
         //seongdae;vxsm
-        public ComputeShader GetComputeShader(/*arguments*/)
+        public ComputeShader GetComputeShader(ComputeShaderHandle handle)
         {
-            return m_ComputeShaders[0];
+            int handleID = (int)handle;
+            if (handleID >= m_ComputeShaders.Length)
+            {
+                Debug.LogError(string.Format("ComputeShader {0} is not registered.",
+                    Enum.GetName(typeof(ComputeShaderHandle), handleID)));
+                return null;
+            }
+
+            return m_ComputeShaders[handleID];
         }
         //seongdae;vxsm
 

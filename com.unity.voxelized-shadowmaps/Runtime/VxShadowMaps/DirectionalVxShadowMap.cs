@@ -7,7 +7,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
 
         public float volumeScale = 10.0f;
         public VoxelResolution voxelResolution = VoxelResolution._4096;
-        public int voxelResolutionInt { get { return (int)voxelResolution; } }
+        public int voxelResolutionInt => (int)voxelResolution;
         public int voxelBias = 4;
         //public DepthBits depthBits = DepthBits._16;
 
