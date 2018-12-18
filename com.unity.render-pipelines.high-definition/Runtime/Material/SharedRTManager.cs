@@ -73,14 +73,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_CameraDepthValuesBuffer = new RTHandleSystem.RTHandle[numStereoPasses];
             }
             // Instanced buffer for forward pass
-            m_CameraDepthStencilInstanced = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencil", useInstancing: true);
-            m_NormalInstanced = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableRandomWrite: true, name: "NormalBuffer", useInstancing: true); // TODO VR convert to TempRTs
-            if (m_MSAASupported)
+            if (XRGraphics.usingTexArray())
             {
-                m_CameraDepthStencilMSAAInstanced = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth24, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, name: "CameraDepthStencilMSAA", useInstancing: true);
-                m_NormalMSAAInstanced = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableMSAA: true, bindTextureMS: true, name: "NormalBufferMSAA", useInstancing: true); // TODO VR convert to TempRTs
-                m_DepthAsColorMSAAInstanced = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RFloat, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "DepthAsColorMSAA", useInstancing: true); // TODO VR convert to TempRTs
+                m_CameraDepthStencilInstanced = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencilInstanced", useInstancing: true);
+                m_NormalInstanced = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableRandomWrite: true, name: "NormalBufferInstanced", useInstancing: true); // TODO VR convert to TempRTs
+                if (m_MSAASupported)
+                {
+                    m_CameraDepthStencilMSAAInstanced = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth24, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, name: "CameraDepthStencilMSAAInstanced", useInstancing: true);
+                    m_NormalMSAAInstanced = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableMSAA: true, bindTextureMS: true, name: "NormalBufferMSAAInstanced", useInstancing: true); // TODO VR convert to TempRTs
+                    m_DepthAsColorMSAAInstanced = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RFloat, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "DepthAsColorMSAAInstanced", useInstancing: true); // TODO VR convert to TempRTs
+                }
             }
+
 
             for (int stereoPass = 0; stereoPass < numStereoPasses; stereoPass++)
             {
@@ -344,11 +348,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void Cleanup()
         {
-            RTHandles.Release(m_CameraDepthStencilInstanced);
-            if (m_MSAASupported)
+            if (XRGraphics.usingTexArray())
             {
-                RTHandles.Release(m_CameraDepthStencilMSAAInstanced);
-                RTHandles.Release(m_DepthAsColorMSAAInstanced);
+                RTHandles.Release(m_CameraDepthStencilInstanced);
+                RTHandles.Release(m_NormalInstanced);
+                if (m_MSAASupported)
+                {
+                    RTHandles.Release(m_CameraDepthStencilMSAAInstanced);
+                    RTHandles.Release(m_DepthAsColorMSAAInstanced);
+                }
             }
 
             int numStereoPasses = XRGraphics.usingTexArray() ? XRGraphics.eyeTextureDesc.volumeDepth : 1;
