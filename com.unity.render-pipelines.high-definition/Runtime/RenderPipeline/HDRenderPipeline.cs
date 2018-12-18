@@ -1124,24 +1124,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
                     
                     StopStereoRendering(cmd, renderContext, camera);
-                    using (new ProfilingSample(cmd, "Copy Depth and Normal for SPI", CustomSamplerId.CopyDepth.GetSampler()))
+                    bool SPI = XRGraphics.usingTexArray();
+                    if (SPI)
                     {
-                        // Copy MSAA buffers and normals
-                        m_SharedRTManager.BlitInstancedPrepassBuffersRTI(hdCamera.frameSettings, cmd);
-                        // Copy depth from texarray to multiple textures
-                        m_CopyDepthArrayPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetInstancedDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
-                        for (int eye = 0; eye < XRGraphics.numPass(); eye++)
+                        using (new ProfilingSample(cmd, "Copy Depth and Normal for SPI", CustomSamplerId.CopyDepth.GetSampler()))
                         {
-                            m_CopyDepthArrayPropertyBlock.SetInt("_DepthSlice", eye);
-                            cmd.SetRenderTarget(m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA, eye));
-                            CoreUtils.DrawFullScreen(cmd, m_CopyDepthArray, m_CopyDepthArrayPropertyBlock);
+                            // Copy MSAA buffers and normals
+                            m_SharedRTManager.BlitInstancedPrepassBuffersRTI(hdCamera.frameSettings, cmd);
+                            // Copy depth from texarray to multiple textures
+                            m_CopyDepthArrayPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetInstancedDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
+                            for (int eye = 0; eye < XRGraphics.numPass(); eye++)
+                            {
+                                m_CopyDepthArrayPropertyBlock.SetInt("_DepthSlice", eye);
+                                cmd.SetRenderTarget(m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA, eye));
+                                CoreUtils.DrawFullScreen(cmd, m_CopyDepthArray, m_CopyDepthArrayPropertyBlock);
+                            }
                         }
                     }
 
 
                     ////////////////////////////
                     // VR Begin stereo passes
-                    uint numStereoPasses = XRGraphics.usingTexArray() ? hdCamera.numEyes : 1;
+                    uint numStereoPasses = SPI ? hdCamera.numEyes : 1;
                     if (numStereoPasses > 1)
                         cmd.EnableShaderKeyword("FORCE_MULTIPASS");
 
@@ -1203,7 +1207,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         GenerateDepthPyramid(hdCamera, cmd, FullScreenDebugMode.DepthPyramid, stereoPass);
                         // Depth texture is now ready, bind it (Depth buffer could have been bind before if DBuffer is enable)
                         cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthTexture(false, 0));
-                        if (XRGraphics.usingTexArray())
+                        if (SPI)
                             cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture_Right, m_SharedRTManager.GetDepthTexture(false, 1)); // Mipchain isn't fully ready but it's good enough for atmospheric scattering which needs it early
 
 
