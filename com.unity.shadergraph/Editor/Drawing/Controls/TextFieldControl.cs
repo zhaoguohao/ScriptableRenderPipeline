@@ -1,14 +1,14 @@
 using System;
 using System.Reflection;
-using UnityEditor.Experimental.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
 using Color = UnityEditor.ShaderGraph.ColorNode.Color;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
     [AttributeUsage(AttributeTargets.Property)]
-    public class TextFieldControlAttribute : Attribute, IControlAttribute
+    class TextFieldControlAttribute : Attribute, IControlAttribute
     {
         string m_Label;
         bool m_Multiline;
@@ -25,7 +25,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         }
     }
 
-    public class TextFieldControlView : VisualElement
+    class TextFieldControlView : VisualElement
     {
         AbstractMaterialNode m_Node;
         PropertyInfo m_PropertyInfo;
@@ -37,7 +37,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         {
             m_Node = node;
             m_PropertyInfo = propertyInfo;
-            AddStyleSheetPath("Styles/Controls/TextFieldControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/TextFieldControlView"));
             if (propertyInfo.PropertyType != typeof(string))
                 throw new ArgumentException("Property must be of type string.", "propertyInfo");
             label = label ?? ObjectNames.NicifyVariableName(propertyInfo.Name);
@@ -48,7 +48,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
                 Add(new Label(label));
 
             m_TextField = new TextField { value = m_String, multiline = multiLine };
-            m_TextField.OnValueChanged(OnChange);
+            m_TextField.RegisterValueChangedCallback(OnChange);
             Add(m_TextField);
         }
 

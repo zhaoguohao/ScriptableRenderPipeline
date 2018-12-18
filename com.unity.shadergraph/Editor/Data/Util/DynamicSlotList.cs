@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor.Graphing;
-using UnityEngine.Experimental.UIElements;
-using UnityEditor.Experimental.UIElements;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 using UnityEditorInternal;
 using UnityEditor.ShaderGraph.Drawing;
 using UnityEditor.ShaderGraph.Drawing.Controls;
@@ -16,7 +16,7 @@ namespace UnityEditor.ShaderGraph
     // ----------------------------------------------------------------------------------------------------
 
 	[Serializable]
-	public class DynamicSlotList
+	class DynamicSlotList
 	{
 		public enum SlotListType { Input, Output, All }
 
@@ -148,7 +148,7 @@ namespace UnityEditor.ShaderGraph
     // Utils
     // ----------------------------------------------------------------------------------------------------
 
-    public static class DynamicSlotUtils
+    static class DynamicSlotUtils
     {
         public static ReorderableList CreateDynamicSlotList(List<DynamicSlotList.Entry> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
         {

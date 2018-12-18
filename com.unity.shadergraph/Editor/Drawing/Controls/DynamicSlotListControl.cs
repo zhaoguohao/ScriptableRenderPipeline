@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor.Graphing;
-using UnityEngine.Experimental.UIElements;
-using UnityEditor.Experimental.UIElements;
+using UnityEngine.UIElements;
+using UnityEditor.UIElements;
 using UnityEditorInternal;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
@@ -12,7 +12,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
     using SlotListType = DynamicSlotList.SlotListType;
 
     [AttributeUsage(AttributeTargets.Property)]
-    public class DynamicSlotListControlAttribute : Attribute, IControlAttribute
+    class DynamicSlotListControlAttribute : Attribute, IControlAttribute
     {
         public DynamicSlotListControlAttribute()
         {
@@ -24,7 +24,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
         }
     }
 
-    public class DynamicSlotListControlView : VisualElement, INodeModificationListener
+    class DynamicSlotListControlView : VisualElement, INodeModificationListener
     {
         AbstractMaterialNode m_Node;
         PropertyInfo m_PropertyInfo;
@@ -38,7 +38,7 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
 
         public DynamicSlotListControlView(AbstractMaterialNode node, PropertyInfo propertyInfo)
         {
-            AddStyleSheetPath("Styles/Controls/DynamicSlotListControlView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/Controls/DynamicSlotListControlView"));
             m_Node = node;
             m_PropertyInfo = propertyInfo;
             m_DynamicSlotList = (DynamicSlotList)m_PropertyInfo.GetValue(m_Node, null);

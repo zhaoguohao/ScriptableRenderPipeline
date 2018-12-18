@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Experimental.UIElements;
 using UnityEngine;
-using UnityEngine.Experimental.UIElements;
+using UnityEditor.UIElements;
+using UnityEngine.UIElements;
 using UnityEditor.Graphing;
 using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph.Drawing.Controls;
@@ -13,7 +13,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 {
     using SlotListType = DynamicSlotList.SlotListType;
 
-    public class DynamicSlotListView : VisualElement
+    class DynamicSlotListView : VisualElement
     {
         AbstractMaterialNode m_Node;
         DynamicSlotList m_DynamicSlotList;
@@ -26,7 +26,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public DynamicSlotListView(AbstractMaterialNode node, DynamicSlotList slotList)
         {
-            AddStyleSheetPath("Styles/DynamicSlotListView");
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/DynamicSlotListView"));
             m_Node = node;
             m_DynamicSlotList = slotList;
 
