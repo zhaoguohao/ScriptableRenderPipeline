@@ -14,7 +14,8 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         Texture2DMS<float> _DepthTextureMS;
 
         Texture2DMSArray<float> _InstancedDepthTextureMS;
-        
+
+
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
         #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
@@ -23,25 +24,41 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
         struct Attributes
         {
             uint vertexID : SV_VertexID;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
         };
 
         struct Varyings
         {
             float4 positionCS : SV_POSITION;
+            UNITY_VERTEX_INPUT_INSTANCE_ID
+            UNITY_VERTEX_OUTPUT_STEREO
         };
+
+        float LoadDepth(int2 positionSS)
+        {
+#ifdef UNITY_STEREO_INSTANCING_ENABLED
+            UNITY_BRANCH
+            if (unity_StereoEyeIndex == 0)
+                return LOAD_TEXTURE2D(_CameraDepthTexture, (int2)positionSS).x;
+            else // TODO VR: More than 2 eyes
+                return LOAD_TEXTURE2D(_CameraDepthTexture_Right, (int2)positionSS).x;
+#else
+            return LOAD_TEXTURE2D(_CameraDepthTexture, (int2)positionSS).x;
+#endif
+        }
 
         Varyings Vert(Attributes input)
         {
+            UNITY_SETUP_INSTANCE_ID(input);
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
+            UNITY_TRANSFER_INSTANCE_ID(input, output);
+            UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
             return output;
         }
-
+        
         inline float4 AtmosphericScatteringCompute(Varyings input, float3 V, float depth)
         {
-#if defined (UNITY_STEREO_INSTANCING_ENABLED)
-            unity_StereoEyeIndex = _ForceEyeIndex;
-#endif
             PositionInputs posInput = GetPositionInput_Stereo(input.positionCS.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
 
 #if defined(USING_STEREO_MATRICES)
@@ -64,9 +81,10 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
 
         float4 Frag(Varyings input) : SV_Target
         {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 positionSS = input.positionCS.xy;
             float3 V          = normalize(mul(float3(positionSS, 1.0), (float3x3)_PixelCoordToViewDirWS));
-            float  depth      = LOAD_TEXTURE2D(_CameraDepthTexture, (int2)positionSS).x;
+            float  depth      = LoadDepth(positionSS);
 
             return AtmosphericScatteringCompute(input, V, depth);
         }

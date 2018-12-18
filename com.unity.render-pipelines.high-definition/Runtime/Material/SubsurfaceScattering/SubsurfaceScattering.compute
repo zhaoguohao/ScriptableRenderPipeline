@@ -11,6 +11,10 @@
 #pragma kernel SubsurfaceScatteringHQ SubsurfaceScattering=SubsurfaceScatteringHQ SSS_ENABLE_NEAR_FIELD=1
 #pragma kernel SubsurfaceScatteringMQ_MSAA SubsurfaceScattering=SubsurfaceScatteringMQ_MSAA SSS_ENABLE_NEAR_FIELD=0 ENABLE_MSAA
 #pragma kernel SubsurfaceScatteringHQ_MSAA SubsurfaceScattering=SubsurfaceScatteringHQ_MSAA SSS_ENABLE_NEAR_FIELD=1 ENABLE_MSAA
+#pragma kernel SubsurfaceScatteringMQ_SPI SubsurfaceScattering=SubsurfaceScatteringMQ_SPI SSS_ENABLE_NEAR_FIELD=0   UNITY_STEREO_INSTANCING_ENABLED=1
+#pragma kernel SubsurfaceScatteringHQ_SPI SubsurfaceScattering=SubsurfaceScatteringHQ_SPI SSS_ENABLE_NEAR_FIELD=1   UNITY_STEREO_INSTANCING_ENABLED=1
+#pragma kernel SubsurfaceScatteringMQ_SPI_MSAA SubsurfaceScattering=SubsurfaceScatteringMQ_SPI_MSAA SSS_ENABLE_NEAR_FIELD=0 ENABLE_MSAA UNITY_STEREO_INSTANCING_ENABLED=1
+#pragma kernel SubsurfaceScatteringHQ_SPI_MSAA SubsurfaceScattering=SubsurfaceScatteringHQ_SPI_MSAA SSS_ENABLE_NEAR_FIELD=1 ENABLE_MSAA UNITY_STEREO_INSTANCING_ENABLED=1
 
 // TODO: use sharp load hoisting on PS4.
 
@@ -57,14 +61,23 @@
 
 float4 _FilterKernels[DIFFUSION_PROFILE_COUNT][SSS_N_SAMPLES_NEAR_FIELD]; // XY = near field, ZW = far field; 0 = radius, 1 = reciprocal of the PDF
 
-TEXTURE2D(_DepthTexture);                           // Z-buffer
 TEXTURE2D(_SSSHTile);                               // DXGI_FORMAT_R8_UINT is not supported by Unity
-TEXTURE2D(_IrradianceSource);                       // Includes transmitted light
+TEXTURE2D(_DepthTexture);                           // Z-buffer
 
 #ifdef USE_INTERMEDIATE_BUFFER
     RW_TEXTURE2D(float4, _CameraFilteringTexture);  // Target texture
 #else
+#ifdef UNITY_STEREO_INSTANCING_ENABLED
+    RW_TEXTURE2D_ARRAY(float4, _CameraColorTexture); // Target texture
+#else
     RW_TEXTURE2D(float4, _CameraColorTexture);      // Target texture
+#endif
+#endif
+
+#ifdef UNITY_STEREO_INSTANCING_ENABLED
+    TEXTURE2D_ARRAY(_IrradianceSource);                       // Includes transmitted light
+#else
+    TEXTURE2D(_IrradianceSource);                       // Includes transmitted light
 #endif
 
 //--------------------------------------------------------------------------------------------------
@@ -96,9 +109,17 @@ float4 LoadSampleFromCacheMemory(int2 cacheCoord)
 }
 #endif
 
+float4 LoadScreenspaceTexture(Texture2D texName, int2 pixelCoord) {
+    return LOAD_TEXTURE2D(texName, pixelCoord);
+}
+
+float4 LoadScreenspaceTexture(Texture2DArray texName, int2 pixelCoord) {
+    return LOAD_TEXTURE2D_ARRAY(texName, pixelCoord, unity_StereoEyeIndex);
+}
+
 float4 LoadSampleFromVideoMemory(int2 pixelCoord)
 {
-    float3 irradiance = LOAD_TEXTURE2D(_IrradianceSource, pixelCoord).rgb;
+    float3 irradiance = LoadScreenspaceTexture(_IrradianceSource,   pixelCoord).rgb; // LOAD_TEXTURE2D(_IrradianceSource, pixelCoord).rgb;
     float  depth      = LOAD_TEXTURE2D(_DepthTexture,     pixelCoord).r;
 
     return float4(irradiance, LinearEyeDepth(depth, _ZBufferParams));
@@ -224,7 +245,11 @@ void StoreResult(uint2 pixelCoord, float3 irradiance)
 #ifdef USE_INTERMEDIATE_BUFFER
     _CameraFilteringTexture[pixelCoord] = float4(irradiance, 1);
 #else
+#ifdef UNITY_STEREO_INSTANCING_ENABLED
+    _CameraColorTexture[uint3(pixelCoord, _DepthSlice)] += float4(irradiance, 0);
+#else
     _CameraColorTexture[pixelCoord]    += float4(irradiance, 0);
+#endif
 #endif
 }
 
@@ -264,7 +289,7 @@ void SubsurfaceScattering(uint2 groupId       : SV_GroupID,
 
     UNITY_BRANCH if (!processGroup) { return; }
 
-    float3 centerIrradiance  = LOAD_TEXTURE2D(_IrradianceSource, pixelCoord).rgb;
+    float3 centerIrradiance  = LoadScreenspaceTexture(_IrradianceSource, pixelCoord).rgb; //LOAD_TEXTURE2D(_IrradianceSource, pixelCoord).rgb;
     float  centerDepth       = 0;
     float  centerViewZ       = 0;
     bool   passedStencilTest = TestLightingForSSS(centerIrradiance);
@@ -317,7 +342,7 @@ void SubsurfaceScattering(uint2 groupId       : SV_GroupID,
 
         uint2  cacheCoord2 = 2 * (startQuad + quadCoord) + DeinterleaveQuad(laneIndex);
         int2   pixelCoord2 = (int2)(groupOffset + cacheCoord2) - TEXTURE_CACHE_BORDER;
-        float3 irradiance2 = LOAD_TEXTURE2D(_IrradianceSource, pixelCoord2).rgb;
+        float3 irradiance2 = LoadScreenspaceTexture(_IrradianceSource, pixelCoord2).rgb; // LOAD_TEXTURE2D(_IrradianceSource, pixelCoord2).rgb;
         float  viewZ2      = 0;
 
         // Save some bandwidth by only loading depth values for SSS pixels.

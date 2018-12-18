@@ -8,6 +8,7 @@
     TEXTURE2D(_DepthPyramidTexture);
     // Ambient occlusion texture
     TEXTURE2D(_AmbientOcclusionTexture);
+    TEXTURE2D(_AmbientOcclusionTexture_Right); // Used only with SPI
     TEXTURE2D(_CameraMotionVectorsTexture);
     TEXTURE2D(_SsrLightingTexture);
 #endif

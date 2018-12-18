@@ -321,7 +321,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 
                 propertyBlock.SetMatrix(HDShaderIDs._PixelCoordToViewDirWS, pixelCoordToViewDirWS);
                 propertyBlock.SetFloat("_ForceEyeIndex", stereoPass);
-                HDUtils.DrawFullScreen(cmd, hdCamera, m_OpaqueAtmScatteringMaterial, colorBuffer, depthBuffer, propertyBlock, isMSAA? 1 : 0, depthSlice: stereoPass);
+                HDUtils.DrawFullScreen(cmd, hdCamera, m_OpaqueAtmScatteringMaterial, colorBuffer, depthBuffer, propertyBlock, isMSAA? 1 : 0, depthSlice: XRGraphics.usingTexArray() ? -1 : 0);
             }
         }
 

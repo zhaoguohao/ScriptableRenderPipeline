@@ -172,6 +172,8 @@ SAMPLER_CMP(s_linear_clamp_compare_sampler);
 
 TEXTURE2D(_CameraDepthTexture);
 SAMPLER(sampler_CameraDepthTexture);
+TEXTURE2D(_CameraDepthTexture_Right);
+SAMPLER(sampler_CameraDepthTexture_Right);
 
 // Main lightmap
 TEXTURE2D(unity_Lightmap);
@@ -341,6 +343,7 @@ float3  _PrevCamPosRWSStereo[2];
 float _ComputeEyeIndex;
 // To force multipass on screenspace effects, we override unity_StereoEyeIndex with _ForceEyeIndex when keyword FORCE_MULTIPASS is set
 int _ForceEyeIndex;
+int _DepthSlice;
 #endif
 CBUFFER_END
 

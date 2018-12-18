@@ -4,16 +4,22 @@
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
+#pragma kernel KMain MAIN=KMain
+#pragma kernel KMainSPI MAIN=KMainSPI UNITY_STEREO_INSTANCING_ENABLED=1
+
 TEXTURE2D(_DistortionTexture);
+#ifdef UNITY_STEREO_INSTANCING_ENABLED
+RW_TEXTURE2D_ARRAY(float4, _Destination);
+#else
 RW_TEXTURE2D(float4, _Destination);
+#endif
 
 CBUFFER_START(cb)
-    float4 _Size;
+float4 _Size;
 CBUFFER_END
 
-#pragma kernel KMain
 [numthreads(8, 8, 1)]
-void KMain(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, uint2 dispatchThreadId : SV_DispatchThreadID)
+void MAIN(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, uint2 dispatchThreadId : SV_DispatchThreadID)
 {
     // We use a bias when fetching distortion source pixels
     // This avoid artifacts when a distortion is overlapped by an opaque object
@@ -60,6 +66,9 @@ void KMain(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, u
     float2 distordedUV = float2((dispatchThreadId + 0.5) + distortion * _FetchBias) * _Size.zw;
     float mip = (_ColorPyramidScale.z - 1) * clamp(distortionBlur, 0.0, 1.0);
     float4 sampled = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, distordedUV * _ColorPyramidScale.xy, mip);
-
+#ifdef UNITY_STEREO_INSTANCING_ENABLED
+    _Destination[uint3(dispatchThreadId, _DepthSlice)] = sampled;
+#else
     _Destination[dispatchThreadId] = sampled;
+#endif
 }

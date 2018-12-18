@@ -70,7 +70,11 @@ struct SSSData
 #define SSSBufferType0 float4 // Must match GBufferType0 in deferred
 
 // SSSBuffer texture declaration
+#if defined(UNITY_STEREO_INSTANCING_ENABLED) && defined(SHADER_STAGE_COMPUTE)
+TEXTURE2D_ARRAY(_SSSBufferTexture0);
+#else
 TEXTURE2D(_SSSBufferTexture0);
+#endif
 
 // Note: The SSS buffer used here is sRGB
 void EncodeIntoSSSBuffer(SSSData sssData, uint2 positionSS, out SSSBufferType0 outSSSBuffer0)
@@ -87,7 +91,11 @@ void DecodeFromSSSBuffer(float4 sssBuffer, uint2 positionSS, out SSSData sssData
 
 void DecodeFromSSSBuffer(uint2 positionSS, out SSSData sssData)
 {
+#if defined(UNITY_STEREO_INSTANCING_ENABLED) && defined(SHADER_STAGE_COMPUTE)
+    float4 sssBuffer = LOAD_TEXTURE2D_ARRAY(_SSSBufferTexture0, positionSS, _DepthSlice);
+#else
     float4 sssBuffer = LOAD_TEXTURE2D(_SSSBufferTexture0, positionSS);
+#endif
     DecodeFromSSSBuffer(sssBuffer, positionSS, sssData);
 }
 

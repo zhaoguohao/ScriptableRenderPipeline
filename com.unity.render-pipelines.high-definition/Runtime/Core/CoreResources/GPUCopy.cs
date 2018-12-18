@@ -99,5 +99,7 @@ namespace UnityEngine.Experimental.Rendering
                  SampleCopyChannel(cmd, rect, XRGraphics.usingTexArray() ? _Source4Inst : _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1, stereoPass);
           }
 
+
+
     }
 }

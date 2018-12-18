@@ -48,6 +48,18 @@ struct AmbientOcclusionFactor
     float3 indirectSpecularOcclusion;
 };
 
+float LoadSSAO(float2 positionSS) {
+#ifdef UNITY_STEREO_INSTANCING_ENABLED
+    UNITY_BRANCH
+    if (unity_StereoEyeIndex == 0)
+        return LOAD_TEXTURE2D(_AmbientOcclusionTexture, positionSS).x;
+    else
+        return LOAD_TEXTURE2D(_AmbientOcclusionTexture_Right, positionSS).x;
+#else
+    return LOAD_TEXTURE2D(_AmbientOcclusionTexture, positionSS).x;
+#endif 
+}
+
 // Get screen space ambient occlusion only:
 float GetScreenSpaceDiffuseOcclusion(float2 positionSS)
 {
@@ -56,7 +68,7 @@ float GetScreenSpaceDiffuseOcclusion(float2 positionSS)
     // We store inverse AO so neutral is black. So either we sample inside or outside the texture it return 0 in case of neutral
      // Ambient occlusion use for indirect lighting (reflection probe, baked diffuse lighting)
 #ifndef _SURFACE_TYPE_TRANSPARENT
-    float indirectAmbientOcclusion = 1.0 - LOAD_TEXTURE2D(_AmbientOcclusionTexture, positionSS).x;
+    float indirectAmbientOcclusion = 1.0 - LoadSSAO(positionSS); //LOAD_TEXTURE2D(_AmbientOcclusionTexture, positionSS).x;
 #else
     float indirectAmbientOcclusion = 1.0;
 #endif

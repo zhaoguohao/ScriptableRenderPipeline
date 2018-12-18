@@ -121,6 +121,7 @@ MonoBehaviour:
   shadowSoftness: 0.5
   blockerSampleCount: 24
   filterSampleCount: 16
+  minFilterSize: 0.00001
 --- !u!114 &8055091487208521644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,11 +266,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23c1ce4fb46143f46bc5cb5224c934f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Version: 1
   clearColorMode: 0
   backgroundColorHDR: {r: 0.025, g: 0.07, b: 0.19, a: 0}
   clearDepth: 1
-  renderingPath: 0
   volumeLayerMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -277,6 +276,9 @@ MonoBehaviour:
   aperture: 8
   shutterSpeed: 0.005
   iso: 400
+  flipYMode: 0
+  fullscreenPassthrough: 0
+  customRenderingSettings: 0
   m_FrameSettings:
     overrides: 0
     enableShadow: 1
@@ -321,6 +323,8 @@ MonoBehaviour:
       enableFptlForForwardOpaque: 1
       enableBigTilePrepass: 1
       isFptlEnabled: 1
+  m_Version: 1
+  m_ObsoleteRenderingPath: 0
 --- !u!114 &1110612009959704977
 MonoBehaviour:
   m_ObjectHideFlags: 0

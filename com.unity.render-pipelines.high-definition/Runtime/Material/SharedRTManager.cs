@@ -191,7 +191,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
                 {
-                    cmd.Blit(m_CameraDepthStencilMSAAInstanced, m_CameraDepthStencilMSAABuffer[stereoPass], new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.0f), stereoPass, 0);
                     cmd.Blit(m_NormalMSAAInstanced, m_NormalMSAART[stereoPass], stereoPass, 0);
                     cmd.Blit(m_DepthAsColorMSAAInstanced, m_DepthAsColorMSAART[stereoPass], stereoPass, 0);
                 }
@@ -202,7 +201,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
                 {
-                    cmd.Blit(m_CameraDepthStencilInstanced, m_CameraDepthStencilBuffer[stereoPass], new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.0f), stereoPass, 0);
                     cmd.Blit(m_NormalInstanced, m_NormalRT[stereoPass], stereoPass, 0);
                 }
 

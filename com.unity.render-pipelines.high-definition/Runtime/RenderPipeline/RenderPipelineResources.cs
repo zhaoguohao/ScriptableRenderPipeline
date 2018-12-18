@@ -179,6 +179,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cameraMotionVectorsPS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MotionVectors/CameraMotionVectors.shader"),
                 copyStencilBufferPS = Load<Shader>(HDRenderPipelinePath + "ShaderLibrary/CopyStencilBuffer.shader"),
                 copyDepthBufferPS = Load<Shader>(HDRenderPipelinePath + "ShaderLibrary/CopyDepthBuffer.shader"),
+                copyDepthBufferArrayPS = Load<Shader>(HDRenderPipelinePath + "ShaderLibrary/CopyDepthArrayBuffer.shader"),
                 blitPS = Load<Shader>(HDRenderPipelinePath + "ShaderLibrary/Blit.shader"),
 
                 // Sky

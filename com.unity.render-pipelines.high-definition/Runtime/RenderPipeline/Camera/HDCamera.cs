@@ -245,6 +245,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     if (numColorPyramidBuffersRequired != 0)
                     {
                         AllocHistoryFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain, HistoryBufferAllocatorFunction, numColorPyramidBuffersRequired);
+                        if (XRGraphics.usingTexArray())
+                            AllocHistoryFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain_Right, HistoryBufferAllocatorFunction, numColorPyramidBuffersRequired);
                         colorPyramidHistoryIsValid = false;
                     }
 
