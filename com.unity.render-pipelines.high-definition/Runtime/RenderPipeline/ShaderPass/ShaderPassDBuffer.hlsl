@@ -23,7 +23,6 @@ PackedVaryingsType Vert(AttributesMesh inputMesh)
 	MeshDecalsPositionZBias(varyingsType);
 #endif
     PackedVaryingsType o = PackVaryingsType(varyingsType);
-    UNITY_TRANSFER_INSTANCE_ID(inputMesh, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     return o;
 }

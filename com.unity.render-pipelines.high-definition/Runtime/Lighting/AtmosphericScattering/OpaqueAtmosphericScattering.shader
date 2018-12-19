@@ -37,7 +37,6 @@ Shader "Hidden/HDRenderPipeline/OpaqueAtmosphericScattering"
             UNITY_SETUP_INSTANCE_ID(input);
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
-            UNITY_TRANSFER_INSTANCE_ID(input, output);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
             return output;
         }

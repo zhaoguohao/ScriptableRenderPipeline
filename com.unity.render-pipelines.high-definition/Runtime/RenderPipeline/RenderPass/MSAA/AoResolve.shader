@@ -31,7 +31,6 @@ Shader "Hidden/HDRenderPipeline/AOResolve"
             Varyings output;
             output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID);
             output.texcoord = GetFullScreenTriangleTexCoord(input.vertexID) * _ScreenSize.xy;
-            UNITY_TRANSFER_INSTANCE_ID(input, output);
             UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
             return output;
         }

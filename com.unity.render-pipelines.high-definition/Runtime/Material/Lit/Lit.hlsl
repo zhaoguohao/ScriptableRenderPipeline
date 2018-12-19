@@ -1594,7 +1594,7 @@ IndirectLighting EvaluateBSDF_ScreenspaceRefraction(LightLoopContext lightLoopCo
         // Do nothing and don't update the hierarchy weight so we can fall back on refraction probe
         return lighting;
 
-    float hitDeviceDepth = LOAD_TEXTURE_LOD(_DepthPyramidTexture, TexCoordStereoOffset(hit.positionSS), 0).r;
+    float hitDeviceDepth = LOAD_TEXTURE2D_ARRAY_LOD(_DepthPyramidTexture, TexCoordStereoOffset(hit.positionSS), unity_StereoEyeIndex, 0).r;
     float hitLinearDepth = LinearEyeDepth(hitDeviceDepth, _ZBufferParams);
 
     // This is an empirically set hack/modifier to reduce haloes of objects visible in the refraction.

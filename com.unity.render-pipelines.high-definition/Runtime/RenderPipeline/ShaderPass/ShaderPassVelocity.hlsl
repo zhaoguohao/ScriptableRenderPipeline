@@ -152,7 +152,6 @@ PackedVaryingsType Vert(AttributesMesh inputMesh,
     }
 
     PackedVaryingsType packedVaryingsType = PackVaryingsType(varyingsType);
-    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
     return packedVaryingsType;
 }
@@ -172,7 +171,6 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
     varyingsType.vpass.previousPositionCS = input.vpass.previousPositionCS;
 
     PackedVaryingsToPS packedVaryingsType = PackVaryingsToPS(varyingsType);
-    UNITY_TRANSFER_INSTANCE_ID(inputMesh, packedVaryingsType);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(packedVaryingsType);
     return packedVaryingsType;
 }

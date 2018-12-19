@@ -13,7 +13,6 @@ struct PackedVaryingsToPS // v2f
 #endif
     PackedVaryingsMeshToPS vmesh;
 
-    UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -46,7 +45,6 @@ struct PackedVaryingsToDS // v2d
     PackedVaryingsPassToDS vpass;
 #endif
         
-    UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -107,6 +105,9 @@ VaryingsMeshType VertMesh(AttributesMesh input)
 #if defined(HAVE_MESH_MODIFICATION)
     input = ApplyMeshModification(input);
 #endif
+
+    UNITY_SETUP_INSTANCE_ID(input);
+    UNITY_TRANSFER_INSTANCE_ID(input, output);
 
     // This return the camera relative position (if enable)
     float3 positionRWS = TransformObjectToWorld(input.positionOS);

@@ -101,8 +101,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Material m_DebugFullScreen;
         Material m_DebugColorPicker;
         Material m_Blit;
-        Material m_BlitFromTexArray;
-        Material m_BlitFromDoubleWide;
         Material m_ErrorMaterial;
 
         RenderTargetIdentifier[] m_MRTCache2 = new RenderTargetIdentifier[2];
@@ -214,9 +212,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Vector4 m_PyramidScale = new Vector4();
 
         public Material GetBlitMaterial() { return m_Blit; }
-        public Material GetBlitFromDoubleWide() { return m_BlitFromDoubleWide; }
-        public Material GetBlitFromTexArray() { return m_BlitFromTexArray; }
-
 
         ComputeBuffer m_DepthPyramidMipLevelOffsetsBuffer = null;
 
@@ -557,8 +552,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DebugFullScreen = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.debugFullScreenPS);
             m_DebugColorPicker = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.debugColorPickerPS);
             m_Blit = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.blitPS);
-            m_BlitFromTexArray = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.blitFromTexArrayPS);
-            m_BlitFromDoubleWide = CoreUtils.CreateEngineMaterial(m_Asset.renderPipelineResources.shaders.blitFromDoubleWidePS);
             m_ErrorMaterial = CoreUtils.CreateEngineMaterial("Hidden/InternalErrorShader");
         }
 
@@ -712,7 +705,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (hdCamera.frameSettings.enableSSR)
                     cmd.SetGlobalTexture(HDShaderIDs._SsrLightingTexture, m_SsrLightingTexture);
                 else
-                    cmd.SetGlobalTexture(HDShaderIDs._SsrLightingTexture, RuntimeUtilities.transparentTexture);
+                    cmd.SetGlobalTexture(HDShaderIDs._SsrLightingTexture, RuntimeUtilities.transparentTextureArray);
 
             }
         }
@@ -1980,7 +1973,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             // No AO applied - neutral is black, see the comment in the shaders
-            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, RuntimeUtilities.blackTexture);
+            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, RuntimeUtilities.blackTextureArray);
             cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
         }
 
