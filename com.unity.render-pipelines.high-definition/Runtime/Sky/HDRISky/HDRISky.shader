@@ -1,9 +1,8 @@
-Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
+Shader "Hidden/HDRP/Sky/HDRISky"
 {
     HLSLINCLUDE
 
     #pragma vertex Vert
-    #pragma fragment Frag
 
     #pragma target 4.5
     #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
@@ -11,7 +10,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonLighting.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 
     TEXTURECUBE(_Cubemap);
     SAMPLER(sampler_Cubemap);
@@ -40,7 +39,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
         return output;
     }
 
-    float4 Frag(Varyings input) : SV_Target
+    float4 RenderSky(Varyings input)
     {
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 #if defined(USING_STEREO_MATRICES)
@@ -50,7 +49,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
         float3 dir = normalize(posInput.positionWS);
 #else
         // Points towards the camera
-        float3 viewDirWS = normalize(mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
+        float3 viewDirWS = normalize(mul(float3(input.positionCS.xy + _TaaJitterStrength.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
         // Reverse it to point into the scene
         float3 dir = -viewDirWS;
 #endif
@@ -67,6 +66,18 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
         return float4(skyColor, 1.0);
     }
 
+    float4 FragBaking(Varyings input) : SV_Target
+    {
+        return RenderSky(input);
+    }
+
+    float4 FragRender(Varyings input) : SV_Target
+    {
+        float4 color = RenderSky(input);
+        color.rgb *= GetCurrentExposureMultiplier();
+        return color;
+    }
+
     ENDHLSL
 
     SubShader
@@ -80,8 +91,8 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
             Cull Off
 
             HLSLPROGRAM
+                #pragma fragment FragBaking
             ENDHLSL
-
         }
 
         // For fullscreen Sky
@@ -93,6 +104,7 @@ Shader "Hidden/HDRenderPipeline/Sky/HDRISky"
             Cull Off
 
             HLSLPROGRAM
+                #pragma fragment FragRender
             ENDHLSL
         }
 
