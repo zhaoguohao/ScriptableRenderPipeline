@@ -130,6 +130,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (rtEnv.raytracedReflections.boolValue)
             {
                 EditorGUI.indentLevel++;
+                EditorGUILayout.PropertyField(rtEnv.reflFilterMode, Styles.reflFilterModeText);
 
                 EditorGUILayout.PropertyField(rtEnv.reflRayLength, Styles.reflRayLengthText);
                 EditorGUILayout.PropertyField(rtEnv.reflNumMaxSamples, Styles.reflNumSamplesText);
