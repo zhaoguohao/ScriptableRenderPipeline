@@ -775,19 +775,25 @@ Shader "HDRenderPipeline/Lit"
 
             #define INTERSECTION_SHADING
 
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingMacros.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition\Runtime\ShaderLibrary\ShaderVariablesRaytracing.hlsl"
-            
-            #include "Packages/com.unity.render-pipelines.core\ShaderLibrary\Debug.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
-            
-            #include "Packages/com.unity.render-pipelines.high-definition\Runtime\Material\Builtin\BuiltinData.cs.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.cs.hlsl"
+
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingIntersection.hlsl"
+            
+            #include "Packages/com.unity.render-pipelines.high-definition\Runtime\Lighting\LightLoop\LightLoopDef.hlsl"
+            #define HAS_LIGHTLOOP
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
+
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitRaytracingData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderpassRaytracingReflection.hlsl"
 
             ENDHLSL
         }
+
         Pass
         {
             Name "RTRaytrace_Visibility"
@@ -797,22 +803,21 @@ Shader "HDRenderPipeline/Lit"
 
             #pragma raytracing test
 
-            #pragma multi_compile _ LIGHTMAP_ON
-            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
-            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
-
             #define SHADOW_LOW
 
             #define INTERSECTION_SHADING
 
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingMacros.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition\Runtime\ShaderLibrary\ShaderVariablesRaytracing.hlsl"
 
-            #include "Packages/com.unity.render-pipelines.core\ShaderLibrary\Debug.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
-
-            #include "Packages/com.unity.render-pipelines.high-definition\Runtime\Material\Builtin\BuiltinData.cs.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.cs.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingIntersection.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
+
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitRaytracingData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderpassRaytracingVisibility.hlsl"
 

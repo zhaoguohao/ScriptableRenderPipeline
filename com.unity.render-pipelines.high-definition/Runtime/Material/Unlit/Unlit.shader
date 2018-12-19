@@ -293,5 +293,73 @@ Shader "HDRenderPipeline/Unlit"
         }
     }
 
+    SubShader
+    {
+        Pass
+        {
+            Name "RTRaytrace_Reflections"
+            Tags{ "LightMode" = "ReflectionDXR" }
+
+            HLSLPROGRAM
+
+            #pragma raytracing test      
+
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            
+             // We use the low shadow maps for raytracing
+            #define SHADOW_LOW
+
+            #define INTERSECTION_SHADING
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingMacros.hlsl"
+
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition\Runtime\ShaderLibrary\ShaderVariablesRaytracing.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingIntersection.hlsl"
+            
+            #include "Packages/com.unity.render-pipelines.high-definition\Runtime\Lighting\LightLoop\LightLoopDef.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/Unlit.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/UnlitRaytracingData.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderpassRaytracingReflection.hlsl"
+
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "RTRaytrace_Visibility"
+            Tags{ "LightMode" = "ShadowsDXR" }
+
+            HLSLPROGRAM
+
+            #pragma raytracing test
+
+            #define SHADOW_LOW
+
+            #define INTERSECTION_SHADING
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingMacros.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Lighting/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition\Runtime\ShaderLibrary\ShaderVariablesRaytracing.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingIntersection.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/Unlit.hlsl"
+            
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/UnlitRaytracingData.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderpassRaytracingVisibility.hlsl"
+
+            ENDHLSL
+        }
+    }
+
     CustomEditor "Experimental.Rendering.HDPipeline.UnlitGUI"
 }
