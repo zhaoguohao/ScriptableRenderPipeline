@@ -15,10 +15,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultScene: {fileID: 3628837357921210760, guid: bc694eebc7afe0b42b02d231420b217a,
     type: 3}
-  defaultRenderSettingsProfile: {fileID: 11400000, guid: cf1b32335766f2e40a3d01fb915d6960,
-    type: 2}
-  defaultPostProcessingProfile: {fileID: 11400000, guid: 0904b06389a0ca142ae72fe1effad808,
-    type: 2}
+  defaultRenderSettingsProfile: {fileID: 0}
+  defaultPostProcessingProfile: {fileID: 0}
   defaultDiffusionProfileSettings: {fileID: 11400000, guid: 404820c4cf36ad944862fa59c56064f0,
     type: 2}
   materials:

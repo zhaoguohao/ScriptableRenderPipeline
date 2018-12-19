@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_GeneratorAsset: {fileID: 0}
   m_Script: {fileID: 11500000, guid: 8b6f86e1523e69a4282e92d393be89a4, type: 3}
-  m_Name: HDRenderPipelineResources
+  m_Name: 
   m_EditorClassIdentifier: 
   shaders:
     defaultPS: {fileID: 4800000, guid: 6e4ae4064600d784cac1e41a9e6f2e59, type: 3}
@@ -117,8 +117,7 @@ MonoBehaviour:
     depthOfFieldCoCCS: {fileID: 7200000, guid: 048b235b54fbfaa4d80ec85ea847d4f8, type: 3}
     depthOfFieldCoCReprojectCS: {fileID: 7200000, guid: 4980decaa3878d6448569489f5fc7931,
       type: 3}
-    depthOfFieldDilateCS: {fileID: 7200000, guid: 1c93af4338c0c1b42b92464992eebc10,
-      type: 3}
+    depthOfFieldDilateCS: {fileID: 0}
     depthOfFieldMipCS: {fileID: 7200000, guid: d3ef53de069ded64e8377cba6eb951fa, type: 3}
     depthOfFieldMipSafeCS: {fileID: 7200000, guid: 2d24ee7b2c804d947a5c371c12ed46bd,
       type: 3}
@@ -137,10 +136,10 @@ MonoBehaviour:
     bloomUpsampleCS: {fileID: 7200000, guid: 5dbb0ac12cb11f84084b7e5633481bd1, type: 3}
     finalPassPS: {fileID: 4800000, guid: 5ac9ef0c50282754b93c7692488e7ee7, type: 3}
   materials:
-    defaultDiffuseMat: {fileID: 2100000, guid: 73c176f402d2c2f4d929aa5da7585d17, type: 2}
-    defaultMirrorMat: {fileID: 2100000, guid: 6b17274157b33bc45b6a40e7d4ff51fe, type: 2}
-    defaultDecalMat: {fileID: 2100000, guid: 500e733574922d04ea961553b1b26a63, type: 2}
-    defaultTerrainMat: {fileID: 2100000, guid: 22ff8771d87ef27429e670136399094b, type: 2}
+    defaultDiffuseMat: {fileID: 0}
+    defaultMirrorMat: {fileID: 0}
+    defaultDecalMat: {fileID: 0}
+    defaultTerrainMat: {fileID: 0}
   textures:
     debugFontTex: {fileID: 2800000, guid: a3ad2df0e49aaa341a3b3a80f93b3f66, type: 3}
     colorGradient: {fileID: 2800000, guid: 4ea52e665573c1644bf05dd9b11fd2a4, type: 3}
