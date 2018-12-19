@@ -16,25 +16,24 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         delegate void MaterialResetter(Material material);
         static Dictionary<string, MaterialResetter> k_MaterialResetters = new Dictionary<string, MaterialResetter>()
         {
-            { "HDRenderPipeline/LayeredLit",  LayeredLitGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/LayeredLitTessellation", LayeredLitGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/Lit", LitGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/LitTessellation", LitGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/Unlit", UnlitGUI.SetupMaterialKeywordsAndPass },
-            // { "HDRenderPipeline/Fabric",  FabricGUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/Decal", DecalUI.SetupMaterialKeywordsAndPass },
-            { "HDRenderPipeline/TerrainLit", TerrainLitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRP/LayeredLit",  LayeredLitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRP/LayeredLitTessellation", LayeredLitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRP/Lit", LitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRP/LitTessellation", LitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRP/Unlit", UnlitGUI.SetupMaterialKeywordsAndPass },
+            { "HDRP/Decal", DecalUI.SetupMaterialKeywordsAndPass },
+            { "HDRP/TerrainLit", TerrainLitGUI.SetupMaterialKeywordsAndPass },
             { StackLitEditorGUI.k_StackLitShaderName, StackLitEditorGUI.SetupMaterialKeywordsAndPass },
         };
 
         const string k_MaterialShaderNameRegexPattern = @"\A"
             + TextureSamplerSharingShaderGenerator.k_StackLitFamilyFindRegexPattern //+ @"(?<shadername>HDRenderPipeline\/StackLit)(\/Generated\/(?<statecode>[0-9a-fA-F]{32}))?"
-            //+ @"(?<shadername>HDRenderPipeline\/LayeredLit)"
-            //+ @"|(?<shadername>HDRenderPipeline\/LayeredLitTessellation)"
-            //+ @"|(?<shadername>HDRenderPipeline\/Unlit)"
-            //+ @"|(?<shadername>HDRenderPipeline\/Fabric)"
-            //+ @"|(?<shadername>HDRenderPipeline\/Decal)"
-            //+ @"|(?<shadername>HDRenderPipeline\/TerrainLit)"
+            //+ @"(?<shadername>HDRP\/LayeredLit)"
+            //+ @"|(?<shadername>HDRP\/LayeredLitTessellation)"
+            //+ @"|(?<shadername>HDRP\/Unlit)"
+            //+ @"|(?<shadername>HDRP\/Fabric)"
+            //+ @"|(?<shadername>HDRP\/Decal)"
+            //+ @"|(?<shadername>HDRP\/TerrainLit)"
             + @"\z";
         static Regex k_MaterialShaderNameRegex = new Regex(k_MaterialShaderNameRegexPattern, RegexOptions.ExplicitCapture| RegexOptions.Compiled);
 
