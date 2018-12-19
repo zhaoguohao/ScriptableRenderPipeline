@@ -30,6 +30,7 @@ Texture2D<float>						_DepthTexture;
 
 // Flag value that defines if a given pixel recieves reflections or not
 // int   									_SsrStencilExclusionValue;
+int                                     _RaytracingNumSamples;
 
 // Output structure of the shadows raytrace shader
 RWTexture2D<float4>     _SNTextureUAV;
@@ -54,7 +55,7 @@ bool GenerateMISSample(uint2 pixelCoordinates, LightData areaLightData, Position
     float halfHeight = areaLightData.size.y * 0.5;
 
     // Compute the world space position of the center of the lightlight
-    float3 areaLightPosWS = areaLightData.positionRWS + _WorldSpaceCameraPos - areaLightData.right *  halfWidth - areaLightData.up *  halfHeight;
+    float3 areaLightPosWS = areaLightData.positionRWS + _WorldSpaceCameraPos;
 
     // Let's first compute the position of the rectangle's corners in world space
     float3 v0 = areaLightPosWS + areaLightData.right *  halfWidth + areaLightData.up *  halfHeight;
@@ -176,8 +177,7 @@ void RayGenShadows()
     float3 v2 = areaLightPosWS - areaLightData.right * halfWidth - areaLightData.up * halfHeight;
     float3 v3 = areaLightPosWS - areaLightData.right * halfWidth + areaLightData.up *  halfHeight;
 
-    int numSamples = 4;
-    for(int i  = 0; i < numSamples; ++i)
+    for(int i  = 0; i < _RaytracingNumSamples; ++i)
     {
         // Get the following noise value
         float2 noiseValue = GetRaytracingNoiseSample(currentPixelCoord, i);
@@ -231,6 +231,6 @@ void RayGenShadows()
         _SNTextureUAV[currentPixelCoord] += float4((diffuseLighting + specularLighting) * rayIntersection.color * invPDF, 1.0f);
         _UNTextureUAV[currentPixelCoord] += float4((diffuseLighting + specularLighting) * invPDF , 1.0f);
     }
-    _SNTextureUAV[currentPixelCoord] *= 1.0f / numSamples;
-    _UNTextureUAV[currentPixelCoord] *= 1.0f / numSamples;
+    _SNTextureUAV[currentPixelCoord] *= 1.0f / _RaytracingNumSamples;
+    _UNTextureUAV[currentPixelCoord] *= 1.0f / _RaytracingNumSamples;
 }

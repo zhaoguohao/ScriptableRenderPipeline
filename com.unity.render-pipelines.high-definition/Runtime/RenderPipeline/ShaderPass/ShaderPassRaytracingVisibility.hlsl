@@ -15,6 +15,10 @@ void AnyHitMain(inout RayIntersection rayIntersection : SV_RayPayload, Attribute
     // Compute the view vector
     float3 viewWS = -rayIntersection.incidentDirection;
 
+    // Compute the distance of the ray
+    float travelDistance = length(fragInput.positionRWS + _WorldSpaceCameraPos - rayIntersection.origin);
+    rayIntersection.t = travelDistance;
+
     // Build the surfacedata and builtindata
     SurfaceData surfaceData;
     BuiltinData builtinData;

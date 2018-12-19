@@ -165,7 +165,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _DebugSingleShadowIndex = Shader.PropertyToID("_DebugSingleShadowIndex");
         public static readonly int _DebugDepthPyramidMip = Shader.PropertyToID("_DebugDepthPyramidMip");
         public static readonly int _DebugDepthPyramidOffsets = Shader.PropertyToID("_DebugDepthPyramidOffsets");
-
+        public static readonly int _HitDistanceTexture = Shader.PropertyToID("_HitDistanceTexture");
+        public static readonly int _ViewSpaceNormalTexture = Shader.PropertyToID("_ViewSpaceNormalTexture");
+        
         public static readonly int _UseTileLightList = Shader.PropertyToID("_UseTileLightList");
 
         public static readonly int _FrameCount     = Shader.PropertyToID("_FrameCount");
@@ -437,6 +439,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _RaytracingNoiseResolution       = Shader.PropertyToID("_RaytracingNoiseResolution");
         public static readonly int _RaytracingNumNoiseLayers        = Shader.PropertyToID("_RaytracingNumNoiseLayers");
         public static readonly int _RaytracingRayBias               = Shader.PropertyToID("_RaytracingRayBias");
+        public static readonly int _RaytracingNumSamples            = Shader.PropertyToID("_RaytracingNumSamples");
         public static readonly int _RaytracingRayMaxLength          = Shader.PropertyToID("_RaytracingRayMaxLength");
         public static readonly string _RaytracingAccelerationStructureName           = "_RaytracingAccelerationStructure";
 #else

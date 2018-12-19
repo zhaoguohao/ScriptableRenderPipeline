@@ -125,7 +125,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Inject the ray generation data
             cmd.SetRaytracingFloatParams(reflectionShader, HDShaderIDs._RaytracingRayBias, rtEnvironement.rayBias);
-            cmd.SetRaytracingFloatParams(reflectionShader, HDShaderIDs._RaytracingRayMaxLength, rtEnvironement.rayMaxLength);
+            cmd.SetRaytracingFloatParams(reflectionShader, HDShaderIDs._RaytracingRayMaxLength, rtEnvironement.reflRayLength);
+            cmd.SetRaytracingIntParams(reflectionShader, HDShaderIDs._RaytracingNumSamples, rtEnvironement.reflNumMaxSamples);
 
             // Set the data for the ray generation
             cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._SsrLightingTextureRW, m_IntermediateBuffer);
@@ -156,27 +157,39 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "Filter Reflection", CustomSamplerId.Raytracing.GetSampler()))
             {
-                // Inject all the parameters for the compute
-                cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.denoiseRadius);
-                cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.denoiseSigma);
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_SourceTexture", m_IntermediateBuffer);
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
+                switch (rtEnvironement.reflFilterMode)
+                {
+                    case HDRaytracingEnvironment.ReflectionsFilterMode.Bilateral:
+                    {
+                        // Inject all the parameters for the compute
+                        cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.reflBilateralRadius);
+                        cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.reflBilateralSigma);
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_SourceTexture", m_IntermediateBuffer);
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
 
-                // Set the output slot
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_OutputTexture", outputTexture);
+                        // Set the output slot
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_OutputTexture", outputTexture);
 
-                // Texture dimensions
-                int texWidth = outputTexture.rt.width;
-                int texHeight = outputTexture.rt.width;
+                        // Texture dimensions
+                        int texWidth = outputTexture.rt.width;
+                        int texHeight = outputTexture.rt.width;
 
-                // Evaluate the dispatch parameters
-                int areaTileSize = 8;
-                int numTilesX = (texWidth + (areaTileSize - 1)) / areaTileSize;
-                int numTilesY = (texHeight + (areaTileSize - 1)) / areaTileSize;
+                        // Evaluate the dispatch parameters
+                        int areaTileSize = 8;
+                        int numTilesX = (texWidth + (areaTileSize - 1)) / areaTileSize;
+                        int numTilesY = (texHeight + (areaTileSize - 1)) / areaTileSize;
 
-                // Compute the texture
-                cmd.DispatchCompute(bilateralFilter, m_KernelFilter, numTilesX, numTilesY, 1);
+                        // Compute the texture
+                        cmd.DispatchCompute(bilateralFilter, m_KernelFilter, numTilesX, numTilesY, 1);
+                    }
+                    break;
+                    case HDRaytracingEnvironment.ReflectionsFilterMode.None:
+                    {
+                        HDUtils.BlitCameraTexture(cmd, hdCamera, m_IntermediateBuffer, outputTexture);
+                    }
+                    break;
+                }
             }
         }
     }

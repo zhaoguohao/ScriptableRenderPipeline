@@ -130,7 +130,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Inject the ray generation data
             cmd.SetRaytracingFloatParams(shadowsShader, HDShaderIDs._RaytracingRayBias, rtEnvironement.rayBias);
-            cmd.SetRaytracingFloatParams(shadowsShader, HDShaderIDs._RaytracingRayMaxLength, rtEnvironement.rayMaxLength);
 
             int numLights = m_LightLoop.m_lightList.lights.Count;
 
@@ -143,6 +142,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Inject the light data
                     cmd.SetRaytracingBufferParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._LightDatas, m_LightLoop.lightDatas);
                     cmd.SetRaytracingIntParam(shadowsShader, _TargetAreaLight, lightIdx);
+                    cmd.SetRaytracingIntParam(shadowsShader, HDShaderIDs._RaytracingNumSamples, rtEnvironement.shadowNumSamples);
 
                     // Set the data for the ray generation
                     cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
@@ -168,8 +168,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, _UNBuffer, m_UNBuffer);
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
-                    cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.denoiseRadius);
-                    cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.denoiseSigma);
+                    cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.shadowFilterRadius);
+                    cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.shadowFilterSigma);
                     cmd.SetComputeIntParam(bilateralFilter, _ShadowSlot, m_LightLoop.m_lightList.lights[lightIdx].shadowIndex);
 
                     // Set the output slot

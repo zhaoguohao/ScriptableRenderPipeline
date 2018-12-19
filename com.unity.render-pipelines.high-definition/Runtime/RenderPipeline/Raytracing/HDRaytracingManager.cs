@@ -139,8 +139,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_Resources.textures.rgNoiseTex0 != null && m_Resources.textures.rgNoiseTex1 != null && m_Resources.textures.rgNoiseTex2 != null && m_Resources.textures.rgNoiseTex3 != null && 
                 m_Resources.textures.rgNoiseTex4 != null && m_Resources.textures.rgNoiseTex5 != null && m_Resources.textures.rgNoiseTex6 != null && m_Resources.textures.rgNoiseTex7 != null)
             {
+                int textureResolution = m_Resources.textures.rgNoiseTex0.width;
                 // Texture
-                m_RGNoiseTexture = new Texture2DArray(256, 256, 8, m_Resources.textures.rgNoiseTex0.format, false);
+                m_RGNoiseTexture = new Texture2DArray(textureResolution, textureResolution, 8, m_Resources.textures.rgNoiseTex0.format, false, true);
 
                 Graphics.CopyTexture(m_Resources.textures.rgNoiseTex0, 0, 0, m_RGNoiseTexture, 0, 0);
                 Graphics.CopyTexture(m_Resources.textures.rgNoiseTex1, 0, 0, m_RGNoiseTexture, 1, 0);

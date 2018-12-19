@@ -23,6 +23,7 @@ float4x4 								_InvViewProjMatrix;
 // int   									_SsrStencilExclusionValue;
 TextureCube 							_SkyTexture;
 SamplerState 							s_trilinear_clamp_sampler;
+int 									_RaytracingNumSamples;
 
 // Output structure of the reflection raytrace shader
 RWTexture2D<float4> 					_SsrLightingTextureRW;
@@ -80,7 +81,7 @@ void RayGenReflections()
 	float roughness = normalData.perceptualRoughness * normalData.perceptualRoughness;
 
 	// the number of samples based on the roughness
-	int numSamples = lerp(1, 13, sqrt(normalData.perceptualRoughness));
+	int numSamples = lerp(1, _RaytracingNumSamples, sqrt(normalData.perceptualRoughness));
 
 	// Variable that accumulate the radiance
 	float3 completeColor = float3(0.0, 0.0, 0.0);
@@ -112,6 +113,7 @@ void RayGenReflections()
 		rayIntersection.color = float3(0.0, 0.0, 0.0);
 		rayIntersection.incidentDirection = rayDescriptor.Direction;
 		rayIntersection.origin = rayDescriptor.Origin;
+		rayIntersection.t = 0.0f;
 
 		// In order to achieve filtering for the textures, we need to compute the spread angle of the pixel
 		rayIntersection.cone.spreadAngle = _PixelSpreadAngle;

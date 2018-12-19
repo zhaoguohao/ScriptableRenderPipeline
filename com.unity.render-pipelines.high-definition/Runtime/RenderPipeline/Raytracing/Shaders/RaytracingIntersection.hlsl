@@ -25,6 +25,8 @@ struct RayIntersection
 	float3 origin;
 	// Direction of the current ray
 	float3 incidentDirection;
+	// Distance of the intersection
+	float t;
 	// Value that holds the color of the ray
 	float3 color;
 	// Cone representation of the ray

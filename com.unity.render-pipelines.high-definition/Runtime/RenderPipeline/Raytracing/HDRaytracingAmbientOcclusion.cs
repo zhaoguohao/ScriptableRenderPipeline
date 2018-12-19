@@ -17,6 +17,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Intermediate buffer that stores the ambient occlusion pre-denoising
         RTHandleSystem.RTHandle m_IntermediateBuffer = null;
+        RTHandleSystem.RTHandle m_HitDistanceBuffer = null;
+        RTHandleSystem.RTHandle m_ViewSpaceNormalBuffer = null;
 
         // String values
         const string m_RayGenShaderName = "RayGenAmbientOcclusion";
@@ -44,10 +46,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Intermediate buffer that holds the pre-denoised texture
             m_IntermediateBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "IntermediateAOBuffer");
+
+            // Buffer that holds the average distance of the rays
+            m_HitDistanceBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RFloat, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "HitDistanceBuffer");
+
+            // Buffer that holds the uncompressed normal buffer
+            m_ViewSpaceNormalBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "ViewSpaceNormalBuffer");
         }
 
         public void Release()
         {
+            RTHandles.Release(m_ViewSpaceNormalBuffer);
+            RTHandles.Release(m_HitDistanceBuffer);
             RTHandles.Release(m_IntermediateBuffer);
         }
 
@@ -96,9 +106,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Inject the ray generation data
             cmd.SetRaytracingFloatParams(aoShader, HDShaderIDs._RaytracingRayBias, rtEnvironement.rayBias);
-            cmd.SetRaytracingFloatParams(aoShader, HDShaderIDs._RaytracingRayMaxLength, rtEnvironement.rayMaxLength);
+            cmd.SetRaytracingFloatParams(aoShader, HDShaderIDs._RaytracingRayMaxLength, rtEnvironement.aoRayLength);
+            cmd.SetRaytracingIntParams(aoShader, HDShaderIDs._RaytracingNumSamples, rtEnvironement.aoNumSamples);
 
             // Set the data for the ray generation
+            cmd.SetRaytracingTextureParam(aoShader, m_RayGenShaderName, HDShaderIDs._HitDistanceTexture, m_HitDistanceBuffer);
+            cmd.SetRaytracingTextureParam(aoShader, m_RayGenShaderName, HDShaderIDs._ViewSpaceNormalTexture, m_ViewSpaceNormalBuffer);
             cmd.SetRaytracingTextureParam(aoShader, m_RayGenShaderName, HDShaderIDs._AmbientOcclusionTexture, m_IntermediateBuffer);
             cmd.SetRaytracingTextureParam(aoShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
             cmd.SetRaytracingTextureParam(aoShader, m_RayGenShaderName, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
@@ -108,27 +121,44 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "Filter Reflection", CustomSamplerId.Raytracing.GetSampler()))
             {
-                // Inject all the parameters for the compute
-                cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.denoiseRadius);
-                cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.denoiseSigma);
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_SourceTexture", m_IntermediateBuffer);
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
+                switch(rtEnvironement.aoFilterMode)
+                {
+                    case HDRaytracingEnvironment.AOFilterMode.Nvidia:
+                    {
+                        cmd.DenoiseAmbientOcclusionTexture(m_IntermediateBuffer, m_HitDistanceBuffer, m_SharedRTManager.GetDepthStencilBuffer(), m_ViewSpaceNormalBuffer, outputTexture, hdCamera.viewMatrix, hdCamera.projMatrix, (uint)rtEnvironement.maxFilterWidthInPixels, rtEnvironement.filterRadiusInMeters, rtEnvironement.normalSharpness, 1.0f, 0.0f);
+                    }
+                    break;
+                    case HDRaytracingEnvironment.AOFilterMode.Bilateral:
+                    {
+                        // Inject all the parameters for the compute
+                        cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.aoBilateralRadius);
+                        cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.aoBilateralSigma);
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_SourceTexture", m_IntermediateBuffer);
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
 
-                // Set the output slot
-                cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_OutputTexture", outputTexture);
+                        // Set the output slot
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_OutputTexture", outputTexture);
 
-                // Texture dimensions
-                int texWidth = outputTexture.rt.width;
-                int texHeight = outputTexture.rt.width;
+                        // Texture dimensions
+                        int texWidth = outputTexture.rt.width;
+                        int texHeight = outputTexture.rt.width;
 
-                // Evaluate the dispatch parameters
-                int areaTileSize = 8;
-                int numTilesX = (texWidth + (areaTileSize - 1)) / areaTileSize;
-                int numTilesY = (texHeight + (areaTileSize - 1)) / areaTileSize;
+                        // Evaluate the dispatch parameters
+                        int areaTileSize = 8;
+                        int numTilesX = (texWidth + (areaTileSize - 1)) / areaTileSize;
+                        int numTilesY = (texHeight + (areaTileSize - 1)) / areaTileSize;
 
-                // Compute the texture
-                cmd.DispatchCompute(bilateralFilter, m_KernelFilter, numTilesX, numTilesY, 1);
+                        // Compute the texture
+                        cmd.DispatchCompute(bilateralFilter, m_KernelFilter, numTilesX, numTilesY, 1);
+                    }
+                    break;
+                    case HDRaytracingEnvironment.AOFilterMode.None:
+                    {
+                        HDUtils.BlitCameraTexture(cmd, hdCamera, m_IntermediateBuffer, outputTexture);
+                    }
+                    break;
+                }
             }
         }
     }

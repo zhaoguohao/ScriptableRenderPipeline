@@ -10,31 +10,88 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
 #if ENABLE_RAYTRACING
         // Generic Ray Data
+        [Range(0.0f, 0.1f)]
         public float rayBias = 0.001f;
-        public float rayMaxLength = 1000f;
 
-        // Area Shadow Data
-        [Range(1, 20)]
-        public int denoiseRadius = 10;
-        [Range(0.01f, 20.0f)]
-        public float denoiseSigma = 5.0f;
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // Ambient Occlusion Data
+        // Flag that defines if the Ambient Occlusion should be Ray-traced
+        public bool raytracedAO = false;
 
-        // Area light budget
-        public const int maxAreaLightShadows = 4;
-        [Range(0, maxAreaLightShadows - 1)]
-        public int numAreaLightShadows = 1;
+        // Filter Type for the ambient occlusion
+        public enum AOFilterMode
+        {
+            None,
+            Bilateral,
+            Nvidia
+        };
+        public AOFilterMode aoFilterMode = AOFilterMode.Bilateral;
 
-        // Light Cluster Dimensions
-        [Range(0, 20)]
-        public int maxNumLightsPercell = 10;
-        [Range(0.01f, 100.0f)]
-        public float cameraClusterRange = 10;
+        // Max Ray Length for the AO
+        [Range(0.001f, 20.0f)]
+        public float aoRayLength = 5.0f;
 
-        // Override the reflections by the raytraced ones
+        // Number of Samples for Ambient Occlusion
+        [Range(1, 64)]
+        public int aoNumSamples = 4;
+
+        // AO Bilateral Filter Data
+        [Range(1, 27)]
+        public int aoBilateralRadius = 10;
+        [Range(0.001f, 9.0f)]
+        public float aoBilateralSigma = 5.0f;
+
+        // Nvidia AO Filter Data
+        [Range(1, 27)]
+        public int maxFilterWidthInPixels = 25;
+        [Range(0.0f, 10.0f)]
+        public float filterRadiusInMeters = 1.0f;
+        [Range(1.0f, 50.0f)]
+        public float normalSharpness = 30.0f;
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // Reflection Data
+        // Flag that defines if the Reflections should be Ray-traced
         public bool raytracedReflections = false;
 
-        // Override the reflections by the raytraced ones
-        public bool raytracedAO = false;
+        // Max Ray Length for the Reflections
+        [Range(0.001f, 50.0f)]
+        public float reflRayLength = 5.0f;
+
+        // Number of Samples for the Reflections
+        [Range(1, 64)]
+        public int reflNumMaxSamples = 13;
+
+        public enum ReflectionsFilterMode
+        {
+            None,
+            Bilateral
+        };
+        public ReflectionsFilterMode reflFilterMode = ReflectionsFilterMode.Bilateral;
+
+        // Reflection Bilateral Filter Data
+        [Range(1, 27)]
+        public int reflBilateralRadius = 10;
+        [Range(0.001f, 9.0f)]
+        public float reflBilateralSigma = 5.0f;
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // Light Cluster
+        [Range(0, 24)]
+        public int maxNumLightsPercell = 10;
+        [Range(0.001f, 50.0f)]
+        public float cameraClusterRange = 10;
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // Area Light Shadows
+        [Range(1, 8)]
+        public int shadowNumSamples = 4;
+        [Range(0, 4)]
+        public int numAreaLightShadows = 1;
+        [Range(1, 27)]
+        public int shadowFilterRadius = 10;
+        [Range(0.001f, 9.0f)]
+        public float shadowFilterSigma = 5.0f;
 
         void Start()
         {
