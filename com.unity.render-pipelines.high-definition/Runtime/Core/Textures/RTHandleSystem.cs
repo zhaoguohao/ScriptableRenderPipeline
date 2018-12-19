@@ -205,6 +205,7 @@ namespace UnityEngine.Experimental.Rendering
 
                 // Grab the render texture
                 var renderTexture = rth.m_RT;
+                Debug.Assert(renderTexture != null); // if RT is null, resize loop breaks early without resizing all valid RTs 
 
                 // Free the previous version
                 renderTexture.Release();
