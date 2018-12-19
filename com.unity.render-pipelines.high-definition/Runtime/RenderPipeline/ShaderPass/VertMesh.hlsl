@@ -28,8 +28,6 @@ PackedVaryingsToPS PackVaryingsToPS(VaryingsToPS input)
 struct InstancedPackedVaryingsToPS
 {
     PackedVaryingsToPS packedVaryingsType;
-
-    UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
@@ -56,7 +54,6 @@ struct InstancedPackedVaryingsToDS
 {
     PackedVaryingsMeshToDS packedVaryingsType;
 
-    UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
 };
 
