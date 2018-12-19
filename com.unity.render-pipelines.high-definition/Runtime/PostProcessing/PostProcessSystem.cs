@@ -230,7 +230,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalTexture(HDShaderIDs._PrevExposureTexture, GetPreviousExposureTexture(camera));
         }
 
-        public void Render(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle colorBuffer, RTHandle lightingBuffer)
+        public void Render(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle colorBuffer, RTHandle lightingBuffer, bool usingTexArray = false)
         {
             void PoolSource(ref RTHandle src, RTHandle dst)
             {
@@ -242,121 +242,137 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
-                var source = colorBuffer;
+                RTHandle source;
+                if (usingTexArray)
+                    source = m_Pool.Get(Vector2.one, k_ColorFormat);
+                else
+                    source = colorBuffer;
 
-                // TODO: Do we want user effects before post?
 
-                // Start with exposure - will be applied in the next frame
-                if (!IsExposureFixed())
+                for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
                 {
-                    using (new ProfilingSample(cmd, "Dynamic Exposure", CustomSamplerId.Exposure.GetSampler()))
+                    if (usingTexArray)
                     {
-                        DoDynamicExposure(cmd, camera, colorBuffer, lightingBuffer);
+                        cmd.Blit(colorBuffer, source, vrPass, 0);
                     }
-                }
+                    // TODO: Do we want user effects before post?
 
-                // Temporal anti-aliasing goes first
-                bool taaEnabled = camera.antialiasing == AntialiasingMode.TemporalAntialiasing
-                    && camera.camera.cameraType == CameraType.Game;
-
-                if (taaEnabled)
-                {
-                    using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
+                    // Start with exposure - will be applied in the next frame
+                    if (!IsExposureFixed())
                     {
-                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoTemporalAntialiasing(cmd, camera, source, destination);
-                        PoolSource(ref source, destination);
-                    }
-                }
-
-                // Depth of Field is done right after TAA as it's easier to just re-project the CoC
-                // map rather than having to deal with all the implications of doing it before TAA
-                if (m_DepthOfField.IsActive())
-                {
-                    using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
-                    {
-                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoDepthOfField(cmd, camera, source, destination, taaEnabled);
-                        PoolSource(ref source, destination);
-                    }
-                }
-
-                // Motion blur after depth of field for aesthetic reasons (better to see motion
-                // blurred bokeh rather than out of focus motion blur)
-                // TODO: Motion blur goes here
-
-                // Panini projection is done as a fullscreen pass after all depth-based effects are
-                // done and before bloom kicks in
-                // This is one effect that would benefit from an overscan mode or supersampling in
-                // HDRP to reduce the amount of resolution lost at the center of the screen
-                if (m_PaniniProjection.IsActive())
-                {
-                    using (new ProfilingSample(cmd, "Panini Projection", CustomSamplerId.PaniniProjection.GetSampler()))
-                    {
-                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                        DoPaniniProjection(cmd, camera, source, destination);
-                        PoolSource(ref source, destination);
-                    }
-                }
-
-                // Combined post-processing stack - always runs if postfx is enabled
-                using (new ProfilingSample(cmd, "Uber", CustomSamplerId.UberPost.GetSampler()))
-                {
-                    // Feature flags are passed to all effects and it's their responsibility to check
-                    // if they are used or not so they can set default values if needed
-                    var cs = m_Resources.shaders.uberPostCS;
-                    var featureFlags = GetUberFeatureFlags();
-                    int kernel = GetUberKernel(cs, featureFlags);
-
-                    // Generate the bloom texture
-                    bool bloomActive = m_Bloom.IsActive();
-
-                    if (bloomActive)
-                    {
-                        using (new ProfilingSample(cmd, "Bloom", CustomSamplerId.Bloom.GetSampler()))
+                        using (new ProfilingSample(cmd, "Dynamic Exposure", CustomSamplerId.Exposure.GetSampler()))
                         {
-                            DoBloom(cmd, camera, source, cs, kernel);
+                            DoDynamicExposure(cmd, camera, source, lightingBuffer);
                         }
                     }
-                    else
+
+                    // Temporal anti-aliasing goes first
+                    bool taaEnabled = camera.antialiasing == AntialiasingMode.TemporalAntialiasing
+                        && camera.camera.cameraType == CameraType.Game;
+
+                    if (taaEnabled)
                     {
-                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._BloomTexture, Texture2D.blackTexture);
-                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._BloomDirtTexture, Texture2D.blackTexture);
-                        cmd.SetComputeVectorParam(cs, HDShaderIDs._BloomParams, Vector4.zero);
+                        using (new ProfilingSample(cmd, "Temporal Anti-aliasing", CustomSamplerId.TemporalAntialiasing.GetSampler()))
+                        {
+                            var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                            DoTemporalAntialiasing(cmd, camera, source, destination);
+                            PoolSource(ref source, destination);
+                        }
                     }
 
-                    // Build the color grading lut
-                    using (new ProfilingSample(cmd, "Color Grading LUT Builder", CustomSamplerId.ColorGradingLUTBuilder.GetSampler()))
+                    // Depth of Field is done right after TAA as it's easier to just re-project the CoC
+                    // map rather than having to deal with all the implications of doing it before TAA
+                    if (m_DepthOfField.IsActive())
                     {
-                        DoColorGrading(cmd, cs, kernel);
+                        using (new ProfilingSample(cmd, "Depth of Field", CustomSamplerId.DepthOfField.GetSampler()))
+                        {
+                            var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                            DoDepthOfField(cmd, camera, source, destination, taaEnabled);
+                            PoolSource(ref source, destination);
+                        }
                     }
 
-                    // Setup the rest of the effects
-                    DoLensDistortion(cmd, cs, kernel, featureFlags);
-                    DoChromaticAberration(cmd, cs, kernel, featureFlags);
-                    DoVignette(cmd, cs, kernel, featureFlags);
+                    // Motion blur after depth of field for aesthetic reasons (better to see motion
+                    // blurred bokeh rather than out of focus motion blur)
+                    // TODO: Motion blur goes here
 
-                    // Run
-                    var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
-                    cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
-                    cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
+                    // Panini projection is done as a fullscreen pass after all depth-based effects are
+                    // done and before bloom kicks in
+                    // This is one effect that would benefit from an overscan mode or supersampling in
+                    // HDRP to reduce the amount of resolution lost at the center of the screen
+                    if (m_PaniniProjection.IsActive())
+                    {
+                        using (new ProfilingSample(cmd, "Panini Projection", CustomSamplerId.PaniniProjection.GetSampler()))
+                        {
+                            var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                            DoPaniniProjection(cmd, camera, source, destination);
+                            PoolSource(ref source, destination);
+                        }
+                    }
 
-                    // Cleanup
-                    if (bloomActive) m_Pool.Recycle(m_BloomTexture);
-                    m_BloomTexture = null;
+                    // Combined post-processing stack - always runs if postfx is enabled
+                    using (new ProfilingSample(cmd, "Uber", CustomSamplerId.UberPost.GetSampler()))
+                    {
+                        // Feature flags are passed to all effects and it's their responsibility to check
+                        // if they are used or not so they can set default values if needed
+                        var cs = m_Resources.shaders.uberPostCS;
+                        var featureFlags = GetUberFeatureFlags();
+                        int kernel = GetUberKernel(cs, featureFlags);
 
-                    PoolSource(ref source, destination);
+                        // Generate the bloom texture
+                        bool bloomActive = m_Bloom.IsActive();
+
+                        if (bloomActive)
+                        {
+                            using (new ProfilingSample(cmd, "Bloom", CustomSamplerId.Bloom.GetSampler()))
+                            {
+                                DoBloom(cmd, camera, source, cs, kernel);
+                            }
+                        }
+                        else
+                        {
+                            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._BloomTexture, Texture2D.blackTexture);
+                            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._BloomDirtTexture, Texture2D.blackTexture);
+                            cmd.SetComputeVectorParam(cs, HDShaderIDs._BloomParams, Vector4.zero);
+                        }
+
+                        // Build the color grading lut
+                        using (new ProfilingSample(cmd, "Color Grading LUT Builder", CustomSamplerId.ColorGradingLUTBuilder.GetSampler()))
+                        {
+                            DoColorGrading(cmd, cs, kernel);
+                        }
+
+                        // Setup the rest of the effects
+                        DoLensDistortion(cmd, cs, kernel, featureFlags);
+                        DoChromaticAberration(cmd, cs, kernel, featureFlags);
+                        DoVignette(cmd, cs, kernel, featureFlags);
+
+                        // Run
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
+                        cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
+                        cmd.DispatchCompute(cs, kernel, (camera.actualWidth + 7) / 8, (camera.actualHeight + 7) / 8, 1);
+
+                        // Cleanup
+                        if (bloomActive) m_Pool.Recycle(m_BloomTexture);
+                        m_BloomTexture = null;
+
+                        PoolSource(ref source, destination);
+
+                        // TODO: User effects go here
+
+                        // Final pass
+                        using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
+                        {
+                            DoFinalPass(cmd, camera, blueNoise, source, usingTexArray);
+                            if (usingTexArray)
+                            {
+                                cmd.Blit(source, BuiltinRenderTextureType.CameraTarget, 0, vrPass);
+                            }
+                        }
+                    }
                 }
-
-                // TODO: User effects go here
-
-                // Final pass
-                using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
-                {
-                    DoFinalPass(cmd, camera, blueNoise, source);
-                    PoolSource(ref source, null);
-                }
+                PoolSource(ref source, null);
             }
 
             m_ResetHistory = false;
@@ -1713,7 +1729,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #region Final Pass
 
-        void DoFinalPass(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle source)
+        void DoFinalPass(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle source, bool usingTexArray = false)
         {
             // Final pass has to be done in a pixel shader as it will be the one writing straight
             // to the backbuffer eventually
@@ -1775,9 +1791,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ? new Vector4(1.0f, -1.0f, 0.0f, 1.0f)
                 : new Vector4(1.0f,  1.0f, 0.0f, 0.0f)
             );
-
-            // Blit to backbuffer
-            HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, BuiltinRenderTextureType.CameraTarget, shaderPassId: pass);
+            if (!usingTexArray)
+                // Blit to backbuffer
+                HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, BuiltinRenderTextureType.CameraTarget, shaderPassId: pass);
+            else
+                HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, source, shaderPassId: pass);
         }
 
         #endregion
