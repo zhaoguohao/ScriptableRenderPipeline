@@ -263,7 +263,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             return Math.Min(definedSharedSamplerUsedNum, sharedSamplerNum);
         }
 
-        // shaderName is the master, non generated shader "name" (ie HDRenderPipeline/StackLit)
+        // shaderName is the master, non generated shader "name" (ie HDRP/StackLit)
         public void Reset(Material material, string shaderName, Action<SamplerClient, int, bool, bool> assignmentCallback, int definedSharedSamplerUsedNum)
         {
             if (material != null)
@@ -533,7 +533,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public const string k_SharedSamplerUsedNumDefine = "SHARED_SAMPLER_USED_NUM";
         public const string k_StackLitGeneratedShaderNamePrefix = StackLitEditorGUI.k_StackLitShaderName + k_GeneratedSuffix; // shaderlab name string of a generated shader is this the sampling config state MD5
         // Matches main or generated shaders, no anchor (\A \z)
-        public const string k_StackLitFamilyFindRegexPattern = @"(?<shadername>HDRenderPipeline\/StackLit)(\/Generated\/(?<statecode>[0-9a-fA-F]{32}))?";
+        public const string k_StackLitFamilyFindRegexPattern = @"(?<shadername>HDRP\/StackLit)(\/Generated\/(?<statecode>[0-9a-fA-F]{32}))?";
 
         private const int k_UseMapUseOwnSamplerValue = 1000;
 
@@ -562,7 +562,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         const string k_UseMapProperyRegexPattern = @"^[\t\ ]*(?<type>float)[\t\ ]{1,}(?<name>\w.*UseMap);[\t\ ]*(\/\/.*|[\t\ ]*)$";
         const string k_ShaderHeaderRegexPattern = @"^[\t\ ]*Shader[\t\ ]*""[\t\ ]*(?<name>.{1,}?)[\t\ ]*""[\t\ ]*(\/\/.*|[\t\ ]*)$";
 
-        private string m_ShaderName; // "HDRenderPipeline/StackLit";
+        private string m_ShaderName; // "HDRP/StackLit";
         private string m_ShaderSimpleName; // "StackLit";
         private string m_DefaultGeneratedFilesPath; // "Assets/" + m_ShaderName + "Generated";
         private string m_GeneratedFilesPath; // m_DefaultGeneratedFilesPath;

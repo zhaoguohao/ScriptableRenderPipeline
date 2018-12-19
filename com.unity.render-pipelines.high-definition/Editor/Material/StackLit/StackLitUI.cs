@@ -17,7 +17,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         };
 
         #region Strings
-        public const string k_StackLitShaderName = "HDRenderPipeline/StackLit";
+        public const string k_StackLitShaderName = "HDRP/StackLit";
         public const string k_StackLitShaderPath = "Runtime/Material/StackLit/StackLit.shader";
         public const string k_StackLitPackagedShaderPath = "Packages/com.unity.render-pipelines.high-definition/" + k_StackLitShaderPath;
 

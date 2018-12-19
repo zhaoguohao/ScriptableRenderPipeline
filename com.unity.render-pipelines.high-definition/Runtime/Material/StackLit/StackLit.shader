@@ -1,4 +1,4 @@
-Shader "HDRenderPipeline/StackLit"
+Shader "HDRP/StackLit"
 {
     Properties
     {
@@ -396,7 +396,7 @@ Shader "HDRenderPipeline/StackLit"
         [ToggleUI] _DistortionEnable("Enable Distortion", Float) = 0.0
         [ToggleUI] _DistortionOnly("Distortion Only", Float) = 0.0
         [ToggleUI] _DistortionDepthTest("Distortion Depth Test Enable", Float) = 1.0
-        [Enum(Add, 0, Multiply, 1)] _DistortionBlendMode("Distortion Blend Mode", Int) = 0
+        [Enum(Add, 0, Multiply, 1, Replace, 2)] _DistortionBlendMode("Distortion Blend Mode", Int) = 0
         [HideInInspector] _DistortionSrcBlend("Distortion Blend Src", Int) = 0
         [HideInInspector] _DistortionDstBlend("Distortion Blend Dst", Int) = 0
         [HideInInspector] _DistortionBlurSrcBlend("Distortion Blur Blend Src", Int) = 0
@@ -617,7 +617,7 @@ Shader "HDRenderPipeline/StackLit"
     SubShader
     {
         // This tags allow to use the shader replacement features
-        Tags{ "RenderPipeline" = "HDRenderPipeline" "RenderType" = "HDStackLitShader" }
+        Tags{ "RenderPipeline" = "HDRenderPipeline" "RenderType" = "StackLitShader" }
 
         Pass
         {
