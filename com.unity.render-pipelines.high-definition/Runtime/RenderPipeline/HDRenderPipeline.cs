@@ -1436,7 +1436,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             {
                                 SSAOTask.EndWithPostWork(cmd, () =>
                                 {
-                                    SSAOPostDispatchWork(cmd, hdCamera, renderContext, postProcessLayer);
+                                    SSAOPostDispatchWork(cmd, hdCamera, renderContext, postProcessLayer, stereoPass);
                                 }
                                 );
                             }
