@@ -1562,6 +1562,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             cmd.BlitFullscreenTriangle(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget); // Prior to 2019.1's y-flip fixes, we didn't need a flip in the shader
 #endif
                                 }
+                                else if (camera.cameraType == CameraType.SceneView && XRGraphics.usingTexArray())
+                                {
+                                    cmd.Blit(m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, new Vector2(camera.pixelRect.width/m_CameraColorBuffer.rt.width, camera.pixelRect.height/m_CameraColorBuffer.rt.height), new Vector2(0f, 0f), 0, 0);
+                                }
                                 else
                                 {
                                     HDUtils.BlitCameraTexture(cmd, hdCamera, m_CameraColorBuffer, BuiltinRenderTextureType.CameraTarget, hdCamera.flipYMode == HDAdditionalCameraData.FlipYMode.ForceFlipY);
@@ -2504,7 +2508,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         HDUtils.BlitCameraTexture(cmd, hdcamera, m_SharedRTManager.GetVelocityBuffer(), HDShaderIDs._CameraMotionVectorsTexture);
                     }
                     cmd.GetTemporaryRT(HDShaderIDs._CameraColorTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_CameraColorBuffer.rt.format);
-                    HDUtils.BlitCameraTexture(cmd, hdcamera, m_CameraColorBuffer, HDShaderIDs._CameraColorTexture);
+                    if (XRGraphics.usingTexArray())
+                    {
+                        cmd.Blit(m_CameraColorBuffer, HDShaderIDs._CameraColorTexture, new Vector2(hdcamera.camera.pixelRect.width / m_CameraColorBuffer.rt.width, hdcamera.camera.pixelRect.height / m_CameraColorBuffer.rt.height), new Vector2(0f, 0f), 0, 0);
+                    }
+                    else
+                        HDUtils.BlitCameraTexture(cmd, hdcamera, m_CameraColorBuffer, HDShaderIDs._CameraColorTexture);
                     source = HDShaderIDs._CameraColorTexture;
                 }
                 else
