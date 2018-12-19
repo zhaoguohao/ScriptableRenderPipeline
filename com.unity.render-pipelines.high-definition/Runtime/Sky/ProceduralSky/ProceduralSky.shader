@@ -41,7 +41,6 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
     struct Varyings
     {
         float4 positionCS : SV_POSITION;
-        UNITY_VERTEX_INPUT_INSTANCE_ID
         UNITY_VERTEX_OUTPUT_STEREO
     };
 
@@ -50,7 +49,6 @@ Shader "Hidden/HDRenderPipeline/Sky/ProceduralSky"
         UNITY_SETUP_INSTANCE_ID(input);
         Varyings output;
         output.positionCS = GetFullScreenTriangleVertexPosition(input.vertexID, UNITY_RAW_FAR_CLIP_VALUE);
-        UNITY_TRANSFER_INSTANCE_ID(input, output);
         UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
         return output;
     }

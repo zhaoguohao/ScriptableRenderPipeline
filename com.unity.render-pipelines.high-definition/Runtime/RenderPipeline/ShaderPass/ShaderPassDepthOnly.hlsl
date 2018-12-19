@@ -11,7 +11,6 @@ InstancedPackedVaryingsType Vert(AttributesMesh inputMesh)
     varyingsType.vmesh = VertMesh(inputMesh);
     InstancedPackedVaryingsType outVaryings;
     outVaryings.packedVaryingsType = PackVaryingsType(varyingsType);
-    UNITY_TRANSFER_INSTANCE_ID(inputMesh, outVaryings);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(outVaryings);
     return outVaryings;
 }
@@ -25,7 +24,6 @@ InstancedPackedVaryingsToPS VertTesselation(VaryingsToDS input)
     varyingsToPS.vmesh = VertMeshTesselation(input.vmesh);
     InstancedPackedVaryingsToPS outVaryings;
     outVaryings.packedVaryingsType = PackVaryingsToPS(varyingsToPS);
-    UNITY_TRANSFER_INSTANCE_ID(inputMesh, outVaryings);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(outVaryings);
     return outVaryings;
 }
