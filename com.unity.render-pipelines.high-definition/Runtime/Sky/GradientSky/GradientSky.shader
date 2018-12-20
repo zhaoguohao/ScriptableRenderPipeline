@@ -11,7 +11,8 @@ Shader "Hidden/HDRP/Sky/GradientSky"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonLighting.hlsl"
-	#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+    #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Sky/SkyUtils.hlsl"
 
     float4x4 _PixelCoordToViewDirWS; // Actually just 3x3, but Unity can only set 4x4
     
@@ -44,22 +45,14 @@ Shader "Hidden/HDRP/Sky/GradientSky"
     float4 Frag(Varyings input) : SV_Target
     {
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-#if defined(USING_STEREO_MATRICES)
-        // The computed PixelCoordToViewDir matrix doesn't seem to capture stereo eye offset. 
-        // So for VR, we compute WSPosition using the stereo matrices instead.
-        PositionInputs posInput = GetPositionInput_Stereo(input.positionCS.xy, _ScreenSize.zw, input.positionCS.z, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
-        float3 viewDirWS = -normalize(posInput.positionWS);
-#else
-		float3 viewDirWS = normalize(mul(float3(input.positionCS.xy, 1.0), (float3x3)_PixelCoordToViewDirWS));
-#endif
+        float3 viewDirWS = GetSkyViewDirWS(input.positionCS.xy, (float3x3)_PixelCoordToViewDirWS);
         float verticalGradient = viewDirWS.y * _GradientDiffusion;
-		float topLerpFactor = saturate(-verticalGradient);
-		float bottomLerpFactor = saturate(verticalGradient);
-		float3 color = lerp(_GradientMiddle.xyz, _GradientBottom.xyz, bottomLerpFactor);
-		color = lerp(color, _GradientTop.xyz, topLerpFactor);
-		return float4 (color, 1.0);
+        float topLerpFactor = saturate(-verticalGradient);
+        float bottomLerpFactor = saturate(verticalGradient);
+        float3 color = lerp(_GradientMiddle.xyz, _GradientBottom.xyz, bottomLerpFactor);
+        color = lerp(color, _GradientTop.xyz, topLerpFactor);
+        return float4 (color, 1.0);
     }
-
 
     ENDHLSL
 
