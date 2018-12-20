@@ -1182,7 +1182,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         GenerateDepthPyramid(hdCamera, cmd, FullScreenDebugMode.DepthPyramid, vrPass);
                         // Depth texture is now ready, bind it (Depth buffer could have been bind before if DBuffer is enable)
                         cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthTexture(false, 0));
-                        if (SPI)
+                        if (SPI) // Need this for opaque atmospheric scattering for now
                             cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture_Right, m_SharedRTManager.GetDepthTexture(false, 1)); // Mipchain isn't fully ready but it's good enough for atmospheric scattering which needs it early
 
 
@@ -1204,7 +1204,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
                         else
                         { 
-                            m_AmbientOcclusionSystem.Render(cmd, hdCamera, m_SharedRTManager);
+                            m_AmbientOcclusionSystem.Render(cmd, hdCamera, m_SharedRTManager, vrPass);
 
                             // Clear and copy the stencil texture needs to be moved to before we invoke the async light list build,
                             // otherwise the async compute queue can end up using that texture before the graphics queue is done with it.
@@ -1321,7 +1321,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             if (hdCamera.frameSettings.SSAORunsAsync())
                             {
-                                void AsyncSSAODispatch(CommandBuffer asyncCmd) => m_AmbientOcclusionSystem.Dispatch(asyncCmd, hdCamera, m_SharedRTManager);
+                                void AsyncSSAODispatch(CommandBuffer asyncCmd) => m_AmbientOcclusionSystem.Dispatch(asyncCmd, hdCamera, m_SharedRTManager, vrPass);
                                 SSAOTask.Start(cmd, renderContext, AsyncSSAODispatch, !haveAsyncTaskWithShadows);
                                 haveAsyncTaskWithShadows = true;
                             }
@@ -1389,7 +1389,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             
                             if (hdCamera.frameSettings.SSAORunsAsync())
                             {
-                                SSAOTask.EndWithPostWork(cmd, () => m_AmbientOcclusionSystem.PostDispatchWork(cmd, hdCamera, m_SharedRTManager));
+                                SSAOTask.EndWithPostWork(cmd, () => m_AmbientOcclusionSystem.PostDispatchWork(cmd, hdCamera, m_SharedRTManager, vrPass));
                             }
 
                             if (hdCamera.frameSettings.ContactShadowsRunAsync())

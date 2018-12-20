@@ -52,7 +52,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly int[] m_Widths = new int[7];
         readonly int[] m_Heights = new int[7];
 
-        readonly RTHandle m_AmbientOcclusionTex;
+        readonly RTHandle[] m_AmbientOcclusionTex;
 
         // All the targets needed are pre-allocated and only released on cleanup for now to avoid
         // having to constantly allo/dealloc on every frame
@@ -80,7 +80,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly ScaleFunc[] m_ScaleFunctors;
 
         // MSAA-specifics
-        readonly RTHandle m_MultiAmbientOcclusionTex;
+        readonly RTHandle[] m_MultiAmbientOcclusionTex;
         readonly MaterialPropertyBlock m_ResolvePropertyBlock;
         readonly Material m_ResolveMaterial;
 
@@ -93,28 +93,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             bool supportMSAA = hdAsset.renderPipelineSettings.supportMSAA;
 
+            int numPass = XRGraphics.numPass();
             // Destination targets
-            m_AmbientOcclusionTex = RTHandles.Alloc(Vector2.one,
-                filterMode: FilterMode.Bilinear,
-                colorFormat: RenderTextureFormat.R8,
-                sRGB: false,
-                enableRandomWrite: true,
-                name: "Ambient Occlusion"
-            );
-
-            if (supportMSAA)
+            m_AmbientOcclusionTex = new RTHandle[numPass];
+            m_MultiAmbientOcclusionTex = new RTHandle[numPass];
+            for (int vrPass = 0; vrPass < numPass; vrPass++)
             {
-                m_MultiAmbientOcclusionTex = RTHandles.Alloc(Vector2.one,
+                m_AmbientOcclusionTex[vrPass] = RTHandles.Alloc(Vector2.one,
                     filterMode: FilterMode.Bilinear,
-                    colorFormat: RenderTextureFormat.RG16,
+                    colorFormat: RenderTextureFormat.R8,
                     sRGB: false,
                     enableRandomWrite: true,
-                    name: "Ambient Occlusion MSAA"
+                    name: "Ambient Occlusion"
                 );
-
-                m_ResolveMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.aoResolvePS);
-                m_ResolvePropertyBlock = new MaterialPropertyBlock();
+                if (supportMSAA)
+                {
+                    m_MultiAmbientOcclusionTex[vrPass] = RTHandles.Alloc(Vector2.one,
+                        filterMode: FilterMode.Bilinear,
+                        colorFormat: RenderTextureFormat.RG16,
+                        sRGB: false,
+                        enableRandomWrite: true,
+                        name: "Ambient Occlusion MSAA"
+                    );
+                }
             }
+
+            m_ResolveMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.aoResolvePS);
+            m_ResolvePropertyBlock = new MaterialPropertyBlock();
 
             // Prepare scale functors
             m_ScaleFunctors = new ScaleFunc[(int)MipLevel.Count];
@@ -165,8 +170,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             CoreUtils.Destroy(m_ResolveMaterial);
 
-            RTHandles.Release(m_AmbientOcclusionTex);
-            RTHandles.Release(m_MultiAmbientOcclusionTex);
+            for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
+            {
+                RTHandles.Release(m_AmbientOcclusionTex[vrPass]);
+                RTHandles.Release(m_MultiAmbientOcclusionTex[vrPass]);
+            }
 
             RTHandles.Release(m_LinearDepthTex);
             
@@ -192,13 +200,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool IsActive(HDCamera camera, AmbientOcclusion settings) => camera.frameSettings.enableSSAO && settings.intensity.value > 0f;
 
-        public void Render(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager)
+        public void Render(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager, int vrPass = 0)
         {
-            Dispatch(cmd, camera, sharedRTManager);
-            PostDispatchWork(cmd, camera, sharedRTManager);
+            Dispatch(cmd, camera, sharedRTManager, vrPass);
+            PostDispatchWork(cmd, camera, sharedRTManager, vrPass);
         }
 
-        public void Dispatch(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager)
+        public void Dispatch(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager, int vrPass = 0)
         {
             // Grab current settings
             var settings = VolumeManager.instance.stack.GetComponent<AmbientOcclusion>();
@@ -231,13 +239,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 if (msaa)
                 {
-                    depthMap = sharedRTManager.GetDepthValuesTexture();
-                    destination = m_MultiAmbientOcclusionTex;
+                    depthMap = sharedRTManager.GetDepthValuesTexture(vrPass);
+                    destination = m_MultiAmbientOcclusionTex[vrPass];
                 }
                 else
                 {
-                    depthMap = sharedRTManager.GetDepthTexture();
-                    destination = m_AmbientOcclusionTex;
+                    depthMap = sharedRTManager.GetDepthTexture(false, vrPass);
+                    destination = m_AmbientOcclusionTex[vrPass];
                 }
 
                 // Render logic
@@ -256,7 +264,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void PostDispatchWork(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager)
+        public void PostDispatchWork(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager, int vrPass = 0)
         {
             // Grab current settings
             var settings = VolumeManager.instance.stack.GetComponent<AmbientOcclusion>();
@@ -274,18 +282,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 using (new ProfilingSample(cmd, "Resolve AO Buffer", CustomSamplerId.ResolveSSAO.GetSampler()))
                 {
-                    HDUtils.SetRenderTarget(cmd, camera, m_AmbientOcclusionTex);
-                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._DepthValuesTexture, sharedRTManager.GetDepthValuesTexture());
-                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._MultiAmbientOcclusionTexture, m_MultiAmbientOcclusionTex);
+                    HDUtils.SetRenderTarget(cmd, camera, m_AmbientOcclusionTex[vrPass]);
+                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._DepthValuesTexture, sharedRTManager.GetDepthValuesTexture(vrPass));
+                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._MultiAmbientOcclusionTexture, m_MultiAmbientOcclusionTex[vrPass]);
                     cmd.DrawProcedural(Matrix4x4.identity, m_ResolveMaterial, 0, MeshTopology.Triangles, 3, 1, m_ResolvePropertyBlock);
                 }
             }
-
-            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionTex);
-            cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(0f, 0f, 0f, settings.directLightingStrength.value));
+            if (vrPass == 1) // Only bind after all AO textures are complete
+            {
+                cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionTex[0]);
+                cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture_Right, m_AmbientOcclusionTex[1]);
+                cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(0f, 0f, 0f, settings.directLightingStrength.value));
+            }
 
             // TODO: All the pushdebug stuff should be centralized somewhere
-            (RenderPipelineManager.currentPipeline as HDRenderPipeline).PushFullScreenDebugTexture(camera, cmd, m_AmbientOcclusionTex, FullScreenDebugMode.SSAO);
+            (RenderPipelineManager.currentPipeline as HDRenderPipeline).PushFullScreenDebugTexture(camera, cmd, m_AmbientOcclusionTex[0], FullScreenDebugMode.SSAO);
         }
 
         void Alloc(out RTHandle rt, MipLevel size, RenderTextureFormat format, bool uav)
