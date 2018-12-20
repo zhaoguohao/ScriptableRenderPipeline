@@ -59,7 +59,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 entries.Add(new SlotEntry()
                 {
                     id = slot.id,
-                    name = slot.displayName,
+                    name = slot.RawDisplayName(),
                     valueType = slot.valueType,
                 });
             }
@@ -137,7 +137,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
 
             m_Node.UpdateNodeAfterDeserialization();
-            m_Node.OnBeforeSerialize();
+            //m_Node.OnBeforeSerialize();
         }
 
         private int GetNewSlotID()

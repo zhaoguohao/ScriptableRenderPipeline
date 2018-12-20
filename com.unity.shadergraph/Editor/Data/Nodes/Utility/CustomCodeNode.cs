@@ -9,9 +9,14 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
+
+
     [Title("Custom Code")]
     class CustomCodeNode : AbstractMaterialNode, IGeneratesFunction, IGeneratesBodyCode, IHasSettings
     {
+        [SerializeField]
+        SerializableSlot[] m_SerializableInputSlots = { new SerializableSlot(0, "In", SlotType.Input, SlotValueType.Vector1) };
+
         [SerializeField]
 		List<MaterialSlot> m_InputSlots;
 
@@ -20,11 +25,20 @@ namespace UnityEditor.ShaderGraph
 		{
 			get 
             { 
-                if(m_InputSlots == null)
+                if (m_SerializableInputSlots != null)
+                {
                     m_InputSlots = new List<MaterialSlot>();
+                    Debug.Log(m_SerializableInputSlots.Length);
+                    for(int i = 0; i < m_SerializableInputSlots.Length; i++)
+                        m_InputSlots.Add(m_SerializableInputSlots[i].Deserialize());
+                    m_SerializableInputSlots = null;
+                }
                 return m_InputSlots; 
             }
 		}
+
+        [SerializeField]
+        SerializableSlot[] m_SerializableOutputSlots = { new SerializableSlot(1, "Out", SlotType.Output, SlotValueType.Vector1) };
 
         [SerializeField]
 		List<MaterialSlot> m_OutputSlots;
@@ -34,14 +48,19 @@ namespace UnityEditor.ShaderGraph
 		{
 			get 
             {
-                if(m_OutputSlots == null)
-                    m_OutputSlots = new List<MaterialSlot>(); 
+                if (m_SerializableOutputSlots != null)
+                {
+                    m_OutputSlots = new List<MaterialSlot>();
+                    for(int i = 0; i < m_SerializableOutputSlots.Length; i++)
+                        m_OutputSlots.Add(m_SerializableOutputSlots[i].Deserialize());
+                    m_SerializableOutputSlots = null;
+                }
                 return m_OutputSlots; 
             }
 		}
 
 		[SerializeField]
-		private string m_Code;
+		private string m_Code = "Out = In;";
 
 		[TextFieldControl("", true)]
 		public string code
@@ -82,6 +101,23 @@ namespace UnityEditor.ShaderGraph
             //RemoveSlotsNameNotMatching(validSlots);
         } 
 
+        public override void OnBeforeSerialize()
+        {
+            base.OnBeforeSerialize();
+            if (m_InputSlots != null)
+            {
+                m_SerializableInputSlots = new SerializableSlot[m_InputSlots.Count];
+                for(int i = 0; i < m_InputSlots.Count; i++)
+                    m_SerializableInputSlots[i] = m_InputSlots[i].Serialize();
+            }
+            if (m_OutputSlots != null)
+            {
+                m_SerializableOutputSlots = new SerializableSlot[m_OutputSlots.Count];
+                for(int i = 0; i < m_OutputSlots.Count; i++)
+                    m_SerializableOutputSlots[i] = m_OutputSlots[i].Serialize();
+            }
+        }
+
 		string GetFunctionName()
         {
             return string.Format("Unity_CustomCode_{0}", precision);
@@ -91,8 +127,6 @@ namespace UnityEditor.ShaderGraph
         {
             Debug.Log(string.Format("Generating from {0} input slots", inputSlots.Count));
 			var arguments = new List<string>();
-
-            //Debug.Log(inputSlots.Count);
 
             for(int i = 0; i < inputSlots.Count; i++)
                 arguments.Add(GetSlotValue(inputSlots[i].id, generationMode));
@@ -156,6 +190,38 @@ namespace UnityEditor.ShaderGraph
             container.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
             container.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
             return container;
+        }
+    }
+
+    [Serializable]
+    struct SerializableSlot
+    {
+        [SerializeField] int id;
+        [SerializeField] string name;
+        [SerializeField] SlotType slotType;
+        [SerializeField] SlotValueType valueType;
+
+        public SerializableSlot(int id, string name, SlotType slotType, SlotValueType valueType)
+        {
+            this.id = id;
+            this.name = name;
+            this.slotType = slotType;
+            this.valueType = valueType;
+        }
+
+        public MaterialSlot Deserialize()
+        {
+            MaterialSlot slot = MaterialSlot.CreateMaterialSlot(valueType, id, name, NodeUtils.GetHLSLSafeName(name), 
+                slotType, Vector4.zero, ShaderStageCapability.All);
+            return slot;
+        }
+    }
+
+    static class SerializableSlotUtil
+    {
+        public static SerializableSlot Serialize(this MaterialSlot slot)
+        {
+            return new SerializableSlot(slot.id, slot.RawDisplayName(), slot.slotType, slot.valueType);
         }
     }
 }
