@@ -101,7 +101,7 @@ namespace UnityEditor.ShaderGraph
                 validSlots.Add(slot.id);
             }
 
-            //RemoveSlotsNameNotMatching(validSlots);
+            RemoveSlotsNameNotMatching(validSlots);
         } 
 
         public override void OnBeforeSerialize()

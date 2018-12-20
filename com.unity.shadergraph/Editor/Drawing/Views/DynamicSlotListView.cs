@@ -23,12 +23,15 @@ namespace UnityEditor.ShaderGraph.Drawing
 		IMGUIContainer m_Container;
         ReorderableList m_ReorderableList;
 
+        int m_SelectedIndex = -1;
+
         public DynamicSlotListView(AbstractMaterialNode node, List<MaterialSlot> slots, SlotType type)
         {
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/DynamicSlotListView"));
             m_Node = node;
             m_Type = type;
             m_Slots = slots;
+            //m_SelectedIndex = m_Slots.Count - 1;
 
             m_Container = new IMGUIContainer(() => OnGUIHandler ()) { name = "ListContainer" };
             Add(m_Container);
@@ -41,6 +44,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var listTitle = string.Format("{0} Slots", m_Type.ToString());
                 var entries = ConvertSlotsToEntries(m_Slots);
                 m_ReorderableList = CreateReorderableList(entries, listTitle, true, true, true, true);
+                m_ReorderableList.index = m_SelectedIndex;
                 m_ReorderableList.DoLayoutList();
 
                 if (changeCheckScope.changed)
@@ -79,7 +83,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => 
             {
                 rect.y += 2;
-                DrawEntry(list[index], new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight));
+                DrawEntry(reorderableList, index, new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight));
             };
 
             reorderableList.elementHeightCallback = (int indexer) => 
@@ -87,29 +91,51 @@ namespace UnityEditor.ShaderGraph.Drawing
                 return reorderableList.elementHeight;
             };
 
+            //reorderableList.onCanRemoveCallback += CanRemoveEntry;
+            reorderableList.onSelectCallback += SelectEntry;
             reorderableList.onAddCallback += AddEntry;
             reorderableList.onRemoveCallback += RemoveEntry;
             return reorderableList;
         }
 
-        private void DrawEntry(SlotEntry entry, Rect rect)
+        private void DrawEntry(ReorderableList list, int index, Rect rect)
         {
             GUIStyle labelStyle = new GUIStyle();
+
+            if(index == m_SelectedIndex)
+                EditorGUI.DrawRect(rect, Color.grey);
+
             labelStyle.normal.textColor = Color.white;
+
+            SlotEntry entry = list.list[index] as SlotEntry;
             entry.name = EditorGUI.TextField( new Rect(rect.x, rect.y, rect.width / 2, EditorGUIUtility.singleLineHeight), entry.name, labelStyle);
             entry.valueType = (SlotValueType)EditorGUI.EnumPopup( new Rect(rect.x + rect.width / 2, rect.y, rect.width / 2, EditorGUIUtility.singleLineHeight), entry.valueType);
+        }
+
+        private void SelectEntry(ReorderableList list)
+        {
+            m_SelectedIndex = list.index;
+            Redraw();
         }
 
         private void AddEntry(ReorderableList list)
         {
             list.list.Add(new SlotEntry() { id = -1, name = "New Slot", valueType = SlotValueType.Vector1 } );
+            m_SelectedIndex = m_Slots.Count - 1;
             Redraw();
         }
 
         private void RemoveEntry(ReorderableList list)
         {
-            list.list.RemoveAt(list.index);
+            list.index = m_SelectedIndex;
+            ReorderableList.defaultBehaviours.DoRemoveButton(list);
+            m_SelectedIndex = list.index;
             Redraw();
+        }
+
+        private bool CanRemoveEntry(ReorderableList list)
+        {
+            return true;//m_SelectedIndex != -1;
         }
 
         void Redraw()
@@ -137,7 +163,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
 
             m_Node.UpdateNodeAfterDeserialization();
-            //m_Node.OnBeforeSerialize();
         }
 
         private int GetNewSlotID()
