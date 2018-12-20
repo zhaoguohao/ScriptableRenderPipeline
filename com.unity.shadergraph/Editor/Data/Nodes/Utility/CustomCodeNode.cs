@@ -10,10 +10,19 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
-
-
     [Title("Custom Code")]
-    class CustomCodeNode : AbstractMaterialNode, IGeneratesFunction, IGeneratesBodyCode, IHasSettings
+    class CustomCodeNode : AbstractMaterialNode
+        , IHasSettings
+        , IGeneratesBodyCode
+        , IGeneratesFunction
+        , IMayRequireNormal
+        , IMayRequireTangent
+        , IMayRequireBitangent
+        , IMayRequireMeshUV
+        , IMayRequireScreenPosition
+        , IMayRequireViewDirection
+        , IMayRequirePosition
+        , IMayRequireVertexColor
     {
         [SerializeField]
         SerializableSlot[] m_SerializableInputSlots = { new SerializableSlot(0, "In", SlotType.Input, SlotValueType.Vector1) };
@@ -207,6 +216,92 @@ namespace UnityEditor.ShaderGraph
             owner.owner.RegisterCompleteObjectUndo("Blend Preserve Specular Change");
             m_DisplayPreview = evt.newValue;
             Dirty(ModificationScope.Graph);
+        }
+
+        public NeededCoordinateSpace RequiresNormal(ShaderStageCapability stageCapability)
+        {
+            var binding = NeededCoordinateSpace.None;
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            foreach (var slot in s_TempSlots)
+                binding |= slot.RequiresNormal();
+            return binding;
+        }
+
+        public NeededCoordinateSpace RequiresViewDirection(ShaderStageCapability stageCapability)
+        {
+            var binding = NeededCoordinateSpace.None;
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            foreach (var slot in s_TempSlots)
+                binding |= slot.RequiresViewDirection();
+            return binding;
+        }
+
+        public NeededCoordinateSpace RequiresPosition(ShaderStageCapability stageCapability)
+        {
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            var binding = NeededCoordinateSpace.None;
+            foreach (var slot in s_TempSlots)
+                binding |= slot.RequiresPosition();
+            return binding;
+        }
+
+        public NeededCoordinateSpace RequiresTangent(ShaderStageCapability stageCapability)
+        {
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            var binding = NeededCoordinateSpace.None;
+            foreach (var slot in s_TempSlots)
+                binding |= slot.RequiresTangent();
+            return binding;
+        }
+
+        public NeededCoordinateSpace RequiresBitangent(ShaderStageCapability stageCapability)
+        {
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            var binding = NeededCoordinateSpace.None;
+            foreach (var slot in s_TempSlots)
+                binding |= slot.RequiresBitangent();
+            return binding;
+        }
+
+        public bool RequiresMeshUV(UVChannel channel, ShaderStageCapability stageCapability)
+        {
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            foreach (var slot in s_TempSlots)
+            {
+                if (slot.RequiresMeshUV(channel))
+                    return true;
+            }
+            return false;
+        }
+
+        public bool RequiresScreenPosition(ShaderStageCapability stageCapability)
+        {
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            foreach (var slot in s_TempSlots)
+            {
+                if (slot.RequiresScreenPosition())
+                    return true;
+            }
+            return false;
+        }
+
+        public bool RequiresVertexColor(ShaderStageCapability stageCapability)
+        {
+            s_TempSlots.Clear();
+            GetInputSlots(s_TempSlots);
+            foreach (var slot in s_TempSlots)
+            {
+                if (slot.RequiresVertexColor())
+                    return true;
+            }
+            return false;
         }
     }
 
