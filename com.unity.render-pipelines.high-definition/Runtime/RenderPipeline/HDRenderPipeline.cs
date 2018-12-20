@@ -1220,18 +1220,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderCameraVelocity(cullingResults, hdCamera, renderContext, cmd);
 
                         StopStereoRendering(cmd, renderContext, camera);
-                    }
-
-                    // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
-                    // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
-                    UpdateSkyEnvironment(hdCamera, cmd);
-
-                    StartStereoRendering(cmd, renderContext, camera);
-                    RenderSky(hdCamera, cmd);
-                    StopStereoRendering(cmd, renderContext, camera);
-
-                    for (int stereoPass = 0; stereoPass < numStereoPasses; stereoPass++)
-                    {
 
                         if (m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                         {
@@ -1464,6 +1452,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
                     }
 
+                    // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
+                    // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
+                    UpdateSkyEnvironment(hdCamera, cmd);
+
+                    StartStereoRendering(cmd, renderContext, camera);
+                    RenderSky(hdCamera, cmd);
+
                     if (!m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                     {
                         cmd.DisableShaderKeyword("FORCE_MULTIPASS");
@@ -1524,11 +1519,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             AccumulateDistortion(cullingResults, hdCamera, renderContext, cmd);
                             RenderDistortion(hdCamera, cmd, stereoPass);
-
-                            StopStereoRendering(cmd, renderContext, camera);
                         }
 
-                        
+
+                        StopStereoRendering(cmd, renderContext, camera);
+
                         PushFullScreenDebugTexture(hdCamera, cmd, m_CameraColorBuffer, FullScreenDebugMode.NanTracker);
                         PushFullScreenLightingDebugTexture(hdCamera, cmd, m_CameraColorBuffer);
                         PushColorPickerDebugTexture(cmd, m_CameraColorBuffer, hdCamera);
