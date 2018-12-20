@@ -13,21 +13,31 @@ namespace UnityEditor.ShaderGraph
     class CustomCodeNode : AbstractMaterialNode, IGeneratesFunction, IGeneratesBodyCode, IHasSettings
     {
         [SerializeField]
-		DynamicSlotList m_InputSlotList;
+		List<MaterialSlot> m_InputSlots;
 
         //[DynamicSlotListControl(SlotType.Input)]
-		public DynamicSlotList inputSlotList
+		public List<MaterialSlot> inputSlots
 		{
-			get { return m_InputSlotList; }
+			get 
+            { 
+                if(m_InputSlots == null)
+                    m_InputSlots = new List<MaterialSlot>();
+                return m_InputSlots; 
+            }
 		}
 
         [SerializeField]
-		DynamicSlotList m_OutputSlotList;
+		List<MaterialSlot> m_OutputSlots;
         
         //[DynamicSlotListControl(SlotType.Output)]
-		public DynamicSlotList outputSlotList
+		public List<MaterialSlot> outputSlots
 		{
-			get { return m_OutputSlotList; }
+			get 
+            {
+                if(m_OutputSlots == null)
+                    m_OutputSlots = new List<MaterialSlot>(); 
+                return m_OutputSlots; 
+            }
 		}
 
 		[SerializeField]
@@ -54,11 +64,22 @@ namespace UnityEditor.ShaderGraph
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
-            m_InputSlotList = new DynamicSlotList(this, SlotType.Input);
-            m_OutputSlotList = new DynamicSlotList(this, SlotType.Output);
-            
-            var validSlots = m_InputSlotList.validSlots.Union(m_OutputSlotList.validSlots).ToArray();
-            RemoveSlotsNameNotMatching(validSlots);
+            Debug.Log(string.Format("Deserializing {0} input slots", inputSlots.Count));
+            List<int> validSlots = new List<int>();
+
+            foreach(MaterialSlot slot in inputSlots)
+            {
+                AddSlot(slot);
+                validSlots.Add(slot.id);
+            }
+                
+            foreach(MaterialSlot slot in outputSlots)
+            {
+                AddSlot(slot);
+                validSlots.Add(slot.id);
+            }
+
+            //RemoveSlotsNameNotMatching(validSlots);
         } 
 
 		string GetFunctionName()
@@ -68,22 +89,25 @@ namespace UnityEditor.ShaderGraph
 
 		public void GenerateNodeCode(ShaderGenerator visitor, GraphContext context, GenerationMode generationMode)
         {
+            Debug.Log(string.Format("Generating from {0} input slots", inputSlots.Count));
 			var arguments = new List<string>();
 
-            for(int i = 0; i < inputSlotList.slots.Count; i++)
-                arguments.Add(GetSlotValue(inputSlotList.slots[i].slotId, generationMode));
+            //Debug.Log(inputSlots.Count);
 
-			for(int i = 0; i < outputSlotList.slots.Count; i++)
-                arguments.Add(GetVariableNameForSlot(outputSlotList.slots[i].slotId));
+            for(int i = 0; i < inputSlots.Count; i++)
+                arguments.Add(GetSlotValue(inputSlots[i].id, generationMode));
+
+			for(int i = 0; i < outputSlots.Count; i++)
+                arguments.Add(GetVariableNameForSlot(outputSlots[i].id));
 
             if(arguments.Count == 0)
                 return;
 
-            for(int i = 0; i < outputSlotList.slots.Count; i++)
+            for(int i = 0; i < outputSlots.Count; i++)
             {
                 visitor.AddShaderChunk(string.Format("{0} {1};", 
-                    FindOutputSlot<MaterialSlot>(outputSlotList.slots[i].slotId).concreteValueType.ToString(precision), 
-                    GetVariableNameForSlot(outputSlotList.slots[i].slotId)), false);
+                    FindOutputSlot<MaterialSlot>(outputSlots[i].id).concreteValueType.ToString(precision), 
+                    GetVariableNameForSlot(outputSlots[i].id)), false);
             }
 
 			visitor.AddShaderChunk(
@@ -97,15 +121,15 @@ namespace UnityEditor.ShaderGraph
         {
 			var arguments = new List<string>();
             
-			for(int i = 0; i < inputSlotList.slots.Count; i++)
+			for(int i = 0; i < inputSlots.Count; i++)
 			{
-                MaterialSlot slot = FindInputSlot<MaterialSlot>(inputSlotList.slots[i].slotId);
+                MaterialSlot slot = FindInputSlot<MaterialSlot>(inputSlots[i].id);
 				arguments.Add(string.Format("{0} {1}", slot.concreteValueType.ToString(precision), slot.shaderOutputName));
 			}
 
-			for(int i = 0; i < outputSlotList.slots.Count; i++)
+			for(int i = 0; i < outputSlots.Count; i++)
 			{
-                MaterialSlot slot = FindOutputSlot<MaterialSlot>(outputSlotList.slots[i].slotId);
+                MaterialSlot slot = FindOutputSlot<MaterialSlot>(outputSlots[i].id);
 				arguments.Add(string.Format("out {0} {1}", slot.concreteValueType.ToString(precision), slot.shaderOutputName));
 			}
 
@@ -129,8 +153,8 @@ namespace UnityEditor.ShaderGraph
         public VisualElement CreateSettingsElement()
         {
             VisualElement container = new VisualElement();
-            container.Add(inputSlotList.CreateSettingsElement());
-            container.Add(outputSlotList.CreateSettingsElement());
+            container.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
+            container.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
             return container;
         }
     }

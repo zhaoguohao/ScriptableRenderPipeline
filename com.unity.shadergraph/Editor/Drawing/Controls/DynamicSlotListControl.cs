@@ -9,7 +9,7 @@ using UnityEditorInternal;
 
 namespace UnityEditor.ShaderGraph.Drawing.Controls
 {
-    [AttributeUsage(AttributeTargets.Property)]
+    /*[AttributeUsage(AttributeTargets.Property)]
     class DynamicSlotListControlAttribute : Attribute, IControlAttribute
     {
         SlotType m_Type;
@@ -95,5 +95,5 @@ namespace UnityEditor.ShaderGraph.Drawing.Controls
             m_Container = new IMGUIContainer(() => CreateReorderableList ()) { name = "ListContainer" };
             Add(m_Container);
         }
-    }
+    }*/
 }

@@ -4,7 +4,7 @@ using UnityEditorInternal;
 
 namespace UnityEditor.ShaderGraph
 {
-    static class DynamicSlotUtils
+    /*static class DynamicSlotUtils
     {
         public static ReorderableList CreateReorderableList(DynamicSlotList list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
         {
@@ -50,5 +50,5 @@ namespace UnityEditor.ShaderGraph
         {
             list.list.RemoveAt(list.index);
         }
-    }
+    }*/
 }
