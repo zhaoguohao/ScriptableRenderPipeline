@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor.Graphing;
+using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph.Drawing;
 using UnityEditor.ShaderGraph.Drawing.Controls;
 using UnityEngine.UIElements;
@@ -28,7 +29,6 @@ namespace UnityEditor.ShaderGraph
                 if (m_SerializableInputSlots != null)
                 {
                     m_InputSlots = new List<MaterialSlot>();
-                    Debug.Log(m_SerializableInputSlots.Length);
                     for(int i = 0; i < m_SerializableInputSlots.Length; i++)
                         m_InputSlots.Add(m_SerializableInputSlots[i].Deserialize());
                     m_SerializableInputSlots = null;
@@ -73,7 +73,11 @@ namespace UnityEditor.ShaderGraph
 			}
 		}
 
+        [SerializeField]
+        private bool m_DisplayPreview = true;
+
         public override bool hasPreview { get { return true; } }
+        public override bool activePreview { get { return m_DisplayPreview; } }
 
         public CustomCodeNode()
         {
@@ -83,7 +87,6 @@ namespace UnityEditor.ShaderGraph
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
-            Debug.Log(string.Format("Deserializing {0} input slots", inputSlots.Count));
             List<int> validSlots = new List<int>();
 
             foreach(MaterialSlot slot in inputSlots)
@@ -125,7 +128,6 @@ namespace UnityEditor.ShaderGraph
 
 		public void GenerateNodeCode(ShaderGenerator visitor, GraphContext context, GenerationMode generationMode)
         {
-            Debug.Log(string.Format("Generating from {0} input slots", inputSlots.Count));
 			var arguments = new List<string>();
 
             for(int i = 0; i < inputSlots.Count; i++)
@@ -186,10 +188,25 @@ namespace UnityEditor.ShaderGraph
 
         public VisualElement CreateSettingsElement()
         {
-            VisualElement container = new VisualElement();
-            container.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
-            container.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
-            return container;
+            PropertySheet ps = new PropertySheet();
+            ps.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
+            ps.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
+            ps.Add(new PropertyRow(new Label("Enable Preview")), (row) =>
+                {
+                    row.Add(new Toggle(), (toggle) =>
+                    {
+                        toggle.value = m_DisplayPreview;
+                        toggle.OnToggleChanged(ChangePreview);
+                    });
+                });
+            return ps;
+        }
+
+        void ChangePreview(ChangeEvent<bool> evt)
+        {
+            owner.owner.RegisterCompleteObjectUndo("Blend Preserve Specular Change");
+            m_DisplayPreview = evt.newValue;
+            Dirty(ModificationScope.Graph);
         }
     }
 

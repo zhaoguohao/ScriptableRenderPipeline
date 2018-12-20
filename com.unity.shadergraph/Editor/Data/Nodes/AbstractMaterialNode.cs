@@ -136,6 +136,12 @@ namespace UnityEditor.ShaderGraph
             get { return false; }
         }
 
+        // Nodes that can disable preview do that here so they still create preview UI
+        public virtual bool activePreview
+        {
+            get { return true; }
+        }
+
         public virtual PreviewMode previewMode
         {
             get { return PreviewMode.Preview2D; }

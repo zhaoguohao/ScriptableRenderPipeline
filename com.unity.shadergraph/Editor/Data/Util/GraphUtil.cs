@@ -962,7 +962,7 @@ namespace UnityEditor.ShaderGraph
             }
 
             var slots = new List<MaterialSlot>();
-            foreach (var activeNode in isUber ? activeNodeList.Where(n => ((AbstractMaterialNode)n).hasPreview) : ((INode)node).ToEnumerable())
+            foreach (var activeNode in isUber ? activeNodeList.Where(n => ((AbstractMaterialNode)n).hasPreview && ((AbstractMaterialNode)n).activePreview) : ((INode)node).ToEnumerable())
             {
                 if (activeNode is IMasterNode || activeNode is SubGraphOutputNode)
                     slots.AddRange(activeNode.GetInputSlots<MaterialSlot>());
@@ -1202,7 +1202,7 @@ namespace UnityEditor.ShaderGraph
                     }
                     if (activeNode is IGeneratesBodyCode)
                         (activeNode as IGeneratesBodyCode).GenerateNodeCode(sg, graphContext, mode);
-                    if (masterNode == null && activeNode.hasPreview)
+                    if (masterNode == null && activeNode.hasPreview && activeNode.activePreview)
                     {
                         var outputSlot = activeNode.GetOutputSlots<MaterialSlot>().FirstOrDefault();
                         if (outputSlot != null)
@@ -1248,7 +1248,7 @@ namespace UnityEditor.ShaderGraph
                             }
                         }
                     }
-                    else if (masterNode.hasPreview)
+                    else if (masterNode.hasPreview && masterNode.activePreview)
                     {
                         foreach (var slot in masterNode.GetOutputSlots<MaterialSlot>())
                             surfaceDescriptionFunction.AppendLine("surface.{0} = {1};", NodeUtils.GetHLSLSafeName(slot.shaderOutputName), masterNode.GetSlotValue(slot.id, mode));

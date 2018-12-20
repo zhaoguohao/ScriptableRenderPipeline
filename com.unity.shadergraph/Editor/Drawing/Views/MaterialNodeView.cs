@@ -131,6 +131,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             AddSlots(node.GetSlots<MaterialSlot>());
             UpdatePortInputs();
             base.expanded = node.drawState.expanded;
+            UpdatePreviewEnabledState();
             RefreshExpandedState(); //This should not be needed. GraphView needs to improve the extension api here
             UpdatePortInputVisibilities();
 
@@ -354,6 +355,28 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
+        private void UpdatePreviewEnabledState()
+        {
+            if(!node.hasPreview)
+                return;
+
+            if(m_PreviewFiller != null && node.activePreview != m_PreviewFiller.visible)
+            {
+                m_PreviewFiller.visible = node.activePreview;
+                m_PreviewContainer.visible = node.activePreview;
+                if(node.activePreview)
+                {
+                    this.Q("contents").Add(m_PreviewFiller);
+                    m_PreviewContainer.PlaceBehind(this.Q("selection-border"));
+                }
+                else
+                {
+                    m_PreviewFiller.RemoveFromHierarchy();
+                    m_PreviewContainer.RemoveFromHierarchy();
+                }
+            }
+        }
+
         void UpdateTitle()
         {
             var subGraphNode = node as SubGraphNode;
@@ -428,6 +451,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                     inputContainer.Sort((x, y) => slots.IndexOf(((ShaderPort)x).slot) - slots.IndexOf(((ShaderPort)y).slot));
                 if (outputContainer.childCount > 0)
                     outputContainer.Sort((x, y) => slots.IndexOf(((ShaderPort)x).slot) - slots.IndexOf(((ShaderPort)y).slot));
+            }
+            else if(scope == ModificationScope.Graph)
+            {
+                UpdatePreviewEnabledState();
             }
 
             RefreshExpandedState(); //This should not be needed. GraphView needs to improve the extension api here
