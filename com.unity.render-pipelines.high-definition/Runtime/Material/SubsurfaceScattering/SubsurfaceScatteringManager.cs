@@ -68,14 +68,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // We use 8x8 tiles in order to match the native GCN HTile as closely as possible.
 
-            for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+            for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
             {
-                m_HTile[stereoPass] = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "SSSHtile"); // Enable UAV
+                m_HTile[vrPass] = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "SSSHtile"); // Enable UAV
 
                 if (NeedTemporarySubsurfaceBuffer() || settings.supportMSAA)
                 {
                     // Caution: must be same format as m_CameraSssDiffuseLightingBuffer
-                    m_CameraFilteringBuffer[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "SSSCameraFiltering"); // Enable UAV
+                    m_CameraFilteringBuffer[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RGB111110Float, sRGB: false, enableRandomWrite: true, name: "SSSCameraFiltering"); // Enable UAV
                 }
             }
         }
@@ -126,10 +126,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
             }
 
-            for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+            for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
             {
-                RTHandles.Release(m_CameraFilteringBuffer[stereoPass]);
-                RTHandles.Release(m_HTile[stereoPass]);
+                RTHandles.Release(m_CameraFilteringBuffer[vrPass]);
+                RTHandles.Release(m_HTile[vrPass]);
             }
 
         }
@@ -169,7 +169,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // In the case our frame is MSAA, for the moment given the fact that we do not have read/write access to the stencil buffer of the MSAA target; we need to keep this pass MSAA
         // However, the compute can't output and MSAA target so we blend the non-MSAA target into the MSAA one.
         public void SubsurfaceScatteringPass(HDCamera hdCamera, CommandBuffer cmd, DiffusionProfileSettings sssParameters,
-            RTHandleSystem.RTHandle colorBufferRT, RTHandleSystem.RTHandle diffuseBufferRT, RTHandleSystem.RTHandle depthStencilBufferRT, RTHandleSystem.RTHandle depthTextureRT, int stereoPass = 0)
+            RTHandleSystem.RTHandle colorBufferRT, RTHandleSystem.RTHandle diffuseBufferRT, RTHandleSystem.RTHandle depthStencilBufferRT, RTHandleSystem.RTHandle depthTextureRT, int vrPass = 0)
         {
             if (sssParameters == null || !hdCamera.frameSettings.enableSubsurfaceScattering)
                 return;
@@ -185,7 +185,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Clear the SSS filtering target
                     using (new ProfilingSample(cmd, "Clear SSS filtering target", CustomSamplerId.ClearSSSFilteringTarget.GetSampler()))
                     {
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraFilteringBuffer[stereoPass], ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraFilteringBuffer[vrPass], ClearFlag.Color, CoreUtils.clearColorAllBlack);
                     }
                 }
 
@@ -195,10 +195,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Therefore, it's computed in a pixel shader, and optimized to only contain the SSS bit.
 
                     // Clear the HTile texture. TODO: move this to ClearBuffers(). Clear operations must be batched!
-                    HDUtils.SetRenderTarget(cmd, hdCamera, m_HTile[stereoPass], ClearFlag.Color, CoreUtils.clearColorAllBlack);
+                    HDUtils.SetRenderTarget(cmd, hdCamera, m_HTile[vrPass], ClearFlag.Color, CoreUtils.clearColorAllBlack);
 
                     HDUtils.SetRenderTarget(cmd, hdCamera, depthStencilBufferRT); // No need for color buffer here
-                    cmd.SetRandomWriteTarget(1, m_HTile[stereoPass]); // This need to be done AFTER SetRenderTarget
+                    cmd.SetRandomWriteTarget(1, m_HTile[vrPass]); // This need to be done AFTER SetRenderTarget
                     // Generate HTile for the split lighting stencil usage. Don't write into stencil texture (shaderPassId = 2)
                     // Use ShaderPassID 1 => "Pass 2 - Export HTILE for stencilRef to output"
                     CoreUtils.DrawFullScreen(cmd, m_CopyStencilForSplitLighting, null, 2);
@@ -219,9 +219,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 int sssKernel = hdCamera.frameSettings.enableMSAA ? m_SubsurfaceScatteringKernelMSAA : m_SubsurfaceScatteringKernel;
                 if (XRGraphics.usingTexArray())
-                    cmd.SetComputeIntParam(m_SubsurfaceScatteringCS, HDShaderIDs._ComputeEyeIndex, stereoPass);
+                    cmd.SetComputeIntParam(m_SubsurfaceScatteringCS, HDShaderIDs._ComputeEyeIndex, vrPass);
                 cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._DepthTexture,       depthTextureRT);
-                cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._SSSHTile,           m_HTile[stereoPass]);
+                cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._SSSHTile,           m_HTile[vrPass]);
                 cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._IrradianceSource,   diffuseBufferRT);
 
                 for (int i = 0; i < sssBufferCount; ++i)
@@ -234,12 +234,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 if (NeedTemporarySubsurfaceBuffer() || hdCamera.frameSettings.enableMSAA)
                 {
-                    cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._CameraFilteringBuffer, m_CameraFilteringBuffer[stereoPass]);
+                    cmd.SetComputeTextureParam(m_SubsurfaceScatteringCS, sssKernel, HDShaderIDs._CameraFilteringBuffer, m_CameraFilteringBuffer[vrPass]);
 
                     // Perform the SSS filtering pass which fills 'm_CameraFilteringBufferRT'.
                     cmd.DispatchCompute(m_SubsurfaceScatteringCS, sssKernel, numTilesX, numTilesY, 1);
 
-                    cmd.SetGlobalTexture(HDShaderIDs._IrradianceSource, m_CameraFilteringBuffer[stereoPass]);  // Cannot set a RT on a material
+                    cmd.SetGlobalTexture(HDShaderIDs._IrradianceSource, m_CameraFilteringBuffer[vrPass]);  // Cannot set a RT on a material
 
                     // Additively blend diffuse and specular lighting into 'm_CameraColorBufferRT'.
                     HDUtils.DrawFullScreen(cmd, hdCamera, m_CombineLightingPass, colorBufferRT, depthStencilBufferRT);

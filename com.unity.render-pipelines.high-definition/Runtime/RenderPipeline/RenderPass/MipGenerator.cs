@@ -113,14 +113,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             int srcMipWidth = size.x;
             int srcMipHeight = size.y;
 
-            for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+            for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
             {
                 // Reset per stereo pass
                 srcMipLevel = 0;
                 srcMipWidth = size.x;
                 srcMipHeight = size.y;
 
-                RenderTexture dest = stereoPass == 0 ? destination : rightEyeDest;
+                RenderTexture dest = vrPass == 0 ? destination : rightEyeDest;
                 if (preferFragment)
                 {
                     int tempTargetWidth = srcMipWidth >> 1;
@@ -191,7 +191,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Source, source, 0);
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Mip0, dest, 0);
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Destination, m_TempColorTarget);
-                            cmd.SetComputeIntParam(cs, "_DepthSlice", stereoPass);
+                            cmd.SetComputeIntParam(cs, "_DepthSlice", vrPass);
                             cmd.DispatchCompute(cs, downsampleKernelMip0, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
                         }
                         else

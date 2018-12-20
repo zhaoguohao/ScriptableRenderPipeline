@@ -86,25 +86,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
 
-            for (int stereoPass = 0; stereoPass < numStereoPasses; stereoPass++)
+            for (int vrPass = 0; vrPass < numStereoPasses; vrPass++)
             {
                 // Create the depth/stencil buffer
-                m_CameraDepthStencilBuffer[stereoPass] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencil");
+                m_CameraDepthStencilBuffer[vrPass] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, name: "CameraDepthStencil");
 
                 // Create the mip chain buffer
                 m_CameraDepthBufferMipChainInfo = new HDUtils.PackedMipChainInfo();
                 m_CameraDepthBufferMipChainInfo.Allocate();
-                m_CameraDepthBufferMipChain[stereoPass] = RTHandles.Alloc(ComputeDepthBufferMipChainSize, colorFormat: RenderTextureFormat.RFloat, filterMode: FilterMode.Point, sRGB: false, enableRandomWrite: true, name: "CameraDepthBufferMipChain");
+                m_CameraDepthBufferMipChain[vrPass] = RTHandles.Alloc(ComputeDepthBufferMipChainSize, colorFormat: RenderTextureFormat.RFloat, filterMode: FilterMode.Point, sRGB: false, enableRandomWrite: true, name: "CameraDepthBufferMipChain");
 
                 // Technically we won't need this buffer in some cases, but nothing that we can determine at init time.
-                m_CameraStencilBufferCopy[stereoPass] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.None, colorFormat: RenderTextureFormat.R8, sRGB: false, filterMode: FilterMode.Point, enableRandomWrite: true, name: "CameraStencilCopy"); // DXGI_FORMAT_R8_UINT is not supported by Unity
+                m_CameraStencilBufferCopy[vrPass] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.None, colorFormat: RenderTextureFormat.R8, sRGB: false, filterMode: FilterMode.Point, enableRandomWrite: true, name: "CameraStencilCopy"); // DXGI_FORMAT_R8_UINT is not supported by Unity
 
                 if (m_VelocitySupport)
                 {
-                    m_VelocityRT[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), sRGB: Builtin.GetVelocityBufferSRGBFlag(), name: "Velocity");
+                    m_VelocityRT[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), sRGB: Builtin.GetVelocityBufferSRGBFlag(), name: "Velocity");
                     if (m_MSAASupported)
                     {
-                        m_VelocityMSAART[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), sRGB: Builtin.GetVelocityBufferSRGBFlag(), enableMSAA: true, bindTextureMS: true, name: "VelocityMSAA");
+                        m_VelocityMSAART[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), sRGB: Builtin.GetVelocityBufferSRGBFlag(), enableMSAA: true, bindTextureMS: true, name: "VelocityMSAA");
                     }
                 }
 
@@ -112,12 +112,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (m_MSAASupported)
                 {
                     // Let's create the MSAA textures
-                    m_CameraDepthStencilMSAABuffer[stereoPass] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth24, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, name: "CameraDepthStencilMSAA");
-                    m_CameraDepthValuesBuffer[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, name: "DepthValuesBuffer");
-                    m_DepthAsColorMSAART[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RFloat, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "DepthAsColorMSAA");
+                    m_CameraDepthStencilMSAABuffer[vrPass] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth24, colorFormat: RenderTextureFormat.Depth, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, name: "CameraDepthStencilMSAA");
+                    m_CameraDepthValuesBuffer[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, name: "DepthValuesBuffer");
+                    m_DepthAsColorMSAART[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.RFloat, sRGB: false, bindTextureMS: true, enableMSAA: true, name: "DepthAsColorMSAA");
 
                     // We need to allocate this texture as long as msaa is supported because on both mode, one of the cameras can be forward only using the framesettings
-                    m_NormalMSAART[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableMSAA: true, bindTextureMS: true, name: "NormalBufferMSAA");
+                    m_NormalMSAART[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableMSAA: true, bindTextureMS: true, name: "NormalBufferMSAA");
 
                     // Create the required resolve materials
                     m_DepthResolveMaterial = CoreUtils.CreateEngineMaterial(resources.shaders.depthValuesPS);
@@ -129,13 +129,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     // In case of full forward we must allocate the render target for normal buffer (or reuse one already existing)
                     // TODO: Provide a way to reuse a render target
-                    m_NormalRT[stereoPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableRandomWrite: true, name: "NormalBuffer");
+                    m_NormalRT[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, sRGB: false, enableRandomWrite: true, name: "NormalBuffer");
                 }
                 else
                 {
                     // When not forward only we should are using the normal buffer of the gbuffer
                     // In case of deferred, we must be in sync with NormalBuffer.hlsl and lit.hlsl files and setup the correct buffers
-                    m_NormalRT[stereoPass] = gbufferManager.GetNormalBuffer(stereoPass); // Normal + Roughness
+                    m_NormalRT[vrPass] = gbufferManager.GetNormalBuffer(vrPass); // Normal + Roughness
                 }
             }
         }
@@ -148,18 +148,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Function that will return the set of buffers required for the prepass (depending on if msaa is enabled or not)
-        public RenderTargetIdentifier[] GetPrepassBuffersRTI(FrameSettings frameSettings, int stereoPass = 0)
+        public RenderTargetIdentifier[] GetPrepassBuffersRTI(FrameSettings frameSettings, int vrPass = 0)
         {
             if (frameSettings.enableMSAA)
             {
                 Debug.Assert(m_MSAASupported);
-                m_RTIDs2[0] = m_NormalMSAART[stereoPass].nameID;
-                m_RTIDs2[1] = m_DepthAsColorMSAART[stereoPass].nameID;
+                m_RTIDs2[0] = m_NormalMSAART[vrPass].nameID;
+                m_RTIDs2[1] = m_DepthAsColorMSAART[vrPass].nameID;
                 return m_RTIDs2;
             }
             else
             {
-                m_RTIDs1[0] = m_NormalRT[stereoPass].nameID;
+                m_RTIDs1[0] = m_NormalRT[vrPass].nameID;
                 return m_RTIDs1;
             }
         }
@@ -193,19 +193,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
             if (frameSettings.enableMSAA)
             {
-                for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+                for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
                 {
-                    cmd.Blit(m_NormalMSAAInstanced, m_NormalMSAART[stereoPass], stereoPass, 0);
-                    cmd.Blit(m_DepthAsColorMSAAInstanced, m_DepthAsColorMSAART[stereoPass], stereoPass, 0);
+                    cmd.Blit(m_NormalMSAAInstanced, m_NormalMSAART[vrPass], vrPass, 0);
+                    cmd.Blit(m_DepthAsColorMSAAInstanced, m_DepthAsColorMSAART[vrPass], vrPass, 0);
                 }
 
                 // TODOVR deallocate instanced Normal and DepthAsColor
             }
             else
             {
-                for (int stereoPass = 0; stereoPass < XRGraphics.numPass(); stereoPass++)
+                for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
                 {
-                    cmd.Blit(m_NormalInstanced, m_NormalRT[stereoPass], stereoPass, 0);
+                    cmd.Blit(m_NormalInstanced, m_NormalRT[vrPass], vrPass, 0);
                 }
 
                 // TODOVR deallocate instanced Normal and DepthAsColor
@@ -213,66 +213,66 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Function that will return the set of buffers required for the motion vector pass
-        public RenderTargetIdentifier[] GetVelocityPassBuffersRTI(FrameSettings frameSettings, int stereoPass = 0)
+        public RenderTargetIdentifier[] GetVelocityPassBuffersRTI(FrameSettings frameSettings, int vrPass = 0)
         {
             Debug.Assert(m_VelocitySupport);
             if (frameSettings.enableMSAA)
             {
                 Debug.Assert(m_MSAASupported);
-                m_RTIDs3[0] = m_VelocityMSAART[stereoPass].nameID;
-                m_RTIDs3[1] = m_NormalMSAART[stereoPass].nameID;
-                m_RTIDs3[2] = m_DepthAsColorMSAART[stereoPass].nameID;
+                m_RTIDs3[0] = m_VelocityMSAART[vrPass].nameID;
+                m_RTIDs3[1] = m_NormalMSAART[vrPass].nameID;
+                m_RTIDs3[2] = m_DepthAsColorMSAART[vrPass].nameID;
                 return m_RTIDs3;
             }
             else
             {
                 Debug.Assert(m_VelocitySupport);
-                m_RTIDs2[0] = m_VelocityRT[stereoPass].nameID;
-                m_RTIDs2[1] = m_NormalRT[stereoPass].nameID;
+                m_RTIDs2[0] = m_VelocityRT[vrPass].nameID;
+                m_RTIDs2[1] = m_NormalRT[vrPass].nameID;
                 return m_RTIDs2;
             }
         }
 
         // Request the normal buffer (MSAA or not)
-        public RTHandleSystem.RTHandle GetNormalBuffer(bool isMSAA = false, int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetNormalBuffer(bool isMSAA = false, int vrPass = 0)
         {
             if (isMSAA)
             {
                 Debug.Assert(m_MSAASupported);
-                return m_NormalMSAART[stereoPass];
+                return m_NormalMSAART[vrPass];
             }
             else
             {
-                return m_NormalRT[stereoPass];
+                return m_NormalRT[vrPass];
             }
         }
 
         // Request the velocity buffer (MSAA or not)
-        public RTHandleSystem.RTHandle GetVelocityBuffer(bool isMSAA = false, int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetVelocityBuffer(bool isMSAA = false, int vrPass = 0)
         {
             Debug.Assert(m_VelocitySupport);
             if (isMSAA)
             {
                 Debug.Assert(m_MSAASupported);
-                return m_VelocityMSAART[stereoPass];
+                return m_VelocityMSAART[vrPass];
             }
             else
             {
-                return m_VelocityRT[stereoPass];
+                return m_VelocityRT[vrPass];
             }
         }
 
         // Request the depth stencil buffer (MSAA or not)
-        public RTHandleSystem.RTHandle GetDepthStencilBuffer(bool isMSAA = false, int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetDepthStencilBuffer(bool isMSAA = false, int vrPass = 0)
         {
             if (isMSAA)
             {
                 Debug.Assert(m_MSAASupported);
-                return m_CameraDepthStencilMSAABuffer[stereoPass];
+                return m_CameraDepthStencilMSAABuffer[vrPass];
             }
             else
             {
-                return m_CameraDepthStencilBuffer[stereoPass];
+                return m_CameraDepthStencilBuffer[vrPass];
             }
         }
         public RTHandleSystem.RTHandle GetInstancedDepthStencilBuffer(bool isMSAA = false)
@@ -302,23 +302,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return GetDepthTexture(true);
         }
         // Request the depth texture (MSAA or not)
-        public RTHandleSystem.RTHandle GetDepthTexture(bool isMSAA = false, int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetDepthTexture(bool isMSAA = false, int vrPass = 0)
         {
             if (isMSAA)
             {
                 Debug.Assert(m_MSAASupported);
-                return m_DepthAsColorMSAART[stereoPass];
+                return m_DepthAsColorMSAART[vrPass];
             }
             else
             {
-                return m_CameraDepthBufferMipChain[stereoPass];
+                return m_CameraDepthBufferMipChain[vrPass];
             }
         }
 
-        public RTHandleSystem.RTHandle GetDepthValuesTexture(int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetDepthValuesTexture(int vrPass = 0)
         {
             Debug.Assert(m_MSAASupported);
-            return m_CameraDepthValuesBuffer[stereoPass];
+            return m_CameraDepthValuesBuffer[vrPass];
         }
 
         public void SetNumMSAASamples(MSAASamples msaaSamples)
@@ -326,9 +326,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_MSAASamples = msaaSamples;
         }
 
-        public RTHandleSystem.RTHandle GetStencilBufferCopy(int stereoPass = 0)
+        public RTHandleSystem.RTHandle GetStencilBufferCopy(int vrPass = 0)
         {
-            return m_CameraStencilBufferCopy[stereoPass];
+            return m_CameraStencilBufferCopy[vrPass];
         }
 
         public Vector2Int ComputeDepthBufferMipChainSize(Vector2Int screenSize)
@@ -360,36 +360,36 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             int numStereoPasses = XRGraphics.usingTexArray() ? XRGraphics.eyeTextureDesc.volumeDepth : 1;
-            for (int stereoPass = 0; stereoPass < numStereoPasses; stereoPass++)
+            for (int vrPass = 0; vrPass < numStereoPasses; vrPass++)
             {
                 if (!m_ReuseGBufferMemory)
                 {
-                    RTHandles.Release(m_NormalRT[stereoPass]);
+                    RTHandles.Release(m_NormalRT[vrPass]);
                 }
 
                 if (m_VelocitySupport)
                 {
-                    RTHandles.Release(m_VelocityRT[stereoPass]);
+                    RTHandles.Release(m_VelocityRT[vrPass]);
                     if (m_MSAASupported)
                     {
-                        RTHandles.Release(m_VelocityMSAART[stereoPass]);
+                        RTHandles.Release(m_VelocityMSAART[vrPass]);
                     }
                 }
 
-                RTHandles.Release(m_CameraDepthStencilBuffer[stereoPass]);
-                RTHandles.Release(m_CameraDepthBufferMipChain[stereoPass]);
-                RTHandles.Release(m_CameraStencilBufferCopy[stereoPass]);
+                RTHandles.Release(m_CameraDepthStencilBuffer[vrPass]);
+                RTHandles.Release(m_CameraDepthBufferMipChain[vrPass]);
+                RTHandles.Release(m_CameraStencilBufferCopy[vrPass]);
 
                 if (m_MSAASupported)
                 {
-                    RTHandles.Release(m_CameraDepthValuesBuffer[stereoPass]);
-                    RTHandles.Release(m_CameraDepthStencilMSAABuffer[stereoPass]);
+                    RTHandles.Release(m_CameraDepthValuesBuffer[vrPass]);
+                    RTHandles.Release(m_CameraDepthStencilMSAABuffer[vrPass]);
 
-                    RTHandles.Release(m_NormalMSAART[stereoPass]);
-                    RTHandles.Release(m_DepthAsColorMSAART[stereoPass]);
+                    RTHandles.Release(m_NormalMSAART[vrPass]);
+                    RTHandles.Release(m_DepthAsColorMSAART[vrPass]);
 
                     // Do not forget to release the materials
-                    if (stereoPass == 1)
+                    if (vrPass == 1)
                     {
                         CoreUtils.Destroy(m_DepthResolveMaterial);
                         CoreUtils.Destroy(m_ColorResolveMaterial);
@@ -422,7 +422,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalTexture(HDShaderIDs._NormalBufferTexture, GetNormalBuffer(isMSAA));
         }
 
-        public void ResolveSharedRT(CommandBuffer cmd, HDCamera hdCamera, int stereoPass = 0)
+        public void ResolveSharedRT(CommandBuffer cmd, HDCamera hdCamera, int vrPass = 0)
         {
             if (hdCamera.frameSettings.enableMSAA)
             {
@@ -430,13 +430,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, "ComputeDepthValues", CustomSamplerId.VolumeUpdate.GetSampler()))
                 {
                     // Grab the RTIs and set the output render targets
-                    m_RTIDs2[0] = m_CameraDepthValuesBuffer[stereoPass].nameID;
-                    m_RTIDs2[1] = m_NormalRT[stereoPass].nameID;
-                    HDUtils.SetRenderTarget(cmd, hdCamera, m_RTIDs2, m_CameraDepthStencilBuffer[stereoPass]);
+                    m_RTIDs2[0] = m_CameraDepthValuesBuffer[vrPass].nameID;
+                    m_RTIDs2[1] = m_NormalRT[vrPass].nameID;
+                    HDUtils.SetRenderTarget(cmd, hdCamera, m_RTIDs2, m_CameraDepthStencilBuffer[vrPass]);
 
                     // Set the input textures
-                    Shader.SetGlobalTexture(HDShaderIDs._NormalTextureMS, m_NormalMSAART[stereoPass]);
-                    Shader.SetGlobalTexture(HDShaderIDs._DepthTextureMS, m_DepthAsColorMSAART[stereoPass]);
+                    Shader.SetGlobalTexture(HDShaderIDs._NormalTextureMS, m_NormalMSAART[vrPass]);
+                    Shader.SetGlobalTexture(HDShaderIDs._DepthTextureMS, m_DepthAsColorMSAART[vrPass]);
 
                     // Resolve the depth and normal buffers
                     cmd.DrawProcedural(Matrix4x4.identity, m_DepthResolveMaterial, SampleCountToPassIndex(m_MSAASamples), MeshTopology.Triangles, 3, 1);

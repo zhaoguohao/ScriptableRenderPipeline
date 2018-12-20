@@ -31,7 +31,7 @@ namespace UnityEngine.Experimental.Rendering
             RenderTargetIdentifier target,
             int kernel8,
             int kernel1,
-            int stereoPass)
+            int vrPass)
         {
             RectInt main, topRow, rightCol, topRight;
             unsafe
@@ -75,7 +75,7 @@ namespace UnityEngine.Experimental.Rendering
                 cmd.SetComputeTextureParam(m_Shader, kernel1, _source, source);
                 cmd.SetComputeTextureParam(m_Shader, kernel8, _target, target);
                 cmd.SetComputeTextureParam(m_Shader, kernel1, _target, target);
-                cmd.SetComputeIntParam(m_Shader, _DepthSlice, stereoPass);
+                cmd.SetComputeIntParam(m_Shader, _DepthSlice, vrPass);
 
                 if (dispatch8Rect.width > 0 && dispatch8Rect.height > 0)
                 {
@@ -94,9 +94,9 @@ namespace UnityEngine.Experimental.Rendering
                 }
             }
         }
-        public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect, int stereoPass = 0)
+        public void SampleCopyChannel_xyzw2x(CommandBuffer cmd, RenderTargetIdentifier source, RenderTargetIdentifier target, RectInt rect, int vrPass = 0)
           {
-                 SampleCopyChannel(cmd, rect, XRGraphics.usingTexArray() ? _Source4Inst : _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1, stereoPass);
+                 SampleCopyChannel(cmd, rect, XRGraphics.usingTexArray() ? _Source4Inst : _Source4, source, _Result1, target, k_SampleKernel_xyzw2x_8, k_SampleKernel_xyzw2x_1, vrPass);
           }
 
 
