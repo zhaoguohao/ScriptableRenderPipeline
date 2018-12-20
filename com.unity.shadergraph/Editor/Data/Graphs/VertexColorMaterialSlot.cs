@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
-    class VertexColorMaterialSlot : Vector4MaterialSlot, IMayRequireScreenPosition
+    class VertexColorMaterialSlot : Vector4MaterialSlot, IMayRequireVertexColor
     {
         public VertexColorMaterialSlot(int slotId, string displayName, string shaderOutputName,
                                        ShaderStageCapability stageCapability = ShaderStageCapability.All, bool hidden = false)
@@ -24,7 +24,7 @@ namespace UnityEditor.ShaderGraph
             return string.Format("IN.{0}", ShaderGeneratorNames.VertexColor);
         }
 
-        public bool RequiresScreenPosition(ShaderStageCapability stageCapability)
+        public bool RequiresVertexColor(ShaderStageCapability stageCapability)
         {
             return !isConnected;
         }
