@@ -1,8 +1,8 @@
 # Diffusion Profile
 
-HDRP stores most [subsurface scattering](Subsurface-Scattering) settings in a __Diffusion Profile List__ Asset. A __Diffusion Profile List __contains a set of 15 __Diffusion Profiles__ that you can edit and assign to your Materials.
+HDRP stores most [subsurface scattering](Subsurface-Scattering.html) settings in a __Diffusion Profile List__ Asset. A __Diffusion Profile List__ contains a set of 15 __Diffusion Profiles__ that you can edit and assign to your Materials.
 
-To create a Diffusion Profile List, navigate to __Assets > Create > Rendering > Diffusion Profile List__. To use it, open your HDRP Asset and assign it to the __Diffusion Profile List __property.
+To create a Diffusion Profile List, navigate to __Assets > Create > Rendering > Diffusion Profile List__. To use it, open your HDRP Asset and assign it to the __Diffusion Profile List__ property.
 
 | Property| Description |
 |:---|:---|
@@ -45,7 +45,7 @@ To create a Diffusion Profile List, navigate to __Assets > Create > Rendering > 
 ## Working with different Transmission Modes
 
 The main difference between the two __Transmission Modes__ is how they use shadows.
-If you disable shadows on your Light, both __Transmission Modes __give the same results, and derive their appearance from the __Thickness Map__ and the __Diffusion Profile__.
+If you disable shadows on your Light, both __Transmission Modes__ give the same results, and derive their appearance from the __Thickness Map__ and the __Diffusion Profile__.
 The results change if you enable shadows. The __Thin Object__ mode is likely to cause self-shadowing, which can cause the object to appear completely black. The __Thick Object__ mode derives the thickness from the shadow map, taking the largest value between the baked thickness and the shadow thickness, and uses this to evaluate the light transmittance.
 
 Because you cannot control the distances HDRP derives from the shadow map, the best way to approach __Thick Object__ is to enable shadows, then adjust the __Scattering Distance__ until the overall transmission intensity is in the desired range, and then use the __Thickness Map__ to mask any shadow mapping artifacts.

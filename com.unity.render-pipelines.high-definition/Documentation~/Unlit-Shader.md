@@ -1,10 +1,10 @@
-Unlit Shader
+# Unlit Shader
 
-The Unlit Shader lets you create Materials that are not affected by lighting. It includes options for the Surface Type, Emissive Color, and GPU Instancing. For more information about Materials, Shaders and Textures, see the[ Unity User Manual](https://docs.unity3d.com/Manual/Shaders.html).
+The Unlit Shader lets you create Materials that are not affected by lighting. It includes options for the Surface Type, Emissive Color, and GPU Instancing. For more information about Materials, Shaders and Textures, see the [Unity User Manual](https://docs.unity3d.com/Manual/Shaders.html).
 
-# Creating an Unlit Material
+## Creating an Unlit Material
 
-New Materials in HDRP use the [Lit Shader](Lit-Shader) by default. To create an Unlit Shader, you need to create a Material and then make it use the Unlit Shader. To do this:
+New Materials in HDRP use the [Lit Shader](Lit-Shader.html) by default. To create an Unlit Shader, you need to create a Material and then make it use the Unlit Shader. To do this:
 
 1. In the Unity Editor, navigate to your Project's Asset window.
 
@@ -14,23 +14,20 @@ New Materials in HDRP use the [Lit Shader](Lit-Shader) by default. To create an 
 
 ![](Images/UnlitShader1.png)
 
-# Unlit Shader Parameters
+## Unlit Shader Parameters
 
-## Surface Options
+### Surface Options
 
 Surface options control the overall look of your Material's surface and how Unity renders the Material on screen. 
 
 | Property| Description |
 |:---|:---|
-| **Surface type** | Controls whether your Shader supports transparency or not. HDRP exposes more properties depending on the Surface Type you select. See the [Surface Type](Surface-Type) documentation for more information. |
-| **Alpha Cutoff Enable** | Controls whether your Material acts like a [Cutout Shader](https://docs.unity3d.com/Manual/StandardShaderMaterialParameterRenderingMode.html) or not. Enabling this feature exposes more properties. See the [Alpha Clipping](Alpha-Clipping) documentation for more information. |
-| **Double Sided** | Controls whether HDRP renders both faces of the polygons in your geometry, or just the side defined by the normal. See the [Double Sided](Double-Sided) documentation for more information. |
+| **Surface type** | Controls whether your Shader supports transparency or not. HDRP exposes more properties depending on the Surface Type you select. See the [Surface Type](Surface-Type.html) documentation for more information. |
+| **Alpha Cutoff Enable** | Controls whether your Material acts like a [Cutout Shader](https://docs.unity3d.com/Manual/StandardShaderMaterialParameterRenderingMode.html) or not. Enabling this feature exposes more properties. See the [Alpha Clipping](Alpha-Clipping.html) documentation for more information. |
+| **Double Sided** | Controls whether HDRP renders both faces of the polygons in your geometry, or just the side defined by the normal. See the [Double Sided](Double-Sided.html) documentation for more information. |
 
 
-
-​	
-
-## Inputs
+### Inputs
 
 | Property| Description |
 |:---|:---|
@@ -43,7 +40,7 @@ Surface options control the overall look of your Material's surface and how Unit
 
 
 
-Transparency Inputs
+### Transparency Inputs
 
 Set the __Surface Type__ to __Transparent__ to expose the __Transparency Inputs__ section in the Material Inspector.
 
@@ -60,9 +57,7 @@ Set the __Surface Type__ to __Transparent__ to expose the __Transparency Inputs_
 
 
 
-Advanced Options
-
-__Enable GPU instancing:__
+### Advanced Options
 
 | Property| Description |
 |:---|:---|

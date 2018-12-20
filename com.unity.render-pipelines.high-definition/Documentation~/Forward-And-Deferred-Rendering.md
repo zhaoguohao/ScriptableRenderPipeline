@@ -10,7 +10,7 @@ You can set the __Lit Shader Mode__ to:
 
 * __Deferred__: For Materials that use __Deferred__ rendering, HDRP renders them all into a GBuffer that stores the Material properties visible on the screen. After it renders all deferred GameObjects to the GBuffer, HDRP then processes the lighting for every GameObject in the Scene.
 
-* __Both__: When you select __Both__, you can change between __Forward__ and __Deferred__ rendering mode on a per Camera and Reflection Probe basis at run time by using the [Frame Settings](Frame-Settings). For example, you can use Forward mode for a Planar Reflection Probe and then render your main Camera using Deferred mode. However, this increases Project build time (see [Build time](#BuildTime)).
+* __Both__: When you select __Both__, you can change between __Forward__ and __Deferred__ rendering mode on a per Camera and Reflection Probe basis at run time by using the [Frame Settings](Frame-Settings.html). For example, you can use Forward mode for a Planar Reflection Probe and then render your main Camera using Deferred mode. However, this increases Project build time (see [Build time](#BuildTime)).
 
 To decide whether to use Forward or Deferred mode, consider the level of quality and performance you want for your Project. Deferred rendering in HDRP is faster in most scenarios, such as a Scene with various Materials and multiple local Lights. Some scenarios, like those with a single Directional Light in a Scene, can be faster in Forward rendering mode. If performance is not so important for your Project, use Forward rendering mode for better quality rendering.
 

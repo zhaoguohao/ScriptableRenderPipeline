@@ -10,7 +10,7 @@ If you upgrade a Project to HDRP and therefore do not use the HDRP template, fol
 
 1. In the Unity Editor, go to the Project window and navigate to the folder you want to create your HDRP Asset in. This folder must be inside the Assets folder; you can not create Assets in the Packages folder.
 
-2. In the menu, navigate to __Assets > Create > Rendering __and click __High Definition Render Pipeline Asset __to create your HDRP Asset.
+2. In the menu, navigate to __Assets > Create > Rendering__ and click __High Definition Render Pipeline Asset__ to create your HDRP Asset.
 
 3. Name the __HDRP Asset__ and press the Return key to confirm it.
 
@@ -34,7 +34,7 @@ Unity creates a HDRP Resources Asset when you create a HDRP Asset and references
 
 ## Diffusion Profile List
 
-The [Diffusion Profile List](Diffusion-Profile) Asset stores Subsurface Scattering and Transmission Control profiles for your Project. Create a Diffusion Profile Settings Asset by navigating to __Assets > Create > Rendering__ and clicking __Diffusion Profile List__.
+The [Diffusion Profile List](Diffusion-Profile.html) Asset stores Subsurface Scattering and Transmission Control profiles for your Project. Create a Diffusion Profile Settings Asset by navigating to __Assets > Create > Rendering__ and clicking __Diffusion Profile List__.
 
 ## Render Pipeline Features
 
@@ -49,10 +49,10 @@ These settings enable or disable HDRP features in your Unity Project. Unity does
 | **SSAO (screen space ambient occlusion)** | Enables support for SSAO. SSAO is a technique for approximating ambient occlusion efficiently in realtime. |
 | **Subsurface Scattering** | Enables Subsurface Scattering (SSS). SSS describes light penetration of the surface of a translucent object. |
 | **Subsurface Scattering - High quality** | Increase the SSS Sample Count and enable ultra quality Subsurface Scattering. Be aware that increasing the sample count greatly increases the cost of the Subsurface Scattering effect. |
-| **Volumetrics** | Enables support for volumetrics. This allows you to use **Volumetric Fog** for the **Fog Type** in the [Visual Environment](Visual-Environment). |
+| **Volumetrics** | Enables support for volumetrics. This allows you to use **Volumetric Fog** for the **Fog Type** in the [Visual Environment](Visual-Environment.html). |
 | **Volumetrics - high quality** | Increases the resolution of volumetrics. This increases the quality of fog effects, but increases the cost of the effect greatly. |
 | **LightLayers** | Enables support for Light Layers. You can assign a Layer to a Light which then only lights up Mesh Renderers with a matching rendering Layer. |
-| **Support Lit Shader Mode** | Choose which mode HDRP uses for the [Lit Shader](Lit-Shader). Select **Forward Only** to force the HDRP renderer to only use forward rendering. Select **Deferred Only** to force the HDRP renderer to use deferred rendering for Lit Shaders (HDRP still renders advanced Materials using forward rendering). Select **Both** to allow the Camera to use deferred and forward rendering. Selecting **Both** allows you to switch between forward and deferred rendering for Lit Shaders at run time or per Camera. Selecting a specific mode reduces build time and Shader memory because HDRP requires less Shader variants, but it is not possible to switch from one mode to the other at run time. |
+| **Support Lit Shader Mode** | Choose which mode HDRP uses for the [Lit Shader](Lit-Shader.html). Select **Forward Only** to force the HDRP renderer to only use forward rendering. Select **Deferred Only** to force the HDRP renderer to use deferred rendering for Lit Shaders (HDRP still renders advanced Materials using forward rendering). Select **Both** to allow the Camera to use deferred and forward rendering. Selecting **Both** allows you to switch between forward and deferred rendering for Lit Shaders at run time or per Camera. Selecting a specific mode reduces build time and Shader memory because HDRP requires less Shader variants, but it is not possible to switch from one mode to the other at run time. |
 | **Support Multi Sampling Anti-Aliasing** | Enables support for Multi Sampling Anti-Aliasing (MSAA). This is only available when **Support Lit Shader Mode** is set to **Forward Only**. |
 | **MSAA Sample Count** | Sets the number of samples HDRP uses for with MSAA. |
 | **Decals** | Enable support for Decals. |
@@ -68,7 +68,7 @@ These settings enable or disable HDRP features in your Unity Project. Unity does
 
 ## HDRP Asset Default Frame Settings
 
-Frame Settings control the rendering passes made by the main Camera at run time. For more information about Frame Setting, and how to use them, see the [HDRP Frame Settings documentation](https://github.com/Unity-Technologies/ScriptableRenderPipeline/wiki/Frame-Settings).
+Frame Settings control the rendering passes made by the main Camera at run time. For more information about Frame Setting, and how to use them, see the [HDRP Frame Settings documentation](Frame-Settings.html).
 
 ## Cookies
 
@@ -106,7 +106,7 @@ These settings control skybox reflections and skybox lighting.
 | Property| Description |
 |:---|:---|
 | **Reflection Size** | The maximum resolution of the cubemap HDRP uses to represent the sky. |
-| **Lighting Override Mask** | The [Volume](Volumes) layer mask HDRP uses to override sky lighting. Use this to decouple the display sky and lighting.  |
+| **Lighting Override Mask** | The [Volume](Volumes.html) layer mask HDRP uses to override sky lighting. Use this to decouple the display sky and lighting. |
 
 
 
@@ -117,7 +117,7 @@ Use these settings to enable or disable settings relating to lighting in HDRP.
 | Property| Description |
 |:---|:---|
 | **Max Directional Lights On Screen** | The maximum number of Directional Lights HDRP can handle on screen at once. |
-| **Max Punctual Lights On Screen** | The maximum number of [Point and Spot Lights](Glossary#PunctualLight) HDRP can handle on screen at once. |
+| **Max Punctual Lights On Screen** | The maximum number of [Point and Spot Lights](Glossary.html#PunctualLight) HDRP can handle on screen at once. |
 | **Max Area Lights On Screen** | The maximum number of area Lights HDRP can handle on screen at once. |
 | **Max Env Lights On Screen** | The maximum number of environment Lights HDRP can handle on screen at once.  |
 | **Max Decals On Screen** | The maximum number of Decals HDRP can handle on screen at once. |
@@ -144,7 +144,7 @@ Higher values use more memory.
 
 | Property| Description |
 |:---|:---|
-| **Max Shadow on Screen** | The maximum number of shadows you can have in view. A  Spot Light casts a single shadow, a Point Light casts six shadows, and a Directional Light casts shadows equal to the number of cascades defined in the [HD Shadow Settings](HD-Shadow-Settings) override. |
+| **Max Shadow on Screen** | The maximum number of shadows you can have in view. A  Spot Light casts a single shadow, a Point Light casts six shadows, and a Directional Light casts shadows equal to the number of cascades defined in the [HD Shadow Settings](HD-Shadow-Settings.html) override. |
 
 
 
@@ -166,7 +166,7 @@ Higher values use more memory.
 
 
 
-Select __PCSS__filtering to enable additional high quality filtering settings in the Light component.
+Select __PCSS__ filtering to enable additional high quality filtering settings in the Light component.
 
 ## Decals
 

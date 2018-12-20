@@ -32,7 +32,7 @@
   * [Lit Shader](Lit-Shader)
   * [Unlit Shader](Unlit-Shader)
   * Subsurface Scattering
-    * [Subsurface Scattering Materials](Subsurface-Scatterting)
+    * [Subsurface Scattering Materials](Subsurface-Scattering)
     * [Diffusion Profile](Diffusion-Profile)
 * Lighting
   * [Light Component](Light-Component)

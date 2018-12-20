@@ -6,7 +6,7 @@ Note: Ambient occlusion in a Lit Shader using deferred rendering affects emissio
 
 HDRP calculates the ambient occlusion effect using a map. You create and apply this map using the green channel of the mask map. HDRP uses the ambient occlusion map for specular occlusion, which it applies on indirect specular lighting. HDRP does not expose specular occlusion options in the Lit Shader.Instead, it automatically calculates specular occlusion from the Camera’s view vector and the ambient occlusion.
 
-| Property                                           | Description                                                  |
-| -------------------------------------------------- | ------------------------------------------------------------ |
-| **Mask Map - Green channel ambient occlusion map** | Assign the ambient occlusion map in the green channel of the **Mask Map**. HDRP uses the green channel of this map to calculate ambient occlusion. |
-| **Ambient Occlusion Remapping**                    | Remaps the ambient occlusion map in the green channel of the **Mask Map** between the minimum and maximum values you define on the slider. These values are between 0 and 1. Assign a texture to the **Mask Map** exposes this value. |
+| Property                        | Description                                                  |
+| ------------------------------- | ------------------------------------------------------------ |
+| **Mask Map - Green channel **   | Assign the ambient occlusion map in the green channel of the **Mask Map**. HDRP uses the green channel of this map to calculate ambient occlusion. |
+| **Ambient Occlusion Remapping** | Remaps the ambient occlusion map in the green channel of the **Mask Map** between the minimum and maximum values you define on the slider. These values are between 0 and 1. Assign a texture to the **Mask Map** exposes this value. |

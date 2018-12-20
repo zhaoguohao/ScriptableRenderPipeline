@@ -1,6 +1,6 @@
 # Frame Settings
 
-Frame Settings are settings HDRP uses to render Cameras, realtime, baked, and custom reflections. You can set the default Frame Settings for each of these three individually from within a [HDRP Asset](HDRP-Asset). Open a HDRP Asset in the Inspector and navigate to the __Default Frame Settings For__ section.
+Frame Settings are settings HDRP uses to render Cameras, realtime, baked, and custom reflections. You can set the default Frame Settings for each of these three individually from within a [HDRP Asset](HDRP-Asset.html). Open a HDRP Asset in the Inspector and navigate to the __Default Frame Settings For__ section.
 
 ![](Images/FrameSettings1.png)
 
@@ -14,7 +14,7 @@ Note: Some options are grayed-out depending on whether you have enabled/disabled
 
 Frame Settings affect all Cameras and Reflection Probes. HDRP handles Reflection Probes in the same way it does Cameras, this includes Frame Settings. All Cameras and Reflection Probes either use the default Frame Settings or a Frame Settings Override to render the Scene. Frame Settings all include the following properties:
 
-# Rendering Passes
+## Rendering Passes
 
 These settings enable or disable the rendering passes made by Cameras and Reflection Probes using these Frame Settings. Disabling these settings does not save on memory, but can improve performance.
 
@@ -33,7 +33,7 @@ These settings enable or disable the rendering passes made by Cameras and Reflec
 
 
 
-# Rendering Settings
+## Rendering Settings
 
 These settings control the method that the cameras using these Frame Settings use for its rendering passes. You can control properties such as the rendering method HDRP uses for this camera, whether or not this camera uses MSAA, or even whether the camera renders Opaque Object at all.
 
@@ -48,7 +48,7 @@ These settings control the method that the cameras using these Frame Settings us
 
 
 
-# Lighting Settings
+## Lighting Settings
 
 These settings control lighting features for your rendering components. Here you can enable and disable lighting features at 
 
@@ -68,7 +68,7 @@ These settings control lighting features for your rendering components. Here you
 
 
 
-# Async Compute Settings
+## Async Compute Settings
 
 These settings control which effects, if any, can make use execute compute Shader commands in parallel. 
 
@@ -83,7 +83,7 @@ These settings control which effects, if any, can make use execute compute Shade
 
 
 
-# Light Loop Settings
+## Light Loop Settings
 
 Use these settings to enable or disable settings relating to lighting in HDRP. 
 
@@ -96,6 +96,3 @@ Note: These settings are for debugging purposes only so do not alter these value
 | **Compute Light Evaluation** | Tick this checkbox to enable Compute Light Evaluation. |
 | **Compute Light Variants** | Enable **Compute Light Evaluation** to access this property. Tick this checkbox to enable Compute Light Variants. |
 | **Compute Material Variants** | Enable **Compute Light Evaluation** to access this property. Tick this checkbox to enable Compute Material Variants. |
-
-
-

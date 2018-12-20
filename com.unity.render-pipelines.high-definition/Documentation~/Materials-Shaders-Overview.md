@@ -2,7 +2,7 @@
 
 The High Definition Render Pipeline introduces multiple Shaders that contain new properties to help you fulfill all of your rendering needs to a high standard. They are purpose built to cover everything from standard lit and unlit Materials all the way to terrain, decals, and advanced layered Materials.
 
-When you create a new Material, it uses the [Lit Shader](Lit-Shader) by default. 
+When you create a new Material, it uses the [Lit Shader](Lit-Shader.html) by default. 
 
 To change the Shader for a Material:
 
