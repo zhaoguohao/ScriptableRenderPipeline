@@ -2490,30 +2490,61 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 if (tempHACK)
                 {
+
                     // TEMPORARY:
                     // Since we don't render to the full render textures, we need to feed the post processing stack with the right scale/bias.
                     // This feature not being implemented yet, we'll just copy the relevant buffers into an appropriately sized RT.
                     cmd.ReleaseTemporaryRT(HDShaderIDs._CameraDepthTexture);
                     cmd.ReleaseTemporaryRT(HDShaderIDs._CameraMotionVectorsTexture);
                     cmd.ReleaseTemporaryRT(HDShaderIDs._CameraColorTexture);
-
-                    cmd.GetTemporaryRT(HDShaderIDs._CameraDepthTexture, hdcamera.actualWidth, hdcamera.actualHeight, m_SharedRTManager.GetDepthStencilBuffer().rt.depth, FilterMode.Point, m_SharedRTManager.GetDepthStencilBuffer().rt.format);
-                    cmd.SetRenderTarget(HDShaderIDs._CameraDepthTexture);
-                    m_CopyDepthPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetDepthStencilBuffer());
-                    m_CopyDepthPropertyBlock.SetInt("_FlipY", 0);
-                    CoreUtils.DrawFullScreen(cmd, m_CopyDepth, m_CopyDepthPropertyBlock);
-                    if (hdcamera.frameSettings.enableMotionVectors)
+                    if (!hdcamera.camera.stereoEnabled || XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePass)
                     {
-                        cmd.GetTemporaryRT(HDShaderIDs._CameraMotionVectorsTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_SharedRTManager.GetVelocityBuffer().rt.format);
-                        HDUtils.BlitCameraTexture(cmd, hdcamera, m_SharedRTManager.GetVelocityBuffer(), HDShaderIDs._CameraMotionVectorsTexture);
-                    }
-                    cmd.GetTemporaryRT(HDShaderIDs._CameraColorTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_CameraColorBuffer.rt.format);
-                    if (XRGraphics.usingTexArray())
-                    {
-                        cmd.Blit(m_CameraColorBuffer, HDShaderIDs._CameraColorTexture, new Vector2(hdcamera.camera.pixelRect.width / m_CameraColorBuffer.rt.width, hdcamera.camera.pixelRect.height / m_CameraColorBuffer.rt.height), new Vector2(0f, 0f), 0, 0);
+                        cmd.GetTemporaryRT(HDShaderIDs._CameraDepthTexture, hdcamera.actualWidth, hdcamera.actualHeight, m_SharedRTManager.GetDepthStencilBuffer().rt.depth, FilterMode.Point, m_SharedRTManager.GetDepthStencilBuffer().rt.format);
+                        cmd.SetRenderTarget(HDShaderIDs._CameraDepthTexture);
+                        m_CopyDepthPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetDepthStencilBuffer());
+                        m_CopyDepthPropertyBlock.SetInt("_FlipY", 0);
+                        CoreUtils.DrawFullScreen(cmd, m_CopyDepth, m_CopyDepthPropertyBlock);
+                        if (hdcamera.frameSettings.enableMotionVectors)
+                        {
+                            cmd.GetTemporaryRT(HDShaderIDs._CameraMotionVectorsTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_SharedRTManager.GetVelocityBuffer().rt.format);
+                            HDUtils.BlitCameraTexture(cmd, hdcamera, m_SharedRTManager.GetVelocityBuffer(), HDShaderIDs._CameraMotionVectorsTexture);
+                        }
+                        cmd.GetTemporaryRT(HDShaderIDs._CameraColorTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_CameraColorBuffer.rt.format);
+                        if (XRGraphics.usingTexArray())
+                        {
+                            cmd.Blit(m_CameraColorBuffer, HDShaderIDs._CameraColorTexture, new Vector2(hdcamera.camera.pixelRect.width / m_CameraColorBuffer.rt.width, hdcamera.camera.pixelRect.height / m_CameraColorBuffer.rt.height), new Vector2(0f, 0f), 0, 0);
+                        }
+                        else
+                            HDUtils.BlitCameraTexture(cmd, hdcamera, m_CameraColorBuffer, HDShaderIDs._CameraColorTexture);
+                        source = HDShaderIDs._CameraColorTexture;
                     }
                     else
-                        HDUtils.BlitCameraTexture(cmd, hdcamera, m_CameraColorBuffer, HDShaderIDs._CameraColorTexture);
+                    { // Stereo enabled and doing SPI
+                        RenderTextureDescriptor depthDesc = m_SharedRTManager.GetInstancedDepthStencilBuffer().m_RT.descriptor;
+                        depthDesc.width = hdcamera.actualWidth;
+                        depthDesc.height = hdcamera.actualHeight;
+                        cmd.GetTemporaryRT(HDShaderIDs._CameraDepthTexture, depthDesc);
+                        m_CopyDepthArrayPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetInstancedDepthStencilBuffer());
+                        m_CopyDepthArrayPropertyBlock.SetInt("_FlipY", 0);
+
+                        RenderTextureDescriptor colorDesc = m_CameraColorBuffer.m_RT.descriptor;
+                        colorDesc.width = hdcamera.actualWidth;
+                        colorDesc.height = hdcamera.actualHeight;
+                        cmd.GetTemporaryRT(HDShaderIDs._CameraColorTexture, colorDesc);
+                        cmd.Blit(m_CameraColorBuffer, HDShaderIDs._CameraColorTexture, new Vector2(hdcamera.camera.pixelRect.width / m_CameraColorBuffer.rt.width, hdcamera.camera.pixelRect.height / m_CameraColorBuffer.rt.height), new Vector2(0f, 0f));
+                        for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
+                        {
+                            cmd.SetRenderTarget(HDShaderIDs._CameraDepthTexture, 0, CubemapFace.Unknown, vrPass);
+                            m_CopyDepthArrayPropertyBlock.SetInt("_DepthSlice", vrPass);
+                            CoreUtils.DrawFullScreen(cmd, m_CopyDepthArray, m_CopyDepthArrayPropertyBlock);
+                        }
+                        if (hdcamera.frameSettings.enableMotionVectors)
+                        { // Fixme get this working with SPI
+                            cmd.GetTemporaryRT(HDShaderIDs._CameraMotionVectorsTexture, hdcamera.actualWidth, hdcamera.actualHeight, 0, FilterMode.Point, m_SharedRTManager.GetVelocityBuffer().rt.format);
+                            HDUtils.BlitCameraTexture(cmd, hdcamera, m_SharedRTManager.GetVelocityBuffer(), HDShaderIDs._CameraMotionVectorsTexture);
+                        }
+
+                    }
                     source = HDShaderIDs._CameraColorTexture;
                 }
                 else
