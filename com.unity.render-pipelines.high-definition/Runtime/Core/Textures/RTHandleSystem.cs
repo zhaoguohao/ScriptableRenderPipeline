@@ -292,7 +292,7 @@ namespace UnityEngine.Experimental.Rendering
                 { // If SPI is enabled but the texture isn't going to be used as a target for expensive 
                   // renders that traverse the scene graph, allocate as two separate textures instead of
                   // a texture array.
-                    overrideDesc.dimension = TextureDimension.Tex2D;
+                    overrideDesc.dimension = dimension;
                     overrideDesc.volumeDepth = 1;
                     overrideDesc.vrUsage = VRTextureUsage.OneEye;
                 }
@@ -549,7 +549,7 @@ namespace UnityEngine.Experimental.Rendering
                 { // If SPI is enabled but the texture isn't going to be used as a target for expensive 
                   // renders that traverse the scene graph, allocate as two separate textures instead of
                   // a texture array.
-                    overrideDesc.dimension = TextureDimension.Tex2D;
+                    overrideDesc.dimension = dimension;
                     overrideDesc.volumeDepth = 1;
                     overrideDesc.vrUsage = VRTextureUsage.OneEye;
                 }

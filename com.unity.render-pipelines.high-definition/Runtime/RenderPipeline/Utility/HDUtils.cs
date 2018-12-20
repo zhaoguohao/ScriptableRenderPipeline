@@ -357,21 +357,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             commandBuffer.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, camera.doubleBufferedViewportScale);
             commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassId, MeshTopology.Triangles, 3, 1, properties);
         }
-
-        public static void DrawFullScreen(CommandBuffer commandBuffer, HDCamera camera, Material material,
-            RenderTargetIdentifier[] colorBuffers, RTHandleSystem.RTHandle depthStencilBuffer,
-            MaterialPropertyBlock properties = null, int shaderPassId = 0)
-        {
-            HDUtils.SetRenderTarget(commandBuffer, camera, colorBuffers, depthStencilBuffer);
-            commandBuffer.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, camera.doubleBufferedViewportScale);
-            commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassId, MeshTopology.Triangles, 3, 1, properties);
-        }
-
+        
         public static void DrawFullScreen(CommandBuffer commandBuffer, HDCamera camera, Material material,
             RenderTargetIdentifier colorBuffer,
-            MaterialPropertyBlock properties = null, int shaderPassId = 0)
+            MaterialPropertyBlock properties = null, int shaderPassId = 0, int depthSlice = 0)
         {
-            CoreUtils.SetRenderTarget(commandBuffer, colorBuffer);
+            CoreUtils.SetRenderTarget(commandBuffer, colorBuffer, depthSlice: depthSlice);
             commandBuffer.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, camera.doubleBufferedViewportScale);
             commandBuffer.DrawProcedural(Matrix4x4.identity, material, shaderPassId, MeshTopology.Triangles, 3, 1, properties);
         }

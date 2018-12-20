@@ -44,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             for (int i = 0; i < k_MaxSSSBuffer; ++i)
             {
-                if (settings.supportedLitShaderMode == RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly) //forward only
+                if ((settings.supportedLitShaderMode == RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly) || XRGraphics.usingTexArray()) //forward only
                 {
                     // In case of full forward we must allocate the render target for forward SSS (or reuse one already existing)
                     // TODO: Provide a way to reuse a render target
@@ -57,7 +57,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     m_ColorMSAAMRTs[i] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGB32, enableMSAA: true, bindTextureMS: true, sRGB: true, name: "SSSBufferMSAA", useInstancing: true);
                 }
-                if ((settings.supportedLitShaderMode & RenderPipelineSettings.SupportedLitShaderMode.DeferredOnly) != 0) //deferred or both
+                if (((settings.supportedLitShaderMode & RenderPipelineSettings.SupportedLitShaderMode.DeferredOnly) != 0) && !XRGraphics.usingTexArray()) //deferred or both
                 {
                     Debug.Assert(!XRGraphics.usingTexArray()); // Deferred is unsupported with SPI
                                                    // In case of deferred, we must be in sync with SubsurfaceScattering.hlsl and lit.hlsl files and setup the correct buffers

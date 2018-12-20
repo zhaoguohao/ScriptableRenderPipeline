@@ -243,14 +243,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
                 RTHandle source;
-                if (usingTexArray)
-                    source = m_Pool.Get(Vector2.one, k_ColorFormat);
-                else
-                    source = colorBuffer;
 
-
-                for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
+                int numPass = camera.camera.stereoEnabled ? XRGraphics.numPass() : 1;
+                for (int vrPass = 0; vrPass < numPass; vrPass++)
                 {
+                    if (usingTexArray)
+                        source = m_Pool.Get(Vector2.one, k_ColorFormat);
+                    else
+                        source = colorBuffer;
                     if (usingTexArray)
                     {
                         cmd.Blit(colorBuffer, source, vrPass, 0);
@@ -364,15 +364,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // Final pass
                         using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
                         {
-                            DoFinalPass(cmd, camera, blueNoise, source, usingTexArray);
-                            if (usingTexArray)
-                            {
-                                cmd.Blit(source, BuiltinRenderTextureType.CameraTarget, 0, vrPass);
-                            }
+                            DoFinalPass(cmd, camera, blueNoise, source, vrPass);
+                            PoolSource(ref source, null);
                         }
                     }
                 }
-                PoolSource(ref source, null);
             }
 
             m_ResetHistory = false;
@@ -1729,7 +1725,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         #region Final Pass
 
-        void DoFinalPass(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle source, bool usingTexArray = false)
+        void DoFinalPass(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle source, int vrPass = 0)
         {
             // Final pass has to be done in a pixel shader as it will be the one writing straight
             // to the backbuffer eventually
@@ -1791,11 +1787,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 ? new Vector4(1.0f, -1.0f, 0.0f, 1.0f)
                 : new Vector4(1.0f,  1.0f, 0.0f, 0.0f)
             );
-            if (!usingTexArray)
-                // Blit to backbuffer
-                HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, BuiltinRenderTextureType.CameraTarget, shaderPassId: pass);
-            else
-                HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, source, shaderPassId: pass);
+            HDUtils.DrawFullScreen(cmd, camera, m_FinalPassMaterial, BuiltinRenderTextureType.CameraTarget, shaderPassId: pass, depthSlice: vrPass);
         }
 
         #endregion

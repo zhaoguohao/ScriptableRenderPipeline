@@ -400,8 +400,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             for (int vrPass = 0; vrPass < numStereoPasses; vrPass++)
             {
 
-                    m_AmbientOcclusionBuffer[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusion");
-
                 m_DistortionBuffer[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), sRGB: Builtin.GetDistortionBufferSRGBFlag(), name: "Distortion");
 
                 // TODO: For MSAA, we'll need to add a Draw path in order to support MSAA properlye
@@ -1497,18 +1495,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                         if (currentFrameSettings.enablePostprocess)
                         {
-                            for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
-                            {
-                                // Post-processes output straight to the backbuffer
-                                m_PostProcessSystem.Render(
-                                    cmd: cmd,
-                                    camera: hdCamera,
-                                    blueNoise: m_BlueNoise,
-                                    colorBuffer: m_CameraColorBuffer,
-                                    lightingBuffer: null,
-                                    usingTexArray: XRGraphics.usingTexArray()
-                                );
-                            }
+                            // Post-processes output straight to the backbuffer
+                            m_PostProcessSystem.Render(
+                                cmd: cmd,
+                                camera: hdCamera,
+                                blueNoise: m_BlueNoise,
+                                colorBuffer: m_CameraColorBuffer,
+                                lightingBuffer: null,
+                                usingTexArray: XRGraphics.usingTexArray()
+                            );
                         }
                         else
                         {
@@ -2041,7 +2036,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #else
                 var pixelCoordToViewDirWS = HDUtils.ComputePixelCoordToWorldSpaceViewDirectionMatrix(hdCamera.camera.fieldOfView * Mathf.Deg2Rad, Vector2.zero, hdCamera.screenSize, hdCamera.viewMatrix, false);
 #endif
-                    m_SkyManager.RenderOpaqueAtmosphericScattering(cmd, hdCamera, colorBuffer, depthBuffer, pixelCoordToViewDirWS, hdCamera.frameSettings.enableMSAA, vrPass);
+                    m_SkyManager.RenderOpaqueAtmosphericScattering(cmd, hdCamera, colorBuffer, depthBuffer, pixelCoordToViewDirWS, hdCamera.frameSettings.enableMSAA);
                 }
             }
         }

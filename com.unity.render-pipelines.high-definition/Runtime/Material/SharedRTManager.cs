@@ -55,7 +55,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_MSAASupported = settings.supportMSAA;
             m_MSAASamples = m_MSAASupported ? settings.msaaSampleCount : MSAASamples.None;
             m_VelocitySupport = settings.supportMotionVectors;
-            m_ReuseGBufferMemory = settings.supportedLitShaderMode != RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly;
+            m_ReuseGBufferMemory = settings.supportedLitShaderMode != RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly && !XRGraphics.usingTexArray();
 
             int numStereoPasses = XRGraphics.usingTexArray() ? XRGraphics.eyeTextureDesc.volumeDepth : 1;
 

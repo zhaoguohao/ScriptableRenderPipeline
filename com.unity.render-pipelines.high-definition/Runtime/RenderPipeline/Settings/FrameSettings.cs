@@ -267,7 +267,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // We have to fall back to forward-only rendering when scene view is using wireframe rendering mode
             // as rendering everything in wireframe + deferred do not play well together
-            if (GL.wireframe) //force forward mode for wireframe
+            if (GL.wireframe || XRGraphics.usingTexArray()) //force forward mode for wireframe and VR SPI
             {
                 aggregate.shaderLitMode = LitShaderMode.Forward;
             }
