@@ -313,14 +313,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         public void RenderOpaqueAtmosphericScattering(CommandBuffer cmd, HDCamera hdCamera, RTHandleSystem.RTHandle colorBuffer, RTHandleSystem.RTHandle depthBuffer,
-                                                      Matrix4x4 pixelCoordToViewDirWS, bool isMSAA, int stereoPass = 0)
+                                                      Matrix4x4 pixelCoordToViewDirWS, bool isMSAA)
         {
             using (new ProfilingSample(cmd, "Opaque Atmospheric Scattering"))
             {
                 var propertyBlock = new MaterialPropertyBlock();
                 
                 propertyBlock.SetMatrix(HDShaderIDs._PixelCoordToViewDirWS, pixelCoordToViewDirWS);
-                propertyBlock.SetFloat("_ForceEyeIndex", stereoPass);
                 HDUtils.DrawFullScreen(cmd, hdCamera, m_OpaqueAtmScatteringMaterial, colorBuffer, depthBuffer, propertyBlock, isMSAA? 1 : 0, depthSlice: XRGraphics.usingTexArray() ? -1 : 0);
             }
         }

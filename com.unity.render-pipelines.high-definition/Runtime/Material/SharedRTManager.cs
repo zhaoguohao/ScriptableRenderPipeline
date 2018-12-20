@@ -356,6 +356,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     RTHandles.Release(m_CameraDepthStencilMSAAInstanced);
                     RTHandles.Release(m_DepthAsColorMSAAInstanced);
+                    RTHandles.Release(m_NormalMSAAInstanced);
                 }
             }
 

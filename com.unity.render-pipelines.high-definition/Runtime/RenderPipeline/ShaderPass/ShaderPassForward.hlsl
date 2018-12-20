@@ -46,12 +46,10 @@ void Frag(InstancedPackedVaryingsToPS packedInput,
           )
 {
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
+
     FragInputs input = UnpackVaryingsMeshToFragInputs(packedInput.packedVaryingsType.vmesh);
 
     uint2 tileIndex = uint2(input.positionSS.xy) / GetTileSize();
-#if defined(UNITY_SINGLE_PASS_STEREO)
-    tileIndex.x -= unity_StereoEyeIndex * _NumTileClusteredX;
-#endif
 
     // input.positionSS is SV_Position
     PositionInputs posInput = GetPositionInput_Stereo(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS.xyz, tileIndex, unity_StereoEyeIndex);
@@ -112,6 +110,8 @@ void Frag(InstancedPackedVaryingsToPS packedInput,
 #endif
         float3 diffuseLighting;
         float3 specularLighting;
+
+        UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput); // Something about the extra curly braces messes up unity_StereoEyeIndex
 
         LightLoop(V, posInput, preLightData, bsdfData, builtinData, featureFlags, diffuseLighting, specularLighting);
 

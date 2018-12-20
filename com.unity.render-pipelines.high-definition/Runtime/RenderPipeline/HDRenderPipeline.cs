@@ -400,6 +400,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             for (int vrPass = 0; vrPass < numStereoPasses; vrPass++)
             {
 
+                    m_AmbientOcclusionBuffer[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: RenderTextureFormat.R8, sRGB: false, enableRandomWrite: true, name: "AmbientOcclusion");
+
                 m_DistortionBuffer[vrPass] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), sRGB: Builtin.GetDistortionBufferSRGBFlag(), name: "Distortion");
 
                 // TODO: For MSAA, we'll need to add a Draw path in order to support MSAA properlye
@@ -1195,18 +1197,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         RenderCameraVelocity(cullingResults, hdCamera, renderContext, cmd);
 
                         StopStereoRendering(cmd, renderContext, camera);
-                    }
-
-                    // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
-                    // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
-                    UpdateSkyEnvironment(hdCamera, cmd);
-
-                    StartStereoRendering(cmd, renderContext, camera);
-                    RenderSky(hdCamera, cmd);
-                    StopStereoRendering(cmd, renderContext, camera);
-
-                    for (int vrPass = 0; vrPass < numStereoPasses; vrPass++)
-                    {
 
                         if (m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                         {
@@ -1427,6 +1417,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
                     }
 
+                    // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
+                    // TODO: Try to arrange code so we can trigger this call earlier and use async compute here to run sky convolution during other passes (once we move convolution shader to compute).
+                    UpdateSkyEnvironment(hdCamera, cmd);
+
+                    StartStereoRendering(cmd, renderContext, camera);
+                    RenderSky(hdCamera, cmd);
+
                     if (!m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                     {
                         cmd.DisableShaderKeyword("FORCE_MULTIPASS");
@@ -1487,11 +1484,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             AccumulateDistortion(cullingResults, hdCamera, renderContext, cmd);
                             RenderDistortion(hdCamera, cmd, vrPass);
-
-                            StopStereoRendering(cmd, renderContext, camera);
                         }
 
-                        
+
+                        StopStereoRendering(cmd, renderContext, camera);
+
                         PushFullScreenDebugTexture(hdCamera, cmd, m_CameraColorBuffer, FullScreenDebugMode.NanTracker);
                         PushFullScreenLightingDebugTexture(hdCamera, cmd, m_CameraColorBuffer);
                         PushColorPickerDebugTexture(cmd, m_CameraColorBuffer, hdCamera);
