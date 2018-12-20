@@ -31,7 +31,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_Node = node;
             m_Type = type;
             m_Slots = slots;
-            //m_SelectedIndex = m_Slots.Count - 1;
 
             m_Container = new IMGUIContainer(() => OnGUIHandler ()) { name = "ListContainer" };
             Add(m_Container);
@@ -49,7 +48,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 if (changeCheckScope.changed)
                 {
-                    UpdateSlots();
+                    //UpdateSlots();
                     m_Node.Dirty(ModificationScope.Node);
                 }
             }
@@ -102,14 +101,19 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             GUIStyle labelStyle = new GUIStyle();
 
-            if(index == m_SelectedIndex)
-                EditorGUI.DrawRect(rect, Color.grey);
+            //if(index == m_SelectedIndex)
+            //    EditorGUI.DrawRect(rect, Color.grey);
 
             labelStyle.normal.textColor = Color.white;
 
             SlotEntry entry = list.list[index] as SlotEntry;
-            entry.name = EditorGUI.TextField( new Rect(rect.x, rect.y, rect.width / 2, EditorGUIUtility.singleLineHeight), entry.name, labelStyle);
+            EditorGUI.BeginChangeCheck();
+            entry.name = EditorGUI.DelayedTextField( new Rect(rect.x, rect.y, rect.width / 2, EditorGUIUtility.singleLineHeight), entry.name, labelStyle);            
             entry.valueType = (SlotValueType)EditorGUI.EnumPopup( new Rect(rect.x + rect.width / 2, rect.y, rect.width / 2, EditorGUIUtility.singleLineHeight), entry.valueType);
+            if(EditorGUI.EndChangeCheck())
+            {
+                UpdateSlots();
+            }
         }
 
         private void SelectEntry(ReorderableList list)
@@ -122,7 +126,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             list.list.Add(new SlotEntry() { id = -1, name = "New Slot", valueType = SlotValueType.Vector1 } );
             m_SelectedIndex = m_Slots.Count - 1;
-            Redraw();
+            UpdateSlots();
         }
 
         private void RemoveEntry(ReorderableList list)
@@ -130,12 +134,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             list.index = m_SelectedIndex;
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
             m_SelectedIndex = list.index;
-            Redraw();
-        }
-
-        private bool CanRemoveEntry(ReorderableList list)
-        {
-            return true;//m_SelectedIndex != -1;
+            UpdateSlots();
         }
 
         void Redraw()
@@ -163,6 +162,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
 
             m_Node.UpdateNodeAfterDeserialization();
+            Redraw();
         }
 
         private int GetNewSlotID()
