@@ -72,7 +72,7 @@ void Frag(  InstancedPackedVaryingsToPS packedInput
     EncodeIntoNormalBuffer(ConvertSurfaceDataToNormalData(surfaceData), posInput.positionSS, outNormalBuffer);
     #ifdef WRITE_MSAA_DEPTH
     // In case we are rendering in MSAA, reading the an MSAA depth buffer is way too expensive. To avoid that, we export the depth to a color buffer
-    depthColor = packedInput.vmesh.positionCS.z;
+    depthColor = packedInput.packedVaryingsType.vmesh.positionCS.z;
     #endif
 #elif defined(SCENESELECTIONPASS)
     // We use depth prepass for scene selection in the editor, this code allow to output the outline correctly
