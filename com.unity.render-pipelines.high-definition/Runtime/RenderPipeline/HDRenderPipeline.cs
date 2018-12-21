@@ -1097,7 +1097,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     StartStereoRendering(cmd, renderContext, camera);
                     bool shouldRenderMotionVectorAfterGBuffer = RenderDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
-                    
+                    cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTextureArray, m_SharedRTManager.GetInstancedDepthStencilBuffer());
+
                     StopStereoRendering(cmd, renderContext, camera);
                     bool SPI = XRGraphics.usingTexArray();
                     if (SPI)
@@ -1176,9 +1177,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         GenerateDepthPyramid(hdCamera, cmd, FullScreenDebugMode.DepthPyramid, vrPass);
                         // Depth texture is now ready, bind it (Depth buffer could have been bind before if DBuffer is enable)
                         cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthTexture(false, 0));
-                        if (SPI) // Need this for opaque atmospheric scattering for now
-                            cmd.SetGlobalTexture(HDShaderIDs._CameraDepthTexture_Right, m_SharedRTManager.GetDepthTexture(false, 1)); // Mipchain isn't fully ready but it's good enough for atmospheric scattering which needs it early
-
 
                         if (shouldRenderMotionVectorAfterGBuffer)
                         {

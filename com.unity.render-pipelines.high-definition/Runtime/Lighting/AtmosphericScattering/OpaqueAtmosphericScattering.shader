@@ -36,11 +36,7 @@ Shader "Hidden/HDRP/OpaqueAtmosphericScattering"
         float LoadDepth(int2 positionSS)
         {
 #ifdef UNITY_STEREO_INSTANCING_ENABLED
-            UNITY_BRANCH
-            if (unity_StereoEyeIndex == 0)
-                return LOAD_TEXTURE2D(_CameraDepthTexture, (int2)positionSS).x;
-            else // TODO VR: More than 2 eyes
-                return LOAD_TEXTURE2D(_CameraDepthTexture_Right, (int2)positionSS).x;
+            return LOAD_TEXTURE2D_ARRAY(_CameraDepthTextureArray, positionSS, unity_StereoEyeIndex);
 #else
             return LOAD_TEXTURE2D(_CameraDepthTexture, (int2)positionSS).x;
 #endif

@@ -168,8 +168,7 @@ SAMPLER_CMP(s_linear_clamp_compare_sampler);
 
 TEXTURE2D(_CameraDepthTexture);
 SAMPLER(sampler_CameraDepthTexture);
-TEXTURE2D(_CameraDepthTexture_Right);
-SAMPLER(sampler_CameraDepthTexture_Right);
+TEXTURE2D_ARRAY(_CameraDepthTextureArray);
 
 // Main lightmap
 TEXTURE2D(unity_Lightmap);

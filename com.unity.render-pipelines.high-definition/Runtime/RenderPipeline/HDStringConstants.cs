@@ -76,7 +76,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _ShadowAtlasSize = Shader.PropertyToID("_ShadowAtlasSize");
         public static readonly int _CascadeShadowAtlasSize = Shader.PropertyToID("_CascadeShadowAtlasSize");
         public static readonly int _CascadeShadowCount = Shader.PropertyToID("_CascadeShadowCount");
-
+        
         public static readonly int g_LayeredSingleIdxBuffer = Shader.PropertyToID("g_LayeredSingleIdxBuffer");
         public static readonly int _EnvLightIndexShift = Shader.PropertyToID("_EnvLightIndexShift");
         public static readonly int _DensityVolumeIndexShift = Shader.PropertyToID("_DensityVolumeIndexShift");
@@ -362,7 +362,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _HalfRcpWeightedVariances = Shader.PropertyToID("_HalfRcpWeightedVariances");
 
         public static readonly int _CameraDepthTexture = Shader.PropertyToID("_CameraDepthTexture");
-        public static readonly int _CameraDepthTexture_Right = Shader.PropertyToID("_CameraDepthTexture_Right");
+        public static readonly int _CameraDepthTextureArray = Shader.PropertyToID("_CameraDepthTextureArray");
         public static readonly int _CameraMotionVectorsTexture = Shader.PropertyToID("_CameraMotionVectorsTexture");
         public static readonly int _CameraMotionVectorsSize = Shader.PropertyToID("_CameraMotionVectorsSize");
         public static readonly int _CameraMotionVectorsScale = Shader.PropertyToID("_CameraMotionVectorsScale");
