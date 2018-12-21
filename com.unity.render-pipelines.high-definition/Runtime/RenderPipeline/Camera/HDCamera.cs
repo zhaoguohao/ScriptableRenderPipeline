@@ -868,14 +868,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public RTHandleSystem.RTHandle GetPreviousFrameRT(int id, int stereoPass = 0)
         {
-            int idx = stereoPass + XRGraphics.numPass(); // idx = stereoPass = XRGraphics.numPass() * 1
+            int idx = stereoPass;
+            if (id == (int)HDCameraFrameHistoryType.ColorBufferMipChain)
+            {
+                bool isColorPyramidHistoryRequired = m_frameSettings.enableSSR; // TODO: TAA as well
+                // idx = stereoPass + XRGraphics.numPass() * 1
+                idx += XRGraphics.numPass() * (isColorPyramidHistoryRequired ? 1 : 0);
+            }
             return m_HistoryRTSystem.GetFrameRT(id, idx);
         }
 
         public RTHandleSystem.RTHandle GetCurrentFrameRT(int id, int stereoPass = 0)
         {
-            // idx = stereoPass + XRGraphics.numPass() * 0
-            return m_HistoryRTSystem.GetFrameRT(id, stereoPass);
+            int idx = 0;
+            if (id == (int)HDCameraFrameHistoryType.ColorBufferMipChain)
+            {
+                // idx = stereoPass + XRGraphics.numPass() * 0
+                idx = stereoPass;
+            }
+            return m_HistoryRTSystem.GetFrameRT(id, idx);
         }
 
         // Allocate buffers frames and return current frame
