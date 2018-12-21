@@ -68,7 +68,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public static class HDShaderIDs
     {
         public static readonly int _ZClip = Shader.PropertyToID("_ZClip");
-        public static readonly int _ForceEyeIndex = Shader.PropertyToID("_ForceEyeIndex");
 
         public static readonly int _HDShadowDatas = Shader.PropertyToID("_HDShadowDatas");
         public static readonly int _HDDirectionalShadowData = Shader.PropertyToID("_HDDirectionalShadowData");

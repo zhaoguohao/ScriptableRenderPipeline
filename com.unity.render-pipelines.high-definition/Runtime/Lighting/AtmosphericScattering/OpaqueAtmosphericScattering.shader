@@ -9,7 +9,6 @@ Shader "Hidden/HDRP/OpaqueAtmosphericScattering"
         // #pragma enable_d3d11_debug_symbols
 
         float4x4 _PixelCoordToViewDirWS; // Actually just 3x3, but Unity can only set 4x4
-        float _ForceEyeIndex;
 
         Texture2DMS<float> _DepthTextureMS;
 

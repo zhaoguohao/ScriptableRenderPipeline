@@ -1121,14 +1121,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     ////////////////////////////
                     // VR Begin stereo passes
                     uint numStereoPasses = SPI ? hdCamera.numEyes : 1;
-                    if (numStereoPasses > 1)
-                        cmd.EnableShaderKeyword("FORCE_MULTIPASS");
 
                     for (int vrPass = 0; vrPass < numStereoPasses; vrPass++)
                     {
-                        cmd.SetGlobalInt("_ForceEyeIndex", vrPass);
-
-
+                        cmd.SetGlobalInt(HDShaderIDs._ComputeEyeIndex, vrPass);
                         StartStereoRendering(cmd, renderContext, camera);
                         if (!shouldRenderMotionVectorAfterGBuffer)
                         {
@@ -1426,12 +1422,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     if (!m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled())
                     {
-                        cmd.DisableShaderKeyword("FORCE_MULTIPASS");
                         RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.Opaque);
 
-                        cmd.EnableShaderKeyword("FORCE_MULTIPASS");
                         for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
                         {
+                            cmd.SetGlobalInt(HDShaderIDs._ComputeEyeIndex, vrPass);
                             m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraSssDiffuseLightingMSAABuffer, m_CameraSssDiffuseLightingBuffer);
                             m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_SSSBufferManager.GetSSSBufferMSAA(0), m_SSSBufferManager.GetSSSBuffer(0));
 
@@ -1440,16 +1435,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                 m_CameraSssDiffuseLightingBuffer, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.enableMSAA, vrPass), m_SharedRTManager.GetDepthTexture(), vrPass);
                         }
 
-                        cmd.DisableShaderKeyword("FORCE_MULTIPASS");
                         RenderTransparentDepthPrepass(cullingResults, hdCamera, renderContext, cmd);
 
                         // Render pre refraction objects
                         RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.PreRefraction);
-
-                        cmd.EnableShaderKeyword("FORCE_MULTIPASS");
-
+                        
                         for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
                         {
+                            cmd.SetGlobalInt(HDShaderIDs._ComputeEyeIndex, vrPass);
                             if (hdCamera.frameSettings.enableRoughRefraction)
                             {
                                 // First resolution of the color buffer for the color pyramid
@@ -1460,12 +1453,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
 
                         // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
-                        cmd.DisableShaderKeyword("FORCE_MULTIPASS");
                         RenderForward(cullingResults, hdCamera, renderContext, cmd, ForwardPass.Transparent);
-                        cmd.EnableShaderKeyword("FORCE_MULTIPASS");
 
                         for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
                         {
+                            cmd.SetGlobalInt(HDShaderIDs._ComputeEyeIndex, vrPass);
                             // Second resolve the color buffer for finishing the frame
                             m_SharedRTManager.ResolveMSAAColor(cmd, hdCamera, m_CameraColorMSAABuffer, m_CameraColorBuffer);
 
@@ -1821,7 +1813,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         if (!XRGraphics.usingTexArray() || (vrPass == 0))
                         {
-                            cmd.DisableShaderKeyword("FORCE_MULTIPASS");
                             HDUtils.SetRenderTarget(cmd, hdCamera, m_SharedRTManager.GetInstancedPrepassBuffersRTI(hdCamera.frameSettings), m_SharedRTManager.GetInstancedDepthStencilBuffer(hdCamera.frameSettings.enableMSAA), depthSlice: XRGraphics.usingTexArray() ? -1 : 0);
                             XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.camera.stereoEnabled);
 
@@ -1832,7 +1823,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             //Shader.SetGlobalTexture(HDShaderIDs._InstancedDepthTexture, m_SharedRTManager.GetInstancedDepthStencilBuffer(false));
                             if (hdCamera.frameSettings.enableMSAA)
                                 Shader.SetGlobalTexture(HDShaderIDs._InstancedDepthTextureMS, m_SharedRTManager.GetInstancedDepthStencilBuffer(true));
-                            cmd.EnableShaderKeyword("FORCE_MULTIPASS");
                         }
                     }
                     break;
