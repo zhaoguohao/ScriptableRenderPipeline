@@ -186,32 +186,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return GetPrepassBuffersRTI(frameSettings);
             }
         }
-
-        public void BlitInstancedPrepassBuffersRTI(FrameSettings frameSettings, CommandBuffer cmd)
-        {
-            if (!XRGraphics.usingTexArray())
-                return;
-            if (frameSettings.enableMSAA)
-            {
-                for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
-                {
-                    cmd.Blit(m_NormalMSAAInstanced, m_NormalMSAART[vrPass], vrPass, 0);
-                    cmd.Blit(m_DepthAsColorMSAAInstanced, m_DepthAsColorMSAART[vrPass], vrPass, 0);
-                }
-
-                // TODOVR deallocate instanced Normal and DepthAsColor
-            }
-            else
-            {
-                for (int vrPass = 0; vrPass < XRGraphics.numPass(); vrPass++)
-                {
-                    cmd.Blit(m_NormalInstanced, m_NormalRT[vrPass], vrPass, 0);
-                }
-
-                // TODOVR deallocate instanced Normal and DepthAsColor
-            }
-        }
-
+        
         // Function that will return the set of buffers required for the motion vector pass
         public RenderTargetIdentifier[] GetVelocityPassBuffersRTI(FrameSettings frameSettings, int vrPass = 0)
         {

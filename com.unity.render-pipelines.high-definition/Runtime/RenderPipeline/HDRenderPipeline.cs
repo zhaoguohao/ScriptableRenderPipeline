@@ -1104,8 +1104,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         using (new ProfilingSample(cmd, "Copy Depth and Normal for SPI", CustomSamplerId.CopyDepth.GetSampler()))
                         {
-                            // Copy MSAA buffers and normals
-                            m_SharedRTManager.BlitInstancedPrepassBuffersRTI(hdCamera.frameSettings, cmd);
                             // Copy depth from texarray to multiple textures
                             m_CopyDepthArrayPropertyBlock.SetTexture(HDShaderIDs._InputDepth, m_SharedRTManager.GetInstancedDepthStencilBuffer(hdCamera.frameSettings.enableMSAA));
                             for (int eye = 0; eye < XRGraphics.numPass(); eye++)
