@@ -233,7 +233,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 bool isVolumetricHistoryRequired   = m_frameSettings.enableVolumetrics && m_frameSettings.enableReprojectionForVolumetrics;
 
                 int numColorPyramidBuffersRequired = isColorPyramidHistoryRequired ? 2 : 1; // TODO: 1 -> 0
-                numColorPyramidBuffersRequired *= XRGraphics.usingTexArray() ? XRGraphics.numPass() : 1;
+                numColorPyramidBuffersRequired *= XRGraphics.numPass();
                 int numVolumetricBuffersRequired   = isVolumetricHistoryRequired   ? 2 : 0; // History + feedback
 
                 if ((numColorPyramidBuffersAllocated != numColorPyramidBuffersRequired) ||
@@ -869,7 +869,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public RTHandleSystem.RTHandle GetPreviousFrameRT(int id, int stereoPass = 0)
         {
             int idx = stereoPass + XRGraphics.numPass(); // idx = stereoPass = XRGraphics.numPass() * 1
-            return m_HistoryRTSystem.GetFrameRT(id, 1);
+            return m_HistoryRTSystem.GetFrameRT(id, idx);
         }
 
         public RTHandleSystem.RTHandle GetCurrentFrameRT(int id, int stereoPass = 0)
