@@ -1749,8 +1749,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "ApplyDistortion", CustomSamplerId.ApplyDistortion.GetSampler()))
             {
-                var currentColorPyramid = (!XRGraphics.usingTexArray() || vrPass == 0) ? hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain)
-                                        : hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain_Right);
+                var currentColorPyramid = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain, vrPass);
 
                 var size = new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, 1f / hdCamera.actualWidth, 1f / hdCamera.actualHeight);
                 uint x, y, z;
@@ -2204,8 +2203,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var cs = m_ScreenSpaceReflectionsCS;
 
-            var previousColorPyramid = (!XRGraphics.usingTexArray() || vrPass == 0) ? hdCamera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain)
-                                        : hdCamera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain_Right);
+            var previousColorPyramid = hdCamera.GetPreviousFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain, vrPass);
 
             Vector2Int previousColorPyramidSize = new Vector2Int(previousColorPyramid.rt.width, previousColorPyramid.rt.height);
 
@@ -2294,18 +2292,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return;
             }
 
-            var currentColorPyramid = (!XRGraphics.usingTexArray() || vrPass == 0) ? hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain)
-                                       : hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain_Right);
+            var currentColorPyramid = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain, vrPass);
 
             int lodCount;
 
             using (new ProfilingSample(cmd, "Color Gaussian MIP Chain", CustomSamplerId.ColorPyramid.GetSampler()))
             {
                 m_PyramidSizeV2I.Set(hdCamera.actualWidth, hdCamera.actualHeight);
-                if (XRGraphics.usingTexArray())
-                    lodCount = m_MipGenerator.RenderColorGaussianPyramid(cmd, m_PyramidSizeV2I, m_CameraColorBuffer, hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain), hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain_Right));
-                else
-                    lodCount = m_MipGenerator.RenderColorGaussianPyramid(cmd, m_PyramidSizeV2I, m_CameraColorBuffer, hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain));
+                lodCount = m_MipGenerator.RenderColorGaussianPyramid(cmd, m_PyramidSizeV2I, m_CameraColorBuffer, hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain, vrPass));
             }
 
             float scaleX = hdCamera.actualWidth / (float)currentColorPyramid.rt.width;

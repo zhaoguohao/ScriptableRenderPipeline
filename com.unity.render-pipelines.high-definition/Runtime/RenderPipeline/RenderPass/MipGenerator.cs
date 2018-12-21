@@ -86,7 +86,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // We can't do it in place as the color pyramid has to be read while writing to the color
         // buffer in some cases (e.g. refraction, distortion)
         // Returns the number of mips
-        public int RenderColorGaussianPyramid(CommandBuffer cmd, Vector2Int size, Texture source, RenderTexture destination, RenderTexture rightEyeDest = null)
+        public int RenderColorGaussianPyramid(CommandBuffer cmd, Vector2Int size, Texture source, RenderTexture destination)
         {
             // Only create the temporary target on-demand in case the game doesn't actually need it
             if (m_TempColorTarget == null)
@@ -120,7 +120,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 srcMipWidth = size.x;
                 srcMipHeight = size.y;
 
-                RenderTexture dest = vrPass == 0 ? destination : rightEyeDest;
                 if (preferFragment)
                 {
                     int tempTargetWidth = srcMipWidth >> 1;
@@ -189,21 +188,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if (srcMipLevel == 0)
                         {
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Source, source, 0);
-                            cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Mip0, dest, 0);
+                            cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Mip0, destination, 0);
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Destination, m_TempColorTarget);
                             cmd.SetComputeIntParam(cs, HDShaderIDs._ComputeEyeIndex, vrPass);
                             cmd.DispatchCompute(cs, downsampleKernelMip0, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
                         }
                         else
                         {
-                            cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Source, dest, srcMipLevel);
+                            cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Source, destination, srcMipLevel);
                             cmd.SetComputeTextureParam(cs, downsampleKernel, HDShaderIDs._Destination, m_TempColorTarget);
                             cmd.DispatchCompute(cs, downsampleKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
                         }
 
                         cmd.SetComputeVectorParam(cs, HDShaderIDs._Size, new Vector4(dstMipWidth, dstMipHeight, 0f, 0f));
                         cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Source, m_TempColorTarget);
-                        cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Destination, dest, srcMipLevel + 1);
+                        cmd.SetComputeTextureParam(cs, gaussianKernel, HDShaderIDs._Destination, destination, srcMipLevel + 1);
                         cmd.DispatchCompute(cs, gaussianKernel, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
 
                         srcMipLevel++;

@@ -233,6 +233,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 bool isVolumetricHistoryRequired   = m_frameSettings.enableVolumetrics && m_frameSettings.enableReprojectionForVolumetrics;
 
                 int numColorPyramidBuffersRequired = isColorPyramidHistoryRequired ? 2 : 1; // TODO: 1 -> 0
+                numColorPyramidBuffersRequired *= XRGraphics.usingTexArray() ? XRGraphics.numPass() : 1;
                 int numVolumetricBuffersRequired   = isVolumetricHistoryRequired   ? 2 : 0; // History + feedback
 
                 if ((numColorPyramidBuffersAllocated != numColorPyramidBuffersRequired) ||
@@ -249,8 +250,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     if (numColorPyramidBuffersRequired != 0)
                     {
                         AllocHistoryFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain, HistoryBufferAllocatorFunction, numColorPyramidBuffersRequired);
-                        if (XRGraphics.usingTexArray())
-                            AllocHistoryFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain_Right, HistoryBufferAllocatorFunction, numColorPyramidBuffersRequired);
                         colorPyramidHistoryIsValid = false;
                     }
 
@@ -867,14 +866,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetGlobalVector(HDShaderIDs._TextureWidthScaling, textureWidthScaling);
         }
 
-        public RTHandleSystem.RTHandle GetPreviousFrameRT(int id)
+        public RTHandleSystem.RTHandle GetPreviousFrameRT(int id, int stereoPass = 0)
         {
+            int idx = stereoPass + XRGraphics.numPass(); // idx = stereoPass = XRGraphics.numPass() * 1
             return m_HistoryRTSystem.GetFrameRT(id, 1);
         }
 
-        public RTHandleSystem.RTHandle GetCurrentFrameRT(int id)
+        public RTHandleSystem.RTHandle GetCurrentFrameRT(int id, int stereoPass = 0)
         {
-            return m_HistoryRTSystem.GetFrameRT(id, 0);
+            // idx = stereoPass + XRGraphics.numPass() * 0
+            return m_HistoryRTSystem.GetFrameRT(id, stereoPass);
         }
 
         // Allocate buffers frames and return current frame
