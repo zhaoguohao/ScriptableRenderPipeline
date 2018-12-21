@@ -154,10 +154,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 m_BlackboardProvider = new BlackboardProvider(graph);
                 m_GraphView.Add(m_BlackboardProvider.blackboard);
-                Rect blackboardLayout = m_BlackboardProvider.blackboard.layout;
-                blackboardLayout.x = 10f;
-                blackboardLayout.y = 10f;
-                m_BlackboardProvider.blackboard.SetPosition(blackboardLayout);
+                m_BlackboardProvider.blackboard.style.left = 10f;
+                m_BlackboardProvider.blackboard.style.top = 10f;
 
                 // Initialize toggle settings if it doesnt exist.
                 if (m_ToggleSettings == null)
@@ -389,7 +387,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             previewManager.ForceShaderUpdate();
         }
-        
+
         public void HandleGraphChanges()
         {
             previewManager.HandleGraphChanges();
@@ -501,7 +499,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             if (!m_MessageManager.nodeMessagesChanged)
                 return;
-            
+
             foreach (var messageData in m_MessageManager.GetNodeMessages())
             {
                 var node = m_Graph.GetNodeFromTempId(messageData.Key);
@@ -712,16 +710,19 @@ namespace UnityEditor.ShaderGraph.Drawing
                 // Restore blackboard layout, and make sure that it remains in the view.
                 Rect blackboardRect = m_FloatingWindowsLayout.blackboardLayout.GetLayout(this.layout);
 
-                // Make sure the dimensions are sufficiently large.
-                blackboardRect.width = Mathf.Clamp(blackboardRect.width, 160f, m_GraphView.contentContainer.layout.width);
-                blackboardRect.height = Mathf.Clamp(blackboardRect.height, 160f, m_GraphView.contentContainer.layout.height);
+                if (!float.IsNaN(blackboardRect.width) && !float.IsNaN(blackboardRect.height))
+                {
+                    // Make sure the dimensions are sufficiently large.
+                    m_BlackboardProvider.blackboard.style.width = Mathf.Clamp(blackboardRect.width, 160f, m_GraphView.contentContainer.layout.width);
+                    m_BlackboardProvider.blackboard.style.height = Mathf.Clamp(blackboardRect.height, 160f, m_GraphView.contentContainer.layout.height);
+                }
 
-                // Make sure that the positionining is on screen.
-                blackboardRect.x = Mathf.Clamp(blackboardRect.x, 0f, Mathf.Max(1f, m_GraphView.contentContainer.layout.width - blackboardRect.width - blackboardRect.width));
-                blackboardRect.y = Mathf.Clamp(blackboardRect.y, 0f, Mathf.Max(1f, m_GraphView.contentContainer.layout.height - blackboardRect.height - blackboardRect.height));
-
-                // Set the processed blackboard layout.
-                m_BlackboardProvider.blackboard.SetPosition(blackboardRect);
+                if (!float.IsNaN(blackboardRect.x) && !float.IsNaN(blackboardRect.y))
+                {
+                    // Make sure that the positionining is on screen.
+                    m_BlackboardProvider.blackboard.style.left = Mathf.Clamp(blackboardRect.x, 0f, Mathf.Max(1f, m_GraphView.contentContainer.layout.width - blackboardRect.width - blackboardRect.width));
+                    m_BlackboardProvider.blackboard.style.top = Mathf.Clamp(blackboardRect.y, 0f, Mathf.Max(1f, m_GraphView.contentContainer.layout.height - blackboardRect.height - blackboardRect.height));
+                }
 
                 previewManager.ResizeMasterPreview(m_FloatingWindowsLayout.masterPreviewSize);
             }
