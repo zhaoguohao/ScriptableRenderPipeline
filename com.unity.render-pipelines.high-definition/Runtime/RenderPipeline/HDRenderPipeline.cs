@@ -1772,7 +1772,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cmd.SetComputeTextureParam(m_applyDistortionCS, m_applyDistortionKernel, HDShaderIDs._Destination, m_CameraColorBuffer);
                 cmd.SetComputeVectorParam(m_applyDistortionCS, HDShaderIDs._Size, size);
                 if (XRGraphics.usingTexArray())
-                    cmd.SetComputeIntParam(m_applyDistortionCS, "_DepthSlice", vrPass);
+                    cmd.SetComputeIntParam(m_applyDistortionCS, HDShaderIDs._ComputeEyeIndex, vrPass);
 
                 cmd.DispatchCompute(m_applyDistortionCS, m_applyDistortionKernel, Mathf.CeilToInt(size.x / x), Mathf.CeilToInt(size.y / y), 1);
             }

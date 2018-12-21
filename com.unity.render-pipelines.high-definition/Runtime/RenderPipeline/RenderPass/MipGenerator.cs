@@ -191,7 +191,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Source, source, 0);
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Mip0, dest, 0);
                             cmd.SetComputeTextureParam(cs, downsampleKernelMip0, HDShaderIDs._Destination, m_TempColorTarget);
-                            cmd.SetComputeIntParam(cs, "_DepthSlice", vrPass);
+                            cmd.SetComputeIntParam(cs, HDShaderIDs._ComputeEyeIndex, vrPass);
                             cmd.DispatchCompute(cs, downsampleKernelMip0, (dstMipWidth + 7) / 8, (dstMipHeight + 7) / 8, 1);
                         }
                         else

@@ -67,18 +67,10 @@ TEXTURE2D(_DepthTexture);                           // Z-buffer
 #ifdef USE_INTERMEDIATE_BUFFER
     RW_TEXTURE2D(float4, _CameraFilteringTexture);  // Target texture
 #else
-#ifdef UNITY_STEREO_INSTANCING_ENABLED
-    RW_TEXTURE2D_ARRAY(float4, _CameraColorTexture); // Target texture
-#else
-    RW_TEXTURE2D(float4, _CameraColorTexture);      // Target texture
-#endif
+    RW_SCREENSPACE_TEXTURE(float4, _CameraColorTexture);      // Target texture
 #endif
 
-#ifdef UNITY_STEREO_INSTANCING_ENABLED
-    TEXTURE2D_ARRAY(_IrradianceSource);                       // Includes transmitted light
-#else
-    TEXTURE2D(_IrradianceSource);                       // Includes transmitted light
-#endif
+UNITY_DECLARE_SCREENSPACE_TEXTURE(_IrradianceSource);                       // Includes transmitted light
 
 //--------------------------------------------------------------------------------------------------
 // Implementation
@@ -245,11 +237,7 @@ void StoreResult(uint2 pixelCoord, float3 irradiance)
 #ifdef USE_INTERMEDIATE_BUFFER
     _CameraFilteringTexture[pixelCoord] = float4(irradiance, 1);
 #else
-#ifdef UNITY_STEREO_INSTANCING_ENABLED
-    _CameraColorTexture[uint3(pixelCoord, _DepthSlice)] += float4(irradiance, 0);
-#else
-    _CameraColorTexture[pixelCoord]    += float4(irradiance, 0);
-#endif
+    _CameraColorTexture[INDEX_SCREENSPACE_TEXTURE(pixelCoord)] += float4(irradiance, 0);
 #endif
 }
 

@@ -20,6 +20,7 @@
 //
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/InstancedTextures.hlsl"
 
 #pragma only_renderers d3d11 ps4 xboxone vulkan metal switch
 
@@ -30,11 +31,7 @@
 
 
 #if COPY_MIP_0
-#if defined(UNITY_STEREO_INSTANCING_ENABLED)
-Texture2DArray<float4> _Source;
-#else
-Texture2D<float4> _Source;
-#endif
+SCREENSPACE_TEXTURE_TYPE(float4, _Source);
 RWTexture2D<float4> _Mip0;
 #else
 RWTexture2D<float4> _Source;
@@ -139,17 +136,10 @@ void MAIN_GAUSSIAN(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThr
     uint2 uthreadUL = uint2(max(0, threadUL));
 
     uint2 size = uint2(_Size.xy) - 1u;
-#if defined(UNITY_STEREO_INSTANCING_ENABLED)
-    float4 p00 = _Source[uint3(min(uthreadUL + uint2(0u, 0u), size), _DepthSlice)];
-    float4 p10 = _Source[uint3(min(uthreadUL + uint2(1u, 0u), size), _DepthSlice)];
-    float4 p11 = _Source[uint3(min(uthreadUL + uint2(1u, 1u), size), _DepthSlice)];
-    float4 p01 = _Source[uint3(min(uthreadUL + uint2(0u, 1u), size), _DepthSlice)];
-#else
-    float4 p00 = _Source[min(uthreadUL + uint2(0u, 0u), size)];
-    float4 p10 = _Source[min(uthreadUL + uint2(1u, 0u), size)];
-    float4 p11 = _Source[min(uthreadUL + uint2(1u, 1u), size)];
-    float4 p01 = _Source[min(uthreadUL + uint2(0u, 1u), size)];
-#endif
+    float4 p00 = _Source[INDEX_SCREENSPACE_TEXTURE(min(uthreadUL + uint2(0u, 0u), size))];
+    float4 p10 = _Source[INDEX_SCREENSPACE_TEXTURE(min(uthreadUL + uint2(1u, 0u), size))];
+    float4 p11 = _Source[INDEX_SCREENSPACE_TEXTURE(min(uthreadUL + uint2(1u, 1u), size))];
+    float4 p01 = _Source[INDEX_SCREENSPACE_TEXTURE(min(uthreadUL + uint2(0u, 1u), size))];
     // Store the 4 downsampled pixels in LDS
     uint destIdx = groupThreadId.x + (groupThreadId.y << 4u);
     Store2Pixels(destIdx     , p00, p10);
@@ -177,18 +167,10 @@ void MAIN_DOWNSAMPLE(uint2 dispatchThreadId : SV_DispatchThreadID)
     uint2 c10 = min(offset + uint2(1u, 0u), size);
     uint2 c11 = min(offset + uint2(1u, 1u), size);
     uint2 c01 = min(offset + uint2(0u, 1u), size);
-#if defined(UNITY_STEREO_INSTANCING_ENABLED)
-    float4 p00 = _Source[uint3(c00, _DepthSlice)];
-    float4 p10 = _Source[uint3(c10, _DepthSlice)];
-    float4 p11 = _Source[uint3(c11, _DepthSlice)];
-    float4 p01 = _Source[uint3(c01, _DepthSlice)];
-#else
-    float4 p00 = _Source[c00];
-    float4 p10 = _Source[c10];
-    float4 p11 = _Source[c11];
-    float4 p01 = _Source[c01];
-#endif
-
+    float4 p00 = _Source[INDEX_SCREENSPACE_TEXTURE(c00)];
+    float4 p10 = _Source[INDEX_SCREENSPACE_TEXTURE(c10)];
+    float4 p11 = _Source[INDEX_SCREENSPACE_TEXTURE(c11)];
+    float4 p01 = _Source[INDEX_SCREENSPACE_TEXTURE(c01)];
     #if COPY_MIP_0
     _Mip0[c00] = p00;
     _Mip0[c10] = p10;

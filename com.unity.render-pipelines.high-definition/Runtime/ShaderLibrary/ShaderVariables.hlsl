@@ -152,6 +152,8 @@ static uint unity_StereoEyeIndex;
     CBUFFER_END
 #endif
 #endif
+                
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/InstancedTextures.hlsl"
 
 CBUFFER_START(UnityPerDrawRare)
     float4x4 glstate_matrix_transpose_modelview0;

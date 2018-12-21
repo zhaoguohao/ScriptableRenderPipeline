@@ -8,11 +8,7 @@
 #pragma kernel KMainSPI MAIN=KMainSPI UNITY_STEREO_INSTANCING_ENABLED=1
 
 TEXTURE2D(_DistortionTexture);
-#ifdef UNITY_STEREO_INSTANCING_ENABLED
-RW_TEXTURE2D_ARRAY(float4, _Destination);
-#else
-RW_TEXTURE2D(float4, _Destination);
-#endif
+RW_SCREENSPACE_TEXTURE(float4, _Destination);
 
 CBUFFER_START(cb)
 float4 _Size;
@@ -66,9 +62,5 @@ void MAIN(uint2 groupId : SV_GroupID, uint2 groupThreadId : SV_GroupThreadID, ui
     float2 distordedUV = float2((dispatchThreadId + 0.5) + distortion * _FetchBias) * _Size.zw;
     float mip = (_ColorPyramidScale.z - 1) * clamp(distortionBlur, 0.0, 1.0);
     float4 sampled = SAMPLE_TEXTURE2D_LOD(_ColorPyramidTexture, s_trilinear_clamp_sampler, distordedUV * _ColorPyramidScale.xy, mip);
-#ifdef UNITY_STEREO_INSTANCING_ENABLED
-    _Destination[uint3(dispatchThreadId, _DepthSlice)] = sampled;
-#else
-    _Destination[dispatchThreadId] = sampled;
-#endif
+    _Destination[INDEX_SCREENSPACE_TEXTURE(dispatchThreadId)] = sampled;
 }
