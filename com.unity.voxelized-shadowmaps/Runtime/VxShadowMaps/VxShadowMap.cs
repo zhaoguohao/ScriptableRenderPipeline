@@ -28,7 +28,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
 
     public abstract class VxShadowMap : MonoBehaviour
     {
-        public static readonly VoxelResolution subTreeResolution = VoxelResolution._4096;
-        public static readonly int subTreeResolutionInt = (int)subTreeResolution;
+        public static readonly VoxelResolution subtreeResolution = VoxelResolution._4096;
+        public static readonly int subtreeResolutionInt = (int)subtreeResolution;
     }
 }
