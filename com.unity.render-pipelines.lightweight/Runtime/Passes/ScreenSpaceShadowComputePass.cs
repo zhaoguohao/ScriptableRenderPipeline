@@ -79,11 +79,11 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (computeShader != null)
             {
                 //if (mainLightDynamicShadows)
-                //    kernel = computeShader.FindKernel("ScreenSpaceShadowWithDynamicShadowsBiFiltering");
-                //    //kernel = computeShader.FindKernel("ScreenSpaceShadowWithDynamicShadowsNoFiltering");
+                //    kernel = computeShader.FindKernel("BiLinearWithDynShadows");
+                //    //kernel = computeShader.FindKernel("NoFilterWithDynShadows");
                 //else
-                    kernel = computeShader.FindKernel("ScreenSpaceShadowWithoutDynamicShadowsBiFiltering");
-                    //kernel = computeShader.FindKernel("ScreenSpaceShadowWithoutDynamicShadowsNoFiltering");
+                    kernel = computeShader.FindKernel("BiLinearWithoutDynShadows");
+                    //kernel = computeShader.FindKernel("NoFilterWithoutDynShadows");
             }
 
             return kernel;

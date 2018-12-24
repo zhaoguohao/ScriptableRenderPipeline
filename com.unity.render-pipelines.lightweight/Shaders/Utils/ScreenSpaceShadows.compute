@@ -1,11 +1,13 @@
 
-#pragma kernel ScreenSpaceShadowWithoutDynamicShadowsNoFiltering     CSMain=ScreenSpaceShadowWithoutDynamicShadowsNoFiltering     NO_FILTERING
-#pragma kernel ScreenSpaceShadowWithoutDynamicShadowsBiFiltering     CSMain=ScreenSpaceShadowWithoutDynamicShadowsBiFiltering     BI_FILTERING
-//#pragma kernel ScreenSpaceShadowWithoutDynamicShadowsPCF9x9Filtering CSMain=ScreenSpaceShadowWithoutDynamicShadowsPCF9x9Filtering PCF9x9_FILTERING
+#pragma kernel NoFilterWithoutDynShadows     CSMain=NoFilterWithoutDynShadows     NO_FILTERING
+#pragma kernel BiLinearWithoutDynShadows     CSMain=BiLinearWithoutDynShadows     BI_LINEAR
+#pragma kernel TriLinearWithoutDynShadows    CSMain=TriLinearWithoutDynShadows    TRI_LINEAR
+//#pragma kernel PCF9x9LinearWithoutDynShadows CSMain=PCF9x9LinearWithoutDynShadows PCF9x9_FILTERING
 
-#pragma kernel ScreenSpaceShadowWithDynamicShadowsNoFiltering        CSMain=ScreenSpaceShadowWithDynamicShadowsNoFiltering        WITH_DYNAMIC_SHADOWS NO_FILTERING
-#pragma kernel ScreenSpaceShadowWithDynamicShadowsBiFiltering        CSMain=ScreenSpaceShadowWithDynamicShadowsBiFiltering        WITH_DYNAMIC_SHADOWS BI_FILTERING
-//#pragma kernel ScreenSpaceShadowWithDynamicShadowsPCF9x9Filtering    CSMain=ScreenSpaceShadowWithDynamicShadowsPCF9x9Filtering    WITH_DYNAMIC_SHADOWS PCF9x9_FILTERING
+#pragma kernel NoFilterWithDynShadows        CSMain=NoFilterWithDynShadows        WITH_DYNAMIC_SHADOWS NO_FILTERING
+#pragma kernel BiLinearWithDynShadows        CSMain=BiLinearWithDynShadows        WITH_DYNAMIC_SHADOWS BI_LINEAR
+#pragma kernel TriLinearWithDynShadows       CSMain=TriLinearWithDynShadows       WITH_DYNAMIC_SHADOWS TRI_LINEAR
+//#pragma kernel PCF9x9LinearWithDynShadows    CSMain=PCF9x9LinearWithDynShadows    WITH_DYNAMIC_SHADOWS PCF9x9_FILTERING
 
 #define TILE_SIZE 8
 
@@ -671,6 +673,98 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
 }
 
 
+float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
+{
+    float3 posLS = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
+
+    bool lessThanBounds = any(posLS.xy < float2(0.0, 0.0));
+    bool greaterThanBounds = any(posLS.xy > float2(1.0, 1.0));
+    if (lessThanBounds || greaterThanBounds)
+        return 1.0;
+
+    float3 posP = posLS * (float)_VoxelResolution - 0.5;
+    float3 posF = floor(posP);
+
+    uint3 posQ = (uint3)posP;
+    posQ.z -= _VoxelBias;
+
+    if (posQ.z < 0 || posQ.z >= _VoxelResolution)
+        return 1.0;
+
+    uint scale = 0;
+    uint3 posbit00 = uint3(0, 0, 0);
+    uint3 posLeaf = posQ % uint3(8, 8, 8);
+
+    bool2 edge = posLeaf.xy == uint2(7, 7);
+    bool inner = all(edge == false);
+
+    uint nodeTracer[16];
+
+    uint4 result00 = TraverseVxShadowMapPosQ(posQ, scale, posbit00, nodeTracer);
+    if (inner && result00.w == 0)
+        return result00.y ? 1.0 : 0.0;
+
+    uint2 bitmask2_00 = TraverseVxShadowMapLeaf(posLeaf.z, result00);
+
+    float2 lerpWeight = posP.xy - posF.xy;
+
+    if (all(edge))
+    {
+        // todo : change traverse order by morton code order
+        // traversalScale01 <- posbit.x and posbit01.x
+        // traversalScale10 <- posbit01.y and posbit10.y
+        // traversalScale11 <- posbit10.x and posbit11.x
+        // insert tracer in TraverseVxShadowMapPosbit for efficient traversal in morton code order
+
+        uint3 posbit01 = uint3(posbit00.x + 4, posbit00.y,     posbit00.z);
+        uint3 posbit10 = uint3(posbit00.x,     posbit00.y + 4, posbit00.z);
+        uint3 posbit11 = uint3(posbit00.x + 4, posbit00.y + 4, posbit00.z);
+
+        uint traversalScale01 = CalculateRetraversalScale(scale, posbit00.x, posbit01.x);
+        uint traversalScale10 = CalculateRetraversalScale(scale, posbit00.y, posbit10.y);
+        uint traversalScale11 = max(traversalScale01, traversalScale10);
+
+        uint nodeIndex01 = nodeTracer[traversalScale01 - 4];
+        uint nodeIndex10 = nodeTracer[traversalScale10 - 4];
+        uint nodeIndex11 = nodeTracer[traversalScale11 - 4];
+
+        uint4 result01 = TraverseVxShadowMapPosbit(traversalScale01, nodeIndex01, posbit01);
+        uint4 result10 = TraverseVxShadowMapPosbit(traversalScale10, nodeIndex10, posbit10);
+        uint4 result11 = TraverseVxShadowMapPosbit(traversalScale11, nodeIndex11, posbit11);
+
+        uint2 bitmask2_01 = TraverseVxShadowMapLeaf(posLeaf.z, result01);
+        uint2 bitmask2_10 = TraverseVxShadowMapLeaf(posLeaf.z, result10);
+        uint2 bitmask2_11 = TraverseVxShadowMapLeaf(posLeaf.z, result11);
+
+        return BilinearSampleShadowBitmask11(bitmask2_00, bitmask2_01, bitmask2_10, bitmask2_11, lerpWeight);
+    }
+    else if (edge.x)
+    {
+        uint3 posbit01 = uint3(posbit00.x + 4, posbit00.y, posbit00.z);
+        uint traversalScale = CalculateRetraversalScale(scale, posbit00.x, posbit01.x);
+        uint nodeIndex = nodeTracer[traversalScale - 4];
+
+        uint4 result01 = TraverseVxShadowMapPosbit(traversalScale, nodeIndex, posbit01);
+        uint2 bitmask2_01 = TraverseVxShadowMapLeaf(posLeaf.z, result01);
+
+        return BilinearSampleShadowBitmask01(bitmask2_00, bitmask2_01, posLeaf, lerpWeight);
+    }
+    else if (edge.y)
+    {
+        uint3 posbit10 = uint3(posbit00.x, posbit00.y + 4, posbit00.z);
+        uint traversalScale = CalculateRetraversalScale(scale, posbit00.y, posbit10.y);
+        uint nodeIndex = nodeTracer[traversalScale - 4];
+
+        uint4 result10 = TraverseVxShadowMapPosbit(traversalScale, nodeIndex, posbit10);
+        uint2 bitmask2_10 = TraverseVxShadowMapLeaf(posLeaf.z, result10);
+
+        return BilinearSampleShadowBitmask10(bitmask2_00, bitmask2_10, posLeaf, lerpWeight);
+    }
+
+    return BilinearSampleShadowBitmask(bitmask2_00, posLeaf, lerpWeight);
+}
+
+
 float ComputeVxShadowMapAttenuationPCF9x9iltering(float3 positionWS)
 {
     float3 posLS = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
@@ -726,8 +820,10 @@ float SampleVxShadowmap(float3 positionWS)
 
 #if NO_FILTERING
     attenuation = ComputeVxShadowMapAttenuationNoFiltering(positionWS);
-#elif BI_FILTERING
+#elif BI_LINEAR
     attenuation = ComputeVxShadowMapAttenuationBiFiltering(positionWS);
+#elif TRI_LINEAR
+    attenuation = ComputeVxShadowMapAttenuationTriFiltering(positionWS);;
 #elif PCF9X9_FILTERING
     //attenuation = ComputeVxShadowMapAttenuationPCF9x9iltering(positionWS);
 #endif
