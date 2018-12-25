@@ -313,6 +313,33 @@ uint2 TraverseVxShadowMapLeaf(uint leaf_z, uint4 innerResult)
 }
 
 
+uint4 TraverseVxShadowMapLeaf3(uint leaf_z, uint4 innerResult)
+{
+    uint nodeIndex = innerResult.x;
+
+    bool lit = innerResult.y;
+    bool intersected = innerResult.w;
+
+    uint4 bitmask3 = lit ? 0x00000000 : 0xFFFFFFFF;
+
+    if (intersected)
+    {
+        int childIndex0 = leaf_z;
+        int childIndex1 = leaf_z + 1;
+
+        int leafIndex0 = _VxShadowMapBuffer[nodeIndex + childIndex0];
+        int leafIndex1 = _VxShadowMapBuffer[nodeIndex + childIndex1];
+
+        bitmask3.x = _VxShadowMapBuffer[leafIndex0];
+        bitmask3.y = _VxShadowMapBuffer[leafIndex0 + 1];
+        bitmask3.z = _VxShadowMapBuffer[leafIndex1];
+        bitmask3.w = _VxShadowMapBuffer[leafIndex1 + 1];
+    }
+
+    return bitmask3;
+}
+
+
 float PointSampleShadowBitmask(uint2 bitmask2, uint3 posLeaf)
 {
     uint bitmask = posLeaf.y < 4 ? bitmask2.x : bitmask2.y;
@@ -441,6 +468,194 @@ float BilinearSampleShadowBitmask11(uint2 bitmask2_00, uint2 bitmask2_01, uint2 
     float weightedSample1 = lerp(sample10, sample11, lerpWeight.x);
 
     float litRate = lerp(weightedSample0, weightedSample1, lerpWeight.y);
+
+    return litRate;
+}
+
+
+float TrilinearSampleShadowBitmask(uint4 bitmask4, uint3 posLeaf, float3 lerpWeight)
+{
+    uint2 xy00 = posLeaf.xy;
+    uint2 xy11 = xy00 + 1;
+
+    uint bitmask0 = xy00.y < 4 ? bitmask4.x : bitmask4.y;
+    uint bitmask1 = xy11.y < 4 ? bitmask4.x : bitmask4.y;
+    uint bitmask2 = xy00.y < 4 ? bitmask4.z : bitmask4.w;
+    uint bitmask3 = xy11.y < 4 ? bitmask4.z : bitmask4.w;
+
+    uint shift00 = xy00.x + 8 * (xy00.y % 4);
+    uint shift01 = xy11.x + 8 * (xy00.y % 4);
+    uint shift10 = xy00.x + 8 * (xy11.y % 4);
+    uint shift11 = xy11.x + 8 * (xy11.y % 4);
+
+    uint mask00 = 0x00000001 << shift00;
+    uint mask01 = 0x00000001 << shift01;
+    uint mask10 = 0x00000001 << shift10;
+    uint mask11 = 0x00000001 << shift11;
+
+    float sample000 = (bitmask0 & mask00) == 0 ? 1.0 : 0.0;
+    float sample001 = (bitmask0 & mask01) == 0 ? 1.0 : 0.0;
+    float sample010 = (bitmask1 & mask10) == 0 ? 1.0 : 0.0;
+    float sample011 = (bitmask1 & mask11) == 0 ? 1.0 : 0.0;
+    float sample100 = (bitmask2 & mask00) == 0 ? 1.0 : 0.0;
+    float sample101 = (bitmask2 & mask01) == 0 ? 1.0 : 0.0;
+    float sample110 = (bitmask3 & mask10) == 0 ? 1.0 : 0.0;
+    float sample111 = (bitmask3 & mask11) == 0 ? 1.0 : 0.0;
+
+    float weightedSample0 = lerp(sample000, sample001, lerpWeight.x);
+    float weightedSample1 = lerp(sample010, sample011, lerpWeight.x);
+    float weightedSample2 = lerp(sample100, sample101, lerpWeight.x);
+    float weightedSample3 = lerp(sample110, sample111, lerpWeight.x);
+
+    float weightedSample4 = lerp(weightedSample0, weightedSample1, lerpWeight.y);
+    float weightedSample5 = lerp(weightedSample2, weightedSample3, lerpWeight.y);
+
+    float litRate = lerp(weightedSample4, weightedSample5, lerpWeight.z);
+
+    return litRate;
+}
+
+
+float TrilinearSampleShadowBitmask001(uint4 bitmask4_000, uint4 bitmask4_001, uint3 posLeaf, float3 lerpWeight)
+{
+    uint2 xy00 = posLeaf.xy;
+    uint2 xy01 = uint2(0, posLeaf.y);
+    uint2 xy10 = uint2(xy00.x, xy00.y + 1);
+    uint2 xy11 = uint2(xy01.x, xy01.y + 1);
+
+    uint bitmask000 = xy00.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask001 = xy01.y < 4 ? bitmask4_001.x : bitmask4_001.y;
+    uint bitmask010 = xy10.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask011 = xy11.y < 4 ? bitmask4_001.x : bitmask4_001.y;
+    uint bitmask100 = xy00.y < 4 ? bitmask4_000.z : bitmask4_000.w;
+    uint bitmask101 = xy01.y < 4 ? bitmask4_001.z : bitmask4_001.w;
+    uint bitmask110 = xy10.y < 4 ? bitmask4_000.z : bitmask4_000.w;
+    uint bitmask111 = xy11.y < 4 ? bitmask4_001.z : bitmask4_001.w;
+
+    uint shift00 = xy00.x + 8 * (xy00.y % 4);
+    uint shift01 = xy01.x + 8 * (xy01.y % 4);
+    uint shift10 = xy10.x + 8 * (xy10.y % 4);
+    uint shift11 = xy11.x + 8 * (xy11.y % 4);
+
+    uint mask00 = 0x00000001 << shift00;
+    uint mask01 = 0x00000001 << shift01;
+    uint mask10 = 0x00000001 << shift10;
+    uint mask11 = 0x00000001 << shift11;
+
+    float sample000 = (bitmask000 & mask00) ? 0.0 : 1.0;
+    float sample001 = (bitmask001 & mask01) ? 0.0 : 1.0;
+    float sample010 = (bitmask010 & mask10) ? 0.0 : 1.0;
+    float sample011 = (bitmask011 & mask11) ? 0.0 : 1.0;
+    float sample100 = (bitmask100 & mask00) ? 0.0 : 1.0;
+    float sample101 = (bitmask101 & mask01) ? 0.0 : 1.0;
+    float sample110 = (bitmask110 & mask10) ? 0.0 : 1.0;
+    float sample111 = (bitmask111 & mask11) ? 0.0 : 1.0;
+
+    float weightedSample0 = lerp(sample000, sample001, lerpWeight.x);
+    float weightedSample1 = lerp(sample010, sample011, lerpWeight.x);
+    float weightedSample2 = lerp(sample100, sample101, lerpWeight.x);
+    float weightedSample3 = lerp(sample110, sample111, lerpWeight.x);
+
+    float weightedSample4 = lerp(weightedSample0, weightedSample1, lerpWeight.y);
+    float weightedSample5 = lerp(weightedSample2, weightedSample3, lerpWeight.y);
+
+    float litRate = lerp(weightedSample4, weightedSample5, lerpWeight.z);
+
+    return litRate;
+}
+
+
+float TrilinearSampleShadowBitmask010(uint4 bitmask4_000, uint4 bitmask4_010, uint3 posLeaf, float3 lerpWeight)
+{
+    uint2 xy00 = posLeaf.xy;
+    uint2 xy01 = uint2(posLeaf.x + 1, posLeaf.y);
+    uint2 xy10 = uint2(xy00.x, 0);
+    uint2 xy11 = uint2(xy01.x, 0);
+
+    uint bitmask000 = xy00.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask001 = xy01.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask010 = bitmask4_010.x;
+    uint bitmask011 = bitmask4_010.x;
+    uint bitmask100 = xy00.y < 4 ? bitmask4_000.z : bitmask4_000.w;
+    uint bitmask101 = xy01.y < 4 ? bitmask4_000.z : bitmask4_000.w;
+    uint bitmask110 = bitmask4_010.z;
+    uint bitmask111 = bitmask4_010.z;
+
+    uint shift00 = xy00.x + 8 * (xy00.y % 4);
+    uint shift01 = xy01.x + 8 * (xy01.y % 4);
+    uint shift10 = xy10.x;
+    uint shift11 = xy11.x;
+
+    uint mask00 = 0x00000001 << shift00;
+    uint mask01 = 0x00000001 << shift01;
+    uint mask10 = 0x00000001 << shift10;
+    uint mask11 = 0x00000001 << shift11;
+
+    float sample000 = (bitmask000 & mask00) ? 0.0 : 1.0;
+    float sample001 = (bitmask001 & mask01) ? 0.0 : 1.0;
+    float sample010 = (bitmask010 & mask10) ? 0.0 : 1.0;
+    float sample011 = (bitmask011 & mask11) ? 0.0 : 1.0;
+    float sample100 = (bitmask100 & mask00) ? 0.0 : 1.0;
+    float sample101 = (bitmask101 & mask01) ? 0.0 : 1.0;
+    float sample110 = (bitmask110 & mask10) ? 0.0 : 1.0;
+    float sample111 = (bitmask111 & mask11) ? 0.0 : 1.0;
+
+    float weightedSample0 = lerp(sample000, sample001, lerpWeight.x);
+    float weightedSample1 = lerp(sample010, sample011, lerpWeight.x);
+    float weightedSample2 = lerp(sample100, sample101, lerpWeight.x);
+    float weightedSample3 = lerp(sample110, sample111, lerpWeight.x);
+
+    float weightedSample4 = lerp(weightedSample0, weightedSample1, lerpWeight.y);
+    float weightedSample5 = lerp(weightedSample2, weightedSample3, lerpWeight.y);
+
+    float litRate = lerp(weightedSample4, weightedSample5, lerpWeight.z);
+
+    return litRate;
+}
+
+
+float TrilinearSampleShadowBitmask100(uint4 bitmask4_000, uint4 bitmask4_100, uint3 posLeaf, float3 lerpWeight)
+{
+    uint2 xy0 = posLeaf.xy;
+    uint2 xy1 = xy0 + 1;
+
+    uint bitmask000 = xy0.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask001 = xy0.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask010 = xy1.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask011 = xy1.y < 4 ? bitmask4_000.x : bitmask4_000.y;
+    uint bitmask100 = xy0.y < 4 ? bitmask4_100.z : bitmask4_100.w;
+    uint bitmask101 = xy0.y < 4 ? bitmask4_100.z : bitmask4_100.w;
+    uint bitmask110 = xy1.y < 4 ? bitmask4_100.z : bitmask4_100.w;
+    uint bitmask111 = xy1.y < 4 ? bitmask4_100.z : bitmask4_100.w;
+
+    uint shift00 = xy0.x + 8 * (xy0.y % 4);
+    uint shift01 = xy1.x + 8 * (xy0.y % 4);
+    uint shift10 = xy0.x + 8 * (xy1.y % 4);
+    uint shift11 = xy1.x + 8 * (xy1.y % 4);
+
+    uint mask00 = 0x00000001 << shift00;
+    uint mask01 = 0x00000001 << shift01;
+    uint mask10 = 0x00000001 << shift10;
+    uint mask11 = 0x00000001 << shift11;
+
+    float sample000 = (bitmask000 & mask00) ? 0.0 : 1.0;
+    float sample001 = (bitmask001 & mask01) ? 0.0 : 1.0;
+    float sample010 = (bitmask010 & mask10) ? 0.0 : 1.0;
+    float sample011 = (bitmask011 & mask11) ? 0.0 : 1.0;
+    float sample100 = (bitmask100 & mask00) ? 0.0 : 1.0;
+    float sample101 = (bitmask101 & mask01) ? 0.0 : 1.0;
+    float sample110 = (bitmask110 & mask10) ? 0.0 : 1.0;
+    float sample111 = (bitmask111 & mask11) ? 0.0 : 1.0;
+
+    float weightedSample0 = lerp(sample000, sample001, lerpWeight.x);
+    float weightedSample1 = lerp(sample010, sample011, lerpWeight.x);
+    float weightedSample2 = lerp(sample100, sample101, lerpWeight.x);
+    float weightedSample3 = lerp(sample110, sample111, lerpWeight.x);
+
+    float weightedSample4 = lerp(weightedSample0, weightedSample1, lerpWeight.y);
+    float weightedSample5 = lerp(weightedSample2, weightedSample3, lerpWeight.y);
+
+    float litRate = lerp(weightedSample4, weightedSample5, lerpWeight.z);
 
     return litRate;
 }
@@ -692,76 +907,64 @@ float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
         return 1.0;
 
     uint scale = 0;
-    uint3 posbit00 = uint3(0, 0, 0);
+    uint3 posbit000 = uint3(0, 0, 0);
     uint3 posLeaf = posQ % uint3(8, 8, 8);
 
-    bool2 edge = posLeaf.xy == uint2(7, 7);
+    bool3 edge = posLeaf == uint3(7, 7, 7);
     bool inner = all(edge == false);
 
     uint nodeTracer[16];
 
-    uint4 result00 = TraverseVxShadowMapPosQ(posQ, scale, posbit00, nodeTracer);
-    if (inner && result00.w == 0)
-        return result00.y ? 1.0 : 0.0;
+    uint4 result000 = TraverseVxShadowMapPosQ(posQ, scale, posbit000, nodeTracer);
+    if (inner && result000.w == 0)
+        return result000.y ? 1.0 : 0.0;
 
-    uint2 bitmask2_00 = TraverseVxShadowMapLeaf(posLeaf.z, result00);
+    uint4 bitmask4_000 = TraverseVxShadowMapLeaf3(posLeaf.z, result000);
 
-    float2 lerpWeight = posP.xy - posF.xy;
+    float3 lerpWeight = posP - posF;
 
     if (all(edge))
     {
-        // todo : change traverse order by morton code order
-        // traversalScale01 <- posbit.x and posbit01.x
-        // traversalScale10 <- posbit01.y and posbit10.y
-        // traversalScale11 <- posbit10.x and posbit11.x
-        // insert tracer in TraverseVxShadowMapPosbit for efficient traversal in morton code order
-
-        uint3 posbit01 = uint3(posbit00.x + 4, posbit00.y,     posbit00.z);
-        uint3 posbit10 = uint3(posbit00.x,     posbit00.y + 4, posbit00.z);
-        uint3 posbit11 = uint3(posbit00.x + 4, posbit00.y + 4, posbit00.z);
-
-        uint traversalScale01 = CalculateRetraversalScale(scale, posbit00.x, posbit01.x);
-        uint traversalScale10 = CalculateRetraversalScale(scale, posbit00.y, posbit10.y);
-        uint traversalScale11 = max(traversalScale01, traversalScale10);
-
-        uint nodeIndex01 = nodeTracer[traversalScale01 - 4];
-        uint nodeIndex10 = nodeTracer[traversalScale10 - 4];
-        uint nodeIndex11 = nodeTracer[traversalScale11 - 4];
-
-        uint4 result01 = TraverseVxShadowMapPosbit(traversalScale01, nodeIndex01, posbit01);
-        uint4 result10 = TraverseVxShadowMapPosbit(traversalScale10, nodeIndex10, posbit10);
-        uint4 result11 = TraverseVxShadowMapPosbit(traversalScale11, nodeIndex11, posbit11);
-
-        uint2 bitmask2_01 = TraverseVxShadowMapLeaf(posLeaf.z, result01);
-        uint2 bitmask2_10 = TraverseVxShadowMapLeaf(posLeaf.z, result10);
-        uint2 bitmask2_11 = TraverseVxShadowMapLeaf(posLeaf.z, result11);
-
-        return BilinearSampleShadowBitmask11(bitmask2_00, bitmask2_01, bitmask2_10, bitmask2_11, lerpWeight);
+        return 1.0;
     }
     else if (edge.x)
     {
-        uint3 posbit01 = uint3(posbit00.x + 4, posbit00.y, posbit00.z);
-        uint traversalScale = CalculateRetraversalScale(scale, posbit00.x, posbit01.x);
+        return 1.0;
+        uint3 posbit001 = uint3(posbit000.x + 4, posbit000.y, posbit000.z);
+        uint traversalScale = CalculateRetraversalScale(scale, posbit000.x, posbit001.x);
         uint nodeIndex = nodeTracer[traversalScale - 4];
 
-        uint4 result01 = TraverseVxShadowMapPosbit(traversalScale, nodeIndex, posbit01);
-        uint2 bitmask2_01 = TraverseVxShadowMapLeaf(posLeaf.z, result01);
+        uint4 result001 = TraverseVxShadowMapPosbit(traversalScale, nodeIndex, posbit001);
+        uint4 bitmask4_001 = TraverseVxShadowMapLeaf3(posLeaf.z, result001);
 
-        return BilinearSampleShadowBitmask01(bitmask2_00, bitmask2_01, posLeaf, lerpWeight);
+        return TrilinearSampleShadowBitmask001(bitmask4_000, bitmask4_001, posLeaf, lerpWeight);
     }
     else if (edge.y)
     {
-        uint3 posbit10 = uint3(posbit00.x, posbit00.y + 4, posbit00.z);
-        uint traversalScale = CalculateRetraversalScale(scale, posbit00.y, posbit10.y);
+        return 1.0;
+        uint3 posbit010 = uint3(posbit000.x, posbit000.y + 4, posbit000.z);
+        uint traversalScale = CalculateRetraversalScale(scale, posbit000.y, posbit010.y);
         uint nodeIndex = nodeTracer[traversalScale - 4];
 
-        uint4 result10 = TraverseVxShadowMapPosbit(traversalScale, nodeIndex, posbit10);
-        uint2 bitmask2_10 = TraverseVxShadowMapLeaf(posLeaf.z, result10);
+        uint4 result010 = TraverseVxShadowMapPosbit(traversalScale, nodeIndex, posbit010);
+        uint4 bitmask4_010 = TraverseVxShadowMapLeaf3(posLeaf.z, result010);
 
-        return BilinearSampleShadowBitmask10(bitmask2_00, bitmask2_10, posLeaf, lerpWeight);
+        return TrilinearSampleShadowBitmask010(bitmask4_000, bitmask4_010, posLeaf, lerpWeight);
+    }
+    else if (edge.z)
+    {
+        return 1.0;
+        uint3 posbit100 = uint3(posbit000.x, posbit000.y, posbit000.z + 4);
+        uint traversalScale = CalculateRetraversalScale(scale, posbit000.z, posbit100.z);
+        uint nodeIndex = nodeTracer[traversalScale - 4];
+
+        uint4 result100 = TraverseVxShadowMapPosbit(traversalScale, nodeIndex, posbit100);
+        uint4 bitmask4_100 = TraverseVxShadowMapLeaf3(posLeaf.z, result100);
+
+        return TrilinearSampleShadowBitmask100(bitmask4_000, bitmask4_100, posLeaf, lerpWeight);
     }
 
-    return BilinearSampleShadowBitmask(bitmask2_00, posLeaf, lerpWeight);
+    return TrilinearSampleShadowBitmask(bitmask4_000, posLeaf, lerpWeight);
 }
 
 
@@ -821,7 +1024,8 @@ float SampleVxShadowmap(float3 positionWS)
 #if NO_FILTERING
     attenuation = ComputeVxShadowMapAttenuationNoFiltering(positionWS);
 #elif BI_LINEAR
-    attenuation = ComputeVxShadowMapAttenuationBiFiltering(positionWS);
+    //attenuation = ComputeVxShadowMapAttenuationBiFiltering(positionWS);
+    attenuation = ComputeVxShadowMapAttenuationTriFiltering(positionWS);
 #elif TRI_LINEAR
     attenuation = ComputeVxShadowMapAttenuationTriFiltering(positionWS);;
 #elif PCF9X9_FILTERING
