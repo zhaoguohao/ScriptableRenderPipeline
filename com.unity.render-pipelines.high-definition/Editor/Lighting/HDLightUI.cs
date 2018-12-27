@@ -697,7 +697,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // TODO: Currently if we use Area type as it is offline light in legacy, the light will not exist at runtime
                     //m_BaseData.type.enumValueIndex = (int)LightType.Rectangle;
                     // In case of change, think to update InitDefaultHDAdditionalLightData()
-                    serialized.settings.lightType.enumValueIndex = (int)LightType.Point;
+                    serialized.settings.lightType.enumValueIndex = (int)LightType.Rectangle;
                     serialized.serializedLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Rectangle;
                     if (serialized.settings.isRealtime)
                         serialized.settings.shadowsType.enumValueIndex = (int)LightShadows.None;
@@ -714,7 +714,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     // TODO: Currently if we use Area type as it is offline light in legacy, the light will not exist at runtime
                     //m_BaseData.type.enumValueIndex = (int)LightType.Rectangle;
                     // In case of change, think to update InitDefaultHDAdditionalLightData()
-                    serialized.settings.lightType.enumValueIndex = (int)LightType.Point;
+                    serialized.settings.lightType.enumValueIndex = (int)LightType.Disc;
                     serialized.serializedLightData.lightTypeExtent.enumValueIndex = (int)LightTypeExtent.Disc;
                     if (serialized.settings.isRealtime)
                         serialized.settings.shadowsType.enumValueIndex = (int)LightShadows.None;
