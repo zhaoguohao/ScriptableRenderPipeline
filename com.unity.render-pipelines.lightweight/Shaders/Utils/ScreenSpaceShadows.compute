@@ -94,7 +94,8 @@ uint CalculateMismatchScale(uint scale, uint srcPosbit, uint dstPosbit)
 }
 
 
-uint CalculateRetraversalScale(uint srcPosbit, uint dstPosbit)
+// todo : calculate uint2 and uint2
+uint CalculateRescale(uint srcPosbit, uint dstPosbit)
 {
 #if defined USE_EMULATE_CLZ
     uint disparity = 32 - emulateCLZ(srcPosbit ^ dstPosbit);
@@ -115,7 +116,7 @@ uint CalculateRetraversalScale(uint srcPosbit, uint dstPosbit)
     uint disparity = _MaxScale;
 #endif
 
-    return disparity;//max(_MaxScale, disparity);
+    return disparity;
 }
 
 
@@ -206,7 +207,7 @@ uint4 TraverseVxShadowMapPosQ(uint3 posQ, out uint scale, out uint nodeTracer[16
 }
 
 
-uint4 TraverseVxShadowMapPosQ(uint3 posQ, uint scale, uint nodeIndex)
+uint4 RetraverseVxShadowMapPosQ(uint3 posQ, uint scale, uint nodeIndex)
 {
     bool lit = false;
     bool shadowed = false;
@@ -267,6 +268,35 @@ uint2 TraverseVxShadowMapLeaf(uint posQ_z, uint4 innerResult)
 }
 
 
+// for one x-y-z-step
+uint2 RetraversalVxShadowMapLeaf(uint3 posQ, uint3 offset, uint rescale, uint scale, uint2 bitmask2, uint nodeTracer[16])
+{
+    if (rescale > scale)
+    {
+        uint stackIndex = rescale - 4;
+        uint nodeIndex = nodeTracer[stackIndex];
+        uint4 tmp = RetraverseVxShadowMapPosQ(posQ + offset, rescale, nodeIndex);
+        bitmask2 = TraverseVxShadowMapLeaf(posQ.z + offset.z, tmp);
+    }
+
+    return bitmask2;
+}
+
+
+// only for one z-step
+uint2 RetraversalVxShadowMapLeafOneZStep(uint3 posQ, uint rescale, uint scale, uint4 result, uint nodeTracer[16])
+{
+    if (rescale > scale)
+    {
+        uint stackIndex = rescale - 4;
+        uint nodeIndex = nodeTracer[stackIndex];
+        result = RetraverseVxShadowMapPosQ(posQ + uint3(0, 0, 1), rescale, nodeIndex);
+    }
+
+    return TraverseVxShadowMapLeaf(posQ.z + 1, result);
+}
+
+
 float PointSampleShadowBitmask(uint2 bitmask2, uint3 posQ)
 {
     uint2 posLeaf = posQ.xy % uint2(8, 8);
@@ -292,6 +322,20 @@ float PointSampleShadowBitmask(uint2 bitmask2, uint3 posQ, uint2 offset)
     float litRate = (bitmask & mask) == 0 ? 1.0 : 0.0;
 
     return litRate;
+}
+
+
+float BilinearSampleShadowBitmask(uint3 posQ, uint2 bitmask2_00, uint2 bitmask2_10, uint2 bitmask2_01, uint2 bitmask2_11, float2 lerpWeight)
+{
+    float attenuation0 = PointSampleShadowBitmask(bitmask2_00, posQ);
+    float attenuation1 = PointSampleShadowBitmask(bitmask2_10, posQ, uint2(1, 0));
+    float attenuation2 = PointSampleShadowBitmask(bitmask2_01, posQ, uint2(0, 1));
+    float attenuation3 = PointSampleShadowBitmask(bitmask2_11, posQ, uint2(1, 1));
+
+    attenuation0 = lerp(attenuation0, attenuation1, lerpWeight.x);
+    attenuation1 = lerp(attenuation2, attenuation3, lerpWeight.x);
+
+    return lerp(attenuation0, attenuation1, lerpWeight.y);
 }
 
 
@@ -346,53 +390,20 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
     uint nodeTracer[16];
 
     uint4 result = TraverseVxShadowMapPosQ(posQ, scale, nodeTracer);
-    // todo : early return by non-intersection
-    //if (result.w == 0)
-        //return result.y ? 1.0 : 0.0;
 
-    //uint2 mismatchScale = uint2(
-    //    CalculateMismatchScale(scale, posQ.x, posQ.x + 1),
-    //    CalculateMismatchScale(scale, posQ.y, posQ.y + 1));
-    uint2 retraversalScale = uint2(
-        CalculateRetraversalScale(posQ.x, posQ.x + 1),
-        CalculateRetraversalScale(posQ.y, posQ.y + 1));
+    uint2 rescale = uint2(
+        CalculateRescale(posQ.x, posQ.x + 1),
+        CalculateRescale(posQ.y, posQ.y + 1));
 
-    uint2 bitmask2_000 = TraverseVxShadowMapLeaf(posQ.z, result);
-    uint2 bitmask2_100 = bitmask2_000;
-    uint2 bitmask2_010 = bitmask2_000;
-    uint2 bitmask2_110 = bitmask2_000;
+    uint maxRescale = max(rescale.x, rescale.y);
 
-    if (retraversalScale.x > scale)
-    {
-        uint nodeIndex = nodeTracer[retraversalScale.x - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(1, 0, 0), retraversalScale.x, nodeIndex);
-        bitmask2_100 = TraverseVxShadowMapLeaf(posQ.z, result);
-    }
-    if (retraversalScale.y > scale)
-    {
-        uint nodeIndex = nodeTracer[retraversalScale.y - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(0, 1, 0), retraversalScale.y, nodeIndex);
-        bitmask2_010 = TraverseVxShadowMapLeaf(posQ.z, result);
-    }
-    if (retraversalScale.x > scale || retraversalScale.y > scale)
-    {
-        uint retraversalScalexy = max(retraversalScale.x, retraversalScale.y);
-        uint nodeIndex = nodeTracer[retraversalScalexy - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(1, 1, 0), retraversalScalexy, nodeIndex);
-        bitmask2_110 = TraverseVxShadowMapLeaf(posQ.z, result);
-    }
+    // todo : reduce traversal count by storing node tracer at each retraversal function
+    uint2 bitmask2_00 = TraverseVxShadowMapLeaf(posQ.z, result);
+    uint2 bitmask2_10 = RetraversalVxShadowMapLeaf(posQ, uint3(1, 0, 0), rescale.x, scale, bitmask2_00, nodeTracer);
+    uint2 bitmask2_01 = RetraversalVxShadowMapLeaf(posQ, uint3(0, 1, 0), rescale.y, scale, bitmask2_00, nodeTracer);
+    uint2 bitmask2_11 = RetraversalVxShadowMapLeaf(posQ, uint3(1, 1, 0), maxRescale, scale, bitmask2_00, nodeTracer);
 
-    float attenuation0 = PointSampleShadowBitmask(bitmask2_000, posQ);
-    float attenuation1 = PointSampleShadowBitmask(bitmask2_100, posQ, uint3(1, 0, 0));
-    float attenuation2 = PointSampleShadowBitmask(bitmask2_010, posQ, uint3(0, 1, 0));
-    float attenuation3 = PointSampleShadowBitmask(bitmask2_110, posQ, uint3(1, 1, 0));
-
-    //attenuation0 = lerp(attenuation0, attenuation1, lerpWeight.x);
-    //attenuation1 = lerp(attenuation2, attenuation3, lerpWeight.x);
-
-    float attenuation = lerp(attenuation0, attenuation1, lerpWeight.y);
-
-    return attenuation1;
+    return BilinearSampleShadowBitmask(posQ, bitmask2_00, bitmask2_10, bitmask2_01, bitmask2_11, lerpWeight.xy);
 }
 
 
@@ -419,101 +430,35 @@ float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
     uint nodeTracer[16];
 
     uint4 result = TraverseVxShadowMapPosQ(posQ, scale, nodeTracer);
-    // todo : early return by non-intersection between z and z+1
-    //if (result.w == 0)
-        //return result.y ? 1.0 : 0.0;
 
-    uint3 mismatchScale = uint3(
-        CalculateMismatchScale(scale, posQ.x, posQ.x + 1),
-        CalculateMismatchScale(scale, posQ.y, posQ.y + 1),
-        CalculateMismatchScale(scale, posQ.z, posQ.z + 1));
+    uint3 rescale = uint3(
+        CalculateRescale(posQ.x, posQ.x + 1),
+        CalculateRescale(posQ.y, posQ.y + 1),
+        CalculateRescale(posQ.z, posQ.z + 1));
 
+    uint maxRescale = max(rescale.x, rescale.y);
+
+    // todo : reduce traversal count by storing node tracer at each retraversal function
     uint2 bitmask2_00 = TraverseVxShadowMapLeaf(posQ.z, result);
-    uint2 bitmask2_10 = bitmask2_00;
-    uint2 bitmask2_01 = bitmask2_00;
-    uint2 bitmask2_11 = bitmask2_00;
+    uint2 bitmask2_10 = RetraversalVxShadowMapLeaf(posQ, uint3(1, 0, 0), rescale.x, scale, bitmask2_00, nodeTracer);
+    uint2 bitmask2_01 = RetraversalVxShadowMapLeaf(posQ, uint3(0, 1, 0), rescale.y, scale, bitmask2_00, nodeTracer);
+    uint2 bitmask2_11 = RetraversalVxShadowMapLeaf(posQ, uint3(1, 1, 0), maxRescale, scale, bitmask2_00, nodeTracer);
 
-    if (mismatchScale.x > scale)
-    {
-        uint nodeIndex = nodeTracer[mismatchScale.x - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(1, 0, 0), mismatchScale.x, nodeIndex);
-        //result = TraverseVxShadowMapPosQ(posQ + uint3(1, 0, 0));
-        bitmask2_10 = TraverseVxShadowMapLeaf(posQ.z, result);
-    }
-    if (mismatchScale.y > scale)
-    {
-        uint nodeIndex = nodeTracer[mismatchScale.y - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(0, 1, 0), mismatchScale.y, nodeIndex);
-        //result = TraverseVxShadowMapPosQ(posQ + uint3(0, 1, 0));
-        bitmask2_01 = TraverseVxShadowMapLeaf(posQ.z, result);
-    }
-    if (mismatchScale.x > scale || mismatchScale.y > scale)
-    {
-        uint mismatchScalexy = max(mismatchScale.x, mismatchScale.y);
-        uint nodeIndex = nodeTracer[mismatchScalexy - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(1, 1, 0), mismatchScalexy, nodeIndex);
-        //result = TraverseVxShadowMapPosQ(posQ + uint3(1, 1, 0));
-        bitmask2_11 = TraverseVxShadowMapLeaf(posQ.z, result);
-    }
+    float attenuation_z0 = BilinearSampleShadowBitmask(posQ, bitmask2_00, bitmask2_10, bitmask2_01, bitmask2_11, lerpWeight.xy);
 
-    float attenuation0 = PointSampleShadowBitmask(bitmask2_00, posQ);
-    float attenuation1 = PointSampleShadowBitmask(bitmask2_10, posQ, uint3(1, 0, 0));
-    float attenuation2 = PointSampleShadowBitmask(bitmask2_01, posQ, uint3(0, 1, 0));
-    float attenuation3 = PointSampleShadowBitmask(bitmask2_11, posQ, uint3(1, 1, 0));
+    uint maxRescale1 = max(rescale.z, rescale.x);
+    uint maxRescale2 = max(rescale.z, rescale.y);
+    uint maxRescale3 = max(rescale.z, maxRescale);
 
-    attenuation0 = lerp(attenuation0, attenuation1, lerpWeight.x);
-    attenuation1 = lerp(attenuation2, attenuation3, lerpWeight.x);
+    // todo : reduce traversal count by storing node tracer at each retraversal function
+    bitmask2_00 = RetraversalVxShadowMapLeafOneZStep(posQ, rescale.z, scale, result, nodeTracer);
+    bitmask2_10 = RetraversalVxShadowMapLeaf(posQ, uint3(1, 0, 1), maxRescale1, scale, bitmask2_00, nodeTracer);
+    bitmask2_01 = RetraversalVxShadowMapLeaf(posQ, uint3(0, 1, 1), maxRescale2, scale, bitmask2_00, nodeTracer);
+    bitmask2_11 = RetraversalVxShadowMapLeaf(posQ, uint3(1, 1, 1), maxRescale3, scale, bitmask2_00, nodeTracer);
 
-    float attenuation_z0 = lerp(attenuation0, attenuation1, lerpWeight.y);
+    float attenuation_z1 = BilinearSampleShadowBitmask(posQ, bitmask2_00, bitmask2_10, bitmask2_01, bitmask2_11, lerpWeight.xy);
 
-    if (mismatchScale.z > scale)
-    {
-        uint nodeIndex = nodeTracer[mismatchScale.z - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(0, 0, 1), mismatchScale.z, nodeIndex);
-        //result = TraverseVxShadowMapPosQ(posQ + uint3(0, 0, 1));
-    }
-
-    bitmask2_00 = TraverseVxShadowMapLeaf(posQ.z + 1, result);
-    bitmask2_10 = bitmask2_00;
-    bitmask2_01 = bitmask2_00;
-    bitmask2_11 = bitmask2_00;
-
-    if (mismatchScale.x > scale)
-    {
-        uint nodeIndex = nodeTracer[mismatchScale.x - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(1, 0, 1), mismatchScale.x, nodeIndex);
-        //result = TraverseVxShadowMapPosQ(posQ + uint3(1, 0, 1));
-        bitmask2_10 = TraverseVxShadowMapLeaf(posQ.z + 1, result);
-    }
-    if (mismatchScale.y > scale)
-    {
-        uint nodeIndex = nodeTracer[mismatchScale.y - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(0, 1, 1), mismatchScale.y, nodeIndex);
-        //result = TraverseVxShadowMapPosQ(posQ + uint3(0, 1, 1));
-        bitmask2_01 = TraverseVxShadowMapLeaf(posQ.z + 1, result);
-    }
-    if (mismatchScale.x > scale || mismatchScale.y > scale)
-    {
-        uint mismatchScalexy = max(mismatchScale.x, mismatchScale.y);
-        uint nodeIndex = nodeTracer[mismatchScalexy - 4];
-        result = TraverseVxShadowMapPosQ(posQ + uint3(1, 1, 1), mismatchScalexy, nodeIndex);
-        //result = TraverseVxShadowMapPosQ(posQ + uint3(1, 1, 1));
-        bitmask2_11 = TraverseVxShadowMapLeaf(posQ.z + 1, result);
-    }
-
-    attenuation0 = PointSampleShadowBitmask(bitmask2_00, posQ);
-    attenuation1 = PointSampleShadowBitmask(bitmask2_10, posQ, uint3(1, 0, 0));
-    attenuation2 = PointSampleShadowBitmask(bitmask2_01, posQ, uint3(0, 1, 0));
-    attenuation3 = PointSampleShadowBitmask(bitmask2_11, posQ, uint3(1, 1, 0));
-
-    attenuation0 = lerp(attenuation0, attenuation1, lerpWeight.x);
-    attenuation1 = lerp(attenuation2, attenuation3, lerpWeight.x);
-
-    float attenuation_z1 = lerp(attenuation0, attenuation1, lerpWeight.y);
-
-    float attenuation = lerp(attenuation_z0, attenuation_z1, lerpWeight.z);
-
-    return attenuation0;
+    return lerp(attenuation_z0, attenuation_z1, lerpWeight.z);
 }
 
 
@@ -552,7 +497,6 @@ float SampleVxShadowmap(float3 positionWS)
     attenuation = ComputeVxShadowMapAttenuationNoFiltering(positionWS);
 #elif BI_LINEAR
     attenuation = ComputeVxShadowMapAttenuationBiFiltering(positionWS);
-    //attenuation = ComputeVxShadowMapAttenuationTriFiltering(positionWS);
 #elif TRI_LINEAR
     attenuation = ComputeVxShadowMapAttenuationTriFiltering(positionWS);
 #elif PCF9X9_FILTERING

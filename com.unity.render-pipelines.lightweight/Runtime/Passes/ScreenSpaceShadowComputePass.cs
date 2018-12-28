@@ -82,7 +82,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 //    kernel = computeShader.FindKernel("BiLinearWithDynShadows");
                 //    //kernel = computeShader.FindKernel("NoFilterWithDynShadows");
                 //else
-                    kernel = computeShader.FindKernel("BiLinearWithoutDynShadows");
+                    kernel = computeShader.FindKernel("TriLinearWithoutDynShadows");
                     //kernel = computeShader.FindKernel("NoFilterWithoutDynShadows");
             }
 
