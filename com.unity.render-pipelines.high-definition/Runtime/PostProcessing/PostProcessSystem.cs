@@ -118,7 +118,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 anisoLevel: 0,
                 useMipMap: false,
                 enableRandomWrite: true,
-                sRGB: false
+                sRGB: false,
+                requireStereoSupport: false
             );
 
             // Setup a default exposure textures and clear it to (1,0)
@@ -258,7 +259,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // TODO: Do we want user effects before post?
 
                     // Start with exposure - will be applied in the next frame
-                    if (!IsExposureFixed())
+                    if (!IsExposureFixed() && vrPass == 0) // Only calculate dynamic exposure once
                     {
                         using (new ProfilingSample(cmd, "Dynamic Exposure", CustomSamplerId.Exposure.GetSampler()))
                         {
