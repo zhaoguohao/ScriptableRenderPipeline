@@ -271,13 +271,12 @@ uint2 TraverseVxShadowMapLeaf(uint posQ_z, uint4 innerResult)
 // for one x-y-z-step
 uint2 RetraversalVxShadowMapLeaf(uint3 posQ, uint3 offset, uint rescale, uint scale, uint2 bitmask2, uint nodeTracer[16])
 {
-    if (rescale > scale)
-    {
-        uint stackIndex = rescale - 4;
-        uint nodeIndex = nodeTracer[stackIndex];
-        uint4 tmp = RetraverseVxShadowMapPosQ(posQ + offset, rescale, nodeIndex);
-        bitmask2 = TraverseVxShadowMapLeaf(posQ.z + offset.z, tmp);
-    }
+    if (rescale <= scale)
+        return bitmask2;
+
+    uint nodeIndex = nodeTracer[rescale - 4];
+    uint4 result = RetraverseVxShadowMapPosQ(posQ + offset, rescale, nodeIndex);
+    bitmask2 = TraverseVxShadowMapLeaf(posQ.z + offset.z, result);
 
     return bitmask2;
 }
@@ -286,12 +285,11 @@ uint2 RetraversalVxShadowMapLeaf(uint3 posQ, uint3 offset, uint rescale, uint sc
 // only for one z-step
 uint2 RetraversalVxShadowMapLeafOneZStep(uint3 posQ, uint rescale, uint scale, uint4 result, uint nodeTracer[16])
 {
-    if (rescale > scale)
-    {
-        uint stackIndex = rescale - 4;
-        uint nodeIndex = nodeTracer[stackIndex];
-        result = RetraverseVxShadowMapPosQ(posQ + uint3(0, 0, 1), rescale, nodeIndex);
-    }
+    if (rescale <= scale)
+        return TraverseVxShadowMapLeaf(posQ.z + 1, result);
+
+    uint nodeIndex = nodeTracer[rescale - 4];
+    result = RetraverseVxShadowMapPosQ(posQ + uint3(0, 0, 1), rescale, nodeIndex);
 
     return TraverseVxShadowMapLeaf(posQ.z + 1, result);
 }
@@ -391,6 +389,12 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
 
     uint4 result = TraverseVxShadowMapPosQ(posQ, scale, nodeTracer);
 
+    uint2 edgeQ = uint2(1, 1) << scale;
+    bool2 inner = (posQ.xy % edgeQ) < (edgeQ - 1);
+
+    if (all(inner) && result.w == 0)
+        return result.y ? 1.0 : 0.0;
+
     uint2 rescale = uint2(
         CalculateRescale(posQ.x, posQ.x + 1),
         CalculateRescale(posQ.y, posQ.y + 1));
@@ -430,6 +434,12 @@ float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
     uint nodeTracer[16];
 
     uint4 result = TraverseVxShadowMapPosQ(posQ, scale, nodeTracer);
+
+    uint3 edgeQ = uint3(1, 1, 1) << scale;
+    bool3 inner = (posQ % edgeQ) < (edgeQ - 1);
+
+    if (all(inner) && result.w == 0)
+        return result.y ? 1.0 : 0.0;
 
     uint3 rescale = uint3(
         CalculateRescale(posQ.x, posQ.x + 1),
