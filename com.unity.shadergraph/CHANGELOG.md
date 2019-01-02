@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - The `Color` node control is now a consistent width.
 - Function declarations no longer contain double delimiters.
 - The `Slider` node control now functions correctly.
-- Fixed the property blackboard going missing or very small.
+- Fixed the property blackboard so it no longer goes missing or turns very small.
 
 ## [5.2.0] - 2018-11-27
 ### Added
