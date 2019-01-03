@@ -25,45 +25,37 @@ namespace UnityEditor.ShaderGraph
         , IMayRequireVertexColor
     {
         [SerializeField]
-        SerializableSlot[] m_SerializableInputSlots = { new SerializableSlot(0, "In", SlotType.Input, SlotValueType.Vector1, 0, ShaderStageCapability.All) };
-
-        [SerializeField]
-		List<MaterialSlot> m_InputSlots;
+		List<SerializableSlot> m_InputSlots = new List<SerializableSlot>() 
+        {
+            new SerializableSlot(0, "In", SlotType.Input, SlotValueType.DynamicVector, 0, ShaderStageCapability.All)
+        };
 
         //[DynamicSlotListControl(SlotType.Input)]
-		public List<MaterialSlot> inputSlots
+		public List<SerializableSlot> inputSlots
 		{
 			get 
             { 
-                if (m_SerializableInputSlots != null)
-                {
-                    m_InputSlots = new List<MaterialSlot>();
-                    for(int i = 0; i < m_SerializableInputSlots.Length; i++)
-                        m_InputSlots.Add(m_SerializableInputSlots[i].Deserialize());
-                    m_SerializableInputSlots = null;
-                }
+                if(m_InputSlots == null)
+                    m_InputSlots = new List<SerializableSlot>();
+
                 return m_InputSlots; 
             }
 		}
 
         [SerializeField]
-        SerializableSlot[] m_SerializableOutputSlots = { new SerializableSlot(1, "Out", SlotType.Output, SlotValueType.Vector1, 0, ShaderStageCapability.All) };
-
-        [SerializeField]
-		List<MaterialSlot> m_OutputSlots;
+		List<SerializableSlot> m_OutputSlots = new List<SerializableSlot>() 
+        {
+            new SerializableSlot(1, "Out", SlotType.Output, SlotValueType.DynamicVector, 0, ShaderStageCapability.All)
+        };
         
         //[DynamicSlotListControl(SlotType.Output)]
-		public List<MaterialSlot> outputSlots
+		public List<SerializableSlot> outputSlots
 		{
 			get 
             {
-                if (m_SerializableOutputSlots != null)
-                {
-                    m_OutputSlots = new List<MaterialSlot>();
-                    for(int i = 0; i < m_SerializableOutputSlots.Length; i++)
-                        m_OutputSlots.Add(m_SerializableOutputSlots[i].Deserialize());
-                    m_SerializableOutputSlots = null;
-                }
+                if(m_OutputSlots == null)
+                    m_OutputSlots = new List<SerializableSlot>();
+
                 return m_OutputSlots; 
             }
 		}
@@ -107,40 +99,68 @@ namespace UnityEditor.ShaderGraph
             };
         }
 
-        public sealed override void UpdateNodeAfterDeserialization()
+        public override void ValidateNode()
         {
             List<int> validSlots = new List<int>();
-
-            foreach(MaterialSlot slot in inputSlots)
-            {
-                AddSlot(slot);
-                validSlots.Add(slot.id);
-            }
-                
-            foreach(MaterialSlot slot in outputSlots)
-            {
-                AddSlot(slot);
-                validSlots.Add(slot.id);
-            }
-
+            UpdateSlotList(inputSlots, ref validSlots);
+            UpdateSlotList(outputSlots, ref validSlots);
             RemoveSlotsNameNotMatching(validSlots);
-        } 
 
-        public override void OnBeforeSerialize()
+            base.ValidateNode();
+        }
+
+        private void UpdateSlotList(List<SerializableSlot> slots, ref List<int> validSlots)
         {
-            base.OnBeforeSerialize();
-            if (m_InputSlots != null)
+            foreach(SerializableSlot entry in slots)
             {
-                m_SerializableInputSlots = new SerializableSlot[m_InputSlots.Count];
-                for(int i = 0; i < m_InputSlots.Count; i++)
-                    m_SerializableInputSlots[i] = m_InputSlots[i].Serialize();
+                // If new Slot generate a valid ID and name
+                if(entry.id == -1)
+                {
+                    entry.id = GetNewSlotID();
+                    entry.name = GetNewSlotName();
+                }
+
+                // Add to Node
+                AddSlot(entry.Deserialize());
+                validSlots.Add(entry.id);
             }
-            if (m_OutputSlots != null)
+        }
+
+        private int GetNewSlotID()
+        {
+            // Track highest Slot ID
+            int ceiling = -1;
+            
+            // Get all Slots from Node
+            List<MaterialSlot> slots = new List<MaterialSlot>();
+            GetSlots(slots);
+
+            // Increment highest Slot ID from Slots on Node
+            foreach(MaterialSlot slot in slots)
+                ceiling = slot.id > ceiling ? slot.id : ceiling;
+
+            return ceiling + 1;
+        }
+
+        private string GetNewSlotName()
+        {
+            // Track highest number of unnamed Slots
+            int ceiling = 0;
+
+            // Get all Slots from Node
+            List<MaterialSlot> slots = new List<MaterialSlot>();
+            GetSlots(slots);
+
+            // Increment highest Slot number from Slots on Node
+            foreach(MaterialSlot slot in slots)
             {
-                m_SerializableOutputSlots = new SerializableSlot[m_OutputSlots.Count];
-                for(int i = 0; i < m_OutputSlots.Count; i++)
-                    m_SerializableOutputSlots[i] = m_OutputSlots[i].Serialize();
+                if(slot.displayName.StartsWith("New Slot"))
+                    ceiling++;
             }
+
+            if(ceiling > 0)
+                return string.Format("New Slot ({0})", ceiling);
+            return "New Slot";
         }
 
 		string GetFunctionName()
@@ -319,4 +339,3 @@ namespace UnityEditor.ShaderGraph
         }
     }
 }
-

@@ -13,22 +13,16 @@ namespace UnityEditor.ShaderGraph.Drawing
 {
     class DynamicSlotListView : VisualElement
     {
-        // --------------------------------------------------
-        // VIEW
-
         // Node data
         AbstractMaterialNode m_Node;
         SlotType m_Type;
-        List<MaterialSlot> m_Slots;
+        List<SerializableSlot> m_Slots;
 
         // GUI data
 		IMGUIContainer m_Container;
-
-        // Reorderable List data
-        [SerializeField] ReorderableList m_ReorderableList;
         int m_SelectedIndex = -1;
 
-        public DynamicSlotListView(AbstractMaterialNode node, List<MaterialSlot> slots, SlotType type)
+        public DynamicSlotListView(AbstractMaterialNode node, List<SerializableSlot> slots, SlotType type)
         {
             // Styling
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/DynamicSlotListView"));
@@ -50,16 +44,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 // Get GUI elements
                 var listTitle = string.Format("{0} Slots", m_Type.ToString());
-                
-                // Create Reorderable List data from Node Slot data
-                List<SerializableSlot> serializableSlots = new List<SerializableSlot>();
-                foreach(MaterialSlot slot in m_Slots)
-                    serializableSlots.Add(slot.Serialize());
 
                 // Create Reorderable List
-                m_ReorderableList = CreateReorderableList(serializableSlots, listTitle, true, true, true, true);
-                m_ReorderableList.index = m_SelectedIndex;
-                m_ReorderableList.DoLayoutList();
+                var reorderableList = CreateReorderableList(m_Slots, listTitle, true, true, true, true);
+                reorderableList.index = m_SelectedIndex;
+                reorderableList.DoLayoutList();
 
                 // If changed repaint
                 if (changeCheckScope.changed)
@@ -121,7 +110,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             
             // Update Slots if changed
             if(EditorGUI.EndChangeCheck())
-                UpdateSlots();
+                m_Node.ValidateNode();
         }
 
         // Select element callback
@@ -137,13 +126,14 @@ namespace UnityEditor.ShaderGraph.Drawing
             list.list.Add(new SerializableSlot() 
             { 
                 id = -1, 
-                name = GetNewSlotName(),
+                name = "",
                 slotType = m_Type, 
                 valueType = SlotValueType.Vector1,
-                interfaceType = 0 
+                interfaceType = 0,
+                stageCapability = ShaderStageCapability.All, 
             });
             m_SelectedIndex = m_Slots.Count - 1;
-            UpdateSlots();
+            m_Node.ValidateNode();
         }
 
         // Remove element callback
@@ -152,7 +142,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             list.index = m_SelectedIndex;
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
             m_SelectedIndex = list.index;
-            UpdateSlots();
+            m_Node.ValidateNode();
         }
 
         // Rebuild UI for redraw
@@ -161,66 +151,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             Remove(m_Container);
             m_Container = new IMGUIContainer(() => OnGUIHandler ()) { name = "ListContainer" };
             Add(m_Container);
-        }
-
-        // --------------------------------------------------
-        // MODEL
-
-        public void UpdateSlots()
-        {
-            // Clear all Slots on Node
-            m_Slots.Clear();
-
-            // Recreate all Slots from Reorderable List
-            foreach(SerializableSlot entry in m_ReorderableList.list)
-            {
-                // If new Slot generate a valid ID
-                if(entry.id == -1)
-                    entry.id = GetNewSlotID();
-
-                // Add to Node
-                m_Slots.Add(entry.Deserialize());
-            }
-
-            // Update Node
-            m_Node.UpdateNodeAfterDeserialization();
-        }
-
-        private int GetNewSlotID()
-        {
-            // Track highest Slot ID
-            int ceiling = -1;
-            
-            // Get all Slots from Node
-            List<MaterialSlot> slots = new List<MaterialSlot>();
-            m_Node.GetSlots(slots);
-
-            // Increment highest Slot ID from Slots on Node
-            foreach(MaterialSlot slot in slots)
-                ceiling = slot.id > ceiling ? slot.id : ceiling;
-
-            return ceiling + 1;
-        }
-
-        private string GetNewSlotName()
-        {
-            // Track highest number of unnamed Slots
-            int ceiling = 0;
-
-            // Get all Slots from Node
-            List<MaterialSlot> slots = new List<MaterialSlot>();
-            m_Node.GetSlots(slots);
-
-            // Increment highest Slot number from Slots on Node
-            foreach(MaterialSlot slot in slots)
-            {
-                if(slot.displayName.StartsWith("New Slot"))
-                    ceiling++;
-            }
-
-            if(ceiling > 0)
-                return string.Format("New Slot ({0})", ceiling);
-            return "New Slot";
         }
     }
 }
