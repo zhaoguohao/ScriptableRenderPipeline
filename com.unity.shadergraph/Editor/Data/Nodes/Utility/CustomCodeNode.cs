@@ -75,12 +75,16 @@ namespace UnityEditor.ShaderGraph
 		public string code
 		{
 			get { return m_Code; }
-			set 
-			{ 
-				m_Code = value;
-				Dirty(ModificationScope.Topological); 
-			}
+			set { m_Code = value; }
 		}
+
+        ButtonConfig m_ButtonConfig;
+
+        [ButtonControl]
+        public ButtonConfig buttonConfig
+        {
+            get { return m_ButtonConfig; }
+        }
 
         [SerializeField]
         private bool m_DisplayPreview = true;
@@ -92,6 +96,15 @@ namespace UnityEditor.ShaderGraph
         {
             name = "Custom Code";
             UpdateNodeAfterDeserialization();
+
+            m_ButtonConfig = new ButtonConfig()
+            {
+                text = "Recompile",
+                action = () =>
+                {
+                    Dirty(ModificationScope.Topological); 
+                }
+            };
         }
 
         public sealed override void UpdateNodeAfterDeserialization()
@@ -132,7 +145,7 @@ namespace UnityEditor.ShaderGraph
 
 		string GetFunctionName()
         {
-            return string.Format("Unity_CustomCode_{0}", precision);
+            return string.Format("Unity_CustomCode_{0}_{1}", GuidEncoder.Encode(guid), precision);
         }
 
 		public void GenerateNodeCode(ShaderGenerator visitor, GraphContext context, GenerationMode generationMode)
