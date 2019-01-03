@@ -24,6 +24,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         static readonly int TileSize = 8;
         static readonly int TileAdditive = TileSize - 1;
 
+        const string k_CollectShadowsTag = "Collect Shadows";
         RenderTextureFormat m_ColorFormat;
 
         public ScreenSpaceShadowComputePass()
@@ -78,12 +79,14 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
             if (computeShader != null)
             {
-                //if (mainLightDynamicShadows)
-                //    kernel = computeShader.FindKernel("BiLinearWithDynShadows");
-                //    //kernel = computeShader.FindKernel("NoFilterWithDynShadows");
-                //else
-                    kernel = computeShader.FindKernel("TriLinearWithoutDynShadows");
-                    //kernel = computeShader.FindKernel("NoFilterWithoutDynShadows");
+                string kernelName = "TriLinear";
+
+                if (mainLightDynamicShadows)
+                    kernelName += "WithDynShadows";
+                else
+                    kernelName += "WithoutDynShadows";
+
+                kernel = computeShader.FindKernel(kernelName);
             }
 
             return kernel;
@@ -99,7 +102,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (kernel == -1)
                 return;
 
-            CommandBuffer cmd = CommandBufferPool.Get("Collect Shadows");
+            CommandBuffer cmd = CommandBufferPool.Get(k_CollectShadowsTag);
 
             cmd.GetTemporaryRT(colorAttachmentHandle.id, descriptor, FilterMode.Bilinear);
             SetupVxShadowReceiverConstants(cmd, kernel, ref computeShader, ref renderingData.cameraData.camera, ref renderingData.shadowData.mainLightVxShadowMap);

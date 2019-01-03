@@ -17,7 +17,7 @@
 #endif
 
 #define USE_EMULATE_CLZ
-//#define USE_IMITATED_CLS
+//#define USE_IMITATED_CLZ
 
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
@@ -69,28 +69,21 @@ uint emulateCLZ(uint x)
 }
 
 
-uint CalculateMismatchScale(uint scale, uint srcPosbit, uint dstPosbit)
+uint imatateCLZ(uint srcPosbit, uint dstPosbit)
 {
-#if defined USE_EMULATE_CLZ
-    uint disparity = 32 - emulateCLZ(srcPosbit ^ dstPosbit);
-#elif defined USE_IMITATED_CLS
     int i = _MaxScale;
-    for (; i > 3; --i)
+    for (; i > 1; --i)
     {
         uint shift = i - 1;
-    
+
         uint a = (srcPosbit >> shift) & 0x00000001;
         uint b = (dstPosbit >> shift) & 0x00000001;
-    
+
         if (a != b)
             break;
     }
-    uint disparity = i;
-#else
-    uint disparity = _MaxScale;
-#endif
 
-    return max(scale, disparity);
+    return i;
 }
 
 
@@ -99,19 +92,8 @@ uint CalculateRescale(uint srcPosbit, uint dstPosbit)
 {
 #if defined USE_EMULATE_CLZ
     uint disparity = 32 - emulateCLZ(srcPosbit ^ dstPosbit);
-#elif defined USE_IMITATED_CLS
-    int i = _MaxScale;
-    for (; i > 3; --i)
-    {
-        uint shift = i - 1;
-    
-        uint a = (srcPosbit >> shift) & 0x00000001;
-        uint b = (dstPosbit >> shift) & 0x00000001;
-    
-        if (a != b)
-            break;
-    }
-    uint disparity = i;
+#elif defined USE_IMITATED_CLZ
+    uint disparity = imatateCLZ(srcPosbit, dstPosbit);
 #else
     uint disparity = _MaxScale;
 #endif
@@ -548,21 +530,26 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
     float3 positionWS = ComputeWorldSpacePosition(posInput.positionNDC, depth, UNITY_MATRIX_I_VP);
 #endif
 
+    float shadowStrength = GetMainLightShadowStrength();
+
 #if WITH_DYNAMIC_SHADOWS
     float4 shadowMapCoords = TransformWorldToShadowCoord(positionWS);
 
     ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
-    float shadowStrength = 1.0;//GetMainLightShadowStrength();
-    float attenuation0 = SampleShadowmap(shadowMapCoords, TEXTURE2D_PARAM(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), shadowSamplingData, shadowStrength, false);
+    float attenuation = SampleShadowmap(shadowMapCoords, TEXTURE2D_PARAM(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), shadowSamplingData, shadowStrength, false);
 
-    float attenuation1 = 1.0;
-    if (attenuation0 > 0.0)
-        attenuation1 = SampleVxShadowmap(positionWS);
+    if (attenuation == 0.0)
+    {
+        _ScreenSpaceShadowOutput[pixelCoord] = attenuation;
+        return;
+    }
 
-    float attenuation = min(attenuation0, attenuation1);
+    attenuation = SampleVxShadowmap(positionWS);
 #else
     float attenuation = SampleVxShadowmap(positionWS);
 #endif
+
+    attenuation = lerp(1.0, attenuation, shadowStrength);
 
     _ScreenSpaceShadowOutput[pixelCoord] = attenuation;
 }

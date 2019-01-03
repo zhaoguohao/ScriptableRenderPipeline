@@ -46,7 +46,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
 
         public bool IsValid()
         {
-            return resource != null;
+            return enabled && resource != null;
         }
 
 #if UNITY_EDITOR

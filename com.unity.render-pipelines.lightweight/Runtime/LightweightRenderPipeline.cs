@@ -389,6 +389,7 @@ namespace UnityEngine.Rendering.LWRP
 
             //seongdae;vxsm
             // compute shader for screen space shadows.
+            // todo : need to fix retransform for world space in screen space on OpenGLES3.1
             bool supportsComputeScreenSpaceShadows =
                 SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES2 &&
                 SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES3;
