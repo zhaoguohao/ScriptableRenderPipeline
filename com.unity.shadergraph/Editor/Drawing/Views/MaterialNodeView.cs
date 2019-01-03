@@ -172,6 +172,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 m_NodeSettingsView = new NodeSettingsView();
                 m_NodeSettingsView.visible = false;
+                m_NodeSettingsView.style.flexGrow = 1;
 
                 Add(m_NodeSettingsView);
 

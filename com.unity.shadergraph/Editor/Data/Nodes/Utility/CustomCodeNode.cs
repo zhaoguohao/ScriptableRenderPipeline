@@ -297,6 +297,7 @@ namespace UnityEditor.ShaderGraph
         public VisualElement CreateSettingsElement()
         {
             PropertySheet ps = new PropertySheet();
+            ps.style.width = 500;
             ps.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
             ps.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
             ps.Add(new PropertyRow(new Label("Enable Preview")), (row) =>
