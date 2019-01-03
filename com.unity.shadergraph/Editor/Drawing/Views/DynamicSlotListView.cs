@@ -115,7 +115,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             serializableSlot.valueType = (SlotValueType)EditorGUI.EnumPopup( new Rect(rect.x + rect.width / elementCount, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.valueType);
             
             if(m_Type == SlotType.Input)
-                serializableSlot.interfaceType = EditorGUI.Popup( new Rect(rect.x + (rect.width / elementCount) * 2, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.interfaceType, SerializableSlotUtil.GetEnumEntriesOfInterfaceType(serializableSlot.valueType) );
+                serializableSlot.interfaceType = EditorGUI.Popup( new Rect(rect.x + (rect.width / elementCount) * 2, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.interfaceType, DynamicSlotUtil.GetEnumEntriesOfInterfaceType(serializableSlot.valueType) );
             
             // Update Slots if changed
             if(EditorGUI.EndChangeCheck())
