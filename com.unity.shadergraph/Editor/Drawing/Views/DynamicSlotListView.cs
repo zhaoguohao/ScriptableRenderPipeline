@@ -186,6 +186,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                     var i = (Vector3Interface)entry.interfaceType;
                     switch(i)
                     {
+                        case Vector3Interface.ColorRGB:
+                            return new ColorRGBMaterialSlot(slotId, displayName, shaderOutputName, m_Type, Vector4.zero, ColorMode.Default, shaderStageCapability);
                         case Vector3Interface.ObjectSpaceNormal:
                             return new NormalMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Object, shaderStageCapability);
                         case Vector3Interface.ObjectSpaceTangent:

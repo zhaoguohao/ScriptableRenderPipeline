@@ -195,29 +195,6 @@ namespace UnityEditor.ShaderGraph
                 });
         }
 
-        public VisualElement CreateSettingsElement()
-        {
-            PropertySheet ps = new PropertySheet();
-            ps.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
-            ps.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
-            ps.Add(new PropertyRow(new Label("Enable Preview")), (row) =>
-                {
-                    row.Add(new Toggle(), (toggle) =>
-                    {
-                        toggle.value = m_DisplayPreview;
-                        toggle.OnToggleChanged(ChangePreview);
-                    });
-                });
-            return ps;
-        }
-
-        void ChangePreview(ChangeEvent<bool> evt)
-        {
-            owner.owner.RegisterCompleteObjectUndo("Blend Preserve Specular Change");
-            m_DisplayPreview = evt.newValue;
-            Dirty(ModificationScope.Graph);
-        }
-
         public NeededCoordinateSpace RequiresNormal(ShaderStageCapability stageCapability)
         {
             var binding = NeededCoordinateSpace.None;
@@ -302,6 +279,29 @@ namespace UnityEditor.ShaderGraph
                     return true;
             }
             return false;
+        }
+
+        public VisualElement CreateSettingsElement()
+        {
+            PropertySheet ps = new PropertySheet();
+            ps.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
+            ps.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
+            ps.Add(new PropertyRow(new Label("Enable Preview")), (row) =>
+                {
+                    row.Add(new Toggle(), (toggle) =>
+                    {
+                        toggle.value = m_DisplayPreview;
+                        toggle.OnToggleChanged(ChangePreview);
+                    });
+                });
+            return ps;
+        }
+
+        void ChangePreview(ChangeEvent<bool> evt)
+        {
+            owner.owner.RegisterCompleteObjectUndo("Blend Preserve Specular Change");
+            m_DisplayPreview = evt.newValue;
+            Dirty(ModificationScope.Graph);
         }
     }
 
