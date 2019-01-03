@@ -135,7 +135,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             list.list.Add(new SerializableSlot() 
             { 
                 id = -1, 
-                name = "New Slot",
+                name = GetNewSlotName(),
                 slotType = m_Type, 
                 valueType = SlotValueType.Vector1,
                 interfaceType = 0 
@@ -198,6 +198,27 @@ namespace UnityEditor.ShaderGraph.Drawing
                 ceiling = slot.id > ceiling ? slot.id : ceiling;
 
             return ceiling + 1;
+        }
+
+        private string GetNewSlotName()
+        {
+            // Track highest number of unnamed Slots
+            int ceiling = 0;
+
+            // Get all Slots from Node
+            List<MaterialSlot> slots = new List<MaterialSlot>();
+            m_Node.GetSlots(slots);
+
+            // Increment highest Slot number from Slots on Node
+            foreach(MaterialSlot slot in slots)
+            {
+                if(slot.displayName.StartsWith("New Slot"))
+                    ceiling++;
+            }
+
+            if(ceiling > 0)
+                return string.Format("New Slot ({0})", ceiling);
+            return "New Slot";
         }
     }
 }
