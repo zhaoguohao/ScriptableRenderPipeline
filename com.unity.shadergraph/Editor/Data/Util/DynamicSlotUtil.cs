@@ -12,7 +12,7 @@ namespace UnityEditor.ShaderGraph
         public static SerializableSlot Serialize(this MaterialSlot slot)
         {
             int interfaceType = slot.GetInterfaceType();
-            return new SerializableSlot(slot.id, slot.RawDisplayName(), slot.slotType, slot.valueType, interfaceType);
+            return new SerializableSlot(slot.id, slot.RawDisplayName(), slot.slotType, slot.valueType, interfaceType, slot.stageCapability);
         }
 
         public static MaterialSlot Deserialize(this SerializableSlot slot)
@@ -23,7 +23,7 @@ namespace UnityEditor.ShaderGraph
             var valueType = slot.valueType;
             var shaderOutputName = NodeUtils.GetHLSLSafeName(slot.name);
             var interfaceType = slot.interfaceType;
-            var shaderStageCapability = ShaderStageCapability.All;
+            var shaderStageCapability = slot.stageCapability;
 
             if(slotType == SlotType.Input)
             {

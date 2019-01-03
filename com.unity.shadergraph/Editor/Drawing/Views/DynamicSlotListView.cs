@@ -109,13 +109,15 @@ namespace UnityEditor.ShaderGraph.Drawing
             SerializableSlot serializableSlot = list.list[index] as SerializableSlot;
 
             // Draw element GUI
-            int elementCount = m_Type == SlotType.Input ? 3 : 2;
+            int elementCount = m_Type == SlotType.Input ? 4 : 3;
             EditorGUI.BeginChangeCheck();
             serializableSlot.name = EditorGUI.DelayedTextField( new Rect(rect.x, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.name, labelStyle);       
             serializableSlot.valueType = (SlotValueType)EditorGUI.EnumPopup( new Rect(rect.x + rect.width / elementCount, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.valueType);
             
             if(m_Type == SlotType.Input)
                 serializableSlot.interfaceType = EditorGUI.Popup( new Rect(rect.x + (rect.width / elementCount) * 2, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.interfaceType, DynamicSlotUtil.GetEnumEntriesOfInterfaceType(serializableSlot.valueType) );
+
+            serializableSlot.stageCapability = (ShaderStageCapability)EditorGUI.EnumPopup( new Rect(rect.x + (rect.width / elementCount) * (elementCount-1), rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.stageCapability);
             
             // Update Slots if changed
             if(EditorGUI.EndChangeCheck())

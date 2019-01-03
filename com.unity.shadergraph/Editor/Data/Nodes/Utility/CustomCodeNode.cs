@@ -25,7 +25,7 @@ namespace UnityEditor.ShaderGraph
         , IMayRequireVertexColor
     {
         [SerializeField]
-        SerializableSlot[] m_SerializableInputSlots = { new SerializableSlot(0, "In", SlotType.Input, SlotValueType.Vector1, 0) };
+        SerializableSlot[] m_SerializableInputSlots = { new SerializableSlot(0, "In", SlotType.Input, SlotValueType.Vector1, 0, ShaderStageCapability.All) };
 
         [SerializeField]
 		List<MaterialSlot> m_InputSlots;
@@ -47,7 +47,7 @@ namespace UnityEditor.ShaderGraph
 		}
 
         [SerializeField]
-        SerializableSlot[] m_SerializableOutputSlots = { new SerializableSlot(1, "Out", SlotType.Output, SlotValueType.Vector1, 0) };
+        SerializableSlot[] m_SerializableOutputSlots = { new SerializableSlot(1, "Out", SlotType.Output, SlotValueType.Vector1, 0, ShaderStageCapability.All) };
 
         [SerializeField]
 		List<MaterialSlot> m_OutputSlots;

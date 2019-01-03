@@ -12,18 +12,20 @@ namespace UnityEditor.ShaderGraph
         [SerializeField] public SlotType slotType;
         [SerializeField] public SlotValueType valueType;
         [SerializeField] public int interfaceType;
+        [SerializeField] public ShaderStageCapability stageCapability;
 
         public SerializableSlot()
         {
         }
 
-        public SerializableSlot(int id, string name, SlotType slotType, SlotValueType valueType, int interfaceType)
+        public SerializableSlot(int id, string name, SlotType slotType, SlotValueType valueType, int interfaceType, ShaderStageCapability stageCapability)
         {
             this.id = id;
             this.name = name;
             this.slotType = slotType;
             this.valueType = valueType;
             this.interfaceType = interfaceType;
+            this.stageCapability = stageCapability;
         }
     }
 }
