@@ -16,79 +16,83 @@ namespace UnityEditor.ShaderGraph.Drawing
         // --------------------------------------------------
         // VIEW
 
+        // Node data
         AbstractMaterialNode m_Node;
         SlotType m_Type;
         List<MaterialSlot> m_Slots;
 
+        // GUI data
 		IMGUIContainer m_Container;
 
-        [SerializeField]
-        ReorderableList m_ReorderableList;
-
+        // Reorderable List data
+        [SerializeField] ReorderableList m_ReorderableList;
         int m_SelectedIndex = -1;
 
         public DynamicSlotListView(AbstractMaterialNode node, List<MaterialSlot> slots, SlotType type)
         {
+            // Styling
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/DynamicSlotListView"));
+
+            // Set Node data
             m_Node = node;
             m_Type = type;
             m_Slots = slots;
 
+            // Generate GUI
             m_Container = new IMGUIContainer(() => OnGUIHandler ()) { name = "ListContainer" };
             Add(m_Container);
         }
 
         void OnGUIHandler()
         {
+            // If changed
             using (var changeCheckScope = new EditorGUI.ChangeCheckScope())
             {
+                // Get GUI elements
                 var listTitle = string.Format("{0} Slots", m_Type.ToString());
-                var entries = ConvertSlotsToEntries(m_Slots);
-                m_ReorderableList = CreateReorderableList(entries, listTitle, true, true, true, true);
+                
+                // Create Reorderable List data from Node Slot data
+                List<SerializableSlot> serializableSlots = new List<SerializableSlot>();
+                foreach(MaterialSlot slot in m_Slots)
+                    serializableSlots.Add(slot.Serialize());
+
+                // Create Reorderable List
+                m_ReorderableList = CreateReorderableList(serializableSlots, listTitle, true, true, true, true);
                 m_ReorderableList.index = m_SelectedIndex;
                 m_ReorderableList.DoLayoutList();
 
+                // If changed repaint
                 if (changeCheckScope.changed)
                     m_Node.Dirty(ModificationScope.Node);
             }
         }
 
-        private List<SlotEntry> ConvertSlotsToEntries(List<MaterialSlot> slots)
+        private ReorderableList CreateReorderableList(List<SerializableSlot> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
         {
-            List<SlotEntry> entries = new List<SlotEntry>();
-            foreach(MaterialSlot slot in slots)
-            {
-                entries.Add(new SlotEntry()
-                {
-                    id = slot.id,
-                    name = slot.RawDisplayName(),
-                    valueType = slot.valueType,
-                });
-            }
-            return entries;
-        }
+            // Create Reorderable List
+            var reorderableList = new ReorderableList(list, typeof(SerializableSlot), draggable, displayHeader, displayAddButton, displayRemoveButton);
 
-        private ReorderableList CreateReorderableList(List<SlotEntry> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
-        {
-            var reorderableList = new ReorderableList(list, typeof(SlotEntry), draggable, displayHeader, displayAddButton, displayRemoveButton);
-
+            // Draw Header
             reorderableList.drawHeaderCallback = (Rect rect) => 
             {  
                 var labelRect = new Rect(rect.x, rect.y, rect.width-10, rect.height);
                 EditorGUI.LabelField(labelRect, label);
             };
 
+            // Draw Element
             reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => 
             {
                 rect.y += 2;
                 DrawEntry(reorderableList, index, new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight));
             };
 
+            // Element height
             reorderableList.elementHeightCallback = (int indexer) => 
             {
                 return reorderableList.elementHeight;
             };
-
+            
+            // Add callback delegates
             reorderableList.onSelectCallback += SelectEntry;
             reorderableList.onAddCallback += AddEntry;
             reorderableList.onRemoveCallback += RemoveEntry;
@@ -97,34 +101,50 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         private void DrawEntry(ReorderableList list, int index, Rect rect)
         {
+            // Label style
             GUIStyle labelStyle = new GUIStyle();
-
             labelStyle.normal.textColor = Color.white;
 
-            SlotEntry entry = list.list[index] as SlotEntry;
+            // Get Slot data
+            SerializableSlot serializableSlot = list.list[index] as SerializableSlot;
+
+            // Draw element GUI
+            int elementCount = m_Type == SlotType.Input ? 3 : 2;
             EditorGUI.BeginChangeCheck();
-            entry.name = EditorGUI.DelayedTextField( new Rect(rect.x, rect.y, rect.width / 3, EditorGUIUtility.singleLineHeight), entry.name, labelStyle);            
-            entry.valueType = (SlotValueType)EditorGUI.EnumPopup( new Rect(rect.x + rect.width / 3, rect.y, rect.width / 3, EditorGUIUtility.singleLineHeight), entry.valueType);
-            entry.interfaceType = EditorGUI.Popup( new Rect(rect.x + (rect.width / 3) * 2, rect.y, rect.width / 3, EditorGUIUtility.singleLineHeight), entry.interfaceType, GetEnumEntries(entry.valueType) );
+            serializableSlot.name = EditorGUI.DelayedTextField( new Rect(rect.x, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.name, labelStyle);       
+            serializableSlot.valueType = (SlotValueType)EditorGUI.EnumPopup( new Rect(rect.x + rect.width / elementCount, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.valueType);
+            
+            if(m_Type == SlotType.Input)
+                serializableSlot.interfaceType = EditorGUI.Popup( new Rect(rect.x + (rect.width / elementCount) * 2, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.interfaceType, SerializableSlotUtil.GetEnumEntriesOfInterfaceType(serializableSlot.valueType) );
+            
+            // Update Slots if changed
             if(EditorGUI.EndChangeCheck())
-            {
                 UpdateSlots();
-            }
         }
 
+        // Select element callback
         private void SelectEntry(ReorderableList list)
         {
             m_SelectedIndex = list.index;
             Redraw();
         }
 
+        // Add element callback
         private void AddEntry(ReorderableList list)
         {
-            list.list.Add(new SlotEntry() { id = -1, name = "New Slot", valueType = SlotValueType.Vector1 } );
+            list.list.Add(new SerializableSlot() 
+            { 
+                id = -1, 
+                name = "New Slot",
+                slotType = m_Type, 
+                valueType = SlotValueType.Vector1,
+                interfaceType = 0 
+            });
             m_SelectedIndex = m_Slots.Count - 1;
             UpdateSlots();
         }
 
+        // Remove element callback
         private void RemoveEntry(ReorderableList list)
         {
             list.index = m_SelectedIndex;
@@ -133,6 +153,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             UpdateSlots();
         }
 
+        // Rebuild UI for redraw
         void Redraw()
         {
             Remove(m_Container);
@@ -145,187 +166,38 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         public void UpdateSlots()
         {
+            // Clear all Slots on Node
             m_Slots.Clear();
-            foreach(SlotEntry entry in m_ReorderableList.list)
+
+            // Recreate all Slots from Reorderable List
+            foreach(SerializableSlot entry in m_ReorderableList.list)
             {
+                // If new Slot generate a valid ID
                 if(entry.id == -1)
                     entry.id = GetNewSlotID();
 
-                m_Slots.Add(GetMaterialSlot(entry));
+                // Add to Node
+                m_Slots.Add(entry.Deserialize());
             }
 
+            // Update Node
             m_Node.UpdateNodeAfterDeserialization();
-        }
-
-        private MaterialSlot GetMaterialSlot(SlotEntry entry)
-        {
-            var slotId = entry.id;
-            var displayName = entry.name;
-            var shaderOutputName = NodeUtils.GetHLSLSafeName(entry.name);
-            var shaderStageCapability = ShaderStageCapability.All;
-
-            if(m_Type == SlotType.Input)
-            {
-                if(entry.valueType == SlotValueType.Vector4)
-                {
-                    var i = (Vector4Interface)entry.interfaceType;
-                    switch(i)
-                    {
-                        case Vector4Interface.ColorRGBA:
-                            return new ColorRGBAMaterialSlot(slotId, displayName, shaderOutputName, m_Type, Vector4.zero, shaderStageCapability);
-                        case Vector4Interface.ScreenPosition:
-                            return new ScreenPositionMaterialSlot(slotId, displayName, shaderOutputName, ScreenSpaceType.Default, shaderStageCapability);
-                        case Vector4Interface.VertexColor:
-                            return new VertexColorMaterialSlot(slotId, displayName, shaderOutputName, shaderStageCapability);
-                        default:
-                            return MaterialSlot.CreateMaterialSlot(entry.valueType, slotId, displayName, shaderOutputName, m_Type, Vector4.zero, ShaderStageCapability.All);
-                    }
-                }
-                else if(entry.valueType == SlotValueType.Vector3)
-                {
-                    var i = (Vector3Interface)entry.interfaceType;
-                    switch(i)
-                    {
-                        case Vector3Interface.ColorRGB:
-                            return new ColorRGBMaterialSlot(slotId, displayName, shaderOutputName, m_Type, Vector4.zero, ColorMode.Default, shaderStageCapability);
-                        case Vector3Interface.ObjectSpaceNormal:
-                            return new NormalMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Object, shaderStageCapability);
-                        case Vector3Interface.ObjectSpaceTangent:
-                            return new TangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Object, shaderStageCapability);
-                        case Vector3Interface.ObjectSpaceBitangent:
-                            return new BitangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Object, shaderStageCapability);
-                        case Vector3Interface.ObjectSpacePosition:
-                            return new PositionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Object, shaderStageCapability);
-                        case Vector3Interface.ViewSpaceNormal:
-                            return new NormalMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.View, shaderStageCapability);
-                        case Vector3Interface.ViewSpaceTangent:
-                            return new TangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.View, shaderStageCapability);
-                        case Vector3Interface.ViewSpaceBitangent:
-                            return new BitangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.View, shaderStageCapability);
-                        case Vector3Interface.ViewSpacePosition:
-                            return new PositionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.View, shaderStageCapability);
-                        case Vector3Interface.WorldSpaceNormal:
-                            return new NormalMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.World, shaderStageCapability);
-                        case Vector3Interface.WorldSpaceTangent:
-                            return new TangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.World, shaderStageCapability);
-                        case Vector3Interface.WorldSpaceBitangent:
-                            return new BitangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.World, shaderStageCapability);
-                        case Vector3Interface.WorldSpacePosition:
-                            return new PositionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.World, shaderStageCapability);
-                        case Vector3Interface.TangentSpaceNormal:
-                            return new NormalMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Tangent, shaderStageCapability);
-                        case Vector3Interface.TangentSpaceTangent:
-                            return new TangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Tangent, shaderStageCapability);
-                        case Vector3Interface.TangentSpaceBitangent:
-                            return new BitangentMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Tangent, shaderStageCapability);
-                        case Vector3Interface.TangentSpacePosition:
-                            return new PositionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Tangent, shaderStageCapability);
-                        case Vector3Interface.ObjectSpaceViewDirection:
-                            return new ViewDirectionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Object, shaderStageCapability);
-                        case Vector3Interface.ViewSpaceViewDirection:
-                            return new ViewDirectionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.View, shaderStageCapability);
-                        case Vector3Interface.WorldSpaceViewDirection:
-                            return new ViewDirectionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.World, shaderStageCapability);
-                        case Vector3Interface.TangentSpaceViewDirection:
-                            return new ViewDirectionMaterialSlot(slotId, displayName, shaderOutputName, CoordinateSpace.Tangent, shaderStageCapability);
-                        default:
-                            return MaterialSlot.CreateMaterialSlot(entry.valueType, slotId, displayName, shaderOutputName, m_Type, Vector4.zero, ShaderStageCapability.All);
-                    }
-                }
-                else if(entry.valueType == SlotValueType.Vector2)
-                {
-                    var i = (Vector2Interface)entry.interfaceType;
-                    switch(i)
-                    {
-                        case Vector2Interface.MeshUV:
-                            return new UVMaterialSlot(slotId, displayName, shaderOutputName, UVChannel.UV0, shaderStageCapability);
-                        default:
-                            return MaterialSlot.CreateMaterialSlot(entry.valueType, slotId, displayName, shaderOutputName, m_Type, Vector4.zero, ShaderStageCapability.All);
-                    }
-                }
-            }
-
-            return MaterialSlot.CreateMaterialSlot(entry.valueType, slotId, displayName, shaderOutputName, m_Type, Vector4.zero, shaderStageCapability);
         }
 
         private int GetNewSlotID()
         {
+            // Track highest Slot ID
             int ceiling = -1;
             
+            // Get all Slots from Node
             List<MaterialSlot> slots = new List<MaterialSlot>();
             m_Node.GetSlots(slots);
 
+            // Increment highest Slot ID from Slots on Node
             foreach(MaterialSlot slot in slots)
                 ceiling = slot.id > ceiling ? slot.id : ceiling;
 
             return ceiling + 1;
-        }
-
-        // --------------------------------------------------
-        // DATA
-
-        public class SlotEntry
-        {
-            public int id;
-            public string name;
-            public SlotValueType valueType;
-            public int interfaceType;
-        }
-
-        protected enum Vector4Interface
-        {
-            Default,
-            ColorRGBA,
-            ScreenPosition,
-            VertexColor,
-        }
-
-        protected enum Vector3Interface
-        {
-            Default,
-            ColorRGB,
-            ObjectSpaceNormal,
-            ObjectSpaceTangent,
-            ObjectSpaceBitangent,
-            ObjectSpacePosition,
-            ViewSpaceNormal,
-            ViewSpaceTangent,
-            ViewSpaceBitangent,
-            ViewSpacePosition,
-            WorldSpaceNormal,
-            WorldSpaceTangent,
-            WorldSpaceBitangent,
-            WorldSpacePosition,
-            TangentSpaceNormal,
-            TangentSpaceTangent,
-            TangentSpaceBitangent,
-            TangentSpacePosition,
-            ObjectSpaceViewDirection,
-            ViewSpaceViewDirection,
-            WorldSpaceViewDirection,
-            TangentSpaceViewDirection,
-        }
-
-        protected enum Vector2Interface
-        {
-            Default,
-            MeshUV,
-        }
-
-        private static Dictionary<SlotValueType, Type> s_InterfaceTypes = new Dictionary<SlotValueType, Type>()
-        {
-            { SlotValueType.Vector4, typeof(Vector4Interface) },
-            { SlotValueType.Vector3, typeof(Vector3Interface) },
-            { SlotValueType.Vector2, typeof(Vector2Interface) },
-        };
-
-        private string[] GetEnumEntries(SlotValueType slotValueType)
-        {
-            Type interfaceType;
-            if(s_InterfaceTypes.TryGetValue(slotValueType, out interfaceType))
-                return Enum.GetNames(Type.GetType(interfaceType.ToString()));
-            
-            return new string[] { "Default" };
         }
     }
 }
