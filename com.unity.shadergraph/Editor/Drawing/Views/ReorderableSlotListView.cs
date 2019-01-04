@@ -89,6 +89,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_ReorderableList.onSelectCallback += SelectEntry;
             m_ReorderableList.onAddCallback += AddEntry;
             m_ReorderableList.onRemoveCallback += RemoveEntry;
+            m_ReorderableList.onReorderCallback += ReorderEntries;
             return m_ReorderableList;
         }
 
