@@ -20,6 +20,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         // GUI data
 		IMGUIContainer m_Container;
+        ReorderableList m_ReorderableList;
         int m_SelectedIndex = -1;
 
         public ReorderableSlotListView(AbstractMaterialNode node, List<ReorderableSlot> slots, SlotType type)
@@ -46,9 +47,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var listTitle = string.Format("{0} Slots", m_Type.ToString());
 
                 // Create Reorderable List
-                var reorderableList = CreateReorderableList(m_Slots, listTitle, true, true, true, true);
-                reorderableList.index = m_SelectedIndex;
-                reorderableList.DoLayoutList();
+                m_ReorderableList = CreateReorderableList(m_Slots, listTitle, true, true, true, true);
+                m_ReorderableList.index = m_SelectedIndex;
+                m_ReorderableList.DoLayoutList();
 
                 // If changed repaint
                 if (changeCheckScope.changed)
@@ -59,33 +60,34 @@ namespace UnityEditor.ShaderGraph.Drawing
         private ReorderableList CreateReorderableList(List<ReorderableSlot> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
         {
             // Create Reorderable List
-            var reorderableList = new ReorderableList(list, typeof(ReorderableSlot), draggable, displayHeader, displayAddButton, displayRemoveButton);
+            if(m_ReorderableList == null)
+                m_ReorderableList = new ReorderableList(list, typeof(ReorderableSlot), draggable, displayHeader, displayAddButton, displayRemoveButton);
 
             // Draw Header
-            reorderableList.drawHeaderCallback = (Rect rect) => 
+            m_ReorderableList.drawHeaderCallback = (Rect rect) => 
             {  
                 var labelRect = new Rect(rect.x, rect.y, rect.width-10, rect.height);
                 EditorGUI.LabelField(labelRect, label);
             };
 
             // Draw Element
-            reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => 
+            m_ReorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) => 
             {
                 rect.y += 2;
-                DrawEntry(reorderableList, index, new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight));
+                DrawEntry(m_ReorderableList, index, new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight));
             };
 
             // Element height
-            reorderableList.elementHeightCallback = (int indexer) => 
+            m_ReorderableList.elementHeightCallback = (int indexer) => 
             {
-                return reorderableList.elementHeight;
+                return m_ReorderableList.elementHeight;
             };
             
             // Add callback delegates
-            reorderableList.onSelectCallback += SelectEntry;
-            reorderableList.onAddCallback += AddEntry;
-            reorderableList.onRemoveCallback += RemoveEntry;
-            return reorderableList;
+            m_ReorderableList.onSelectCallback += SelectEntry;
+            m_ReorderableList.onAddCallback += AddEntry;
+            m_ReorderableList.onRemoveCallback += RemoveEntry;
+            return m_ReorderableList;
         }
 
         private void DrawEntry(ReorderableList list, int index, Rect rect)
@@ -134,6 +136,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             list.index = m_SelectedIndex;
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
             m_SelectedIndex = list.index;
+            m_Node.ValidateNode();
+        }
+
+        private void ReorderEntries(ReorderableList list)
+        {
             m_Node.ValidateNode();
         }
 
