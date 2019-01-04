@@ -486,6 +486,7 @@ namespace UnityEditor.VFX.UI
             {
                 foreach (var controller in blocks.Keys.Except(blockControllers).ToArray())
                 {
+                    GetFirstAncestorOfType<VFXView>().RemoveNodeEdges(blocks[controller]);
                     m_BlockContainer.Remove(blocks[controller]);
                     blocks.Remove(controller);
                 }

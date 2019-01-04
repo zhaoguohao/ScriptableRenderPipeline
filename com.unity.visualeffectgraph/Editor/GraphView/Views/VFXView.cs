@@ -139,6 +139,15 @@ namespace UnityEditor.VFX.UI
             }
         }
 
+        public void RemoveNodeEdges(VFXNodeUI node)
+        {
+            foreach (var edge in dataEdges.Where(t => t.Value.input.node == node || t.Value.output.node == node).ToArray())
+            {
+                RemoveElement(edge.Value);
+                dataEdges.Remove(edge.Key);
+            }
+        }
+
         public VFXViewController controller
         {
             get { return m_Controller; }
