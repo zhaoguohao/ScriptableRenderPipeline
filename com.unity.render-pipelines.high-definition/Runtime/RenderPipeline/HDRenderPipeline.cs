@@ -7,7 +7,7 @@ using UnityEngine.Experimental.GlobalIllumination;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
-    public class HDRenderPipeline : UnityEngine.Rendering.RenderPipeline
+    public partial class HDRenderPipeline : UnityEngine.Rendering.RenderPipeline
     {
         public const string k_ShaderTagName = "HDRenderPipeline";
         const string k_OldQualityShadowKey = "HDRP:oldQualityShadows";
@@ -828,16 +828,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool assetFrameSettingsIsDirty = m_Asset.frameSettingsIsDirty;
             m_Asset.UpdateDirtyFrameSettings();
 
-            const int maxRenderRequests = 64;
-            const int maxRenderRequestsLinks = 64;
-            var graphBufferLength = Graph<RenderRequest>.SizeFor(maxRenderRequests, maxRenderRequestsLinks);
-            var graphBuffer = stackalloc byte[graphBufferLength];
-            var renderGraph = new Graph<RenderRequest>(graphBuffer, graphBufferLength, maxRenderRequests, maxRenderRequestsLinks);
-
-            using (DictionaryPool<HDProbe, List<Graph.NodeID>>.Get(out var renderRequestIndicesWhereTheProbeIsVisible))
-            using (ListPool<CameraSettings>.Get(out var cameraSettings))
-            using (ListPool<CameraPositionSettings>.Get(out var cameraPositionSettings))
+            using (var renderLoopPreparation = new RenderLoopPreparation(this))
             {
+                var buffer = stackalloc byte[renderLoopPreparation.RequiredStackMemorySize];
+                renderLoopPreparation.SetAllocatedStackMemory(buffer);
+
+                // TODO: Replace with renderLoopPreparation.PrepareAndCull
                 // Culling loop
                 foreach (var camera in cameras)
                 {
@@ -862,9 +858,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var skipRequest = false;
                     if (!(TryCalculateFrameParameters(
                             camera, assetFrameSettingsIsDirty,
-                            out HDAdditionalCameraData additionalCameraData,
-                            out HDCamera hdCamera,
-                            out ScriptableCullingParameters cullingParameters
+                            out var additionalCameraData,
+                            out var hdCamera,
+                            out var cullingParameters
                         )
                         // Note: In case of a custom render, we have false here and 'TryCull' is not executed
                         && TryCull(
@@ -1144,16 +1140,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
 
-                var renderRequestIndicesToRenderPtr = stackalloc Graph.NodeID[renderGraph.NodeCount];
-                var renderRequestIndicesToRenderLength = renderGraph.NodeCount;
-                renderRequestIndicesToRenderLength =
-                    renderGraph.ComputeLinearExecutionOrder(renderRequestIndicesToRenderPtr,
-                        renderRequestIndicesToRenderLength);
+                var renderRequestToRenderPtr = stackalloc Graph.NodeID[renderGraph.NodeCount];
+                var renderRequestToRenderLength = renderGraph.NodeCount;
+                renderRequestToRenderLength =
+                    renderGraph.ComputeLinearExecutionOrder(renderRequestToRenderPtr,
+                        renderRequestToRenderLength);
 
                 // Execute render request graph, in reverse order
-                for (var i = renderRequestIndicesToRenderLength - 1; i >= 0; --i)
+                for (var i = renderRequestToRenderLength - 1; i >= 0; --i)
                 {
-                    var renderRequestIndex = renderRequestIndicesToRenderPtr[i];
+                    var renderRequestIndex = renderRequestToRenderPtr[i];
                     ref var renderRequest = ref *(RenderRequest*)renderGraph.GetNodePtr(renderRequestIndex);
 
                     var cmd = CommandBufferPool.Get("");
