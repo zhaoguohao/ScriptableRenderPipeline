@@ -25,7 +25,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         public ReorderableSlotListView(AbstractMaterialNode node, List<ReorderableSlot> slots, SlotType type)
         {
             // Styling
-            styleSheets.Add(Resources.Load<StyleSheet>("Styles/DynamicSlotListView"));
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/ReorderableSlotListView"));
 
             // Set Node data
             m_Node = node;
