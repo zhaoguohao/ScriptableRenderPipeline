@@ -5,65 +5,35 @@ using System.Reflection;
 using UnityEditor.ShaderGraph.Drawing.Controls;
 using UnityEngine;
 using UnityEditor.Graphing;
+using UnityEditor.ShaderGraph.Drawing;
 using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
-    class SubGraphOutputControlAttribute : Attribute, IControlAttribute
+    class SubGraphOutputNode : AbstractMaterialNode, IHasSettings
     {
-        public VisualElement InstantiateControl(AbstractMaterialNode node, PropertyInfo propertyInfo)
-        {
-            if (!(node is SubGraphOutputNode))
-                throw new ArgumentException("Node must inherit from AbstractSubGraphIONode.", "node");
-            return new SubGraphOutputControlView((SubGraphOutputNode)node);
-        }
-    }
+        [SerializeField]
+        List<ReorderableSlot> m_InputSlots = new List<ReorderableSlot>() {};
 
-    class SubGraphOutputControlView : VisualElement
-    {
-        SubGraphOutputNode m_Node;
+		public List<ReorderableSlot> inputSlots
+		{
+			get 
+            { 
+                if(m_InputSlots == null)
+                    m_InputSlots = new List<ReorderableSlot>();
 
-        public SubGraphOutputControlView(SubGraphOutputNode node)
-        {
-            m_Node = node;
-            Add(new Button(OnAdd) { text = "Add Slot" });
-            Add(new Button(OnRemove) { text = "Remove Slot" });
-        }
-
-        void OnAdd()
-        {
-            m_Node.AddSlot();
-        }
-
-        void OnRemove()
-        {
-            // tell the user that they might cchange things up.
-            if (EditorUtility.DisplayDialog("Sub Graph Will Change", "If you remove a slot and save the sub graph, you might change other graphs that are using this sub graph.\n\nDo you want to continue?", "Yes", "No"))
-            {
-                m_Node.owner.owner.RegisterCompleteObjectUndo("Removing Slot");
-                m_Node.RemoveSlot();
+                return m_InputSlots; 
             }
-        }
-    }
-
-    class SubGraphOutputNode : AbstractMaterialNode
-    {
-        [SubGraphOutputControl]
-        int controlDummy { get; set; }
+		}
 
         public SubGraphOutputNode()
         {
-            name = "SubGraphOutputs";
+            name = "Sub Graph Outputs";
         }
 
         public override bool hasPreview
         {
-            get { return true; }
-        }
-
-        public override PreviewMode previewMode
-        {
-            get { return PreviewMode.Preview3D; }
+            get { return false; }
         }
 
         public ShaderStageCapability effectiveShaderStage
@@ -101,8 +71,11 @@ namespace UnityEditor.ShaderGraph
 
         public override void ValidateNode()
         {
-            ValidateShaderStage();
+            List<int> validSlots = new List<int>();
+            ReorderableSlotListUtil.UpdateSlotList(this, inputSlots, ref validSlots);
+            RemoveSlotsNameNotMatching(validSlots);
 
+            ValidateShaderStage();
             base.ValidateNode();
         }
 
@@ -111,15 +84,6 @@ namespace UnityEditor.ShaderGraph
             var index = this.GetInputSlots<ISlot>().Count() + 1;
             AddSlot(new Vector4MaterialSlot(index, "Output " + index, "Output" + index, SlotType.Input, Vector4.zero));
             return index;
-        }
-
-        public virtual void RemoveSlot()
-        {
-            var index = this.GetInputSlots<ISlot>().Count();
-            if (index == 0)
-                return;
-
-            RemoveSlot(index);
         }
 
         public void RemapOutputs(ShaderGenerator visitor, GenerationMode generationMode)
@@ -134,6 +98,14 @@ namespace UnityEditor.ShaderGraph
             {
                 return NodeExtensions.GetInputSlots<MaterialSlot>(this).OrderBy(x => x.id);
             }
+        }
+
+        public VisualElement CreateSettingsElement()
+        {
+            PropertySheet ps = new PropertySheet();
+            ps.style.width = 362;
+            ps.Add(new ReorderableSlotListView(this, inputSlots, SlotType.Input));
+            return ps;
         }
     }
 }

@@ -96,65 +96,11 @@ namespace UnityEditor.ShaderGraph
         public override void ValidateNode()
         {
             List<int> validSlots = new List<int>();
-            UpdateSlotList(inputSlots, ref validSlots);
-            UpdateSlotList(outputSlots, ref validSlots);
+            ReorderableSlotListUtil.UpdateSlotList(this, inputSlots, ref validSlots);
+            ReorderableSlotListUtil.UpdateSlotList(this, outputSlots, ref validSlots);
             RemoveSlotsNameNotMatching(validSlots);
 
             base.ValidateNode();
-        }
-
-        private void UpdateSlotList(List<ReorderableSlot> slots, ref List<int> validSlots)
-        {
-            foreach(ReorderableSlot entry in slots)
-            {
-                // If new Slot generate a valid ID and name
-                if(entry.id == -1)
-                {
-                    entry.id = GetNewSlotID();
-                    entry.name = GetNewSlotName();
-                }
-
-                // Add to Node
-                AddSlot(entry.ToMaterialSlot());
-                validSlots.Add(entry.id);
-            }
-        }
-
-        private int GetNewSlotID()
-        {
-            // Track highest Slot ID
-            int ceiling = -1;
-            
-            // Get all Slots from Node
-            List<MaterialSlot> slots = new List<MaterialSlot>();
-            GetSlots(slots);
-
-            // Increment highest Slot ID from Slots on Node
-            foreach(MaterialSlot slot in slots)
-                ceiling = slot.id > ceiling ? slot.id : ceiling;
-
-            return ceiling + 1;
-        }
-
-        private string GetNewSlotName()
-        {
-            // Track highest number of unnamed Slots
-            int ceiling = 0;
-
-            // Get all Slots from Node
-            List<MaterialSlot> slots = new List<MaterialSlot>();
-            GetSlots(slots);
-
-            // Increment highest Slot number from Slots on Node
-            foreach(MaterialSlot slot in slots)
-            {
-                if(slot.displayName.StartsWith("New Slot"))
-                    ceiling++;
-            }
-
-            if(ceiling > 0)
-                return string.Format("New Slot ({0})", ceiling);
-            return "New Slot";
         }
 
 		string GetFunctionName()

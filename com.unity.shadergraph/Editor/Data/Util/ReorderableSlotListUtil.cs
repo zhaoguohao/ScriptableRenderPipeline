@@ -9,6 +9,60 @@ namespace UnityEditor.ShaderGraph
 {
     static class ReorderableSlotListUtil
     {
+        public static void UpdateSlotList(INode node, List<ReorderableSlot> slots, ref List<int> validSlots)
+        {
+            foreach(ReorderableSlot entry in slots)
+            {
+                // If new Slot generate a valid ID and name
+                if(entry.id == -1)
+                {
+                    entry.id = GetNewSlotID(node);
+                    entry.name = GetNewSlotName(node);
+                }
+
+                // Add to Node
+                node.AddSlot(entry.ToMaterialSlot());
+                validSlots.Add(entry.id);
+            }
+        }
+
+        private static int GetNewSlotID(INode node)
+        {
+            // Track highest Slot ID
+            int ceiling = -1;
+            
+            // Get all Slots from Node
+            List<MaterialSlot> slots = new List<MaterialSlot>();
+            node.GetSlots(slots);
+
+            // Increment highest Slot ID from Slots on Node
+            foreach(MaterialSlot slot in slots)
+                ceiling = slot.id > ceiling ? slot.id : ceiling;
+
+            return ceiling + 1;
+        }
+
+        private static string GetNewSlotName(INode node)
+        {
+            // Track highest number of unnamed Slots
+            int ceiling = 0;
+
+            // Get all Slots from Node
+            List<MaterialSlot> slots = new List<MaterialSlot>();
+            node.GetSlots(slots);
+
+            // Increment highest Slot number from Slots on Node
+            foreach(MaterialSlot slot in slots)
+            {
+                if(slot.displayName.StartsWith("New Slot"))
+                    ceiling++;
+            }
+
+            if(ceiling > 0)
+                return string.Format("New Slot ({0})", ceiling);
+            return "New Slot";
+        }
+
         public static MaterialSlot ToMaterialSlot(this ReorderableSlot slot)
         {
             var slotId = slot.id;
