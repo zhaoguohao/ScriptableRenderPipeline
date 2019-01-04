@@ -130,6 +130,15 @@ namespace UnityEditor.VFX.UI
             }
         }
 
+        public void RemoveAnchorEdges(VFXDataAnchor anchor)
+        {
+            foreach (var edge in dataEdges.Where(t => t.Value.input == anchor || t.Value.output == anchor).ToArray())
+            {
+                RemoveElement(edge.Value);
+                dataEdges.Remove(edge.Key);
+            }
+        }
+
         public VFXViewController controller
         {
             get { return m_Controller; }

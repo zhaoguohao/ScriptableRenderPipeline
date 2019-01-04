@@ -261,6 +261,8 @@ namespace UnityEditor.VFX.UI
 
             foreach (var deletedController in deletedControllers)
             {
+                //Explicitely remove edges before removing anchor.
+                GetFirstAncestorOfType<VFXView>().RemoveAnchorEdges(existingAnchors[deletedController]);
                 container.Remove(existingAnchors[deletedController]);
                 existingAnchors.Remove(deletedController);
             }
