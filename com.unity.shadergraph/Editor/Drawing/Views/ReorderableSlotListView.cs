@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -47,7 +47,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var listTitle = string.Format("{0} Slots", m_Type.ToString());
 
                 // Create Reorderable List
-                m_ReorderableList = CreateReorderableList(m_Slots, listTitle, true, true, true, true);
+                if (m_ReorderableList == null)
+                    m_ReorderableList = CreateReorderableList(m_Slots, listTitle, true, true, true, true);
+
                 m_ReorderableList.index = m_SelectedIndex;
                 m_ReorderableList.DoLayoutList();
 
@@ -60,7 +62,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         private ReorderableList CreateReorderableList(List<ReorderableSlot> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
         {
             // Create Reorderable List
-            if(m_ReorderableList == null)
+            //if(m_ReorderableList == null)
                 m_ReorderableList = new ReorderableList(list, typeof(ReorderableSlot), draggable, displayHeader, displayAddButton, displayRemoveButton);
 
             // Draw Header
