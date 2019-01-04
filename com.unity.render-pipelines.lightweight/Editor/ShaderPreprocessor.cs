@@ -53,6 +53,17 @@ namespace UnityEditor.Rendering.LWRP
             if (shader.name.Contains("HDRP"))
                 return true;
 
+            // No shader quality tiers in LWRP.
+            if (compilerData.platformKeywordSet.IsEnabled(BuiltinShaderDefine.UNITY_HARDWARE_TIER2) ||
+                compilerData.platformKeywordSet.IsEnabled(BuiltinShaderDefine.UNITY_HARDWARE_TIER3))
+                return true;
+
+            if (shader.name.Contains("PostProcessing/ScreenSpaceReflections") ||
+                shader.name.Contains("PostProcessing/TemporalAntialiasing") ||
+                shader.name.Contains("PostProcessing/DeferredFog") ||
+                shader.name.Contains("PostProcessing/MotionBlur"))
+                return true;
+
             if (!CoreUtils.HasFlag(features, ShaderFeatures.MainLightShadows) &&
                 shader.name.Contains("ScreenSpaceShadows"))
                 return true;
