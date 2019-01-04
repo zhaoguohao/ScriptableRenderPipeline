@@ -517,6 +517,7 @@ namespace UnityEditor.VFX.UI
                             m_BlockContainer.Add(blockUI);
                             m_BlockContainer.Insert(prevBlock == null ? 0: m_BlockContainer.IndexOf(prevBlock), blockUI);
                         }
+                        prevBlock = blockUI;
                     }
                     VFXBlockUI firstBlock = m_BlockContainer.Query<VFXBlockUI>();
                     firstBlock.AddToClassList("first");
