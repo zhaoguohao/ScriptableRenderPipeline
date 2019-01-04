@@ -11,18 +11,18 @@ using UnityEditorInternal;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    class DynamicSlotListView : VisualElement
+    class ReorderableSlotListView : VisualElement
     {
         // Node data
         AbstractMaterialNode m_Node;
         SlotType m_Type;
-        List<SerializableSlot> m_Slots;
+        List<ReorderableSlot> m_Slots;
 
         // GUI data
 		IMGUIContainer m_Container;
         int m_SelectedIndex = -1;
 
-        public DynamicSlotListView(AbstractMaterialNode node, List<SerializableSlot> slots, SlotType type)
+        public ReorderableSlotListView(AbstractMaterialNode node, List<ReorderableSlot> slots, SlotType type)
         {
             // Styling
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/DynamicSlotListView"));
@@ -56,10 +56,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        private ReorderableList CreateReorderableList(List<SerializableSlot> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
+        private ReorderableList CreateReorderableList(List<ReorderableSlot> list, string label, bool draggable, bool displayHeader, bool displayAddButton, bool displayRemoveButton) 
         {
             // Create Reorderable List
-            var reorderableList = new ReorderableList(list, typeof(SerializableSlot), draggable, displayHeader, displayAddButton, displayRemoveButton);
+            var reorderableList = new ReorderableList(list, typeof(ReorderableSlot), draggable, displayHeader, displayAddButton, displayRemoveButton);
 
             // Draw Header
             reorderableList.drawHeaderCallback = (Rect rect) => 
@@ -95,7 +95,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             labelStyle.normal.textColor = Color.white;
 
             // Get Slot data
-            SerializableSlot serializableSlot = list.list[index] as SerializableSlot;
+            ReorderableSlot serializableSlot = list.list[index] as ReorderableSlot;
 
             // Draw element GUI
             int elementCount = m_Type == SlotType.Input ? 4 : 3;
@@ -104,7 +104,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             serializableSlot.valueType = (SlotValueType)EditorGUI.EnumPopup( new Rect(rect.x + rect.width / elementCount, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.valueType);
             
             if(m_Type == SlotType.Input)
-                serializableSlot.interfaceType = EditorGUI.Popup( new Rect(rect.x + (rect.width / elementCount) * 2, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.interfaceType, DynamicSlotUtil.GetEnumEntriesOfInterfaceType(serializableSlot.valueType) );
+                serializableSlot.interfaceType = EditorGUI.Popup( new Rect(rect.x + (rect.width / elementCount) * 2, rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.interfaceType, ReorderableSlotListUtil.GetEnumEntriesOfInterfaceType(serializableSlot.valueType) );
 
             serializableSlot.stageCapability = (ShaderStageCapability)EditorGUI.EnumPopup( new Rect(rect.x + (rect.width / elementCount) * (elementCount-1), rect.y, rect.width / elementCount, EditorGUIUtility.singleLineHeight), serializableSlot.stageCapability);
             
@@ -123,15 +123,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         // Add element callback
         private void AddEntry(ReorderableList list)
         {
-            list.list.Add(new SerializableSlot() 
-            { 
-                id = -1, 
-                name = "",
-                slotType = m_Type, 
-                valueType = SlotValueType.Vector1,
-                interfaceType = 0,
-                stageCapability = ShaderStageCapability.All, 
-            });
+            list.list.Add(new ReorderableSlot(-1, "", m_Type, SlotValueType.Vector1));
             m_SelectedIndex = m_Slots.Count - 1;
             m_Node.ValidateNode();
         }

@@ -25,36 +25,34 @@ namespace UnityEditor.ShaderGraph
         , IMayRequireVertexColor
     {
         [SerializeField]
-		List<SerializableSlot> m_InputSlots = new List<SerializableSlot>() 
+		List<ReorderableSlot> m_InputSlots = new List<ReorderableSlot>() 
         {
-            new SerializableSlot(0, "In", SlotType.Input, SlotValueType.DynamicVector, 0, ShaderStageCapability.All)
+            new ReorderableSlot(0, "In", SlotType.Input, SlotValueType.DynamicVector, 0, ShaderStageCapability.All)
         };
 
-        //[DynamicSlotListControl(SlotType.Input)]
-		public List<SerializableSlot> inputSlots
+		public List<ReorderableSlot> inputSlots
 		{
 			get 
             { 
                 if(m_InputSlots == null)
-                    m_InputSlots = new List<SerializableSlot>();
+                    m_InputSlots = new List<ReorderableSlot>();
 
                 return m_InputSlots; 
             }
 		}
 
         [SerializeField]
-		List<SerializableSlot> m_OutputSlots = new List<SerializableSlot>() 
+		List<ReorderableSlot> m_OutputSlots = new List<ReorderableSlot>() 
         {
-            new SerializableSlot(1, "Out", SlotType.Output, SlotValueType.DynamicVector, 0, ShaderStageCapability.All)
+            new ReorderableSlot(1, "Out", SlotType.Output, SlotValueType.DynamicVector, 0, ShaderStageCapability.All)
         };
         
-        //[DynamicSlotListControl(SlotType.Output)]
-		public List<SerializableSlot> outputSlots
+		public List<ReorderableSlot> outputSlots
 		{
 			get 
             {
                 if(m_OutputSlots == null)
-                    m_OutputSlots = new List<SerializableSlot>();
+                    m_OutputSlots = new List<ReorderableSlot>();
 
                 return m_OutputSlots; 
             }
@@ -109,9 +107,9 @@ namespace UnityEditor.ShaderGraph
             base.ValidateNode();
         }
 
-        private void UpdateSlotList(List<SerializableSlot> slots, ref List<int> validSlots)
+        private void UpdateSlotList(List<ReorderableSlot> slots, ref List<int> validSlots)
         {
-            foreach(SerializableSlot entry in slots)
+            foreach(ReorderableSlot entry in slots)
             {
                 // If new Slot generate a valid ID and name
                 if(entry.id == -1)
@@ -121,7 +119,7 @@ namespace UnityEditor.ShaderGraph
                 }
 
                 // Add to Node
-                AddSlot(entry.Deserialize());
+                AddSlot(entry.ToMaterialSlot());
                 validSlots.Add(entry.id);
             }
         }
@@ -318,8 +316,8 @@ namespace UnityEditor.ShaderGraph
         {
             PropertySheet ps = new PropertySheet();
             ps.style.width = 500;
-            ps.Add(new DynamicSlotListView(this, inputSlots, SlotType.Input));
-            ps.Add(new DynamicSlotListView(this, outputSlots, SlotType.Output));
+            ps.Add(new ReorderableSlotListView(this, inputSlots, SlotType.Input));
+            ps.Add(new ReorderableSlotListView(this, outputSlots, SlotType.Output));
             ps.Add(new PropertyRow(new Label("Enable Preview")), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>

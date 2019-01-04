@@ -7,15 +7,9 @@ using UnityEditor.Graphing.Util;
 
 namespace UnityEditor.ShaderGraph
 {
-    static class DynamicSlotUtil
+    static class ReorderableSlotListUtil
     {
-        public static SerializableSlot Serialize(this MaterialSlot slot)
-        {
-            int interfaceType = slot.GetInterfaceType();
-            return new SerializableSlot(slot.id, slot.RawDisplayName(), slot.slotType, slot.valueType, interfaceType, slot.stageCapability);
-        }
-
-        public static MaterialSlot Deserialize(this SerializableSlot slot)
+        public static MaterialSlot ToMaterialSlot(this ReorderableSlot slot)
         {
             var slotId = slot.id;
             var displayName = slot.name;
@@ -109,134 +103,6 @@ namespace UnityEditor.ShaderGraph
             return MaterialSlot.CreateMaterialSlot(valueType, slotId, displayName, shaderOutputName, slotType, Vector4.zero, shaderStageCapability);
         }
 
-        public static int GetInterfaceType(this MaterialSlot slot)
-        {
-            int interfaceType = 0;
-
-            if(TryGetInterfaceType<ColorRGBAMaterialSlot>(slot, out interfaceType))
-                return interfaceType;
-            else if(TryGetInterfaceType<ScreenPositionMaterialSlot>(slot, out interfaceType))
-                return interfaceType;
-            else if(TryGetInterfaceType<VertexColorMaterialSlot>(slot, out interfaceType))
-                return interfaceType;
-            else if(TryGetInterfaceType<ColorRGBMaterialSlot>(slot, out interfaceType))
-                return interfaceType;
-            else if(TryGetInterfaceType<UVMaterialSlot>(slot, out interfaceType))
-                return interfaceType;
-
-            else if(slot as NormalMaterialSlot != null)
-            {
-                NormalMaterialSlot normalMaterialSlot = slot as NormalMaterialSlot;
-                switch(normalMaterialSlot.space)
-                {
-                    case CoordinateSpace.World:
-                        return (int)Vector3Interface.WorldSpaceNormal;
-                    case CoordinateSpace.Tangent:
-                        return (int)Vector3Interface.TangentSpaceNormal;
-                    case CoordinateSpace.View:
-                        return (int)Vector3Interface.ViewSpaceNormal;
-                    default:
-                        return (int)Vector3Interface.ObjectSpaceNormal;
-                }
-            }
-
-            else if(slot as TangentMaterialSlot != null)
-            {
-                TangentMaterialSlot tangentMaterialSlot = slot as TangentMaterialSlot;
-                switch(tangentMaterialSlot.space)
-                {
-                    case CoordinateSpace.World:
-                        return (int)Vector3Interface.WorldSpaceTangent;
-                    case CoordinateSpace.Tangent:
-                        return (int)Vector3Interface.TangentSpaceTangent;
-                    case CoordinateSpace.View:
-                        return (int)Vector3Interface.ViewSpaceTangent;
-                    default:
-                        return (int)Vector3Interface.ObjectSpaceTangent;
-                }
-            }
-
-            else if(slot as BitangentMaterialSlot != null)
-            {
-                BitangentMaterialSlot bitangentMaterialSlot = slot as BitangentMaterialSlot;
-                switch(bitangentMaterialSlot.space)
-                {
-                    case CoordinateSpace.World:
-                        return (int)Vector3Interface.WorldSpaceBitangent;
-                    case CoordinateSpace.Tangent:
-                        return (int)Vector3Interface.TangentSpaceBitangent;
-                    case CoordinateSpace.View:
-                        return (int)Vector3Interface.ViewSpaceBitangent;
-                    default:
-                        return (int)Vector3Interface.ObjectSpaceBitangent;
-                }
-            }
-
-            else if(slot as PositionMaterialSlot != null)
-            {
-                PositionMaterialSlot positionMaterialSlot = slot as PositionMaterialSlot;
-                switch(positionMaterialSlot.space)
-                {
-                    case CoordinateSpace.World:
-                        return (int)Vector3Interface.WorldSpacePosition;
-                    case CoordinateSpace.Tangent:
-                        return (int)Vector3Interface.TangentSpacePosition;
-                    case CoordinateSpace.View:
-                        return (int)Vector3Interface.ViewSpacePosition;
-                    default:
-                        return (int)Vector3Interface.ObjectSpacePosition;
-                }
-            }
-
-            else if(slot as ViewDirectionMaterialSlot != null)
-            {
-                ViewDirectionMaterialSlot viewDirectionMaterialSlot = slot as ViewDirectionMaterialSlot;
-                switch(viewDirectionMaterialSlot.space)
-                {
-                    case CoordinateSpace.World:
-                        return (int)Vector3Interface.WorldSpaceViewDirection;
-                    case CoordinateSpace.Tangent:
-                        return (int)Vector3Interface.TangentSpaceViewDirection;
-                    case CoordinateSpace.View:
-                        return (int)Vector3Interface.ViewSpaceViewDirection;
-                    default:
-                        return (int)Vector3Interface.ObjectSpaceViewDirection;
-                }
-            }
-                
-            else
-                return 0;
-        }
-
-        public static bool TryGetInterfaceType<T>(MaterialSlot slot, out int interfaceType) where T : MaterialSlot
-        {
-            interfaceType = 0;
-            if(slot as T == null)
-                return false;
-
-            if(s_SlotInterfaceType.TryGetValue(typeof(T), out interfaceType))
-                return true;
-            else
-                return false;
-        }
-
-        public static Dictionary<Type, int> s_SlotInterfaceType = new Dictionary<Type, int>()
-        {
-            { typeof(ColorRGBAMaterialSlot), (int)Vector4Interface.ColorRGBA },
-            { typeof(ScreenPositionMaterialSlot), (int)Vector4Interface.ScreenPosition },
-            { typeof(VertexColorMaterialSlot), (int)Vector4Interface.VertexColor },
-            { typeof(ColorRGBMaterialSlot), (int)Vector3Interface.ColorRGB },
-            { typeof(UVMaterialSlot), (int)Vector2Interface.MeshUV },
-        };
-
-        public static Dictionary<SlotValueType, Type> s_InterfaceTypes = new Dictionary<SlotValueType, Type>()
-        {
-            { SlotValueType.Vector4, typeof(Vector4Interface) },
-            { SlotValueType.Vector3, typeof(Vector3Interface) },
-            { SlotValueType.Vector2, typeof(Vector2Interface) },
-        };
-
-        // Get all enum entries of an InterfaceType from its corresponding SlotValueType
         public static string[] GetEnumEntriesOfInterfaceType(SlotValueType slotValueType)
         {
             Type interfaceType;
@@ -245,6 +111,13 @@ namespace UnityEditor.ShaderGraph
             
             return new string[] { "Default" };
         }
+
+        public static Dictionary<SlotValueType, Type> s_InterfaceTypes = new Dictionary<SlotValueType, Type>()
+        {
+            { SlotValueType.Vector4, typeof(Vector4Interface) },
+            { SlotValueType.Vector3, typeof(Vector3Interface) },
+            { SlotValueType.Vector2, typeof(Vector2Interface) },
+        };
     }
 
     public enum Vector4Interface
