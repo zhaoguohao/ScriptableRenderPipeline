@@ -10,8 +10,8 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph
 {
-    [Title("Custom Code")]
-    class CustomCodeNode : AbstractMaterialNode
+    [Title("Utility", "Custom Function")]
+    class CustomFunctionNode : AbstractMaterialNode
         , IHasSettings
         , IGeneratesBodyCode
         , IGeneratesFunction
@@ -76,15 +76,11 @@ namespace UnityEditor.ShaderGraph
             get { return m_ButtonConfig; }
         }
 
-        [SerializeField]
-        private bool m_DisplayPreview = true;
-
         public override bool hasPreview { get { return true; } }
-        public override bool activePreview { get { return m_DisplayPreview; } }
 
-        public CustomCodeNode()
+        public CustomFunctionNode()
         {
-            name = "Custom Code";
+            name = "Custom Function";
             UpdateNodeAfterDeserialization();
 
             m_ButtonConfig = new ButtonConfig()
@@ -318,22 +314,7 @@ namespace UnityEditor.ShaderGraph
             ps.style.width = 500;
             ps.Add(new ReorderableSlotListView(this, inputSlots, SlotType.Input));
             ps.Add(new ReorderableSlotListView(this, outputSlots, SlotType.Output));
-            ps.Add(new PropertyRow(new Label("Enable Preview")), (row) =>
-                {
-                    row.Add(new Toggle(), (toggle) =>
-                    {
-                        toggle.value = m_DisplayPreview;
-                        toggle.OnToggleChanged(ChangePreview);
-                    });
-                });
             return ps;
-        }
-
-        void ChangePreview(ChangeEvent<bool> evt)
-        {
-            owner.owner.RegisterCompleteObjectUndo("Change Preview state");
-            m_DisplayPreview = evt.newValue;
-            Dirty(ModificationScope.Graph);
         }
     }
 }
