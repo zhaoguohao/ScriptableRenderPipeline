@@ -515,7 +515,7 @@ namespace UnityEditor.VFX.UI
                         {
                             blockUI = InstantiateBlock(blockController);
                             m_BlockContainer.Add(blockUI);
-                            m_BlockContainer.Insert(prevBlock == null ? 0: m_BlockContainer.IndexOf(prevBlock), blockUI);
+                            m_BlockContainer.Insert(prevBlock == null ? 0: m_BlockContainer.IndexOf(prevBlock) +1, blockUI);
                         }
                         prevBlock = blockUI;
                     }
