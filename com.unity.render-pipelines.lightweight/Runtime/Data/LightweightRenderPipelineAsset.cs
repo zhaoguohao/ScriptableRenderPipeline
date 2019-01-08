@@ -448,6 +448,16 @@ namespace UnityEngine.Rendering.LWRP
         {
             get { return editorResources.autodeskInteractiveMaskedShader; }
         }
+
+        public override Shader defaultSpeedTree7Shader
+        {
+            get { return editorResources.defaultSpeedTree7Shader; }
+        }
+
+        public override Shader defaultSpeedTree8Shader
+        {
+            get { return editorResources.defaultSpeedTree8Shader; }
+        }
 #endif
 
         public Shader blitShader

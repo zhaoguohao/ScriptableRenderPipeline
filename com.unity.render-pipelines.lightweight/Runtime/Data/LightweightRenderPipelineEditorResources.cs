@@ -22,6 +22,12 @@ namespace UnityEngine.Rendering.LWRP
         [FormerlySerializedAs("AutodeskInteractiveMaskedShader"), SerializeField]
         private Shader m_AutodeskInteractiveMaskedShader = null;
 
+        [SerializeField]
+        private Shader m_SpeedTree7Shader = null;
+
+        [SerializeField]
+        private Shader m_SpeedTree8Shader = null;
+
         public Material litMaterial
         {
             get { return m_LitMaterial; }
@@ -52,5 +58,14 @@ namespace UnityEngine.Rendering.LWRP
             get { return m_AutodeskInteractiveMaskedShader; }
         }
 
+        public Shader defaultSpeedTree7Shader
+        {
+            get { return m_SpeedTree7Shader; }
+        }
+
+        public Shader defaultSpeedTree8Shader
+        {
+            get { return m_SpeedTree8Shader; }
+        }
     }
 }
