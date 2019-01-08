@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fix in sequential line to include the end point
 - Fix a bug with attributes in Attribute from curve
+- Fix legacy render path shader compilation issues
 
 ## [4.6.0-preview] - 2018-12-07
 ### Fixed
