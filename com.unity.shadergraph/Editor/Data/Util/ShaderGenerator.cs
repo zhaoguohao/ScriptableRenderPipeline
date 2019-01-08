@@ -821,7 +821,7 @@ namespace UnityEditor.ShaderGraph
                 var outputSlot = node.GetOutputSlots<MaterialSlot>().FirstOrDefault();
                 if (outputSlot != null)
                 {
-                    var result = string.Format("surf.{0}", node.GetVariableNameForSlot(outputSlot.id));
+                    var result = string.Format("surf.{0}", NodeUtils.GetHLSLSafeName(outputSlot.shaderOutputName));
                     pixelShaderSurfaceRemap.AppendLine("return {0};", AdaptNodeOutputForPreview(node, outputSlot.id, result));
                 }
                 else
