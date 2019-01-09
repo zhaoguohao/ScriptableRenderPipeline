@@ -11,7 +11,6 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         {
             public static int _InvViewProjMatrixID;
             public static int _ScreenSizeID;
-            public static int _ShadowData;
 
             public static int _VoxelResolutionID;
             public static int _VoxelBiasID;
@@ -32,7 +31,6 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         {
             VxShadowMapConstantBuffer._InvViewProjMatrixID = Shader.PropertyToID("_InvViewProjMatrix");
             VxShadowMapConstantBuffer._ScreenSizeID = Shader.PropertyToID("_ScreenSize");
-            VxShadowMapConstantBuffer._ShadowData = Shader.PropertyToID("_MainLightShadowData");
 
             VxShadowMapConstantBuffer._VoxelResolutionID = Shader.PropertyToID("_VoxelResolution");
             VxShadowMapConstantBuffer._VoxelBiasID = Shader.PropertyToID("_VoxelBias");
@@ -104,16 +102,10 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (kernel == -1)
                 return;
 
-            var camera = renderingData.cameraData.camera;
-            var vxShadowMap = renderingData.shadowData.mainLightVxShadowMap;
-
-            var shadowLightIndex = renderingData.lightData.mainLightIndex;
-            var shadowLight = renderingData.lightData.visibleLights[shadowLightIndex];
-
             CommandBuffer cmd = CommandBufferPool.Get(k_CollectShadowsTag);
 
             cmd.GetTemporaryRT(colorAttachmentHandle.id, descriptor, FilterMode.Bilinear);
-            SetupVxShadowReceiverConstants(cmd, kernel, ref computeShader, ref camera, ref shadowLight, ref vxShadowMap);
+            SetupVxShadowReceiverConstants(cmd, kernel, ref computeShader, ref renderingData.cameraData.camera, ref renderingData.shadowData.mainLightVxShadowMap);
 
             int x = (renderingData.cameraData.camera.pixelWidth + TileAdditive) / TileSize;
             int y = (renderingData.cameraData.camera.pixelHeight + TileAdditive) / TileSize;
@@ -134,6 +126,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
             if (renderingData.cameraData.isStereoEnabled)
             {
+                Camera camera = renderingData.cameraData.camera;
                 context.StartMultiEye(camera);
                 context.ExecuteCommandBuffer(cmd);
                 context.StopMultiEye(camera);
@@ -157,7 +150,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             }
         }
 
-        void SetupVxShadowReceiverConstants(CommandBuffer cmd, int kernel, ref ComputeShader computeShader, ref Camera camera, ref VisibleLight shadowLight, ref DirectionalVxShadowMap vxShadowMap)
+        void SetupVxShadowReceiverConstants(CommandBuffer cmd, int kernel, ref ComputeShader computeShader, ref Camera camera, ref DirectionalVxShadowMap vxShadowMap)
         {
             float screenSizeX = (float)camera.pixelWidth;
             float screenSizeY = (float)camera.pixelHeight;
@@ -171,12 +164,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             var projMatrix = gpuProj;
             var viewProjMatrix = projMatrix * viewMatrix;
 
-            var screenSize = new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY);
-            var shadowData = new Vector4(shadowLight.light.shadowStrength, 0.0f, 0.0f, 0.0f);
-
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._InvViewProjMatrixID, viewProjMatrix.inverse);
-            cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, screenSize);
-            cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ShadowData, shadowData);
+            cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY));
 
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelResolutionID, vxShadowMap.voxelResolutionInt);
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelBiasID, vxShadowMap.voxelBias);

@@ -536,9 +536,7 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
     float4 shadowMapCoords = TransformWorldToShadowCoord(positionWS);
 
     ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
-
     float attenuation = SampleShadowmap(shadowMapCoords, TEXTURE2D_PARAM(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), shadowSamplingData, shadowStrength, false);
-    attenuation = lerp(1.0, attenuation, shadowStrength);
 
     if (attenuation == 0.0)
     {
@@ -547,11 +545,11 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
     }
 
     attenuation = SampleVxShadowmap(positionWS);
-    attenuation = lerp(1.0, attenuation, shadowStrength);
 #else
     float attenuation = SampleVxShadowmap(positionWS);
-    attenuation = lerp(1.0, attenuation, shadowStrength);
 #endif
+
+    attenuation = lerp(1.0, attenuation, shadowStrength);
 
     _ScreenSpaceShadowOutput[pixelCoord] = attenuation;
 }
