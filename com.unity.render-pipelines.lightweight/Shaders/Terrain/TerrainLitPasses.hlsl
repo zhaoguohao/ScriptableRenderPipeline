@@ -289,7 +289,7 @@ VertexOutputLean ShadowPassVertex(VertexInputLean v)
     TerrainInstancing(v.position, v.normal);
 
     float3 positionWS = TransformObjectToWorld(v.position.xyz);
-    float3 normalWS = TransformObjectToWorldDir(v.normal);
+    float3 normalWS = TransformObjectToWorldNormal(v.normal);
 
     float4 clipPos = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, _LightDirection));
 
