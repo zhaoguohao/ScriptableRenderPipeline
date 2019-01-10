@@ -336,6 +336,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableRandomWrite: uav,
                 sRGB: false,
                 filterMode: FilterMode.Point,
+                wrapMode: TextureWrapMode.Clamp,
                 name: name
             );
         }
@@ -353,6 +354,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableRandomWrite: uav,
                 sRGB: false,
                 filterMode: FilterMode.Point,
+                wrapMode: TextureWrapMode.Clamp,
                 name: name
             );
         }
