@@ -20,6 +20,7 @@ Shader "Lightweight Render Pipeline/Terrain/Lit"
         [HideInInspector] _Smoothness1("Smoothness 1", Range(0.0, 1.0)) = 0.5
         [HideInInspector] _Smoothness2("Smoothness 2", Range(0.0, 1.0)) = 0.5
         [HideInInspector] _Smoothness3("Smoothness 3", Range(0.0, 1.0)) = 0.5
+		[HideInInspector] _TerrainSurfaceMaskTexture("Surface Mask Map (RGB)", 2D) = "white" {}
 
         // used in fallback on old cards & base map
         [HideInInspector] _MainTex("BaseMap (RGB)", 2D) = "grey" {}
