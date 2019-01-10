@@ -161,10 +161,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void AreaShadowSubMenu(SerializedHDRaytracingEnvironment rtEnv, Editor owner)
         {
             EditorGUILayout.PropertyField(rtEnv.raytracedShadows, Styles.shadowEnableText);
-            EditorGUILayout.PropertyField(rtEnv.shadowNumSamples, Styles.shadowNumSamplesText);
-            EditorGUILayout.PropertyField(rtEnv.numAreaLightShadows, Styles.numAreaLightShadows);
-            EditorGUILayout.PropertyField(rtEnv.shadowFilterRadius, Styles.shadowBilateralRadius);
-            EditorGUILayout.PropertyField(rtEnv.shadowFilterSigma, Styles.shadowBilateralSigma);
+
+            if (rtEnv.raytracedShadows.boolValue)
+            {
+                EditorGUILayout.PropertyField(rtEnv.shadowNumSamples, Styles.shadowNumSamplesText);
+                EditorGUILayout.PropertyField(rtEnv.numAreaLightShadows, Styles.numAreaLightShadows);
+                EditorGUILayout.PropertyField(rtEnv.shadowFilterRadius, Styles.shadowBilateralRadius);
+                EditorGUILayout.PropertyField(rtEnv.shadowFilterSigma, Styles.shadowBilateralSigma);
+            }
         }
 
         protected void OnEnable()
