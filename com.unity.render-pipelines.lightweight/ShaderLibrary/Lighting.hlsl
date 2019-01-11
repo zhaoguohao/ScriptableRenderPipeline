@@ -156,6 +156,10 @@ Light GetAdditionalLight(int i, float3 positionWS)
     light.shadowAttenuation = AdditionalLightRealtimeShadow(perObjectLightIndex, positionWS);
     light.color = _AdditionalLightsColor[perObjectLightIndex].rgb;
 
+#if !(defined(_MIXED_LIGHTING_SUBTRACTIVE) && defined(LIGHTMAP_ON))
+    light.distanceAttenuation = unity_ProbesOcclusion[i];
+#endif
+
     return light;
 }
 
