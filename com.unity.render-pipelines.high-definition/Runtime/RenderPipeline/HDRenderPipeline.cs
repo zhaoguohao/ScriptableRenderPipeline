@@ -525,9 +525,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (!SystemInfo.supportsComputeShaders)
                 return false;
 
-// When we're in the editor, we have to check the first API in the build target
-// (which is the one that will be used in the editor if the build target is the same that our current OS)
-// It would be better to check every graphic apis in the list but
 #if UNITY_EDITOR
             UnityEditor.BuildTarget activeBuildTarget = UnityEditor.EditorUserBuildSettings.activeBuildTarget;
             // If the build target matches the operating system of the editor
@@ -544,7 +541,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 else
                 {
-                    // otherwise, we need to iterate over every graphic api available in the list
+                    // otherwise, we need to iterate over every graphic api available in the list to track every non-supported APIs
                     return HDUtils.AreGraphicsAPIsSupported(activeBuildTarget, out unsupportedGraphicDevice);
                 }
             }

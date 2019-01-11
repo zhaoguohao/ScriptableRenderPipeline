@@ -584,7 +584,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (!HDUtils.IsSupportedGraphicDevice(graphicAPI))
                 {
                     unsupportedGraphicDevice = graphicAPI;
-                    Debug.Log("HERE !");
                     return false;
                 }
             }
