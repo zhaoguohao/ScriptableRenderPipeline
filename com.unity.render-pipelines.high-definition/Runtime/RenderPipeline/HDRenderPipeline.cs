@@ -567,12 +567,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             };
         }
 
-        public void OnSceneLoad()
-        {
-            // Recreate the textures which went NULL
-            m_MaterialList.ForEach(material => material.Build(m_Asset));
-        }
-
         public override void Dispose()
         {
             UnsetRenderingFeatures();
@@ -757,6 +751,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(cmd, "LIGHT_LAYERS", hdCamera.frameSettings.enableLightLayers);
             cmd.SetGlobalInt(HDShaderIDs._EnableLightLayers, hdCamera.frameSettings.enableLightLayers ? 1 : 0);
 
+            // configure keyword for both decal.shader and material
             if (m_Asset.renderPipelineSettings.supportDecals)
             {
                 CoreUtils.SetKeyword(cmd, "DECALS_OFF", false);
@@ -807,6 +802,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
                 else
                 {
+                    // If we switch to other scene Time.realtimeSinceStartup is reset, so we need to
+                    // reset also m_Time. Here we simply detect ill case to trigger the reset.
+                    m_Time = m_Time > t ? 0.0f : m_Time;
+
                     newFrame = (t - m_Time) > 0.0166f;
 
                     if (newFrame)
@@ -1163,7 +1162,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         // Clear and copy the stencil texture needs to be moved to before we invoke the async light list build,
                         // otherwise the async compute queue can end up using that texture before the graphics queue is done with it.
                         // TODO: Move this code inside LightLoop
-                        if (m_LightLoop.GetFeatureVariantsEnabled())
+                        // For the SSR we need the lighting flags to be copied into the stencil texture (it is use to discard object that have no lighting)
+                        if (m_LightLoop.GetFeatureVariantsEnabled() || hdCamera.frameSettings.enableSSR)
                         {
                             // For material classification we use compute shader and so can't read into the stencil, so prepare it.
                             using (new ProfilingSample(cmd, "Clear and copy stencil texture", CustomSamplerId.ClearAndCopyStencilTexture.GetSampler()))
@@ -1395,6 +1395,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                             RenderColorPyramid(hdCamera, cmd, true);
                         }
+
+                        // Bind current color pyramid for shader graph SceneColorNode on transparent objects
+                        var currentColorPyramid = hdCamera.GetCurrentFrameRT((int)HDCameraFrameHistoryType.ColorBufferMipChain);
+                        cmd.SetGlobalTexture(HDShaderIDs._ColorPyramidTexture, currentColorPyramid);
 
                         // Render all type of transparent forward (unlit, lit, complex (hair...)) to keep the sorting between transparent objects.
                         RenderForward(m_CullResults, hdCamera, renderContext, cmd, ForwardPass.Transparent);
