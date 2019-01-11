@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - LWRP now uses the Unity recorder extension. You can use this to capture the output of Cameras.
 - You can now inject a custom render pass before LWRP renders opaque objects. To do so, implement an `IBeforeRender` interface.
+- LWRP now includes version defines for both C# and Shaders in the format of `LWRP_X_Y_Z_OR_NEWER`. For example, `LWRP_5_3_0_OR_NEWER` defines version 5.3.0.
 
 ### Changed
-- You can now only initialize a camera by setting a Background Type. The supported options are Skybox, Solid Color, and Don't Initialize.
+- You can now only initialize a camera by setting a Background Type. The supported options are Skybox, Solid Color, and Don't Care.
 - LWRP now uses non-square shadowmap textures when it renders directional shadows with 2 shadow cascades. 
 - LWRP now uses ARGB2101010 as the HDR format on mobile devices, when this format is supported.
 - Removed `IAfterDepthPrePass` interface.
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Realtime shadows now work in GLES2. [Case 1087251](https://issuetracker.unity3d.com/issues/android-lwrp-no-real-time-light-and-shadows-using-gles2)
 - Framedebugger now renders correctly when stepping through drawcalls.
 - Cameras that request MSAA and Opaque Textures now use less frame bandwidth when they render.
+- Fixed rendering in the gamma color space, so it doesn't appear darker.
 
 ## [5.2.0] - 2018-11-27
 ### Added
