@@ -73,13 +73,18 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             this.mainLightDynamicShadows = mainLightDynamicShadows;
         }
 
-        private int GetComputeShaderKernel(ref ComputeShader computeShader)
+        private int GetComputeShaderKernel(ref ComputeShader computeShader, ref ShadowData shadowData)
         {
             int kernel = -1;
 
             if (computeShader != null)
             {
-                string kernelName = "TriLinear";
+                string kernelName = "NoFilter";
+                switch (shadowData.mainLightVxShadowQuality)
+                {
+                    case 1: kernelName = "BiLinear";  break;
+                    case 2: kernelName = "TriLinear"; break;
+                }
 
                 if (mainLightDynamicShadows)
                     kernelName += "WithDynShadows";
@@ -95,7 +100,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
             var computeShader = renderer.GetComputeShader(ComputeShaderHandle.ScreenSpaceShadow);
-            int kernel = GetComputeShaderKernel(ref computeShader);
+            int kernel = GetComputeShaderKernel(ref computeShader, ref renderingData.shadowData);
             if (kernel == -1)
                 return;
 

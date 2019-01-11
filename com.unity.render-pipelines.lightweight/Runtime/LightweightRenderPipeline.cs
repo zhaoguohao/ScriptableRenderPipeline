@@ -82,6 +82,7 @@ namespace UnityEngine.Rendering.LWRP
             public float shadowNormalBias { get; private set; }
             public bool supportsSoftShadows { get; private set; }
             public bool supportsVxShadowMaps { get; private set; } //seongdae;vxsm
+            public VxShadowMapsQuality vxShadowMapsQuality { get; private set; } //seongdae;vxsm
             public bool supportsDynamicBatching { get; private set; }
             public bool mixedLightingSupported { get; private set; }
             public IRendererSetup rendererSetup { get; private set; }
@@ -119,6 +120,7 @@ namespace UnityEngine.Rendering.LWRP
                 cache.shadowNormalBias = asset.shadowNormalBias;
                 cache.supportsSoftShadows = asset.supportsSoftShadows;
                 cache.supportsVxShadowMaps = asset.supportsVxShadowMaps; //seongdae;vxsm
+                cache.vxShadowMapsQuality = asset.vxShadowMapsQuality; //seongdae;vxsm
 
                 // Advanced settings
                 cache.supportsDynamicBatching = asset.supportsDynamicBatching;
@@ -428,10 +430,12 @@ namespace UnityEngine.Rendering.LWRP
                 bool vxShadowMapIsValid = vxShadowMap != null && vxShadowMap.IsValid();
 
                 shadowData.requiresScreenSpaceShadowCompute = vxShadowMapIsValid;
+                shadowData.mainLightVxShadowQuality = (int)settings.vxShadowMapsQuality;
             }
             else
             {
                 shadowData.requiresScreenSpaceShadowCompute = false;
+                shadowData.mainLightVxShadowQuality = 0;
             }
             //seongdae;vxsm
 

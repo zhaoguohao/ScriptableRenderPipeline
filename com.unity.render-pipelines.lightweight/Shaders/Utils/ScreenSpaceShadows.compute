@@ -330,11 +330,11 @@ float ComputeVxShadowMapAttenuationNoFiltering(float3 positionWS)
 
     float3 posP = posLS * (float)_VoxelResolution;
 
+    if (posP.z < 0.0 || posP.z >= (_VoxelResolution - 1.0))
+        return 1.0;
+
     uint3 posQ = (uint3)posP;
     posQ.z -= _VoxelBias;
-
-    if (posQ.z < 0 || posQ.z >= _VoxelResolution)
-        return 1.0;
 
     uint4 result = TraverseVxShadowMapPosQ(posQ);
     if (result.w == 0)
@@ -360,11 +360,11 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
     float3 posF = floor(posP);
     float2 lerpWeight = posP.xy - posF.xy;
 
+    if (posP.z < 0.0 || posP.z >= (_VoxelResolution - 1.0))
+        return 1.0;
+
     uint3 posQ = (uint3)posP;
     posQ.z -= _VoxelBias;
-
-    if (posQ.z < 0 || posQ.z >= _VoxelResolution)
-        return 1.0;
 
     uint scale = 0;
     uint nodeTracer[16];
@@ -402,15 +402,15 @@ float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
     if (lessThanBounds || greaterThanBounds)
         return 1.0;
 
-    float3 posP = posLS * (float)_VoxelResolution - 0.5;
+    float3 posP = posLS * _VoxelResolution - 0.5;
     float3 posF = floor(posP);
     float3 lerpWeight = posP - posF;
 
+    if (posP.z < 0.0 || posP.z >= (_VoxelResolution - 1.0))
+        return 1.0;
+
     uint3 posQ = (uint3)posP;
     posQ.z -= _VoxelBias;
-
-    if (posQ.z < 0 || posQ.z >= _VoxelResolution)
-        return 1.0;
 
     uint scale = 0;
     uint nodeTracer[16];
@@ -481,7 +481,7 @@ float ComputeVxShadowMapAttenuationPCF9x9iltering(float3 positionWS)
     return attenuation;
 }
 
-float SampleVxShadowmap(float3 positionWS)
+float SampleVxShadowMap(float3 positionWS)
 {
     float attenuation = 1.0;
 
@@ -544,9 +544,9 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
         return;
     }
 
-    attenuation = min(attenuation, SampleVxShadowmap(positionWS));
+    attenuation = min(attenuation, SampleVxShadowMap(positionWS));
 #else
-    float attenuation = SampleVxShadowmap(positionWS);
+    float attenuation = SampleVxShadowMap(positionWS);
 #endif
 
     attenuation = lerp(1.0, attenuation, shadowStrength);

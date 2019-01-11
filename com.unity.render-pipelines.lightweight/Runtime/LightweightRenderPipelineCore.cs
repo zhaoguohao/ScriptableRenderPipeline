@@ -63,6 +63,7 @@ namespace UnityEngine.Rendering.LWRP
         public int mainLightShadowmapHeight;
         public int mainLightShadowCascadesCount;
         public Vector3 mainLightShadowCascadesSplit;
+        public int mainLightVxShadowQuality; //seongdae;vxsm
         public bool supportsAdditionalLightShadows;
         public int additionalLightsShadowmapWidth;
         public int additionalLightsShadowmapHeight;
