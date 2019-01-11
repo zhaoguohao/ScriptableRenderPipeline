@@ -69,29 +69,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDRaytracingEnvironment rtEnvironement = m_RaytracingManager.CurrentEnvironment();
             Texture2DArray noiseTexture = m_RaytracingManager.m_RGNoiseTexture;
             ComputeShader bilateralFilter = m_PipelineResources.shaders.reflectionBilateralFilterCS;
+            m_KernelFilter = bilateralFilter.FindKernel("GaussianBilateralFilter");
             RaytracingShader aoShader = m_PipelineResources.shaders.aoRaytracing;
-            if (rtEnvironement == null || noiseTexture == null || bilateralFilter == null || aoShader == null || !hdCamera.frameSettings.enableSSAO || (hdCamera.camera.GetComponent<HDRayTracingFilter>() == null))
+            HDRayTracingFilter raytracingFilter = hdCamera.camera.gameObject.GetComponent<HDRayTracingFilter>();
+            RaytracingAccelerationStructure accelerationStructure = null;
+
+            bool missingRequiredResources = rtEnvironement == null || noiseTexture == null || bilateralFilter == null || aoShader == null || m_PipelineResources.shaders.reflectionRaytracing == null;
+            bool useEditorCam = (hdCamera.camera.cameraType == CameraType.SceneView || hdCamera.camera.cameraType == CameraType.Preview);
+            bool currCamRTAO = ((raytracingFilter != null) || useEditorCam) && hdCamera.frameSettings.enableSSAO; // If SSAO should not be raytraced for current camera
+
+            if (missingRequiredResources || !currCamRTAO) 
             {
                 cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, Texture2D.blackTexture);
                 cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
                 return;
             }
-
-            // If no reflection shader is available, just skip right away
-            if (m_PipelineResources.shaders.reflectionRaytracing == null) return;
-            m_KernelFilter = bilateralFilter.FindKernel("GaussianBilateralFilter");
-
-            // Try to grab the acceleration structure for the target camera
-            HDRayTracingFilter raytracingFilter = hdCamera.camera.gameObject.GetComponent<HDRayTracingFilter>();
-            RaytracingAccelerationStructure accelerationStructure = null;
-            if (raytracingFilter != null)
+            else
             {
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(raytracingFilter.layermask);
-            }
-            else if (hdCamera.camera.cameraType == CameraType.SceneView || hdCamera.camera.cameraType == CameraType.Preview)
-            {
-                // For the scene view, we want to use the default acceleration structure
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(m_PipelineSettings.editorRaytracingFilterLayerMask);
+                // Try to grab the acceleration structure for the target camera
+                if (useEditorCam)
+                {
+                    // For the scene view, we want to use the default acceleration structure
+                    accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(m_PipelineSettings.editorRaytracingFilterLayerMask);
+                }
+                else
+                    accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(raytracingFilter.layermask);
             }
 
             // If no acceleration structure available, end it now
