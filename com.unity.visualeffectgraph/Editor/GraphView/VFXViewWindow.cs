@@ -193,12 +193,6 @@ namespace  UnityEditor.VFX.UI
             currentWindow = null;
         }
 
-        void OnFocus()
-        {
-            if (graphView != null)
-                graphView.UpdateGlobalSelection();
-        }
-
         void OnEnterPanel(AttachToPanelEvent e)
         {
             rootVisualElement.AddManipulator(m_ShortcutHandler);
