@@ -530,7 +530,7 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
     float3 positionWS = ComputeWorldSpacePosition(posInput.positionNDC, depth, UNITY_MATRIX_I_VP);
 #endif
 
-    float shadowStrength = GetMainLightShadowStrength();
+    float shadowStrength = 1.0;//GetMainLightShadowStrength();
 
 #if WITH_DYNAMIC_SHADOWS
     float4 shadowMapCoords = TransformWorldToShadowCoord(positionWS);
@@ -544,7 +544,7 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
         return;
     }
 
-    attenuation = SampleVxShadowmap(positionWS);
+    attenuation = min(attenuation, SampleVxShadowmap(positionWS));
 #else
     float attenuation = SampleVxShadowmap(positionWS);
 #endif

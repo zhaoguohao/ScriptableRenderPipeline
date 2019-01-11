@@ -81,6 +81,7 @@ namespace UnityEngine.Rendering.LWRP
             public float shadowDepthBias { get; private set; }
             public float shadowNormalBias { get; private set; }
             public bool supportsSoftShadows { get; private set; }
+            public bool supportsVxShadowMaps { get; private set; } //seongdae;vxsm
             public bool supportsDynamicBatching { get; private set; }
             public bool mixedLightingSupported { get; private set; }
             public IRendererSetup rendererSetup { get; private set; }
@@ -117,6 +118,7 @@ namespace UnityEngine.Rendering.LWRP
                 cache.shadowDepthBias = asset.shadowDepthBias;
                 cache.shadowNormalBias = asset.shadowNormalBias;
                 cache.supportsSoftShadows = asset.supportsSoftShadows;
+                cache.supportsVxShadowMaps = asset.supportsVxShadowMaps; //seongdae;vxsm
 
                 // Advanced settings
                 cache.supportsDynamicBatching = asset.supportsDynamicBatching;
@@ -417,7 +419,7 @@ namespace UnityEngine.Rendering.LWRP
             }
 
             //seongdae;vxsm
-            if (shadowData.supportsMainLightShadows)
+            if (shadowData.supportsMainLightShadows && settings.supportsVxShadowMaps)
             {
                 int mainLightIndex = GetMainLightIndex(settings, visibleLights);
                 var mainLight = visibleLights[mainLightIndex].light;
@@ -426,12 +428,10 @@ namespace UnityEngine.Rendering.LWRP
                 bool vxShadowMapIsValid = vxShadowMap != null && vxShadowMap.IsValid();
 
                 shadowData.requiresScreenSpaceShadowCompute = vxShadowMapIsValid;
-                shadowData.mainLightVxShadowMap = vxShadowMap;
             }
             else
             {
                 shadowData.requiresScreenSpaceShadowCompute = false;
-                shadowData.mainLightVxShadowMap = null;
             }
             //seongdae;vxsm
 

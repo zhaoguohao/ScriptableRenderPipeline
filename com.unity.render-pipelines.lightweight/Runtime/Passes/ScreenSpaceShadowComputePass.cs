@@ -94,9 +94,6 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (renderingData.shadowData.mainLightVxShadowMap == null)
-                return;
-
             var computeShader = renderer.GetComputeShader(ComputeShaderHandle.ScreenSpaceShadow);
             int kernel = GetComputeShaderKernel(ref computeShader);
             if (kernel == -1)
@@ -104,8 +101,11 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
             CommandBuffer cmd = CommandBufferPool.Get(k_CollectShadowsTag);
 
+            var shadowLightIndex = renderingData.lightData.mainLightIndex;
+            var shadowLight = renderingData.lightData.visibleLights[shadowLightIndex];
+
             cmd.GetTemporaryRT(colorAttachmentHandle.id, descriptor, FilterMode.Bilinear);
-            SetupVxShadowReceiverConstants(cmd, kernel, ref computeShader, ref renderingData.cameraData.camera, ref renderingData.shadowData.mainLightVxShadowMap);
+            SetupVxShadowReceiverConstants(cmd, kernel, ref computeShader, ref renderingData.cameraData.camera, ref shadowLight);
 
             int x = (renderingData.cameraData.camera.pixelWidth + TileAdditive) / TileSize;
             int y = (renderingData.cameraData.camera.pixelHeight + TileAdditive) / TileSize;
@@ -150,7 +150,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             }
         }
 
-        void SetupVxShadowReceiverConstants(CommandBuffer cmd, int kernel, ref ComputeShader computeShader, ref Camera camera, ref DirectionalVxShadowMap vxShadowMap)
+        void SetupVxShadowReceiverConstants(CommandBuffer cmd, int kernel, ref ComputeShader computeShader, ref Camera camera, ref VisibleLight shadowLight)
         {
             float screenSizeX = (float)camera.pixelWidth;
             float screenSizeY = (float)camera.pixelHeight;
@@ -163,6 +163,9 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             var viewMatrix = gpuView;
             var projMatrix = gpuProj;
             var viewProjMatrix = projMatrix * viewMatrix;
+
+            var light = shadowLight.light;
+            var vxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
 
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._InvViewProjMatrixID, viewProjMatrix.inverse);
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY));

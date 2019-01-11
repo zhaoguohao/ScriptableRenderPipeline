@@ -69,7 +69,6 @@ namespace UnityEngine.Rendering.LWRP
         public bool supportsSoftShadows;
         public int shadowmapDepthBufferBits;
         public List<Vector4> bias;
-        public DirectionalVxShadowMap mainLightVxShadowMap; //seongdae;vxsm
     }
 
     public static class ShaderKeywordStrings

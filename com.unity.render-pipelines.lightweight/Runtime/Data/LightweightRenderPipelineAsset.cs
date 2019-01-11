@@ -105,6 +105,7 @@ namespace UnityEngine.Rendering.LWRP
         [SerializeField] float m_ShadowDepthBias = 1.0f;
         [SerializeField] float m_ShadowNormalBias = 1.0f;
         [SerializeField] bool m_SoftShadowsSupported = false;
+        [SerializeField] bool m_VxShadowMapsSupported = false; //seongdae;vxsm
 
         // Advanced settings
         [SerializeField] bool m_UseSRPBatcher = false;
@@ -351,6 +352,13 @@ namespace UnityEngine.Rendering.LWRP
         {
             get { return m_SoftShadowsSupported; }
         }
+
+        //seongdae;vxsm
+        public bool supportsVxShadowMaps
+        {
+            get { return m_VxShadowMapsSupported; }
+        }
+        //seongdae;vxsm
 
         public bool supportsDynamicBatching
         {
