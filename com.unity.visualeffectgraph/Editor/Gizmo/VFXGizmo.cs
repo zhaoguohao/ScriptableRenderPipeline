@@ -221,22 +221,14 @@ namespace UnityEditor.VFX
         {
             Matrix4x4 oldMatrix = Handles.matrix;
 
-            if( !spaceLocalByDefault)
+            if (currentSpace == VFXCoordinateSpace.Local)
             {
-                if (currentSpace == VFXCoordinateSpace.Local)
-                {
-                    if (component == null) return;
-                    Handles.matrix = component.transform.localToWorldMatrix;
-                }
+                if (component == null) return;
+                Handles.matrix = component.transform.localToWorldMatrix;
             }
             else
             {
-                if (currentSpace != VFXCoordinateSpace.Local)
-                {
-                    if (component == null) return;
-                    Handles.matrix = component.transform.worldToLocalMatrix;
-                }
-
+                Handles.matrix = Matrix4x4.identity;
             }
 
             OnDrawSpacedGizmo(value);

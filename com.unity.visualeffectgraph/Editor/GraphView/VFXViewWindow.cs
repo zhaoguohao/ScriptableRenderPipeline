@@ -159,10 +159,6 @@ namespace  UnityEditor.VFX.UI
 
             currentWindow = this;
 
-            /*if (m_ViewScale != Vector3.zero)
-            {
-                graphView.UpdateViewTransform(m_ViewPosition, m_ViewScale);
-            }*/
 #if USE_EXIT_WORKAROUND_FOGBUGZ_1062258
             EditorApplication.wantsToQuit += Quitting_Workaround;
 #endif

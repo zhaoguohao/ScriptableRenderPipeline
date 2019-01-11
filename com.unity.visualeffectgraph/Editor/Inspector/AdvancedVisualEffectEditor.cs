@@ -339,16 +339,11 @@ namespace UnityEditor.VFX
                 get
                 {
                     m_SerializedObject.Update();
-                    if (m_Stack.Count == 0)
-                        m_Stack.Add(System.Activator.CreateInstance(portType));
-                    else
-                        m_Stack.RemoveRange(1, m_Stack.Count - 1);
-                    int stackSize = m_Stack.Count;
+                    m_Stack.Clear();
 
                     foreach (var cmd in m_ValueCmdList)
                     {
                         cmd(m_Stack);
-                        stackSize = m_Stack.Count;
                     }
 
 
@@ -501,6 +496,8 @@ namespace UnityEditor.VFX
                 m_ValueCmdList.Clear();
                 m_Stack.Clear();
 
+                m_ValueCmdList.Add(o => o.Add(m_Parameter.value));
+
                 BuildValue(m_ValueCmdList, portType, m_Parameter.exposedName);
             }
 
@@ -526,13 +523,9 @@ namespace UnityEditor.VFX
                     }
                     if (property != null)
                     {
+                        var overrideProperty = property.FindPropertyRelative("m_Overridden");
                         property = property.FindPropertyRelative("m_Value");
-
-
-                        //Debug.Log("PushProperty" + propertyPath + "("+property.propertyType.ToString()+")");
-                        cmdList.Add(
-                            o => PushProperty(o, property)
-                        );
+                        cmdList.Add(o => { if (overrideProperty.boolValue) PushProperty(o, property); });
                     }
                 }
                 else
@@ -541,13 +534,11 @@ namespace UnityEditor.VFX
                     {
                         if (fieldInfo.FieldType == typeof(VFXCoordinateSpace))
                             continue;
-                        //Debug.Log("Push "+type.UserFriendlyName()+"."+fieldInfo.Name+"("+fieldInfo.FieldType.UserFriendlyName());
                         cmdList.Add(o =>
                         {
                             Push(o, fieldInfo);
                         });
                         BuildValue(cmdList, fieldInfo.FieldType, propertyPath + "_" + fieldInfo.Name);
-                        //Debug.Log("Pop "+type.UserFriendlyName()+"."+fieldInfo.Name+"("+fieldInfo.FieldType.UserFriendlyName());
                         cmdList.Add(o =>
                             Pop(o, fieldInfo)
                         );
