@@ -206,7 +206,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RenderTexture                   m_TemporaryTargetForCubemaps;
         Stack<Camera>                   m_ProbeCameraPool = new Stack<Camera>();
 
+#if ENABLE_RAYTRACING
         bool                            m_AreaShadowsRendered;
+#endif
 
         RenderTargetIdentifier[] m_MRTWithSSS;
         string m_ForwardPassProfileName;
@@ -1273,7 +1275,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var cullingResults = renderRequest.cullingResults.cullingResults;
             var hdProbeCullingResults = renderRequest.cullingResults.hdProbeCullingResults;
             var target = renderRequest.target;
+#if ENABLE_RAYTRACING
             m_AreaShadowsRendered = false;
+#endif
 
             m_DbufferManager.enableDecals = false;
             if (hdCamera.frameSettings.enableDecals)
@@ -1488,10 +1492,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         cmd.SetGlobalInt(HDShaderIDs._RaytracedAreaShadow, 1);
                     }
                     else
-#endif
                     {
                         cmd.SetGlobalInt(HDShaderIDs._RaytracedAreaShadow, 0);
                     }
+#endif
 
                     HDUtils.CheckRTCreated(m_ScreenSpaceShadowsBuffer);
 
@@ -2425,13 +2429,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Output split lighting for materials asking for it (masked in the stencil buffer)
                 options.outputSplitLighting = true;
 
-                m_LightLoop.RenderDeferredLighting(hdCamera, cmd, m_CurrentDebugDisplaySettings, m_MRTCache2, m_SharedRTManager.GetDepthStencilBuffer(), depthTexture, options, m_AreaShadowsRendered);
+                m_LightLoop.RenderDeferredLighting(hdCamera, cmd, m_CurrentDebugDisplaySettings, m_MRTCache2, m_SharedRTManager.GetDepthStencilBuffer(), depthTexture, options
+#if ENABLE_RAYTRACING
+                    , m_AreaShadowsRendered
+#endif
+                    );
             }
 
             // Output combined lighting for all the other materials.
             options.outputSplitLighting = false;
 
-            m_LightLoop.RenderDeferredLighting(hdCamera, cmd, m_CurrentDebugDisplaySettings, m_MRTCache2, m_SharedRTManager.GetDepthStencilBuffer(), depthTexture, options, m_AreaShadowsRendered);
+            m_LightLoop.RenderDeferredLighting(hdCamera, cmd, m_CurrentDebugDisplaySettings, m_MRTCache2, m_SharedRTManager.GetDepthStencilBuffer(), depthTexture, options
+#if ENABLE_RAYTRACING
+                    , m_AreaShadowsRendered
+#endif
+                    );
         }
 
         void UpdateSkyEnvironment(HDCamera hdCamera, CommandBuffer cmd)

@@ -2606,7 +2606,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void RenderDeferredLighting(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings,
             RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthStencilBuffer, RenderTargetIdentifier depthTexture,
-            LightingPassOptions options, bool areaShadowsRendered = false)
+            LightingPassOptions options
+#if ENABLE_RAYTRACING
+            , bool areaShadowsRendered
+#endif
+            )
         {
             cmd.SetGlobalBuffer(HDShaderIDs.g_vLightListGlobal, s_LightList);
 
@@ -2638,11 +2642,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     int numTilesY = (h + 15) / 16;
                     int numTiles = numTilesX * numTilesY;
 
+#if ENABLE_RAYTRACING
                     if (areaShadowsRendered)
                         cmd.SetComputeIntParam(deferredComputeShader, HDShaderIDs._RaytracedAreaShadow, 1);
                     else
                         cmd.SetComputeIntParam(deferredComputeShader, HDShaderIDs._RaytracedAreaShadow, 0);
-
+#endif
 
                     bool enableFeatureVariants = GetFeatureVariantsEnabled() && !debugDisplaySettings.IsDebugDisplayEnabled() && !hdCamera.camera.stereoEnabled; // TODO VR: Reenable later
 
