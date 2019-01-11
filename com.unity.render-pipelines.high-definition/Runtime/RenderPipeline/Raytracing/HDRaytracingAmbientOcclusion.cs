@@ -70,8 +70,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Texture2DArray noiseTexture = m_RaytracingManager.m_RGNoiseTexture;
             ComputeShader bilateralFilter = m_PipelineResources.shaders.reflectionBilateralFilterCS;
             RaytracingShader aoShader = m_PipelineResources.shaders.aoRaytracing;
-            if (rtEnvironement == null || noiseTexture == null || bilateralFilter == null || aoShader == null)
+            if (rtEnvironement == null || noiseTexture == null || bilateralFilter == null || aoShader == null || !hdCamera.frameSettings.enableSSAO || (hdCamera.camera.GetComponent<HDRayTracingFilter>() == null))
             {
+                cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, Texture2D.blackTexture);
+                cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
                 return;
             }
 
@@ -162,6 +164,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     break;
                 }
             }
+
+
+            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, outputTexture);
+            cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(0f, 0f, 0f, VolumeManager.instance.stack.GetComponent<AmbientOcclusion>().directLightingStrength.value));
+            // TODO: All the push-debug stuff should be centralized somewhere
+            (RenderPipelineManager.currentPipeline as HDRenderPipeline).PushFullScreenDebugTexture(hdCamera, cmd, outputTexture, FullScreenDebugMode.SSAO);
         }
     }
 #endif
