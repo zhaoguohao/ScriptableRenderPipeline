@@ -460,6 +460,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _RaytracingHitDistanceTexture    = Shader.PropertyToID("_RaytracingHitDistanceTexture");
         public static readonly int _RaytracingVSNormalTexture       = Shader.PropertyToID("_RaytracingVSNormalTexture");
         public static readonly string _RaytracingAccelerationStructureName           = "_RaytracingAccelerationStructure";
+        // TODO if debug rt
+        public static readonly int _RayCountTexture                 = Shader.PropertyToID("_RayCountTexture");
+        // endif
 #else
         public static readonly int _RaytracedAreaShadow             = Shader.PropertyToID("_RaytracedAreaShadow");
 #endif

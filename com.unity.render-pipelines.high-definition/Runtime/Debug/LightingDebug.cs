@@ -17,6 +17,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     }
 
     [GenerateHLSL]
+    public enum DebugRayTracedPass
+    {
+        None,
+        All,
+        AreaShadow,
+        Reflections,
+        AmbientOcclusion,
+    }
+
+    [GenerateHLSL]
     public enum ShadowMapDebugMode
     {
         None,
@@ -84,5 +94,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public LightLoop.TileClusterDebug tileClusterDebug = LightLoop.TileClusterDebug.None;
         public LightLoop.TileClusterCategoryDebug tileClusterDebugByCategory = LightLoop.TileClusterCategoryDebug.Punctual;
+
+        public bool                 debugRayTrace = false;
+        public DebugRayTracedPass   rayTracedPass = DebugRayTracedPass.None;
     }
 }
