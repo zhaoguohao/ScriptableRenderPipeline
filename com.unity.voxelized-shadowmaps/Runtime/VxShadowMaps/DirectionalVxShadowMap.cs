@@ -1,4 +1,6 @@
 
+using UnityEngine.Rendering;
+
 namespace UnityEngine.Experimental.VoxelizedShadowMaps
 {
     public sealed class DirectionalVxShadowMap : MonoBehaviour
@@ -47,7 +49,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
 
         public bool IsValid()
         {
-            return enabled && resource != null;
+            return enabled && resource != null && computeBuffer != null;
         }
 
 #if UNITY_EDITOR
@@ -92,8 +94,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
                 maxScale = resource.MaxScale;
                 worldToShadowMatrix = resource.WorldToShadowMatrix;
 
-                if (computeBuffer != null)
-                    computeBuffer.Release();
+                CoreUtils.SafeRelease(computeBuffer);
 
                 int count = resource.Data.Length;
                 int stride = 4;
@@ -105,13 +106,9 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
 
         public void InvalidateResources()
         {
+            CoreUtils.SafeRelease(computeBuffer);
+            computeBuffer = null;
             resource = null;
-
-            if (computeBuffer != null)
-            {
-                computeBuffer.Release();
-                computeBuffer = null;
-            }
         }
     }
 }

@@ -106,10 +106,10 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (kernel == -1)
                 return;
 
-            CommandBuffer cmd = CommandBufferPool.Get(k_CollectShadowsTag);
-
             var shadowLightIndex = renderingData.lightData.mainLightIndex;
             var shadowLight = renderingData.lightData.visibleLights[shadowLightIndex];
+
+            CommandBuffer cmd = CommandBufferPool.Get(k_CollectShadowsTag);
 
             cmd.GetTemporaryRT(colorAttachmentHandle.id, descriptor, FilterMode.Bilinear);
             SetupVxShadowReceiverConstants(cmd, kernel, ref computeShader, ref renderingData.cameraData.camera, ref shadowLight);
