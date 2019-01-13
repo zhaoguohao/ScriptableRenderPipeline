@@ -43,7 +43,7 @@ SAMPLER(sampler_CameraDepthTexture);
 CBUFFER_START(DirectionalVxShadowMap)
 uint _VoxelResolution;
 int _VoxelZBias;
-int _VoxelUpBias;
+float _VoxelUpBias;
 uint _MaxScale;
 float4x4 _WorldToShadowMatrix;
 CBUFFER_END

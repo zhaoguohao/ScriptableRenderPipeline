@@ -174,12 +174,14 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             var light = shadowLight.light;
             var vxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
 
+            float voxelUpBias = vxShadowMap.voxelUpBias / vxShadowMap.volumeScale;
+
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._InvViewProjMatrixID, viewProjMatrix.inverse);
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY));
 
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelResolutionID, vxShadowMap.voxelResolutionInt);
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelZBiasID, vxShadowMap.voxelZBias);
-            cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelUpBiasID, vxShadowMap.voxelUpBias);
+            cmd.SetComputeFloatParam(computeShader, VxShadowMapConstantBuffer._VoxelUpBiasID, voxelUpBias);
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._MaxScaleID, vxShadowMap.maxScale);
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._WorldToShadowMatrixID, vxShadowMap.worldToShadowMatrix);
 
