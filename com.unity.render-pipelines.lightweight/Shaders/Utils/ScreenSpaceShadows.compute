@@ -367,7 +367,7 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
     bool2 inner = (posQ.xy % edgeQ) < (edgeQ - 1);
 
     if (all(inner) && result.w == 0)
-        return result.y ? 1.0 : 0.7;
+        return result.y ? 1.0 : 0.0;
 
     uint2 rescale = uint2(
         CalculateRescale(posQ.x, posQ.x + 1),
