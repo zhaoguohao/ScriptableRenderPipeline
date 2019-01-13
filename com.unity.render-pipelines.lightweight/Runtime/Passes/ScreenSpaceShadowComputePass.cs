@@ -13,7 +13,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             public static int _ScreenSizeID;
 
             public static int _VoxelResolutionID;
-            public static int _VoxelBiasID;
+            public static int _VoxelZBiasID;
+            public static int _VoxelUpBiasID;
             public static int _MaxScaleID;
             public static int _WorldToShadowMatrixID;
 
@@ -33,7 +34,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             VxShadowMapConstantBuffer._ScreenSizeID = Shader.PropertyToID("_ScreenSize");
 
             VxShadowMapConstantBuffer._VoxelResolutionID = Shader.PropertyToID("_VoxelResolution");
-            VxShadowMapConstantBuffer._VoxelBiasID = Shader.PropertyToID("_VoxelBias");
+            VxShadowMapConstantBuffer._VoxelZBiasID = Shader.PropertyToID("_VoxelZBias");
+            VxShadowMapConstantBuffer._VoxelUpBiasID = Shader.PropertyToID("_VoxelUpBias");
             VxShadowMapConstantBuffer._MaxScaleID = Shader.PropertyToID("_MaxScale");
             VxShadowMapConstantBuffer._WorldToShadowMatrixID = Shader.PropertyToID("_WorldToShadowMatrix");
 
@@ -176,7 +178,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY));
 
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelResolutionID, vxShadowMap.voxelResolutionInt);
-            cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelBiasID, vxShadowMap.voxelBias);
+            cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelZBiasID, vxShadowMap.voxelZBias);
+            cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._VoxelUpBiasID, vxShadowMap.voxelUpBias);
             cmd.SetComputeIntParam(computeShader, VxShadowMapConstantBuffer._MaxScaleID, vxShadowMap.maxScale);
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._WorldToShadowMatrixID, vxShadowMap.worldToShadowMatrix);
 

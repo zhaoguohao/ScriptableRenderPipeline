@@ -42,7 +42,8 @@ SAMPLER(sampler_CameraDepthTexture);
 
 CBUFFER_START(DirectionalVxShadowMap)
 uint _VoxelResolution;
-uint _VoxelBias;
+int _VoxelZBias;
+int _VoxelUpBias;
 uint _MaxScale;
 float4x4 _WorldToShadowMatrix;
 CBUFFER_END
@@ -321,20 +322,15 @@ float BilinearSampleShadowBitmask(uint3 posQ, uint2 bitmask2_00, uint2 bitmask2_
 
 float ComputeVxShadowMapAttenuationNoFiltering(float3 positionWS)
 {
-    float3 posLS = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
-
-    bool lessThanBounds = any(posLS.xy < float2(0.0, 0.0));
-    bool greaterThanBounds = any(posLS.xy > float2(1.0, 1.0));
-    if (lessThanBounds || greaterThanBounds)
-        return 1.0;
-
-    float3 posP = posLS * (float)_VoxelResolution;
-
-    if (posP.z < 0.0 || posP.z >= (_VoxelResolution - 1.0))
-        return 1.0;
+    positionWS.y += _VoxelUpBias;
+    float3 posNDC = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
+    float3 posP = posNDC * (float)_VoxelResolution;
 
     uint3 posQ = (uint3)posP;
-    posQ.z -= _VoxelBias;
+    posQ.z -= _VoxelZBias;
+
+    if (any(posQ >= (_VoxelResolution.xxx - 1)))
+        return 1.0;
 
     uint4 result = TraverseVxShadowMapPosQ(posQ);
     if (result.w == 0)
@@ -349,22 +345,18 @@ float ComputeVxShadowMapAttenuationNoFiltering(float3 positionWS)
 
 float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
 {
-    float3 posLS = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
+    positionWS.y += _VoxelUpBias;
+    float3 posNDC = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
 
-    bool lessThanBounds = any(posLS.xy < float2(0.0, 0.0));
-    bool greaterThanBounds = any(posLS.xy > float2(1.0, 1.0));
-    if (lessThanBounds || greaterThanBounds)
-        return 1.0;
-
-    float3 posP = posLS * (float)_VoxelResolution - 0.5;
+    float3 posP = posNDC * (float)_VoxelResolution - 0.5;
     float3 posF = floor(posP);
     float2 lerpWeight = posP.xy - posF.xy;
 
-    if (posP.z < 0.0 || posP.z >= (_VoxelResolution - 1.0))
-        return 1.0;
-
     uint3 posQ = (uint3)posP;
-    posQ.z -= _VoxelBias;
+    posQ.z -= _VoxelZBias;
+
+    if (any(posQ >= (_VoxelResolution.xxx - 1)))
+        return 1.0;
 
     uint scale = 0;
     uint nodeTracer[16];
@@ -375,7 +367,7 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
     bool2 inner = (posQ.xy % edgeQ) < (edgeQ - 1);
 
     if (all(inner) && result.w == 0)
-        return result.y ? 1.0 : 0.0;
+        return result.y ? 1.0 : 0.7;
 
     uint2 rescale = uint2(
         CalculateRescale(posQ.x, posQ.x + 1),
@@ -395,22 +387,18 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
 
 float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
 {
-    float3 posLS = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
+    positionWS.y += _VoxelUpBias;
+    float3 posNDC = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
 
-    bool lessThanBounds = any(posLS.xy < float2(0.0, 0.0));
-    bool greaterThanBounds = any(posLS.xy > float2(1.0, 1.0));
-    if (lessThanBounds || greaterThanBounds)
-        return 1.0;
-
-    float3 posP = posLS * _VoxelResolution - 0.5;
+    float3 posP = posNDC * _VoxelResolution - 0.5;
     float3 posF = floor(posP);
     float3 lerpWeight = posP - posF;
 
-    if (posP.z < 0.0 || posP.z >= (_VoxelResolution - 1.0))
-        return 1.0;
-
     uint3 posQ = (uint3)posP;
-    posQ.z -= _VoxelBias;
+    posQ.z -= _VoxelZBias;
+
+    if (any(posQ >= (_VoxelResolution.xxx - 1)))
+        return 1.0;
 
     uint scale = 0;
     uint nodeTracer[16];
@@ -456,19 +444,14 @@ float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
 
 float ComputeVxShadowMapAttenuationPCF9x9iltering(float3 positionWS)
 {
-    float3 posLS = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
-
-    bool lessThanBounds = any(posLS.xy < float2(0.0, 0.0));
-    bool greaterThanBounds = any(posLS.xy > float2(1.0, 1.0));
-    if (lessThanBounds || greaterThanBounds)
-        return 1.0;
-
-    float3 posP = posLS * (float)_VoxelResolution;
+    positionWS.y += _VoxelUpBias;
+    float3 posNDC = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
+    float3 posP = posNDC * (float)_VoxelResolution;
 
     uint3 posQ = (uint3)posP;
-    posQ.z -= _VoxelBias;
+    posQ.z -= _VoxelZBias;
 
-    if (posQ.z < 0 || posQ.z >= _VoxelResolution)
+    if (any(posQ >= (_VoxelResolution.xxx - 1)))
         return 1.0;
 
     uint4 result = TraverseVxShadowMapPosQ(posQ);
