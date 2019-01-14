@@ -51,7 +51,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             
             m_ColorFormat = R8 ? RenderTextureFormat.R8 : RenderTextureFormat.RFloat;
 
-            Debug.Log("Screen Space Shadow Target format = " + m_ColorFormat);
+            //Debug.Log("Screen Space Shadow Target format = " + m_ColorFormat);
         }
 
         private RenderTargetHandle colorAttachmentHandle { get; set; }
@@ -174,7 +174,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             var light = shadowLight.light;
             var vxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
 
-            float voxelUpBias = vxShadowMap.voxelUpBias / vxShadowMap.volumeScale;
+            float voxelUpBias = vxShadowMap.voxelUpBias * (vxShadowMap.volumeScale / vxShadowMap.voxelResolutionInt);
 
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._InvViewProjMatrixID, viewProjMatrix.inverse);
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY));
