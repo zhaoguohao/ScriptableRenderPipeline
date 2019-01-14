@@ -268,6 +268,13 @@ namespace UnityEditor.VFX
             public VFXGizmo gizmo;
         }
 
+        protected override void PropertyOverrideChanged()
+        {
+            foreach(var context in m_ContextsPerComponent.Values.Select(t=>t.context))
+            {
+                context.Unprepare();
+            }
+        }
 
         Dictionary<VisualEffect, ContextAndGizmo> m_ContextsPerComponent = new Dictionary<VisualEffect, ContextAndGizmo>();
 
@@ -365,6 +372,7 @@ namespace UnityEditor.VFX
 
                 return VFXGizmoUtility.NullProperty<T>.defaultProperty;
             }
+
 
             void AddNewValue(List<object> l, object o, SerializedProperty vfxField,string propertyPath,string[] memberPath,int depth)
             {

@@ -631,6 +631,8 @@ namespace UnityEditor.VFX
                             //< Actual display
                             GUIContent nameContent = GetGUIContent(parameter.name, parameter.tooltip);
                             EditorGUI.BeginChangeCheck();
+
+                            bool wasOverriden = actualDisplayedPropertyOverridden.boolValue;
                             DisplayProperty(ref parameter, nameContent, actualDisplayedPropertyOverridden, actualDisplayedPropertyValue, AnimationMode.IsPropertyAnimated(target, actualDisplayedPropertyValue.propertyPath));
                             if (EditorGUI.EndChangeCheck())
                             {
@@ -643,23 +645,21 @@ namespace UnityEditor.VFX
                                     newEntry.FindPropertyRelative("m_Overridden").boolValue = actualDisplayedPropertyOverridden.boolValue;
                                     SetObjectValue(newEntry.FindPropertyRelative("m_Value"), GetObjectValue(actualDisplayedPropertyValue));
                                     newEntry.FindPropertyRelative("m_Name").stringValue = param.path;
+                                    PropertyOverrideChanged();
                                 }
                                 else if (wasNotOverriddenProperty)
                                 {
-                                    if (actualDisplayedPropertyOverridden.boolValue)
-                                    {
-                                        //The check box has simply been toggle, we should not restore value from asset but simply change overridden state
-                                        sourceProperty.FindPropertyRelative("m_Overridden").boolValue = true;
-                                    }
-                                    else
+                                    if (!actualDisplayedPropertyOverridden.boolValue)
                                     {
                                         //The value has been directly changed, change overridden state and recopy new value
                                         SetObjectValue(sourceProperty.FindPropertyRelative("m_Value"), GetObjectValue(actualDisplayedPropertyValue));
-                                        sourceProperty.FindPropertyRelative("m_Overridden").boolValue = true;
                                     }
+                                    sourceProperty.FindPropertyRelative("m_Overridden").boolValue = true;
+                                    PropertyOverrideChanged();
                                 }
-                                else //wasNewProperty == wasNotOverriddenProperty == false => there isn't any additionnal behavior needed, we are already using real serialized property
+                                else if (wasOverriden != actualDisplayedPropertyOverridden.boolValue)
                                 {
+                                    PropertyOverrideChanged();
                                 }
                                 serializedObject.ApplyModifiedProperties();
                             }
@@ -670,6 +670,8 @@ namespace UnityEditor.VFX
             }
             GUILayout.Space(1); // Space for the line if the last category is closed.
         }
+
+        protected virtual void PropertyOverrideChanged() { }
 
         private void DrawRendererProperties()
         {
