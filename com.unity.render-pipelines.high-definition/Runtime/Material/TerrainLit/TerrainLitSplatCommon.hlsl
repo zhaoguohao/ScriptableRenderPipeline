@@ -40,7 +40,7 @@ SAMPLER(sampler_TerrainSurfaceMaskTexture);
 void ClipSurfaceMask(float2 uv)
 {
 	float surfMask = SAMPLE_TEXTURE2D(_TerrainSurfaceMaskTexture, sampler_TerrainSurfaceMaskTexture, uv).r;
-	clip(surfMask == 0.0f ? -1 : 1);
+	DoAlphaTest(surfMask, 0.5);
 }
 #endif
 
