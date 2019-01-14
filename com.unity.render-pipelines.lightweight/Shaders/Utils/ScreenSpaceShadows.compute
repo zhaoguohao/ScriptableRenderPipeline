@@ -19,6 +19,8 @@
 #define USE_EMULATE_CLZ
 //#define USE_IMITATED_CLZ
 
+#define DO_RETRAVERSAL
+
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/CommonMaterial.hlsl"
@@ -254,12 +256,14 @@ uint2 TraverseVxShadowMapLeaf(uint posQ_z, uint4 innerResult)
 // for one x-y-z-step
 uint2 RetraversalVxShadowMapLeaf(uint3 posQ, uint3 offset, uint rescale, uint scale, uint2 bitmask2, uint nodeTracer[16])
 {
+#ifdef DO_RETRAVERSAL
     if (rescale <= scale)
         return bitmask2;
 
     uint nodeIndex = nodeTracer[rescale - 4];
     uint4 result = RetraverseVxShadowMapPosQ(posQ + offset, rescale, nodeIndex);
     bitmask2 = TraverseVxShadowMapLeaf(posQ.z + offset.z, result);
+#endif
 
     return bitmask2;
 }
@@ -268,11 +272,13 @@ uint2 RetraversalVxShadowMapLeaf(uint3 posQ, uint3 offset, uint rescale, uint sc
 // only for one z-step
 uint2 RetraversalVxShadowMapLeafOneZStep(uint3 posQ, uint rescale, uint scale, uint4 result, uint nodeTracer[16])
 {
+#ifdef DO_RETRAVERSAL
     if (rescale <= scale)
         return TraverseVxShadowMapLeaf(posQ.z + 1, result);
 
     uint nodeIndex = nodeTracer[rescale - 4];
     result = RetraverseVxShadowMapPosQ(posQ + uint3(0, 0, 1), rescale, nodeIndex);
+#endif
 
     return TraverseVxShadowMapLeaf(posQ.z + 1, result);
 }
@@ -308,6 +314,52 @@ float PointSampleShadowBitmask(uint2 bitmask2, uint3 posQ, uint2 offset)
 
 float BilinearSampleShadowBitmask(uint3 posQ, uint2 bitmask2_00, uint2 bitmask2_10, uint2 bitmask2_01, uint2 bitmask2_11, float2 lerpWeight)
 {
+#if 1 // second opt
+    uint4 posLeaf_x = (posQ.xxxx + uint4(0, 1, 0, 1)) % 8;
+    uint4 posLeaf_y = (posQ.yyyy + uint4(0, 0, 1, 1)) % 8;
+
+    uint4 bitmask_x = uint4(bitmask2_00.x, bitmask2_10.x, bitmask2_01.x, bitmask2_11.x);
+    uint4 bitmask_y = uint4(bitmask2_00.y, bitmask2_10.y, bitmask2_01.y, bitmask2_11.y);
+
+    uint4 bitmask = posLeaf_y < 4 ? bitmask_x : bitmask_y;
+    uint4 shift = posLeaf_x + 8 * (posLeaf_y % 4);
+
+    uint4 mask = 0x00000001 << shift;
+
+    float4 attenuation = (bitmask & mask) == 0 ? float4(1.0, 1.0, 1.0, 1.0) : float4(0.0, 0.0, 0.0, 0.0);
+
+    attenuation.x = lerp(attenuation.x, attenuation.y, lerpWeight.x);
+    attenuation.y = lerp(attenuation.z, attenuation.w, lerpWeight.x);
+
+    return lerp(attenuation.x, attenuation.y, lerpWeight.y);
+
+#elif 0 // first opt
+    uint2 posLeaf_00 = posQ.xy % uint2(8, 8);
+    uint2 posLeaf_10 = uint2(posQ.x + 1, posQ.y) % uint2(8, 8);
+    uint2 posLeaf_01 = uint2(posQ.x, posQ.y + 1) % uint2(8, 8);
+    uint2 posLeaf_11 = (posQ.xy + 1) % uint2(8, 8);
+
+    uint4 bitmask = uint4(
+        posLeaf_00.y < 4 ? bitmask2_00.x : bitmask2_00.y,
+        posLeaf_10.y < 4 ? bitmask2_10.x : bitmask2_10.y,
+        posLeaf_01.y < 4 ? bitmask2_01.x : bitmask2_01.y,
+        posLeaf_11.y < 4 ? bitmask2_11.x : bitmask2_11.y);
+
+    uint4 shift = uint4(
+        posLeaf_00.x + 8 * (posLeaf_00.y % 4),
+        posLeaf_10.x + 8 * (posLeaf_10.y % 4),
+        posLeaf_01.x + 8 * (posLeaf_01.y % 4),
+        posLeaf_11.x + 8 * (posLeaf_11.y % 4));
+
+    uint4 mask = 0x00000001 << shift;
+
+    float4 attenuation = (bitmask & mask) == 0 ? float4(1.0, 1.0, 1.0, 1.0) : float4(0.0, 0.0, 0.0, 0.0);
+
+    attenuation.x = lerp(attenuation.x, attenuation.y, lerpWeight.x);
+    attenuation.y = lerp(attenuation.z, attenuation.w, lerpWeight.x);
+
+    return lerp(attenuation.x, attenuation.y, lerpWeight.y);
+#else // origin
     float attenuation0 = PointSampleShadowBitmask(bitmask2_00, posQ);
     float attenuation1 = PointSampleShadowBitmask(bitmask2_10, posQ, uint2(1, 0));
     float attenuation2 = PointSampleShadowBitmask(bitmask2_01, posQ, uint2(0, 1));
@@ -317,6 +369,7 @@ float BilinearSampleShadowBitmask(uint3 posQ, uint2 bitmask2_00, uint2 bitmask2_
     attenuation1 = lerp(attenuation2, attenuation3, lerpWeight.x);
 
     return lerp(attenuation0, attenuation1, lerpWeight.y);
+#endif
 }
 
 
@@ -515,24 +568,22 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
 
     float shadowStrength = 1.0;//GetMainLightShadowStrength();
 
+    float attenuation = 1.0;
+
 #if WITH_DYNAMIC_SHADOWS
     float4 shadowMapCoords = TransformWorldToShadowCoord(positionWS);
 
     ShadowSamplingData shadowSamplingData = GetMainLightShadowSamplingData();
-    float attenuation = SampleShadowmap(shadowMapCoords, TEXTURE2D_PARAM(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), shadowSamplingData, shadowStrength, false);
+    attenuation = SampleShadowmap(shadowMapCoords, TEXTURE2D_PARAM(_MainLightShadowmapTexture, sampler_MainLightShadowmapTexture), shadowSamplingData, 1.0, false);
 
     if (attenuation == 0.0)
     {
-        _ScreenSpaceShadowOutput[pixelCoord] = attenuation;
+        _ScreenSpaceShadowOutput[pixelCoord] = LerpWhiteTo(attenuation, shadowStrength);
         return;
     }
-
-    attenuation = min(attenuation, SampleVxShadowMap(positionWS));
-#else
-    float attenuation = SampleVxShadowMap(positionWS);
 #endif
 
-    attenuation = lerp(1.0, attenuation, shadowStrength);
+    attenuation = min(attenuation, SampleVxShadowMap(positionWS));
 
-    _ScreenSpaceShadowOutput[pixelCoord] = attenuation;
+    _ScreenSpaceShadowOutput[pixelCoord] = LerpWhiteTo(attenuation, shadowStrength);
 }
