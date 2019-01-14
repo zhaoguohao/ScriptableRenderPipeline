@@ -366,6 +366,26 @@ namespace UnityEditor.VFX
                 return VFXGizmoUtility.NullProperty<T>.defaultProperty;
             }
 
+            void AddNewValue(List<object> l, object o, SerializedProperty vfxField,string propertyPath,string[] memberPath,int depth)
+            {
+                vfxField.InsertArrayElementAtIndex(vfxField.arraySize);
+                var newEntry = vfxField.GetArrayElementAtIndex(vfxField.arraySize - 1);
+                newEntry.FindPropertyRelative("m_Overridden").boolValue = true;
+
+                var valueProperty = newEntry.FindPropertyRelative("m_Value");
+
+                VFXSlot slot = m_Parameter.outputSlots[0];
+                for(int i = 0; i < memberPath.Length&& i< depth; ++i)
+                {
+                    slot = slot.children.First(t => t.name == memberPath[i]);
+                }
+
+                l.Add(slot.value); // find the default value which is in the parameter.
+                newEntry.FindPropertyRelative("m_Name").stringValue = propertyPath;
+
+                Unprepare(); // if we set the value we'll have to regenerate the cmdList for next time.
+            }
+
             bool BuildPropertyValue<T>(List<Action<List<object>, object>> cmdList, Type type, string propertyPath, string[] memberPath, int depth, FieldInfo specialSpacableVector3CaseField = null)
             {
                 string field = VisualEffectSerializationUtility.GetTypeField(type);
@@ -396,9 +416,24 @@ namespace UnityEditor.VFX
                         property = property.FindPropertyRelative("m_Value");
                         cmdList.Add((l, o) => overrideProperty.boolValue = true);
                     }
-                    else
+                    else if( vfxField != null)
                     {
-                        return false;
+                        cmdList.Add((l, o) =>
+                        {
+                            AddNewValue(l,o,vfxField,propertyPath, memberPath,depth);
+                        });
+
+                        if (depth < memberPath.Length)
+                        {
+                            if (!BuildPropertySubValue<T>(cmdList, type, memberPath, depth))
+                                return false;
+                        }
+                        cmdList.Add((l, o) =>
+                        {
+                            SetObjectValue(vfxField.GetArrayElementAtIndex(vfxField.arraySize - 1).FindPropertyRelative("m_Value"), l[l.Count - 1]);
+                        });
+
+                        return true;
                     }
 
                     if (depth < memberPath.Length)
