@@ -406,6 +406,7 @@ namespace UnityEditor.VFX.UI
         {
             get { return VFXContextController.IsTypeExpandable(portType); }
         }
+        bool IPropertyRMProvider.expandableIfShowsEverything { get { return true; } }
 
         public virtual string iconName
         {
