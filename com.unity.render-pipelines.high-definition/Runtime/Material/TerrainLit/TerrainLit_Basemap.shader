@@ -123,7 +123,7 @@ Shader "Hidden/HDRP/TerrainLit_Basemap"
 
 			#ifdef _ALPHATEST_ON
 				// When we have alpha test, we will force a depth prepass so we always bypass the clip instruction in the GBuffer
-				//#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+				#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
 			#endif
 			
             #define SHADERPASS SHADERPASS_GBUFFER
