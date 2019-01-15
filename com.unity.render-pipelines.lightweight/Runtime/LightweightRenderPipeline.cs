@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Unity.Collections;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -229,11 +229,20 @@ namespace UnityEngine.Rendering.LWRP
                 InitializeRenderingData(settings, ref cameraData, ref cullResults,
                     renderer.maxVisibleAdditionalLights, renderer.maxPerObjectAdditionalLights, out var renderingData);
 
-                renderer.Clear();
-
                 var rendererSetup = setup ?? settings.rendererSetup;
-                rendererSetup.Setup(renderer, ref renderingData);
-                renderer.Execute(context, ref renderingData);
+
+                for (int eye = 0; eye < renderingData.totalEyes; ++eye)
+                {
+                    renderingData.currentEye = eye;
+                    if (renderingData.currentEye > 0)
+                        renderingData.allowViewIndepentSetup = false;
+
+					renderer.Clear();
+                    rendererSetup.Setup(renderer, ref renderingData);
+                    renderer.Execute(context, ref renderingData);
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+                }
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -358,6 +367,13 @@ namespace UnityEngine.Rendering.LWRP
             InitializeLightData(settings, visibleLights, mainLightIndex, maxVisibleAdditionalLights, maxPerObjectAdditionalLights, out renderingData.lightData);
             InitializeShadowData(settings, visibleLights, mainLightCastShadows, additionalLightsCastShadows && !renderingData.lightData.shadeAdditionalLightsPerVertex, out renderingData.shadowData);
             renderingData.supportsDynamicBatching = settings.supportsDynamicBatching;
+
+            renderingData.currentEye = 0;
+            renderingData.totalEyes = 1;
+            renderingData.allowViewIndepentSetup = true;
+            if (renderingData.cameraData.isStereoEnabled &&
+                XR.XRSettings.stereoRenderingMode == XR.XRSettings.StereoRenderingMode.MultiPass)
+                renderingData.totalEyes = 2;
 
             bool platformNeedsToKillAlpha = Application.platform == RuntimePlatform.IPhonePlayer ||
                 Application.platform == RuntimePlatform.Android ||

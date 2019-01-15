@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
@@ -49,14 +49,17 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         [NonSerialized]
         private bool m_Initialized = false;
 
-        private void Init()
+        private void Init(bool allowViewIndependentSetup)
         {
             if (m_Initialized)
                 return;
 
             m_DepthOnlyPass = new DepthOnlyPass();
-            m_MainLightShadowCasterPass = new MainLightShadowCasterPass();
-            m_AdditionalLightsShadowCasterPass = new AdditionalLightsShadowCasterPass();
+            if (allowViewIndependentSetup)
+            {
+                m_MainLightShadowCasterPass = new MainLightShadowCasterPass();
+                m_AdditionalLightsShadowCasterPass = new AdditionalLightsShadowCasterPass();
+            }
             m_SetupForwardRenderingPass = new SetupForwardRenderingPass();
             m_ScreenSpaceShadowResolvePass = new ScreenSpaceShadowResolvePass();
             m_CreateLightweightRenderTexturesPass = new CreateLightweightRenderTexturesPass();
@@ -117,11 +120,12 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         public void Setup(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            Init();
+            Init(renderingData.allowViewIndepentSetup);
 
             Camera camera = renderingData.cameraData.camera;
+            if(renderingData.allowViewIndepentSetup)
+                renderer.SetupPerObjectLightIndices(ref renderingData.cullResults, ref renderingData.lightData);
 
-            renderer.SetupPerObjectLightIndices(ref renderingData.cullResults, ref renderingData.lightData);
             RenderTextureDescriptor baseDescriptor = ScriptableRenderer.CreateRenderTextureDescriptor(ref renderingData.cameraData);
             RenderTextureDescriptor shadowDescriptor = baseDescriptor;
             shadowDescriptor.dimension = TextureDimension.Tex2D;
@@ -305,9 +309,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             }
 
             if (renderingData.cameraData.isStereoEnabled)
-            {
                 renderer.EnqueuePass(m_EndXrRenderingPass);
-            }
 
 #if UNITY_EDITOR
             m_UnlitGizmoRenderingPass.Setup(false);

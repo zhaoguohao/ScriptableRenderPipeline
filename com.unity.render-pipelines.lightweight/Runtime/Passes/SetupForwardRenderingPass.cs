@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -24,7 +24,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (renderer == null)
                 throw new ArgumentNullException("renderer");
             
-            context.SetupCameraProperties(renderingData.cameraData.camera, renderingData.cameraData.isStereoEnabled);
+            context.SetupCameraProperties(renderingData.cameraData.camera, renderingData.cameraData.isStereoEnabled, renderingData.currentEye);
         }
     }
 }

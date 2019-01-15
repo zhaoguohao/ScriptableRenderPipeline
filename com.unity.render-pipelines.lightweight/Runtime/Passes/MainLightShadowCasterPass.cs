@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -27,6 +27,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         int m_ShadowCasterCascadesCount;
 
         RenderTexture m_MainLightShadowmapTexture;
+        bool m_CleanupMainLightShadowmapTexture;
 
         Matrix4x4[] m_MainLightShadowMatrices;
         ShadowSliceData[] m_CascadeSlices;
@@ -60,6 +61,13 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         public bool Setup(RenderTargetHandle destination, ref RenderingData renderingData)
         {
+            m_CleanupMainLightShadowmapTexture = false;
+            if (!renderingData.allowViewIndepentSetup)
+            {
+                m_CleanupMainLightShadowmapTexture = true;
+                return true;
+            }
+
             Clear();
             this.destination = destination;
 
@@ -106,7 +114,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 throw new ArgumentNullException("renderer");
 
             if (renderingData.shadowData.supportsMainLightShadows)
-                RenderMainLightCascadeShadowmap(ref context, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
+                RenderMainLightCascadeShadowmap(ref context, renderingData.allowViewIndepentSetup, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
             }
 
         /// <inheritdoc/>
@@ -115,7 +123,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (cmd == null)
                 throw new ArgumentNullException("cmd");
 
-            if (m_MainLightShadowmapTexture)
+            if (m_CleanupMainLightShadowmapTexture && m_MainLightShadowmapTexture)
             {
                 RenderTexture.ReleaseTemporary(m_MainLightShadowmapTexture);
                 m_MainLightShadowmapTexture = null;
@@ -124,7 +132,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         void Clear()
         {
-            m_MainLightShadowmapTexture = null;
+            if(m_CleanupMainLightShadowmapTexture)
+                m_MainLightShadowmapTexture = null;
 
             for (int i = 0; i < m_MainLightShadowMatrices.Length; ++i)
                 m_MainLightShadowMatrices[i] = Matrix4x4.identity;
@@ -136,36 +145,38 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 m_CascadeSlices[i].Clear();
         }
 
-        void RenderMainLightCascadeShadowmap(ref ScriptableRenderContext context, ref CullingResults cullResults, ref LightData lightData, ref ShadowData shadowData)
+        void RenderMainLightCascadeShadowmap(ref ScriptableRenderContext context, bool allowViewIndepentSetup, ref CullingResults cullResults, ref LightData lightData, ref ShadowData shadowData)
         {
             int shadowLightIndex = lightData.mainLightIndex;
             if (shadowLightIndex == -1)
                 return;
 
             VisibleLight shadowLight = lightData.visibleLights[shadowLightIndex];
-
             CommandBuffer cmd = CommandBufferPool.Get(k_RenderMainLightShadowmapTag);
-            using (new ProfilingSample(cmd, k_RenderMainLightShadowmapTag))
+
+            if (allowViewIndepentSetup)
             {
-                var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
-
-                m_MainLightShadowmapTexture = ShadowUtils.GetTemporaryShadowTexture(shadowData.mainLightShadowmapWidth,
-                    shadowData.mainLightShadowmapHeight, k_ShadowmapBufferBits);
-                SetRenderTarget(cmd, m_MainLightShadowmapTexture, RenderBufferLoadAction.DontCare,
-                    RenderBufferStoreAction.Store, ClearFlag.Depth, Color.black, TextureDimension.Tex2D);
-
-                for (int cascadeIndex = 0; cascadeIndex < m_ShadowCasterCascadesCount; ++cascadeIndex)
+                using (new ProfilingSample(cmd, k_RenderMainLightShadowmapTag))
                 {
-                    var splitData = settings.splitData;
-                    splitData.cullingSphere = m_CascadeSplitDistances[cascadeIndex];
-                    settings.splitData = splitData;
-                    Vector4 shadowBias = ShadowUtils.GetShadowBias(ref shadowLight, shadowLightIndex, ref shadowData, m_CascadeSlices[cascadeIndex].projectionMatrix, m_CascadeSlices[cascadeIndex].resolution);
-                    ShadowUtils.SetupShadowCasterConstantBuffer(cmd, ref shadowLight, shadowBias);
-                    ShadowUtils.RenderShadowSlice(cmd, ref context, ref m_CascadeSlices[cascadeIndex],
-                        ref settings, m_CascadeSlices[cascadeIndex].projectionMatrix, m_CascadeSlices[cascadeIndex].viewMatrix);
-                }
+                    var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
 
+                    m_MainLightShadowmapTexture = ShadowUtils.GetTemporaryShadowTexture(shadowData.mainLightShadowmapWidth,
+                        shadowData.mainLightShadowmapHeight, k_ShadowmapBufferBits);
+                    SetRenderTarget(cmd, m_MainLightShadowmapTexture, RenderBufferLoadAction.DontCare,
+                        RenderBufferStoreAction.Store, ClearFlag.Depth, Color.black, TextureDimension.Tex2D);
+
+                    for (int cascadeIndex = 0; cascadeIndex < m_ShadowCasterCascadesCount; ++cascadeIndex)
+                    {
+                        var splitData = settings.splitData;
+                        splitData.cullingSphere = m_CascadeSplitDistances[cascadeIndex];
+                        settings.splitData = splitData;
+                        Vector4 shadowBias = ShadowUtils.GetShadowBias(ref shadowLight, shadowLightIndex, ref shadowData, m_CascadeSlices[cascadeIndex].projectionMatrix, m_CascadeSlices[cascadeIndex].resolution);
+                        ShadowUtils.SetupShadowCasterConstantBuffer(cmd, ref shadowLight, shadowBias);
+                        ShadowUtils.RenderShadowSlice(cmd, ref context, ref m_CascadeSlices[cascadeIndex],
+                            ref settings, m_CascadeSlices[cascadeIndex].projectionMatrix, m_CascadeSlices[cascadeIndex].viewMatrix);
+                    }
                     SetupMainLightShadowReceiverConstants(cmd, ref shadowData, shadowLight);
+                }
             }
 
             CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);

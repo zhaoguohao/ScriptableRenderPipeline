@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -23,7 +23,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 throw new ArgumentNullException("renderer");
             
             Camera camera = renderingData.cameraData.camera;
-            context.StartMultiEye(camera);
+            context.StartMultiEye(camera, renderingData.currentEye);
         }
     }
 }

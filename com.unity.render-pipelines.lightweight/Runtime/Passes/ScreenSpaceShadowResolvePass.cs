@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -56,7 +56,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (renderingData.cameraData.isStereoEnabled)
             {
                 Camera camera = renderingData.cameraData.camera;
-                context.StartMultiEye(camera);
+                context.StartMultiEye(camera, renderingData.currentEye);
                 context.ExecuteCommandBuffer(cmd);
                 context.StopMultiEye(camera);
             }

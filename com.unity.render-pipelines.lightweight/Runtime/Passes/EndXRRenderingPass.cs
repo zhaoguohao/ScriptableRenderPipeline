@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -21,7 +21,9 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             
             Camera camera = renderingData.cameraData.camera;
             context.StopMultiEye(camera);
-            context.StereoEndRender(camera);
+
+            if(renderingData.currentEye == renderingData.totalEyes - 1)
+                context.StereoEndRender(camera, renderingData.currentEye);
         }
     }
 }

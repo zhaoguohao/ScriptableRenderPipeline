@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine.Rendering.PostProcessing;
@@ -20,6 +20,9 @@ namespace UnityEngine.Rendering.LWRP
         public ShadowData shadowData;
         public bool supportsDynamicBatching;
         public bool killAlphaInFinalBlit;
+        public int currentEye;
+        public int totalEyes;
+        public bool allowViewIndepentSetup;
     }
 
     public struct LightData
