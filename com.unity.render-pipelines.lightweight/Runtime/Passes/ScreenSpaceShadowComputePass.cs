@@ -197,10 +197,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             float invHalfShadowAtlasWidth = 0.5f * invShadowAtlasWidth;
             float invHalfShadowAtlasHeight = 0.5f * invShadowAtlasHeight;
 
-            var light = shadowLight.light;
-
             cmd.SetComputeMatrixArrayParam(computeShader, VxShadowMapConstantBuffer._WorldToShadow, dirVxShadowMap.cascadesMatrices);
-            cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ShadowData, new Vector4(light.shadowStrength, 0.0f, 0.0f, 0.0f));
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._CascadeShadowSplitSpheres0, dirVxShadowMap.cascadeSplitDistances[0]);
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._CascadeShadowSplitSpheres1, dirVxShadowMap.cascadeSplitDistances[1]);
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._CascadeShadowSplitSpheres2, dirVxShadowMap.cascadeSplitDistances[2]);
@@ -220,6 +217,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         void SetupVxShadowReceiverConstants(CommandBuffer cmd, int kernel, ref ComputeShader computeShader, ref Camera camera, ref VisibleLight shadowLight)
         {
+            var light = shadowLight.light;
+
             float screenSizeX = (float)camera.pixelWidth;
             float screenSizeY = (float)camera.pixelHeight;
             float invScreenSizeX = 1.0f / screenSizeX;
@@ -233,6 +232,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             var viewProjMatrix = projMatrix * viewMatrix;
 
             float voxelUpBias = dirVxShadowMap.voxelUpBias * (dirVxShadowMap.volumeScale / dirVxShadowMap.voxelResolutionInt);
+
+            cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ShadowData, new Vector4(light.shadowStrength, 0.0f, 0.0f, 0.0f));
 
             cmd.SetComputeMatrixParam(computeShader, VxShadowMapConstantBuffer._InvViewProjMatrixID, viewProjMatrix.inverse);
             cmd.SetComputeVectorParam(computeShader, VxShadowMapConstantBuffer._ScreenSizeID, new Vector4(screenSizeX, screenSizeY, invScreenSizeX, invScreenSizeY));
