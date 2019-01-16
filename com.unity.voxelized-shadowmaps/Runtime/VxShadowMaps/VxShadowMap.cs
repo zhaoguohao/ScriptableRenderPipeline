@@ -19,11 +19,10 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
         _65536 = _32768 * 2,
     }
 
-    public enum DepthBits
+    public enum ShadowsBlendMode
     {
-        _8 = 8,
-        _16 = 16,
-        //_32 = 32,
+        OnlyVxShadowMaps,
+        BlendDynamicShadows,
     }
 
     public abstract class VxShadowMap : MonoBehaviour

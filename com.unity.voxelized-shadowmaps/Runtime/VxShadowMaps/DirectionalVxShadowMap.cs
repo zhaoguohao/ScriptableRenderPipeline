@@ -12,11 +12,15 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
         public int voxelResolutionInt => (int)voxelResolution;
         public int voxelZBias = 2;
         public int voxelUpBias = 1;
-        //public DepthBits depthBits = DepthBits._16;
+        public ShadowsBlendMode shadowsBlendMode = ShadowsBlendMode.OnlyVxShadowMaps;
 
 #if UNITY_EDITOR
         public float size = 0.0f;
 #endif
+
+        [HideInInspector] public int cascadesCount;
+        [HideInInspector] public Matrix4x4[] cascadesMatrices;
+        [HideInInspector] public Vector4[] cascadeSplitDistances;
 
         [HideInInspector] public int maxScale;
         [HideInInspector] public Matrix4x4 worldToShadowMatrix = Matrix4x4.identity;

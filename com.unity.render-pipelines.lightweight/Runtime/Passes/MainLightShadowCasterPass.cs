@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Experimental.VoxelizedShadowMaps;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -31,6 +32,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         Matrix4x4[] m_MainLightShadowMatrices;
         ShadowSliceData[] m_CascadeSlices;
         Vector4[] m_CascadeSplitDistances;
+
+        DirectionalVxShadowMap m_VxShadowMap = null; //seongdae;vxsm
 
         const string k_RenderMainLightShadowmapTag = "Render Main Shadowmap";
 
@@ -95,6 +98,13 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 if (!success)
                     return false;
             }
+
+            //seongdae;vxsm
+            m_VxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
+            bool canNotCastDynamicShadows = m_VxShadowMap != null && m_VxShadowMap.shadowsBlendMode == ShadowsBlendMode.OnlyVxShadowMaps;
+            if (canNotCastDynamicShadows)
+                return false;
+            //seongdae;vxsm
 
             return true;
         }
@@ -165,7 +175,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                         ref settings, m_CascadeSlices[cascadeIndex].projectionMatrix, m_CascadeSlices[cascadeIndex].viewMatrix);
                 }
 
-                    SetupMainLightShadowReceiverConstants(cmd, ref shadowData, shadowLight);
+                SetupMainLightShadowReceiverConstants(cmd, ref shadowData, shadowLight);
+                SetMainLightShadowReceiverConstantsToVxShadowMap(); //seongdae;vxsm
             }
 
             CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
@@ -212,5 +223,21 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowAtlasWidth, invShadowAtlasHeight,
                 shadowData.mainLightShadowmapWidth, shadowData.mainLightShadowmapHeight));
         }
+
+        //seongdae;vxsm
+        void SetMainLightShadowReceiverConstantsToVxShadowMap()
+        {
+            if (m_VxShadowMap.cascadesMatrices == null)
+                m_VxShadowMap.cascadesMatrices = new Matrix4x4[k_MaxCascades + 1];
+            if (m_VxShadowMap.cascadeSplitDistances == null)
+                m_VxShadowMap.cascadeSplitDistances = new Vector4[k_MaxCascades];
+
+            m_VxShadowMap.cascadesCount = m_ShadowCasterCascadesCount;
+            for (int i = 0; i < m_MainLightShadowMatrices.Length; ++i)
+                m_VxShadowMap.cascadesMatrices[i] = m_MainLightShadowMatrices[i];
+            for (int i = 0; i < m_CascadeSplitDistances.Length; ++i)
+                m_VxShadowMap.cascadeSplitDistances[i] = m_CascadeSplitDistances[i];
+        }
+        //seongdae;vxsm
     };
 }

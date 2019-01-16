@@ -425,11 +425,11 @@ namespace UnityEngine.Rendering.LWRP
             {
                 int mainLightIndex = GetMainLightIndex(settings, visibleLights);
                 var mainLight = visibleLights[mainLightIndex].light;
-                var vxShadowMap = mainLight.GetComponent<DirectionalVxShadowMap>();
+                var dirVxShadowMap = mainLight.GetComponent<DirectionalVxShadowMap>();
 
-                bool vxShadowMapIsValid = vxShadowMap != null && vxShadowMap.IsValid();
+                bool dirVxShadowMapIsValid = dirVxShadowMap != null && dirVxShadowMap.IsValid();
 
-                shadowData.requiresScreenSpaceShadowCompute = vxShadowMapIsValid;
+                shadowData.requiresScreenSpaceShadowCompute = dirVxShadowMapIsValid;
                 shadowData.mainLightVxShadowQuality = (int)settings.vxShadowMapsQuality;
             }
             else

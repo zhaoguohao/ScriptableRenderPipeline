@@ -12,9 +12,7 @@
 #define TILE_SIZE 8
 
 #define _SHADOWS_ENABLED
-#ifdef PCF9x9_FILTERING
-#define _SHADOWS_SOFT
-#endif
+#define _MAIN_LIGHT_SHADOWS_CASCADE
 
 #define USE_EMULATE_CLZ
 //#define USE_IMITATED_CLZ
@@ -42,7 +40,7 @@ TEXTURE2D_FLOAT(_CameraDepthTexture);
 
 SAMPLER(sampler_CameraDepthTexture);
 
-CBUFFER_START(DirectionalVxShadowMap)
+CBUFFER_START(_DirectionalVxShadowMap)
 uint _VoxelResolution;
 int _VoxelZBias;
 float _VoxelUpBias;
@@ -566,8 +564,7 @@ void CSMain(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
     float3 positionWS = ComputeWorldSpacePosition(posInput.positionNDC, depth, UNITY_MATRIX_I_VP);
 #endif
 
-    float shadowStrength = 1.0;//GetMainLightShadowStrength();
-
+    float shadowStrength = GetMainLightShadowStrength();
     float attenuation = 1.0;
 
 #if WITH_DYNAMIC_SHADOWS
