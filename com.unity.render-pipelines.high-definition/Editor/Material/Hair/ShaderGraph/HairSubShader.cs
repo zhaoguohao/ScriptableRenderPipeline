@@ -35,7 +35,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HairMasterNode.NormalSlotId,
                 HairMasterNode.SpecularOcclusionSlotId,
                 HairMasterNode.BentNormalSlotId,
-                HairMasterNode.TangentSlotId,
+                HairMasterNode.BitangentSlotId,
                 HairMasterNode.SubsurfaceMaskSlotId,
                 HairMasterNode.ThicknessSlotId,
                 HairMasterNode.DiffusionProfileSlotId,
@@ -312,7 +312,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HairMasterNode.NormalSlotId,
                 HairMasterNode.SpecularOcclusionSlotId,
                 HairMasterNode.BentNormalSlotId,
-                HairMasterNode.TangentSlotId,
+                HairMasterNode.BitangentSlotId,
                 HairMasterNode.SubsurfaceMaskSlotId,
                 HairMasterNode.ThicknessSlotId,
                 HairMasterNode.DiffusionProfileSlotId,
@@ -372,7 +372,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 HairMasterNode.NormalSlotId,
                 HairMasterNode.SpecularOcclusionSlotId,
                 HairMasterNode.BentNormalSlotId,
-                HairMasterNode.TangentSlotId,
+                HairMasterNode.BitangentSlotId,
                 HairMasterNode.SubsurfaceMaskSlotId,
                 HairMasterNode.ThicknessSlotId,
                 HairMasterNode.DiffusionProfileSlotId,
@@ -579,9 +579,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 activeFields.Add("BentNormal");
             }
 
-            if (masterNode.IsSlotConnected(HairMasterNode.TangentSlotId) && pass.PixelShaderUsesSlot(HairMasterNode.TangentSlotId))
+            if (masterNode.IsSlotConnected(HairMasterNode.BitangentSlotId) && pass.PixelShaderUsesSlot(HairMasterNode.BitangentSlotId))
             {
-                activeFields.Add("Tangent");
+                activeFields.Add("Bitangent");
             }
 
             if (masterNode.transmission.isOn)

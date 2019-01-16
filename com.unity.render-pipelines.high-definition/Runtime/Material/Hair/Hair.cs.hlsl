@@ -27,11 +27,12 @@
 #define DEBUGVIEW_HAIR_SURFACEDATA_SUBSURFACE_MASK (1410)
 #define DEBUGVIEW_HAIR_SURFACEDATA_THICKNESS (1411)
 #define DEBUGVIEW_HAIR_SURFACEDATA_TANGENT (1412)
-#define DEBUGVIEW_HAIR_SURFACEDATA_SECONDARY_SMOOTHNESS (1413)
-#define DEBUGVIEW_HAIR_SURFACEDATA_SPECULAR_TINT (1414)
-#define DEBUGVIEW_HAIR_SURFACEDATA_SECONDARY_SPECULAR_TINT (1415)
-#define DEBUGVIEW_HAIR_SURFACEDATA_SPECULAR_SHIFT (1416)
-#define DEBUGVIEW_HAIR_SURFACEDATA_SECONDARY_SPECULAR_SHIFT (1417)
+#define DEBUGVIEW_HAIR_SURFACEDATA_BITANGENT (1413)
+#define DEBUGVIEW_HAIR_SURFACEDATA_SECONDARY_SMOOTHNESS (1414)
+#define DEBUGVIEW_HAIR_SURFACEDATA_SPECULAR_TINT (1415)
+#define DEBUGVIEW_HAIR_SURFACEDATA_SECONDARY_SPECULAR_TINT (1416)
+#define DEBUGVIEW_HAIR_SURFACEDATA_SPECULAR_SHIFT (1417)
+#define DEBUGVIEW_HAIR_SURFACEDATA_SECONDARY_SPECULAR_SHIFT (1418)
 
 //
 // UnityEngine.Experimental.Rendering.HDPipeline.Hair+BSDFData:  static fields
@@ -79,6 +80,7 @@ struct SurfaceData
     float subsurfaceMask;
     float thickness;
     float3 tangentWS;
+    float3 bitangentWS;
     float secondaryPerceptualSmoothness;
     float3 specularTint;
     float3 secondarySpecularTint;
@@ -163,6 +165,9 @@ void GetGeneratedSurfaceDataDebug(uint paramId, SurfaceData surfacedata, inout f
             break;
         case DEBUGVIEW_HAIR_SURFACEDATA_TANGENT:
             result = surfacedata.tangentWS * 0.5 + 0.5;
+            break;
+        case DEBUGVIEW_HAIR_SURFACEDATA_BITANGENT:
+            result = surfacedata.bitangentWS * 0.5 + 0.5;
             break;
         case DEBUGVIEW_HAIR_SURFACEDATA_SECONDARY_SMOOTHNESS:
             result = surfacedata.secondaryPerceptualSmoothness.xxx;

@@ -33,8 +33,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public const string BentNormalSlotName = "BentNormal";
         public const int BentNormalSlotId = 4;
 
-        public const string TangentSlotName = "Tangent";
-        public const int TangentSlotId = 5;
+        public const string BitangentSlotName = "Bitangent";
+        public const int BitangentSlotId = 5;
 
         public const string SubsurfaceMaskSlotName = "SubsurfaceMask";
         public const int SubsurfaceMaskSlotId = 6;
@@ -115,7 +115,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             Normal = 1 << NormalSlotId,
             SpecularOcclusion = 1 << SpecularOcclusionSlotId,
             BentNormal = 1 << BentNormalSlotId,
-            Tangent = 1 << TangentSlotId,
+            Bitangent = 1 << BitangentSlotId,
             SubsurfaceMask = 1 << SubsurfaceMaskSlotId,
             Thickness = 1 << ThicknessSlotId,
             DiffusionProfile = 1 << DiffusionProfileSlotId,
@@ -134,7 +134,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             AlphaClipThresholdShadow = 1 << AlphaClipThresholdShadowSlotId
         }
 
-        const SlotMask KajiyaKaySlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.SpecularOcclusion | SlotMask.BentNormal | SlotMask.Tangent | SlotMask.SubsurfaceMask 
+        const SlotMask KajiyaKaySlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.SpecularOcclusion | SlotMask.BentNormal | SlotMask.Bitangent | SlotMask.SubsurfaceMask 
                                             | SlotMask.Thickness | SlotMask.DiffusionProfile | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaClipThreshold | SlotMask.AlphaClipThresholdDepthPrepass 
                                                 | SlotMask.AlphaClipThresholdDepthPostpass | SlotMask.SpecularTint | SlotMask.SpecularShift | SlotMask.SecondarySpecularTint | SlotMask.SecondarySmoothness | SlotMask.SecondarySpecularShift | SlotMask.AlphaClipThresholdShadow;
 
@@ -554,10 +554,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 AddSlot(new Vector1MaterialSlot(ThicknessSlotId, ThicknessSlotName, ThicknessSlotName, SlotType.Input, 1.0f, ShaderStageCapability.Fragment));
                 validSlots.Add(ThicknessSlotId);
             }
-            if (MaterialTypeUsesSlotMask(SlotMask.Tangent))
+            if (MaterialTypeUsesSlotMask(SlotMask.Bitangent))
             {
-                AddSlot(new TangentMaterialSlot(TangentSlotId, TangentSlotName, TangentSlotName, CoordinateSpace.Tangent, ShaderStageCapability.Fragment));
-                validSlots.Add(TangentSlotId);
+                AddSlot(new TangentMaterialSlot(BitangentSlotId, BitangentSlotName, BitangentSlotName, CoordinateSpace.Tangent, ShaderStageCapability.Fragment));
+                validSlots.Add(BitangentSlotId);
             }
             if (MaterialTypeUsesSlotMask(SlotMask.Emission))
             {

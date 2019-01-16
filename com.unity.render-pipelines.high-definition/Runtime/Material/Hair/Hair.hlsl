@@ -155,8 +155,8 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
         FillMaterialTransmission(surfaceData.diffusionProfile, surfaceData.thickness, bsdfData);
     }
 
-    bsdfData.tangentWS = surfaceData.tangentWS;
-    bsdfData.bitangentWS = cross(surfaceData.normalWS, surfaceData.tangentWS);
+    bsdfData.bitangentWS = surfaceData.bitangentWS;
+    surfaceData.tangentWS = cross(surfaceData.bitangentWS, surfaceData.normalWS);
 
     // Kajiya kay
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_HAIR_KAJIYA_KAY))
@@ -251,8 +251,6 @@ PreLightData GetPreLightData(float3 V, PositionInputs posInput, inout BSDFData b
     preLightData.NdotV = dot(N, V);
 
     float NdotV = ClampNdotV(preLightData.NdotV);
-    float TdotV = dot(bsdfData.tangentWS, V);
-    float BdotV = dot(bsdfData.bitangentWS, V);
 
     float unused;
     float3 iblN;
@@ -363,8 +361,9 @@ void BSDF(  float3 V, float3 L, float NdotL, float3 positionWS, PreLightData pre
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_HAIR_KAJIYA_KAY))
     {
         // Must shift with bitangent and not tangent? <= TODO: check this
-        float3 t1 = ShiftTangent(bsdfData.bitangentWS, bsdfData.normalWS, bsdfData.specularShift);
-        float3 t2 = ShiftTangent(bsdfData.bitangentWS, bsdfData.normalWS, bsdfData.secondarySpecularShift);
+        float3 hairStrandDirection = -Orthonormalize(bsdfData.bitangentWS, bsdfData.normalWS);
+        float3 t1 = ShiftTangent(hairStrandDirection, bsdfData.normalWS, bsdfData.specularShift);
+        float3 t2 = ShiftTangent(hairStrandDirection, bsdfData.normalWS, bsdfData.secondarySpecularShift);
 
         float3 H = (L + V) * invLenLV;
 

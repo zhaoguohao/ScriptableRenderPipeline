@@ -220,8 +220,11 @@ $include("SharedCode.template.hlsl")
         surfaceData.geomNormalWS = fragInputs.worldToTangent[2];
 
         surfaceData.tangentWS = normalize(fragInputs.worldToTangent[0].xyz);    // The tangent is not normalize in worldToTangent for mikkt. TODO: Check if it expected that we normalize with Morten. Tag: SURFACE_GRADIENT
-        $Tangent: surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.worldToTangent);
-        surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
+        //$Tangent: surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.worldToTangent);
+        //surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.geomNormalWS);
+        surfaceData.bitangentWS = fragInputs.worldToTangent[1];
+        $Bitangent: surfaceData.bitangentWS = TransformTangentToWorld(-surfaceDescription.Bitangent, fragInputs.worldToTangent);
+
 
         // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
         // If user provide bent normal then we process a better term

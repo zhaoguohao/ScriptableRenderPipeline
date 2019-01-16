@@ -54,8 +54,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float thickness;
 
             // Anisotropic
-            [SurfaceDataAttributes("Tangent", true)]
-            public Vector3 tangentWS;
+            //[SurfaceDataAttributes("Tangent", true)]
+            //public Vector3 tangentWS;
+            [SurfaceDataAttributes("Bitangent", true)]
+            public Vector3 bitangentWS;
 
             // Kajiya kay
             [SurfaceDataAttributes("Secondary Smoothness")]
