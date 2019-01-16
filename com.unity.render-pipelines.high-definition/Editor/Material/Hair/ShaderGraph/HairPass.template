@@ -223,8 +223,7 @@ $include("SharedCode.template.hlsl")
         //$Tangent: surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.worldToTangent);
         //surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.geomNormalWS);
         surfaceData.bitangentWS = fragInputs.worldToTangent[1];
-        $Bitangent: surfaceData.bitangentWS = TransformTangentToWorld(-surfaceDescription.Bitangent, fragInputs.worldToTangent);
-
+        $Bitangent: surfaceData.bitangentWS = TransformTangentToWorld(-normalize(surfaceDescription.Bitangent), fragInputs.worldToTangent);
 
         // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
         // If user provide bent normal then we process a better term

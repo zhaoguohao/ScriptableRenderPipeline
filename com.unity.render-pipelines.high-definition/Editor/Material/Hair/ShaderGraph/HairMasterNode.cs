@@ -33,7 +33,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public const string BentNormalSlotName = "BentNormal";
         public const int BentNormalSlotId = 4;
 
-        public const string BitangentSlotName = "Bitangent";
+        public const string BitangentSlotName = "HairStrandDirection";
         public const int BitangentSlotId = 5;
 
         public const string SubsurfaceMaskSlotName = "SubsurfaceMask";
