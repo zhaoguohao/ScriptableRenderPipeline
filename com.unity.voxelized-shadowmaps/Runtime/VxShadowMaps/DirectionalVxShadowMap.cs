@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.VoxelizedShadowMaps
 {
-    public sealed class DirectionalVxShadowMap : MonoBehaviour
+    public sealed class DirectionalVxShadowMap : VxShadowMap
     {
         public DirectionalVxShadowMapResources resource;
 

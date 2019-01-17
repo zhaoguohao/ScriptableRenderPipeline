@@ -33,7 +33,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         ShadowSliceData[] m_CascadeSlices;
         Vector4[] m_CascadeSplitDistances;
 
-        DirectionalVxShadowMap m_VxShadowMap = null; //seongdae;vxsm
+        DirectionalVxShadowMap m_DirVxShadowMap = null; //seongdae;vxsm
 
         const string k_RenderMainLightShadowmapTag = "Render Main Shadowmap";
 
@@ -100,12 +100,12 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             }
 
             //seongdae;vxsm
-            m_VxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
+            m_DirVxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
 
             bool canNotCastDynamicShadows =
-                m_VxShadowMap != null &&
-                m_VxShadowMap.IsValid() &&
-                m_VxShadowMap.shadowsBlendMode == ShadowsBlendMode.OnlyVxShadowMaps;
+                m_DirVxShadowMap != null &&
+                m_DirVxShadowMap.IsValid() &&
+                m_DirVxShadowMap.shadowsBlendMode == ShadowsBlendMode.OnlyVxShadowMaps;
 
             if (canNotCastDynamicShadows)
                 return false;
@@ -232,11 +232,11 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         //seongdae;vxsm
         void SetMainLightShadowReceiverConstantsToVxShadowMap()
         {
-            m_VxShadowMap.cascadesCount = m_ShadowCasterCascadesCount;
+            m_DirVxShadowMap.cascadesCount = m_ShadowCasterCascadesCount;
             for (int i = 0; i < m_MainLightShadowMatrices.Length; ++i)
-                m_VxShadowMap.cascadesMatrices[i] = m_MainLightShadowMatrices[i];
+                m_DirVxShadowMap.cascadesMatrices[i] = m_MainLightShadowMatrices[i];
             for (int i = 0; i < m_CascadeSplitDistances.Length; ++i)
-                m_VxShadowMap.cascadeSplitDistances[i] = m_CascadeSplitDistances[i];
+                m_DirVxShadowMap.cascadeSplitDistances[i] = m_CascadeSplitDistances[i];
         }
         //seongdae;vxsm
     };
