@@ -87,46 +87,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_SNBuffer);
         }
 
+        void BindShadowTexture(CommandBuffer cmd)
+        {
+            cmd.SetGlobalTexture(HDShaderIDs._AreaShadowTexture, m_AreaShadowTextureArray);
+        }
+
         public bool RenderAreaShadows(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext)
         {
-            // Bind the texture because everyone needs it
-            cmd.SetGlobalTexture(HDShaderIDs._AreaShadowTexture, m_AreaShadowTextureArray);
+            // NOTE: Here we cannot clear the area shadow texture because it is a texture array. So we need to bind it and make sure no material will try to read it in the shaders
+            BindShadowTexture(cmd);
 
-            // First thing to check is: Do we have a valid ray-tracing environment?
+            // Let's check all the resources and states to see if we should render the effect
             HDRaytracingEnvironment rtEnvironement = m_RaytracingManager.CurrentEnvironment();
             Texture2DArray noiseTexture = m_RaytracingManager.m_RGNoiseTexture;
-            if (rtEnvironement == null || noiseTexture == null || !rtEnvironement.raytracedShadows)
-            {
-                return false;
-            }
-
-            // Try to grab the acceleration structure for the target camera
-            HDRayTracingFilter raytracingFilter = hdCamera.camera.gameObject.GetComponent<HDRayTracingFilter>();
-            RaytracingAccelerationStructure accelerationStructure = null;
-            if (raytracingFilter != null)
-            {
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(raytracingFilter.layermask);
-            }
-            else if (hdCamera.camera.cameraType == CameraType.SceneView || hdCamera.camera.cameraType == CameraType.Preview)
-            {
-                // For the scene view, we want to use the default acceleration structure
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(m_PipelineAsset.renderPipelineSettings.editorRaytracingFilterLayerMask);
-            }
-            // If no acceleration structure available, end it now
-            if (accelerationStructure == null)
-            {
-                return false;
-            }
-
-            // If no shadows shader is available, just skip right away
-            if (m_PipelineAsset.renderPipelineResources.shaders.areaBillateralFilterCS == null || m_PipelineAsset.renderPipelineResources.shaders.shadowsRaytracing == null)
-            {
-                return false;
-            }
-
-            // Fetch the shaders we will be using
             RaytracingShader shadowsShader = m_PipelineAsset.renderPipelineResources.shaders.shadowsRaytracing;
             ComputeShader bilateralFilter = m_PipelineAsset.renderPipelineResources.shaders.areaBillateralFilterCS;
+            bool invalidState = rtEnvironement == null || noiseTexture == null || !rtEnvironement.raytracedShadows || shadowsShader  == null || bilateralFilter == null || hdCamera.frameSettings.shaderLitMode != LitShaderMode.Deferred;
+
+            // Try to grab the acceleration structure for the target camera
+            RaytracingAccelerationStructure accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(hdCamera);
+
+            // If invalid state or ray-tracing acceleration structure, we stop right away
+            if (invalidState || accelerationStructure == null)
+                return false;
 
             // Fetch the filter kernel
             m_KernelFilter = bilateralFilter.FindKernel("AreaBilateralShadow");

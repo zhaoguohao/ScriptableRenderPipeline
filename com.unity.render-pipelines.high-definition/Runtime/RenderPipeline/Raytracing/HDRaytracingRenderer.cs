@@ -125,34 +125,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Texture2DArray noiseTexture = m_RaytracingManager.m_RGNoiseTexture;
             RaytracingShader forwardShader = m_PipelineAsset.renderPipelineResources.shaders.forwardRaytracing;
             Shader raytracingMask = m_PipelineAsset.renderPipelineResources.shaders.raytracingFlagMask;
-            if (rtEnvironement == null || noiseTexture == null || forwardShader == null || raytracingMask == null || !rtEnvironement.rayrtacedObjects)
-            {
+
+            // Try to grab the acceleration structure and the list of HD lights for the target camera
+            RaytracingAccelerationStructure accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(hdCamera);
+            List<HDAdditionalLightData> lightData = m_RaytracingManager.RequestHDLightList(hdCamera);
+
+            bool missingResources = rtEnvironement == null || noiseTexture == null || forwardShader == null || raytracingMask == null || accelerationStructure == null || lightData == null;
+
+            // If any resource or game-object is missing We stop right away
+            if (!rtEnvironement.rayrtacedObjects || missingResources)
                 return;
-            }
 
-            // Try to grab the acceleration structure for the target camera
-            HDRayTracingFilter raytracingFilter = hdCamera.camera.gameObject.GetComponent<HDRayTracingFilter>();
-            RaytracingAccelerationStructure accelerationStructure = null;
-            List<HDAdditionalLightData> lightData = null;
-            if (raytracingFilter != null)
-            {
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(raytracingFilter.layermask);
-                lightData = m_RaytracingManager.RequestHDLightList(raytracingFilter.layermask);
-            }
-            else if(hdCamera.camera.cameraType == CameraType.SceneView || hdCamera.camera.cameraType == CameraType.Preview)
-            {
-                // For the scene view, we want to use the default acceleration structure
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(m_PipelineAsset.renderPipelineSettings.editorRaytracingFilterLayerMask);
-                lightData = m_RaytracingManager.RequestHDLightList(m_PipelineAsset.renderPipelineSettings.editorRaytracingFilterLayerMask);
-            }
-
-            // If no acceleration structure available, end it now
-            if (accelerationStructure == null) return;
-
-            if(m_RaytracingFlagMaterial == null)
-            {
+            if (m_RaytracingFlagMaterial == null)
                 m_RaytracingFlagMaterial = CoreUtils.CreateEngineMaterial(raytracingMask);
-            }
 
             // Before going into raytracing, we need to flag which pixels needs to be raytracing
             EvaluateRaytracingMask(cull, hdCamera, cmd, renderContext);

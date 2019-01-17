@@ -63,38 +63,31 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_IntermediateBuffer);
         }
 
+        public void SetDefaultAmbientOcclusionTexture(CommandBuffer cmd)
+        {
+            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, Texture2D.blackTexture);
+            cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
+        }
+
         public void RenderAO(HDCamera hdCamera, CommandBuffer cmd, RTHandleSystem.RTHandle outputTexture, ScriptableRenderContext renderContext)
         {
-            // First thing to check is: Do we have a valid ray-tracing environment?
+            // Let's check all the resources
             HDRaytracingEnvironment rtEnvironement = m_RaytracingManager.CurrentEnvironment();
             Texture2DArray noiseTexture = m_RaytracingManager.m_RGNoiseTexture;
             ComputeShader bilateralFilter = m_PipelineResources.shaders.reflectionBilateralFilterCS;
             RaytracingShader aoShader = m_PipelineResources.shaders.aoRaytracing;
-            if (rtEnvironement == null || noiseTexture == null || bilateralFilter == null || aoShader == null)
-            {
-                return;
-            }
-
-            // If no reflection shader is available, just skip right away
-            if (m_PipelineResources.shaders.reflectionRaytracing == null) return;
-            m_KernelFilter = bilateralFilter.FindKernel("GaussianBilateralFilter");
+            bool missingResources = rtEnvironement == null || noiseTexture == null || bilateralFilter == null || aoShader == null;
 
             // Try to grab the acceleration structure for the target camera
-            HDRayTracingFilter raytracingFilter = hdCamera.camera.gameObject.GetComponent<HDRayTracingFilter>();
-            RaytracingAccelerationStructure accelerationStructure = null;
-            if (raytracingFilter != null)
-            {
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(raytracingFilter.layermask);
-            }
-            else if (hdCamera.camera.cameraType == CameraType.SceneView || hdCamera.camera.cameraType == CameraType.Preview)
-            {
-                // For the scene view, we want to use the default acceleration structure
-                accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(m_PipelineSettings.editorRaytracingFilterLayerMask);
-            }
+            RaytracingAccelerationStructure accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(hdCamera);
 
-            // If no acceleration structure available, end it now
-            if (accelerationStructure == null) return;
-
+            // If a resource is missing, the effect is not requested or no acceleration structure, set the default one and leave right away
+            if (missingResources || !hdCamera.frameSettings.enableSSAO || accelerationStructure == null)
+            {
+                SetDefaultAmbientOcclusionTexture(cmd);
+                return;
+            }
+            
             // Define the shader pass to use for the reflection pass
             cmd.SetRaytracingShaderPass(aoShader, "RTRaytrace_Visibility");
 
@@ -132,6 +125,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     break;
                     case HDRaytracingEnvironment.AOFilterMode.Bilateral:
                     {
+                        m_KernelFilter = bilateralFilter.FindKernel("GaussianBilateralFilter");
                         // Inject all the parameters for the compute
                         cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.aoBilateralRadius);
                         cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.aoBilateralSigma);
@@ -162,6 +156,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     break;
                 }
             }
+
+            // Bind the textures and the params
+            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, outputTexture);
+            cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(0f, 0f, 0f, VolumeManager.instance.stack.GetComponent<AmbientOcclusion>().directLightingStrength.value));
+
+            // TODO: All the push-debug stuff should be centralized somewhere
+            (RenderPipelineManager.currentPipeline as HDRenderPipeline).PushFullScreenDebugTexture(hdCamera, cmd, outputTexture, FullScreenDebugMode.SSAO);
         }
     }
 #endif
