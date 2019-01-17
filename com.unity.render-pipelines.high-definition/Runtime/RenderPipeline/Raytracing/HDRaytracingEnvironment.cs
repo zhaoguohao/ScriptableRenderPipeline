@@ -82,10 +82,25 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Range(0.001f, 50.0f)]
         public float cameraClusterRange = 10;
 
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////
+        // Primary Visibility
+        // Flag that defines if raytraced objects should be rendered
+        public bool rayrtacedObjects = false;
+
+        // This is the maximal depth that a ray can have for the primary visibility pass
+        const int maxRayDepth = 10;
+        [Range(1, maxRayDepth)]
+        public int rayMaxDepth = 3;
+
+        // Max Ray Length for the primary visibility
+        [Range(0.001f, 50.0f)]
+        public float raytracingRayLength = 20.0f;
+
         /////////////////////////////////////////////////////////////////////////////////////////////////
         // Area Light Shadows
         public bool raytracedShadows = false;
-        [Range(1, 8)]
+        [Range(2, 32)]
         public int shadowNumSamples = 4;
         [Range(0, 4)]
         public int numAreaLightShadows = 1;

@@ -16,6 +16,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             Background = UnityEngine.Rendering.RenderQueue.Background,
 
+            RaytracingTransparent = UnityEngine.Rendering.RenderQueue.Geometry - 2,
+            RaytracingOpaque = UnityEngine.Rendering.RenderQueue.Geometry - 1,
+
             Opaque = UnityEngine.Rendering.RenderQueue.Geometry,
             OpaqueAlphaTest = UnityEngine.Rendering.RenderQueue.AlphaTest,
             // Warning: we must not change Geometry last value to stay compatible with occlusion
@@ -55,11 +58,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             LowTransparent,
             AfterPostprocessTransparent,
             Overlay,
+            Raytracing,
             Unknown
         }
 
         public static readonly RenderQueueRange k_RenderQueue_OpaqueNoAlphaTest = new RenderQueueRange { lowerBound = (int)Priority.Opaque, upperBound = (int)Priority.OpaqueAlphaTest - 1 };
         public static readonly RenderQueueRange k_RenderQueue_OpaqueAlphaTest = new RenderQueueRange { lowerBound = (int)Priority.OpaqueAlphaTest, upperBound = (int)Priority.OpaqueLast };
+        public static readonly RenderQueueRange k_RenderQueue_AllOpaqueRaytracing = new RenderQueueRange { lowerBound = (int)Priority.RaytracingOpaque, upperBound = (int)Priority.RaytracingOpaque };
         public static readonly RenderQueueRange k_RenderQueue_AllOpaque = new RenderQueueRange { lowerBound = (int)Priority.Opaque, upperBound = (int)Priority.OpaqueLast };
 
         public static readonly RenderQueueRange k_RenderQueue_OpaqueAfterPostProcessing = new RenderQueueRange { lowerBound = (int)Priority.AfterPostprocessOpaque, upperBound = (int)Priority.AfterPostprocessOpaqueAlphaTest };
@@ -70,6 +75,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly RenderQueueRange k_RenderQueue_AllTransparent = new RenderQueueRange { lowerBound = (int)Priority.PreRefractionFirst, upperBound = (int)Priority.LowTransparentLast };
 
         public static readonly RenderQueueRange k_RenderQueue_AfterPostProcessTransparent = new RenderQueueRange { lowerBound = (int)Priority.AfterPostprocessTransparentFirst, upperBound = (int)Priority.AfterPostprocessTransparentLast };
+
+        public static readonly RenderQueueRange k_RenderQueue_Raytracing = new RenderQueueRange { lowerBound = (int)Priority.RaytracingTransparent, upperBound = (int)Priority.RaytracingOpaque };
 
         public static readonly RenderQueueRange k_RenderQueue_All = new RenderQueueRange { lowerBound = 0, upperBound = 5000 };
 
@@ -97,6 +104,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return RenderQueueType.AfterPostprocessTransparent;
             if (renderQueue == (int)Priority.Overlay)
                 return RenderQueueType.Overlay;
+            if (renderQueue == (int)Priority.RaytracingOpaque)
+                return RenderQueueType.Raytracing;
+            if (renderQueue == (int)Priority.RaytracingTransparent)
+                return RenderQueueType.Raytracing;
             return RenderQueueType.Unknown;
         }
 
@@ -118,6 +129,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return (int)Priority.LowTransparent + offset;
                 case RenderQueueType.AfterPostprocessTransparent:
                     return (int)Priority.AfterPostprocessTransparent + offset;
+                case RenderQueueType.Raytracing:
+                    return alphaTest ? (int)Priority.RaytracingTransparent : (int)Priority.RaytracingOpaque;
                 case RenderQueueType.Overlay:
                     return (int)Priority.Overlay;
                 default:
@@ -133,6 +146,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return RenderQueueType.Transparent;
                 case RenderQueueType.AfterPostProcessOpaque:
                     return RenderQueueType.AfterPostprocessTransparent;
+                case RenderQueueType.Raytracing:
+                    return RenderQueueType.Raytracing;
                 default:
                     //keep transparent mapped to transparent
                     return type;
@@ -152,6 +167,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return RenderQueueType.Opaque;
                 case RenderQueueType.AfterPostprocessTransparent:
                     return RenderQueueType.AfterPostProcessOpaque;
+                case RenderQueueType.Raytracing:
+                    return RenderQueueType.Raytracing;
                 default:
                     //keep opaque mapped to opaque
                     return type;
@@ -166,7 +183,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public enum OpaqueRenderQueue
         {
             Default,
-            AfterPostProcessing
+            AfterPostProcessing,
+            Raytracing
         }
 
         public enum TransparentRenderQueue
@@ -174,7 +192,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             BeforeRefraction,
             Default,
             LowResolution,
-            AfterPostProcessing
+            AfterPostProcessing,
+            Raytracing
         }
 
         public static OpaqueRenderQueue ConvertToOpaqueRenderQueue(RenderQueueType renderQueue)
@@ -185,6 +204,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return OpaqueRenderQueue.Default;
                 case RenderQueueType.AfterPostProcessOpaque:
                     return OpaqueRenderQueue.AfterPostProcessing;
+                case RenderQueueType.Raytracing:
+                    return OpaqueRenderQueue.Raytracing;
                 default:
                     throw new ArgumentException("Cannot map to OpaqueRenderQueue");
             }
@@ -198,6 +219,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return RenderQueueType.Opaque;
                 case OpaqueRenderQueue.AfterPostProcessing:
                     return RenderQueueType.AfterPostProcessOpaque;
+                case OpaqueRenderQueue.Raytracing:
+                    return RenderQueueType.Raytracing;
                 default:
                     throw new ArgumentException("Unknown OpaqueRenderQueue");
             }
@@ -215,6 +238,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return TransparentRenderQueue.LowResolution;
                 case RenderQueueType.AfterPostprocessTransparent:
                     return TransparentRenderQueue.AfterPostProcessing;
+                case RenderQueueType.Raytracing:
+                    return TransparentRenderQueue.Raytracing;
                 default:
                     throw new ArgumentException("Cannot map to TransparentRenderQueue");
             }
@@ -232,6 +257,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return RenderQueueType.LowTransparent;
                 case TransparentRenderQueue.AfterPostProcessing:
                     return RenderQueueType.AfterPostprocessTransparent;
+                case TransparentRenderQueue.Raytracing:
+                    return RenderQueueType.Raytracing;
                 default:
                     throw new ArgumentException("Unknown TransparentRenderQueue");
             }

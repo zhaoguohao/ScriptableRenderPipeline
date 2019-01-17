@@ -58,7 +58,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Keep track of the shared rt manager
             m_SharedRTManager = sharedRTManager;
 
-            m_IntermediateBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBHalf, sRGB: false, enableRandomWrite: true, useMipMap: false, name: "IntermediateReflectionBuffer");
+            m_IntermediateBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, useMipMap: false, name: "IntermediateReflectionBuffer");
 
             // Allocate the light cluster
             m_LightCluster = new HDRaytracingLightCluster();
@@ -124,8 +124,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetRaytracingIntParams(reflectionShader, HDShaderIDs._RaytracingNumNoiseLayers, noiseTexture.depth);
 
             // Inject the ray generation data
-            cmd.SetRaytracingFloatParams(reflectionShader, HDShaderIDs._RaytracingRayBias, rtEnvironement.rayBias);
-            cmd.SetRaytracingFloatParams(reflectionShader, HDShaderIDs._RaytracingRayMaxLength, rtEnvironement.reflRayLength);
+            cmd.SetGlobalFloat(HDShaderIDs._RaytracingRayBias, rtEnvironement.rayBias);
+            cmd.SetGlobalFloat(HDShaderIDs._RaytracingRayMaxLength, rtEnvironement.reflRayLength);
             cmd.SetRaytracingIntParams(reflectionShader, HDShaderIDs._RaytracingNumSamples, rtEnvironement.reflNumMaxSamples);
 
             // Set the data for the ray generation

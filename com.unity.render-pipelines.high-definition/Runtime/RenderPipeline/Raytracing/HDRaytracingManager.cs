@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Collections.Generic;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -175,6 +178,38 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Keep track of the noise texture to use
             m_RGNoiseTexture = blueNoise.textureArray128RGCoherent;
+
+#if UNITY_EDITOR
+            // We need to invalidate the acceleration structures in case the hierarchy changed
+            EditorApplication.hierarchyChanged += OnHierarchyChanged;
+#endif
+        }
+#if UNITY_EDITOR
+
+        static void OnHierarchyChanged()
+        {
+            HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+            if (hdPipeline != null)
+            {
+                hdPipeline.m_RayTracingManager.SetDirty();
+            }
+        }
+#endif
+
+        public void SetDirty()
+        {
+            int numFilters = m_Filters.Count;
+            for(int filterIdx = 0; filterIdx < numFilters; ++filterIdx)
+            {
+                // Grab the target graph component
+                HDRayTracingFilter filterComponent = m_Filters[filterIdx];
+                
+                // If this camera had a graph component had an obsolete flag
+                if(filterComponent != null)
+                {
+                    filterComponent.SetDirty();
+                }
+            }
         }
 
         public void Release()
@@ -394,9 +429,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             for(int meshIdx = 0; meshIdx < numSubMeshes; ++meshIdx)
                             {
                                 Material currentMaterial = currentRenderer.sharedMaterials[meshIdx];
+                                bool materialIsTransparent = currentMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT");
                                 if(currentMaterial != null)
                                 {
-                                    subMeshFlagArray[meshIdx] = !currentMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT");
+                                    subMeshFlagArray[meshIdx] = true; // !currentMaterial.IsKeywordEnabled("_SURFACE_TYPE_TRANSPARENT");
                                     subMeshCutoffArray[meshIdx] = currentMaterial.IsKeywordEnabled("_ALPHATEST_ON");
                                     singleSided |= !currentMaterial.IsKeywordEnabled("_DOUBLESIDED_ON");
                                 }

@@ -75,6 +75,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public HDRaytracingManager m_RayTracingManager = new HDRaytracingManager();
         readonly HDRaytracingReflections m_RaytracingReflections = new HDRaytracingReflections();
         readonly HDRaytracingShadowManager m_RaytracingShadows = new HDRaytracingShadowManager();
+        readonly HDRaytracingRenderer m_RaytracingRenderer = new HDRaytracingRenderer();
 #endif
 
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
@@ -356,6 +357,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RayTracingManager.Init(m_Asset.renderPipelineSettings, m_Asset.renderPipelineResources, m_BlueNoise);
             m_RaytracingReflections.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager);
             m_RaytracingShadows.Init(m_Asset, m_RayTracingManager, m_SharedRTManager, m_LightLoop, m_GbufferManager);
+            m_RaytracingRenderer.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager);
             m_LightLoop.InitRaytracing(m_RayTracingManager);
             m_AmbientOcclusionSystem.InitRaytracing(m_RayTracingManager, m_SharedRTManager);
 #endif
@@ -627,6 +629,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             base.Dispose(disposing);
 
 #if ENABLE_RAYTRACING
+            m_RaytracingRenderer.Release();
             m_RaytracingShadows.Release();
             m_RaytracingReflections.Release();
             m_RayTracingManager.Release();
@@ -1505,6 +1508,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
                     // Let's render the screen space area light shadows
                     bool shadowsRendered = m_RaytracingShadows.RenderAreaShadows(hdCamera, cmd, renderContext);
+                    PushFullScreenDebugTexture(hdCamera, cmd, m_RaytracingShadows.GetShadowedIntegrationTexture(), FullScreenDebugMode.RaytracedAreaShadow);
                     if (shadowsRendered)
                     {
                         cmd.SetGlobalInt(HDShaderIDs._RaytracedAreaShadow, 1);
@@ -1708,6 +1712,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Fill depth buffer to reduce artifact for transparent object during postprocess
                 RenderTransparentDepthPostpass(cullingResults, hdCamera, renderContext, cmd);
 
+#if ENABLE_RAYTRACING
+                m_RaytracingRenderer.Render(hdCamera, cmd, m_CameraColorBuffer, renderContext, cullingResults);
+#endif
                 RenderColorPyramid(hdCamera, cmd, false);
 
                 AccumulateDistortion(cullingResults, hdCamera, renderContext, cmd);
@@ -2321,6 +2328,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 default:
                     throw new ArgumentOutOfRangeException("Unknown ShaderLitMode");
             }
+
+#if ENABLE_RAYTRACING
+            // If there is a ray-tracing environment and the feature is enabled we want to push these objects to the prepass
+            HDRaytracingEnvironment currentEnv = m_RayTracingManager.CurrentEnvironment();
+            // We want the opaque objects to be in the prepass so that we avoid rendering uselessly the pixels before raytracing them
+            if (currentEnv != null && currentEnv.rayrtacedObjects)
+                RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyAndDepthForwardOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaqueRaytracing);
+#endif
 
             return shouldRenderMotionVectorAfterGBuffer;
         }

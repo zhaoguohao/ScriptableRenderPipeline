@@ -128,6 +128,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public RaytracingShader aoRaytracing;
             public RaytracingShader reflectionRaytracing;
             public RaytracingShader shadowsRaytracing;
+            public Shader           raytracingFlagMask;
+            public RaytracingShader forwardRaytracing;
             public ComputeShader areaBillateralFilterCS;
             public ComputeShader reflectionBilateralFilterCS;
             public ComputeShader lightClusterBuildCS;
