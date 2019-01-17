@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -16,6 +17,13 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     /// </summary>
     internal class BeginXRRenderingPass : ScriptableRenderPass
     {
+        private readonly int eyeIndex;
+
+        public BeginXRRenderingPass(int eye)
+        {
+            eyeIndex = eye;
+        }
+
         /// <inheritdoc/>
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
@@ -23,7 +31,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 throw new ArgumentNullException("renderer");
             
             Camera camera = renderingData.cameraData.camera;
-            context.StartMultiEye(camera, renderingData.currentEye);
+            context.StartMultiEye(camera, eyeIndex);
         }
     }
 }

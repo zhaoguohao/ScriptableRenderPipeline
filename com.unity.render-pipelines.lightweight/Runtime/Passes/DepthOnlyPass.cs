@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -19,14 +20,16 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         private RenderTargetHandle depthAttachmentHandle { get; set; }
         internal RenderTextureDescriptor descriptor { get; private set; }
         private FilteringSettings opaqueFilterSettings { get; set; }
+        private readonly int eyeIndex;
 
         /// <summary>
         /// Create the DepthOnlyPass
         /// </summary>
-        public DepthOnlyPass()
+        public DepthOnlyPass(int eye)
         {
             RegisterShaderPassName("DepthOnly");
             opaqueFilterSettings = new FilteringSettings(RenderQueueRange.opaque);
+            eyeIndex = eye;
         }
         
         /// <summary>
@@ -79,7 +82,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 if (renderingData.cameraData.isStereoEnabled)
                 {
                     Camera camera = renderingData.cameraData.camera;
-                    context.StartMultiEye(camera, renderingData.currentEye);
+                    context.StartMultiEye(camera, eyeIndex);
                     context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref filteringSettings);
                     context.StopMultiEye(camera);
                 }

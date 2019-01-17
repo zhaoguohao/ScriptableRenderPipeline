@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -8,12 +9,15 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     {
         const string k_CollectShadowsTag = "Collect Shadows";
         RenderTextureFormat m_ColorFormat;
+        private readonly int eyeIndex;
 
-        public ScreenSpaceShadowResolvePass()
+        public ScreenSpaceShadowResolvePass(int eye)
         {
             m_ColorFormat = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.R8)
                 ? RenderTextureFormat.R8
                 : RenderTextureFormat.ARGB32;
+
+            eyeIndex = eye;
         }
 
         private RenderTargetHandle colorAttachmentHandle { get; set; }
@@ -56,12 +60,17 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (renderingData.cameraData.isStereoEnabled)
             {
                 Camera camera = renderingData.cameraData.camera;
-                context.StartMultiEye(camera, renderingData.currentEye);
+                context.StartMultiEye(camera, eyeIndex);
                 context.ExecuteCommandBuffer(cmd);
                 context.StopMultiEye(camera);
             }
             else
                 context.ExecuteCommandBuffer(cmd);
+
+            cmd.Clear();
+            cmd.SetGlobalTexture(colorAttachmentHandle.id, screenSpaceOcclusionTexture);
+            context.ExecuteCommandBuffer(cmd);
+
             CommandBufferPool.Release(cmd);
         }
 

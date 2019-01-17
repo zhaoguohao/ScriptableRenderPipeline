@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -13,6 +14,13 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     /// </summary>
     internal class EndXRRenderingPass : ScriptableRenderPass
     {
+        private readonly int eyeIndex;
+
+        public EndXRRenderingPass(int eye)
+        {
+            eyeIndex = eye;
+        }
+
         /// <inheritdoc/>
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
@@ -22,8 +30,8 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             Camera camera = renderingData.cameraData.camera;
             context.StopMultiEye(camera);
 
-            if(renderingData.currentEye == renderingData.totalEyes - 1)
-                context.StereoEndRender(camera, renderingData.currentEye);
+            bool isLastPass = eyeIndex == renderingData.totalEyes-1;
+            context.StereoEndRender(camera, eyeIndex, isLastPass);
         }
     }
 }

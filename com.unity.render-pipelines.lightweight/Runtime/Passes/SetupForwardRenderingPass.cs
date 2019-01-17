@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -18,13 +19,20 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     /// </summary>
     internal class SetupForwardRenderingPass : ScriptableRenderPass
     {
+        private readonly int eyeIndex;
+
+        public SetupForwardRenderingPass(int eye)
+        {
+            eyeIndex = eye;
+        }
+
         /// <inheritdoc/>
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
         {
             if (renderer == null)
                 throw new ArgumentNullException("renderer");
-            
-            context.SetupCameraProperties(renderingData.cameraData.camera, renderingData.cameraData.isStereoEnabled, renderingData.currentEye);
+
+            context.SetupCameraProperties(renderingData.cameraData.camera, renderingData.cameraData.isStereoEnabled, eyeIndex);
         }
     }
 }

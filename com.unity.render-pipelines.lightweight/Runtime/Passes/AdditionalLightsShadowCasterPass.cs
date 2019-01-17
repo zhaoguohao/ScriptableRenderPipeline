@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine.Rendering;
@@ -21,7 +21,6 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         const int k_ShadowmapBufferBits = 16;
         RenderTexture m_AdditionalLightsShadowmapTexture;
-        bool m_CleanupAdditionalLightsShadowmapTexture;
 
         Matrix4x4[] m_AdditionalLightShadowMatrices;
         ShadowSliceData[] m_AdditionalLightSlices;
@@ -51,13 +50,6 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         public bool Setup(RenderTargetHandle destination, ref RenderingData renderingData, int maxVisibleAdditinalLights)
         {
-            m_CleanupAdditionalLightsShadowmapTexture = false;
-            if (!renderingData.allowViewIndepentSetup)
-            {
-                m_CleanupAdditionalLightsShadowmapTexture = true;
-                return true;
-            }
-
             Clear();
             this.destination = destination;
 
@@ -138,7 +130,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 throw new ArgumentNullException("renderer");
 
             if (renderingData.shadowData.supportsAdditionalLightShadows)
-                RenderAdditionalShadowmapAtlas(ref context, renderingData.allowViewIndepentSetup, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
+                RenderAdditionalShadowmapAtlas(ref context, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
             }
 
         public override void FrameCleanup(CommandBuffer cmd)
@@ -146,7 +138,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             if (cmd == null)
                 throw new ArgumentNullException("cmd");
 
-            if (m_CleanupAdditionalLightsShadowmapTexture && m_AdditionalLightsShadowmapTexture)
+            if (m_AdditionalLightsShadowmapTexture)
             {
                 RenderTexture.ReleaseTemporary(m_AdditionalLightsShadowmapTexture);
                 m_AdditionalLightsShadowmapTexture = null;
@@ -155,8 +147,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
         void Clear()
         {
-            if(m_CleanupAdditionalLightsShadowmapTexture)
-                m_AdditionalLightsShadowmapTexture = null;
+            m_AdditionalLightsShadowmapTexture = null;
 
             for (int i = 0; i < m_AdditionalLightShadowMatrices.Length; ++i)
                 m_AdditionalLightShadowMatrices[i] = Matrix4x4.identity;
@@ -168,42 +159,39 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 m_AdditionalLightsShadowStrength[i] = 0.0f;
         }
 
-        void RenderAdditionalShadowmapAtlas(ref ScriptableRenderContext context, bool allowViewIndepentSetup, ref CullingResults cullResults, ref LightData lightData, ref ShadowData shadowData)
+        void RenderAdditionalShadowmapAtlas(ref ScriptableRenderContext context, ref CullingResults cullResults, ref LightData lightData, ref ShadowData shadowData)
         {
             NativeArray<VisibleLight> visibleLights = lightData.visibleLights;
 
             bool additionalLightHasSoftShadows = false;
             CommandBuffer cmd = CommandBufferPool.Get(k_RenderAdditionalLightShadows);
-            if (allowViewIndepentSetup)
+            using (new ProfilingSample(cmd, k_RenderAdditionalLightShadows))
             {
-                using (new ProfilingSample(cmd, k_RenderAdditionalLightShadows))
+                int shadowmapWidth = shadowData.additionalLightsShadowmapWidth;
+                int shadowmapHeight = shadowData.additionalLightsShadowmapHeight;
+
+                m_AdditionalLightsShadowmapTexture = ShadowUtils.GetTemporaryShadowTexture(shadowmapWidth, shadowmapHeight, k_ShadowmapBufferBits);
+
+                SetRenderTarget(cmd, m_AdditionalLightsShadowmapTexture, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store,
+                    ClearFlag.Depth, Color.black, TextureDimension.Tex2D);
+
+                for (int i = 0; i < m_AdditionalShadowCastingLightIndices.Count; ++i)
                 {
-                    int shadowmapWidth = shadowData.additionalLightsShadowmapWidth;
-                    int shadowmapHeight = shadowData.additionalLightsShadowmapHeight;
+                    int shadowLightIndex = m_AdditionalShadowCastingLightIndices[i];
+                    VisibleLight shadowLight = visibleLights[shadowLightIndex];
 
-                    m_AdditionalLightsShadowmapTexture = ShadowUtils.GetTemporaryShadowTexture(shadowmapWidth, shadowmapHeight, k_ShadowmapBufferBits);
-
-                    SetRenderTarget(cmd, m_AdditionalLightsShadowmapTexture, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store,
-                        ClearFlag.Depth, Color.black, TextureDimension.Tex2D);
-
-                    for (int i = 0; i < m_AdditionalShadowCastingLightIndices.Count; ++i)
-                    {
-                        int shadowLightIndex = m_AdditionalShadowCastingLightIndices[i];
-                        VisibleLight shadowLight = visibleLights[shadowLightIndex];
-
-                        if (m_AdditionalShadowCastingLightIndices.Count > 1)
-                            ShadowUtils.ApplySliceTransform(ref m_AdditionalLightSlices[i], shadowmapWidth, shadowmapHeight);
+                    if (m_AdditionalShadowCastingLightIndices.Count > 1)
+                        ShadowUtils.ApplySliceTransform(ref m_AdditionalLightSlices[i], shadowmapWidth, shadowmapHeight);
 
                         var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
                         Vector4 shadowBias = ShadowUtils.GetShadowBias(ref shadowLight, shadowLightIndex,
                             ref shadowData, m_AdditionalLightSlices[i].projectionMatrix, m_AdditionalLightSlices[i].resolution);
                         ShadowUtils.SetupShadowCasterConstantBuffer(cmd, ref shadowLight, shadowBias);
-                        ShadowUtils.RenderShadowSlice(cmd, ref context, ref m_AdditionalLightSlices[i], ref settings, m_AdditionalLightSlices[i].projectionMatrix, m_AdditionalLightSlices[i].viewMatrix);
-                        additionalLightHasSoftShadows |= shadowLight.light.shadows == LightShadows.Soft;
-                    }
-
-                    SetupAdditionalLightsShadowReceiverConstants(cmd, ref shadowData);
+                    ShadowUtils.RenderShadowSlice(cmd, ref context, ref m_AdditionalLightSlices[i], ref settings, m_AdditionalLightSlices[i].projectionMatrix, m_AdditionalLightSlices[i].viewMatrix);
+                    additionalLightHasSoftShadows |= shadowLight.light.shadows == LightShadows.Soft;
                 }
+
+                SetupAdditionalLightsShadowReceiverConstants(cmd, ref shadowData);
             }
 
             // We share soft shadow settings for main light and additional lights to save keywords.
