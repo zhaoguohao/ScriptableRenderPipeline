@@ -103,7 +103,7 @@ namespace UnityEditor.ShaderGraph
             set
             {
                 m_DrawState = value;
-                Dirty(ModificationScope.Node);
+                Dirty(ModificationScope.Layout);
             }
         }
 
