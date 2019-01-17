@@ -108,17 +108,20 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
             if (computeShader != null)
             {
-                string kernelName = "NoFilter";
+                string blendModeName;
+                if (mainLightDynamicShadows)
+                    blendModeName = "BlendDynamicShadows";
+                else
+                    blendModeName = "NoBlend";
+
+                string filteringName = "NoFilter";
                 switch (shadowData.mainLightVxShadowQuality)
                 {
-                    case 1: kernelName = "BiLinear";  break;
-                    case 2: kernelName = "TriLinear"; break;
+                    case 1: filteringName = "Bilinear";  break;
+                    case 2: filteringName = "Trilinear"; break;
                 }
 
-                if (mainLightDynamicShadows)
-                    kernelName += "WithDynShadows";
-                else
-                    kernelName += "WithoutDynShadows";
+                string kernelName = blendModeName + filteringName;
 
                 kernel = computeShader.FindKernel(kernelName);
             }

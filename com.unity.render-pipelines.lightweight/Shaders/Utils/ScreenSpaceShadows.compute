@@ -1,13 +1,11 @@
 
-#pragma kernel NoFilterWithoutDynShadows     CSMain=NoFilterWithoutDynShadows     NO_FILTERING
-#pragma kernel BiLinearWithoutDynShadows     CSMain=BiLinearWithoutDynShadows     BI_LINEAR
-#pragma kernel TriLinearWithoutDynShadows    CSMain=TriLinearWithoutDynShadows    TRI_LINEAR
-//#pragma kernel PCF9x9LinearWithoutDynShadows CSMain=PCF9x9LinearWithoutDynShadows PCF9x9_FILTERING
+#pragma kernel BlendDynamicShadowsNoFilter  CSMain=BlendDynamicShadowsNoFilter  WITH_DYNAMIC_SHADOWS NO_FILTERING
+#pragma kernel BlendDynamicShadowsBilinear  CSMain=BlendDynamicShadowsBilinear  WITH_DYNAMIC_SHADOWS BILINEAR_FILTERING
+#pragma kernel BlendDynamicShadowsTrilinear CSMain=BlendDynamicShadowsTrilinear WITH_DYNAMIC_SHADOWS TRILINEAR_FILTERING
 
-#pragma kernel NoFilterWithDynShadows        CSMain=NoFilterWithDynShadows        WITH_DYNAMIC_SHADOWS NO_FILTERING
-#pragma kernel BiLinearWithDynShadows        CSMain=BiLinearWithDynShadows        WITH_DYNAMIC_SHADOWS BI_LINEAR
-#pragma kernel TriLinearWithDynShadows       CSMain=TriLinearWithDynShadows       WITH_DYNAMIC_SHADOWS TRI_LINEAR
-//#pragma kernel PCF9x9LinearWithDynShadows    CSMain=PCF9x9LinearWithDynShadows    WITH_DYNAMIC_SHADOWS PCF9x9_FILTERING
+#pragma kernel NoBlendNoFilter              CSMain=NoBlendNoFilter              NO_FILTERING
+#pragma kernel NoBlendBilinear              CSMain=NoBlendBilinear              BILINEAR_FILTERING
+#pragma kernel NoBlendTrilinear             CSMain=NoBlendTrilinear             TRILINEAR_FILTERING
 
 #define TILE_SIZE 8
 
@@ -521,9 +519,9 @@ float SampleVxShadowMap(float3 positionWS)
 
 #if NO_FILTERING
     attenuation = ComputeVxShadowMapAttenuationNoFiltering(positionWS);
-#elif BI_LINEAR
+#elif BILINEAR_FILTERING
     attenuation = ComputeVxShadowMapAttenuationBiFiltering(positionWS);
-#elif TRI_LINEAR
+#elif TRILINEAR_FILTERING
     attenuation = ComputeVxShadowMapAttenuationTriFiltering(positionWS);
 #elif PCF9X9_FILTERING
     //attenuation = ComputeVxShadowMapAttenuationPCF9x9iltering(positionWS);
