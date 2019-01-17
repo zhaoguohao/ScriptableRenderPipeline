@@ -75,7 +75,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public HDRaytracingManager m_RayTracingManager = new HDRaytracingManager();
         readonly HDRaytracingReflections m_RaytracingReflections = new HDRaytracingReflections();
         readonly HDRaytracingShadowManager m_RaytracingShadows = new HDRaytracingShadowManager();
-        public DebugRayTrace m_DebugRayTrace = new DebugRayTrace();
 #endif
 
         // Renderer Bake configuration can vary depends on if shadow mask is enabled or no
@@ -363,7 +362,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RaytracingShadows.Init(m_Asset, m_RayTracingManager, m_SharedRTManager, m_LightLoop, m_GbufferManager);
             m_LightLoop.InitRaytracing(m_RayTracingManager);
             m_AmbientOcclusionSystem.InitRaytracing(m_RayTracingManager, m_SharedRTManager);
-            m_DebugRayTrace.Init(m_Asset.renderPipelineResources);
 #endif
         }
 
@@ -611,7 +609,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RaytracingShadows.Release();
             m_RaytracingReflections.Release();
             m_RayTracingManager.Release();
-            m_DebugRayTrace.Release();
 #endif
             m_DebugDisplaySettings.UnregisterDebug();
 
@@ -1280,7 +1277,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var target = renderRequest.target;
 #if ENABLE_RAYTRACING
             m_AreaShadowsRendered = false;
-            m_DebugRayTrace.ClearRayCount(cmd);
+            m_RayTracingManager.debugManager.ClearRayCount(cmd, hdCamera);
 #endif
 
             m_DbufferManager.enableDecals = false;
@@ -1429,7 +1426,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 StartStereoRendering(cmd, renderContext, camera);
 
                 if (!hdCamera.frameSettings.SSAORunsAsync())
-                    m_AmbientOcclusionSystem.Render(cmd, hdCamera, m_SharedRTManager, renderContext, m_DebugRayTrace.rayCountTex);
+                    m_AmbientOcclusionSystem.Render(cmd, hdCamera, m_SharedRTManager, renderContext, m_RayTracingManager.debugManager.rayCountTex);
 
                 // Clear and copy the stencil texture needs to be moved to before we invoke the async light list build,
                 // otherwise the async compute queue can end up using that texture before the graphics queue is done with it.
@@ -2949,7 +2946,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 
                 m_LightLoop.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth, cullResults);
-
+                
                 DecalSystem.instance.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth);
 
                 if (m_CurrentDebugDisplaySettings.data.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None || m_CurrentDebugDisplaySettings.data.falseColorDebugSettings.falseColor || m_CurrentDebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuminanceMeter)
