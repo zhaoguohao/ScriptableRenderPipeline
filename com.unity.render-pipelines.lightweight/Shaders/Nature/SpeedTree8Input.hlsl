@@ -1,6 +1,12 @@
 #ifndef LIGHTWEIGHT_SPEEDTREE8_INPUT_INCLUDED
 #define LIGHTWEIGHT_SPEEDTREE8_INPUT_INCLUDED
 
+#ifdef EFFECT_BUMP
+    #define _NORMALMAP
+#endif
+
+#define _ALPHATEST_ON
+
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/SurfaceInput.hlsl"
 
@@ -15,6 +21,11 @@
 
 half4 _Color;
 int _TwoSided;
+
+#ifdef SCENESELECTIONPASS
+    int _ObjectId;
+    int _PassValue;
+#endif
 
 #ifdef EFFECT_EXTRA_TEX
     sampler2D _ExtraTex;

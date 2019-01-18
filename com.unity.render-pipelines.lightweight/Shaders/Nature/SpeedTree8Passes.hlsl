@@ -17,51 +17,50 @@ struct SpeedTreeVertexInput
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
-struct SpeedTreeVertexInterpolated
+struct SpeedTreeVertexOutput
 {
-#ifdef DEPTH_ONLY
+    float2 uv                       : TEXCOORD0;
+    half4 color                     : TEXCOORD1;
+    
+    half4 fogFactorAndVertexLight   : TEXCOORD2;    // x: fogFactor, yzw: vertex light
+    
+    #ifdef EFFECT_BUMP
+        half4 normalWS              : TEXCOORD3;    // xyz: normal, w: viewDir.x
+        half4 tangentWS             : TEXCOORD4;    // xyz: tangent, w: viewDir.y
+        half4 bitangentWS           : TEXCOORD5;    // xyz: bitangent, w: viewDir.z
+    #else
+        half3 normalWS              : TEXCOORD3;
+        half3 viewDirWS             : TEXCOORD4;
+    #endif
+
+    #ifdef _MAIN_LIGHT_SHADOWS
+        float4 shadowCoord          : TEXCOORD6;
+    #endif
+    
+    float3 positionWS               : TEXCOORD7;
+    float4 clipPos                  : SV_POSITION;
+    UNITY_VERTEX_INPUT_INSTANCE_ID
+    UNITY_VERTEX_OUTPUT_STEREO
+};
+
+struct SpeedTreeVertexDepthOutput
+{
     float2 uv                       : TEXCOORD0;
     half4 color                     : TEXCOORD1;
     float4 clipPos                  : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
-#else
-    float2 uv                       : TEXCOORD0;
-    // Lightnaps/GI?                : TEXCOORD1;
-    float4 posWS                    : TEXCOORD2;
-
-    half4 normalWS                  : TEXCOORD3;    // xyz: tangent, w: viewDir.x
-    half4 tangentWS                 : TEXCOORD4;    // xyz: tangent, w: viewDir.y
-    half4 bitangentWS               : TEXCOORD5;    // xyz: bitangent, w: viewDir.z
-    #ifdef _MAIN_LIGHT_SHADOWS
-        float4 shadowCoord          : TEXCOORD6;
-    #endif
-
-    half4 color                     : TEXCOORD7;
-    float4 clipPos                  : SV_POSITION;
-    UNITY_VERTEX_INPUT_INSTANCE_ID
-    UNITY_VERTEX_OUTPUT_STEREO
-#endif
-};
-
-struct SpeedTreeVertexOutput
-{
-    SpeedTreeVertexInterpolated interpolated;
 };
 
 struct SpeedTreeFragmentInput
 {
-    SpeedTreeVertexInterpolated interpolated;
+    SpeedTreeVertexOutput interpolated;
 #ifdef EFFECT_BACKSIDE_NORMALS
     half facing : VFACE;
 #endif
 };
 
-///////////////////////////////////////////////////////////////////////////////
-//                  Vertex and Fragment functions                            //
-///////////////////////////////////////////////////////////////////////////////
-
-void InitializeVertData(inout SpeedTreeVertexInput input, inout SpeedTreeVertexOutput output, float lodValue)
+void InitializeCommonData(inout SpeedTreeVertexInput input, float lodValue)
 {
     // smooth LOD
     #if defined(LOD_FADE_PERCENTAGE) && !defined(EFFECT_BILLBOARD)
@@ -151,39 +150,13 @@ void InitializeVertData(inout SpeedTreeVertexInput input, inout SpeedTreeVertexO
             input.vertex.xyz = windyPosition;
         }
     #endif
-}
-
-///////////////////////////////////////////////////////////////////////
-//  vertex program
-
-SpeedTreeVertexOutput SpeedTree8Vert(SpeedTreeVertexInput input)
-{
-    SpeedTreeVertexOutput output = (SpeedTreeVertexOutput)0;
-    UNITY_SETUP_INSTANCE_ID(input);
-    UNITY_TRANSFER_INSTANCE_ID(input, output.interpolated);
-    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output.interpolated);
-
-	// handle speedtree wind and lod
-	InitializeVertData(input, output, unity_LODFade.x);
-    output.interpolated.color = input.color;
-
-#ifdef DEPTH_ONLY
-    // Probably need to deal with the shadow bias for tree self-shadowing?
-    output.interpolated.uv = input.texcoord.xy;
-    half3 normalWS = TransformObjectToWorldNormal(input.normal);
-    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
-    output.interpolated.clipPos = vertexInput.positionCS;
-    #ifdef SHADOW_CASTER
-        float4 positionCS = TransformWorldToHClip(ApplyShadowBias(vertexInput.positionWS, normalWS, _LightDirection));
-        output.interpolated.clipPos = positionCS;
-    #endif
-#else
-    float3 treePos = float3(UNITY_MATRIX_M[0].w, UNITY_MATRIX_M[1].w, UNITY_MATRIX_M[2].w);
+        
     #if defined(EFFECT_BILLBOARD)
+        float3 treePos = float3(UNITY_MATRIX_M[0].w, UNITY_MATRIX_M[1].w, UNITY_MATRIX_M[2].w);
         // crossfade faces
         bool topDown = (input.texcoord.z > 0.5);
         float3 viewDir = UNITY_MATRIX_IT_MV[2].xyz;
-        float3 cameraDir = normalize(mul((float3x3)unity_WorldToObject, _WorldSpaceCameraPos - treePos));
+        float3 cameraDir = normalize(mul((float3x3)UNITY_MATRIX_M, _WorldSpaceCameraPos - treePos));
         float viewDot = max(dot(viewDir, input.normal), dot(cameraDir, input.normal));
         viewDot *= viewDot;
         viewDot *= viewDot;
@@ -192,10 +165,10 @@ SpeedTreeVertexOutput SpeedTree8Vert(SpeedTreeVertexInput input)
         // if invisible, avoid overdraw
         if (viewDot < 0.3333)
         {
-            input.vertex.xyz = float3(0,0,0);
+            input.vertex.xyz = float3(0, 0, 0);
         }
 
-        output.interpolated.color = float4(1, 1, 1, clamp(viewDot, 0, 1));
+        input.color = float4(1, 1, 1, clamp(viewDot, 0, 1));
 
         // adjust lighting on billboards to prevent seams between the different faces
         if (topDown)
@@ -210,154 +183,221 @@ SpeedTreeVertexOutput SpeedTree8Vert(SpeedTreeVertexInput input)
         }
         input.normal = normalize(input.normal);
     #endif
+}
+
+SpeedTreeVertexOutput SpeedTree8Vert(SpeedTreeVertexInput input)
+{
+    SpeedTreeVertexOutput output = (SpeedTreeVertexOutput)0;
+    UNITY_SETUP_INSTANCE_ID(input);
+    UNITY_TRANSFER_INSTANCE_ID(input, output);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+	// handle speedtree wind and lod
+	InitializeCommonData(input, unity_LODFade.x);
+    
+    output.uv = input.texcoord.xy;
+    output.color = input.color;
 
     // color already contains (ao, ao, ao, blend)
     // put hue variation amount in there
     #ifdef EFFECT_HUE_VARIATION
+        float3 treePos = float3(UNITY_MATRIX_M[0].w, UNITY_MATRIX_M[1].w, UNITY_MATRIX_M[2].w);
         float hueVariationAmount = frac(treePos.x + treePos.y + treePos.z);
-        output.interpolated.color.g = saturate(hueVariationAmount * _HueVariationColor.a);
+        output.color.g = saturate(hueVariationAmount * _HueVariationColor.a);
     #endif
 	
 	VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
-	
-    output.interpolated.uv = input.texcoord.xy;
-    output.interpolated.posWS.xyz = vertexInput.positionWS;
-
-    #ifdef _MAIN_LIGHT_SHADOWS
-		output.interpolated.shadowCoord = GetShadowCoord(vertexInput);
-	#endif
-
-    //output.interpolated.posWS.w = ComputeFogFactor(vertexInput.positionCS.z);
-    output.interpolated.posWS.w = 1.0;
-	
-    real sign = input.tangent.w * GetOddNegativeScale();
-	output.interpolated.normalWS.xyz = TransformObjectToWorldNormal(input.normal);
-	output.interpolated.tangentWS.xyz = TransformObjectToWorldDir(input.tangent.xyz);
-	output.interpolated.bitangentWS.xyz = cross(output.interpolated.normalWS.xyz, output.interpolated.tangentWS.xyz) * sign;
+    half3 normalWS = TransformObjectToWorldNormal(input.normal);
+    
+    half3 vertexLight = VertexLighting(vertexInput.positionWS, normalWS);
+    half fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+    output.fogFactorAndVertexLight = half4(fogFactor, vertexLight);
 
     half3 viewDirWS = GetCameraPositionWS() - vertexInput.positionWS;
-    // View dir packed in w.
-    output.interpolated.normalWS.w = viewDirWS.x;
-    output.interpolated.tangentWS.w = viewDirWS.y;
-    output.interpolated.bitangentWS.w = viewDirWS.z;
 
-    // Probably need to deal with the shadow bias for tree self-shadowing?
-    output.interpolated.clipPos = vertexInput.positionCS;
-#endif
+    #ifdef EFFECT_BUMP
+        real sign = input.tangent.w * GetOddNegativeScale();
+        output.normalWS.xyz = normalWS;
+        output.tangentWS.xyz = TransformObjectToWorldDir(input.tangent.xyz);
+        output.bitangentWS.xyz = cross(output.normalWS.xyz, output.tangentWS.xyz) * sign;
+
+        // View dir packed in w.
+        output.normalWS.w = viewDirWS.x;
+        output.tangentWS.w = viewDirWS.y;
+        output.bitangentWS.w = viewDirWS.z;
+    #else
+        output.normalWS = normalWS;
+        output.viewDirWS = viewDirWS;
+    #endif
+
+    #ifdef _MAIN_LIGHT_SHADOWS
+		output.shadowCoord = GetShadowCoord(vertexInput);
+	#endif
+
+    output.positionWS = vertexInput.positionWS;
+    output.clipPos = vertexInput.positionCS;
+
 	return output;
+}
+
+SpeedTreeVertexDepthOutput SpeedTree8VertDepth(SpeedTreeVertexInput input)
+{
+    SpeedTreeVertexDepthOutput output = (SpeedTreeVertexDepthOutput)0;
+    UNITY_SETUP_INSTANCE_ID(input);
+    UNITY_TRANSFER_INSTANCE_ID(input, output);
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+    // handle speedtree wind and lod
+    InitializeCommonData(input, unity_LODFade.x);
+    output.uv = input.texcoord.xy;
+    output.color = input.color;
+
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
+
+#ifdef SHADOW_CASTER
+    half3 normalWS = TransformObjectToWorldNormal(input.normal);
+    float4 positionCS = TransformWorldToHClip(ApplyShadowBias(vertexInput.positionWS, normalWS, _LightDirection));
+    output.clipPos = positionCS;
+#else
+    output.clipPos = vertexInput.positionCS;
+#endif
+
+    return output;
 }
 
 void InitializeInputData(SpeedTreeFragmentInput input, half3 normalTS, out InputData inputData)
 {
-#ifdef DEPTH_ONLY
-    // Nothing
-#else
-    inputData.positionWS = input.interpolated.posWS.xyz;
+    inputData.positionWS = input.interpolated.positionWS.xyz;
 
-    half3 viewDirWS = half3(input.interpolated.normalWS.w, input.interpolated.tangentWS.w, input.interpolated.bitangentWS.w);
-#if SHADER_HINT_NICE_QUALITY
-    viewDirWS = SafeNormalize(viewDirWS);
-#endif
-
+#ifdef EFFECT_BUMP
     inputData.normalWS = TransformTangentToWorld(normalTS, half3x3(input.interpolated.tangentWS.xyz, input.interpolated.bitangentWS.xyz, input.interpolated.normalWS.xyz));
     inputData.normalWS = NormalizeNormalPerPixel(inputData.normalWS);
+    inputData.viewDirectionWS = half3(input.interpolated.normalWS.w, input.interpolated.tangentWS.w, input.interpolated.bitangentWS.w);
+#else
+    inputData.normalWS = input.interpolated.normalWS;
+    inputData.viewDirectionWS = input.interpolated.viewDirWS;
+#endif
 
-    inputData.viewDirectionWS = viewDirWS;
+#if SHADER_HINT_NICE_QUALITY
+    inputData.viewDirectionWS = SafeNormalize(inputData.viewDirectionWS);
+#endif
+
 #ifdef _MAIN_LIGHT_SHADOWS
     inputData.shadowCoord = input.interpolated.shadowCoord;
 #else
     inputData.shadowCoord = float4(0, 0, 0, 0);
 #endif
-    inputData.fogCoord = 0;
-    inputData.vertexLighting = half3(0, 0, 0);
-    inputData.bakedGI = half3(0, 0, 0);
 
-    //inputData.fogCoord = input.fogFactorAndVertexLight.x;
-    //inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
-    //inputData.bakedGI = SAMPLE_GI(input.lightmapUV, input.vertexSH, inputData.normalWS);
-#endif
+    inputData.fogCoord = input.interpolated.fogFactorAndVertexLight.x;
+    inputData.vertexLighting = input.interpolated.fogFactorAndVertexLight.yzw;
+    inputData.bakedGI = half3(0, 0, 0); // No GI currently.
 }
 
 half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
 {
 	UNITY_SETUP_INSTANCE_ID(input.interpolated);
 
-    float2 uv = input.interpolated.uv;
-    half4 diffuseAlpha = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex)) * _Color;
+    #ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
+        #ifdef EFFECT_BILLBOARD
+            LODDitheringTransition(input.interpolated.clipPos.xyz, unity_LODFade.x);
+        #endif
+    #endif
 
-    half alpha = diffuseAlpha.a * input.interpolated.color.a;
+    float2 uv = input.interpolated.uv;
+    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex)) * _Color;
+
+    half alpha = diffuse.a * input.interpolated.color.a;
     AlphaDiscard(alpha - 0.3333, 0.0);
 
-    #ifdef DEPTH_ONLY
-        return half4(1,1,1,1);
+    half3 albedo = diffuse.rgb;
+    half3 emission = 0;
+	half metallic = 0;
+	half smoothness = 0;
+	half occlusion = 0;
+    half3 specular = 0;
+
+    // hue variation
+    #ifdef EFFECT_HUE_VARIATION
+        half3 shiftedColor = lerp(albedo, _HueVariationColor.rgb, input.interpolated.color.g);
+
+        // preserve vibrance
+        half maxBase = max(albedo.r, max(albedo.g, albedo.b));
+        half newMaxBase = max(shiftedColor.r, max(shiftedColor.g, shiftedColor.b));
+        maxBase /= newMaxBase;
+        maxBase = maxBase * 0.5f + 0.5f;
+        shiftedColor.rgb *= maxBase;
+
+        albedo = saturate(shiftedColor);
+    #endif
+
+    // normal
+    #ifdef EFFECT_BUMP
+        half3 normalTs = SampleNormal(uv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
     #else
-        half3 diffuse = diffuseAlpha.rgb;
-        half3 emission = 0;
-	    half metallic = 0;
-	    half smoothness = 0;
-	    half occlusion = 0;
-        half3 specular = 0;
         half3 normalTs = half3(0, 0, 1);
+    #endif
 
-        // hue variation
-        #ifdef EFFECT_HUE_VARIATION
-            half3 shiftedColor = lerp(diffuse, _HueVariationColor.rgb, input.interpolated.color.g);
+    // flip normal on backsides
+    #ifdef EFFECT_BACKSIDE_NORMALS
+        if (input.facing < 0.5)
+        {
+            normalTs.z = -normalTs.z;
+        }
+    #endif
 
-            // preserve vibrance
-            half maxBase = max(diffuse.r, max(diffuse.g, diffuse.b));
-            half newMaxBase = max(shiftedColor.r, max(shiftedColor.g, shiftedColor.b));
-            maxBase /= newMaxBase;
-            maxBase = maxBase * 0.5f + 0.5f;
-            shiftedColor.rgb *= maxBase;
+    // adjust billboard normals to improve GI and matching
+    #ifdef EFFECT_BILLBOARD
+        normalTs.z *= 0.5;
+        normalTs = normalize(normalTs);
+    #endif
 
-            diffuse = saturate(shiftedColor);
-        #endif
+    // extra
+    #ifdef EFFECT_EXTRA_TEX
+        half4 extra = tex2D(_ExtraTex, uv);
+        smoothness = extra.r;
+        metallic = extra.g;
+        occlusion = extra.b * input.interpolated.color.r;
+    #else
+        smoothness = _Glossiness;
+        metallic = _Metallic;
+        occlusion = input.interpolated.color.r;
+    #endif
 
-        // normal
-        #ifdef EFFECT_BUMP
-            normalTs = SampleNormal(uv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
-        #elif defined(EFFECT_BACKSIDE_NORMALS) || defined(EFFECT_BILLBOARD)
-            normalTs = half3(0, 0, 1);
-        #endif
+    // subsurface (hijack emissive)
+    #ifdef EFFECT_SUBSURFACE
+        emission = tex2D(_SubsurfaceTex, uv).rgb * _SubsurfaceColor.rgb;
+    #endif
 
-        // flip normal on backsides
-        #ifdef EFFECT_BACKSIDE_NORMALS
-            if (input.facing < 0.5)
-            {
-                normalTs.z = -normalTs.z;
-            }
-        #endif
+    InputData inputData;
+    InitializeInputData(input, normalTs, inputData);
 
-        // adjust billboard normals to improve GI and matching
-        #ifdef EFFECT_BILLBOARD
-            normalTs.z *= 0.5;
-            normalTs = normalize(normalTs);
-        #endif
-
-        // extra
-        #ifdef EFFECT_EXTRA_TEX
-            half4 extra = tex2D(_ExtraTex, uv);
-            smoothness = extra.r;
-            metallic = extra.g;
-            occlusion = extra.b * input.interpolated.color.r;
-        #else
-            smoothness = _Glossiness;
-            metallic = _Metallic;
-            occlusion = input.interpolated.color.r;
-        #endif
-
-        // subsurface (hijack emissive)
-        #ifdef EFFECT_SUBSURFACE
-            emission = tex2D(_SubsurfaceTex, uv).rgb * _SubsurfaceColor.rgb;
-        #endif
-
-        InputData inputData;
-        InitializeInputData(input, normalTs, inputData);
-
-        half4 color = LightweightFragmentPBR(inputData, diffuse, metallic, specular, smoothness, occlusion, emission, alpha);
-        //color.rgb = MixFog(color.rgb, inputData.fogCoord);
+    half4 color = LightweightFragmentPBR(inputData, albedo, metallic, specular, smoothness, occlusion, emission, alpha);
+    color.rgb = MixFog(color.rgb, inputData.fogCoord);
     
-        return color;
+    return color;
+}
+
+half4 SpeedTree8FragDepth(SpeedTreeVertexDepthOutput input) : SV_Target
+{
+    UNITY_SETUP_INSTANCE_ID(input);
+
+    #ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
+        #ifdef EFFECT_BILLBOARD
+            LODDitheringTransition(input.clipPos.xyz, unity_LODFade.x);
+        #endif
+    #endif
+
+    float2 uv = input.uv;
+    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex)) * _Color;
+
+    half alpha = diffuse.a * input.color.a;
+    AlphaDiscard(alpha - 0.3333, 0.0);
+
+    #if defined(SCENESELECTIONPASS)
+        // We use depth prepass for scene selection in the editor, this code allow to output the outline correctly
+        return half4(_ObjectId, _PassValue, 1.0, 1.0);
+    #else    
+        return half4(0, 0, 0, 0);
     #endif
 }
 

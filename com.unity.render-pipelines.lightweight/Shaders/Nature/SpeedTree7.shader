@@ -1,46 +1,31 @@
-Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
+Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
 {
     Properties
     {
-        _MainTex ("Base (RGB) Transparency (A)", 2D) = "white" {}
-        _Color ("Color", Color) = (1,1,1,1)
-
-        [Toggle(EFFECT_HUE_VARIATION)] _HueVariationKwToggle("Hue Variation", Float) = 0
-        _HueVariationColor ("Hue Variation Color", Color) = (1.0,0.5,0.0,0.1)
-
-        [Toggle(EFFECT_BUMP)] _NormalMapKwToggle("Normal Mapping", Float) = 0
+        _Color("Main Color", Color) = (1,1,1,1)
+        _HueVariation("Hue Variation", Color) = (1.0,0.5,0.0,0.1)
+        _MainTex("Base (RGB) Trans (A)", 2D) = "white" {}
+        _DetailTex("Detail", 2D) = "black" {}
         _BumpMap("Normal Map", 2D) = "bump" {}
-
-        _ExtraTex ("Smoothness (R), Metallic (G), AO (B)", 2D) = "(0.5, 0.0, 1.0)" {}
-        _Glossiness ("Smoothness", Range(0.0, 1.0)) = 0.5
-        _Metallic ("Metallic", Range(0.0, 1.0)) = 0.0
-
-        [Toggle(EFFECT_SUBSURFACE)] _SubsurfaceKwToggle("Subsurface", Float) = 0
-        _SubsurfaceTex ("Subsurface (RGB)", 2D) = "white" {}
-        _SubsurfaceColor ("Subsurface Color", Color) = (1,1,1,1)
-        _SubsurfaceIndirect ("Subsurface Indirect", Range(0.0, 1.0)) = 0.25
-
-        [Toggle(EFFECT_BILLBOARD)] _BillboardKwToggle("Billboard", Float) = 0
-        _BillboardShadowFade ("Billboard Shadow Fade", Range(0.0, 1.0)) = 0.5
-
-        [Enum(No,2,Yes,0)] _TwoSided ("Two Sided", Int) = 2 // enum matches cull mode
-        [KeywordEnum(None,Fastest,Fast,Better,Best,Palm)] _WindQuality ("Wind Quality", Range(0,5)) = 0
+        _Cutoff("Alpha Cutoff", Range(0,1)) = 0.333
+        [MaterialEnum(Off,0,Front,1,Back,2)] _Cull("Cull", Int) = 2
+        [MaterialEnum(None,0,Fastest,1,Fast,2,Better,3,Best,4,Palm,5)] _WindQuality("Wind Quality", Range(0,5)) = 0
     }
 
     SubShader
     {
         Tags
         {
-            "Queue"="AlphaTest"
-            "IgnoreProjector"="True"
-            "RenderType"="TransparentCutout"
-            "DisableBatching"="LODFading"
-			"RenderPipeline" = "LightweightPipeline"
+            "Queue" = "Geometry"
+            "IgnoreProjector" = "True"
+            "RenderType" = "Opaque"
+            "DisableBatching" = "LODFading"
+            "RenderPipeline" = "LightweightPipeline"
         }
         LOD 400
-        Cull [_TwoSided]
+        Cull [_Cull]
 
-		Pass
+        Pass
         {
             Name "ForwardLit"
             Tags { "LightMode" = "LightweightForward" }
@@ -48,8 +33,8 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             HLSLPROGRAM
             #pragma target 3.0
 
-            #pragma vertex SpeedTree8Vert
-            #pragma fragment SpeedTree8Frag
+            #pragma vertex SpeedTree7Vert
+            #pragma fragment SpeedTree7Frag
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
@@ -57,24 +42,20 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-            #pragma multi_compile __ LOD_FADE_CROSSFADE
             #pragma multi_compile_fog
 
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
-            #pragma shader_feature_local EFFECT_HUE_VARIATION
-            #pragma shader_feature_local EFFECT_SUBSURFACE
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
             #pragma shader_feature_local EFFECT_BUMP
-            #pragma shader_feature_local EFFECT_EXTRA_TEX
+            #pragma shader_feature_local EFFECT_HUE_VARIATION
 
             #define ENABLE_WIND
-            #define EFFECT_BACKSIDE_NORMALS
+            #define VERTEX_COLOR
 
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
             
             ENDHLSL
         }
@@ -89,25 +70,20 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             HLSLPROGRAM
             #pragma target 3.0
 
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-            #pragma multi_compile __ LOD_FADE_CROSSFADE
+            #pragma vertex SpeedTree7VertDepth
+            #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
 
             #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SCENESELECTIONPASS
 
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
-            
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
             ENDHLSL
         }
 
@@ -119,24 +95,22 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             HLSLPROGRAM
             #pragma target 3.0
 
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
+            #pragma vertex SpeedTree7VertDepth
+            #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-            #pragma multi_compile __ LOD_FADE_CROSSFADE
             
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
 
             #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SHADOW_CASTER
 
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
             ENDHLSL
         }
 
@@ -145,29 +119,26 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             Name "DepthOnly"
             Tags{"LightMode" = "DepthOnly"}
 
-            ZWrite On
             ColorMask 0
 
             HLSLPROGRAM
             #pragma target 3.0
 
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
+            #pragma vertex SpeedTree7VertDepth
+            #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-            #pragma multi_compile __ LOD_FADE_CROSSFADE
 
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
-
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
+            
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
 
             #define ENABLE_WIND
             #define DEPTH_ONLY
-            
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
+
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
 
             ENDHLSL
         }
@@ -197,8 +168,8 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
 
-            #pragma vertex SpeedTree8Vert
-            #pragma fragment SpeedTree8Frag
+            #pragma vertex SpeedTree7Vert
+            #pragma fragment SpeedTree7Frag
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
@@ -208,11 +179,13 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
             #pragma multi_compile_fog
 
-            #pragma shader_feature_local EFFECT_BILLBOARD
-            #pragma shader_feature_local EFFECT_EXTRA_TEX
+            #pragma multi_compile_instancing
+            #pragma instancing_options assumeuniformscaling maxcount:50
 
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
+            #define VERTEX_COLOR
+
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
 
             ENDHLSL
         }
@@ -230,22 +203,17 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
 
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
+            #pragma vertex SpeedTree7VertDepth
+            #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
-            #pragma shader_feature_local EFFECT_BILLBOARD
-
             #define DEPTH_ONLY
             #define SCENESELECTIONPASS
 
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
-        
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
             ENDHLSL
         }
 
@@ -260,22 +228,19 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
 
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
-
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
+
+            #pragma vertex SpeedTree7VertDepth
+            #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
-            #pragma shader_feature_local EFFECT_BILLBOARD
-
             #define DEPTH_ONLY
             #define SHADOW_CASTER
 
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
-
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
             ENDHLSL
         }
 
@@ -292,25 +257,24 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma exclude_renderers d3d11_9x
             #pragma target 2.0
 
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
+            #pragma vertex SpeedTree7VertDepth
+            #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
 
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
-            #pragma shader_feature_local EFFECT_BILLBOARD
-
             #define DEPTH_ONLY
 
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
+            #include "SpeedTree7Input.hlsl"
+            #include "SpeedTree7Passes.hlsl"
 
             ENDHLSL
         }
     }
 
+    Dependency "BillboardShader" = "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
     FallBack "Lightweight Render Pipeline/Simple Lit"
-    CustomEditor "SpeedTree8ShaderGUI"
+    CustomEditor "SpeedTreeMaterialInspector"
 }
