@@ -136,7 +136,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             bool missingResources = rtEnvironement == null || noiseTexture == null || forwardShader == null || raytracingMask == null || accelerationStructure == null || lightData == null;
 
             // If any resource or game-object is missing We stop right away
-            if (!rtEnvironement.rayrtacedObjects || missingResources)
+            if (missingResources || !rtEnvironement.rayrtacedObjects)
                 return;
 
             if (m_RaytracingFlagMaterial == null)
