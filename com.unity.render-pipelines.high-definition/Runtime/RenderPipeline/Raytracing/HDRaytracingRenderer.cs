@@ -93,7 +93,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 criteria = 0
             };
 
-            var filterSettings = new FilteringSettings(HDRenderQueue.k_RenderQueue_Raytracing)
+            var filterSettings = new FilteringSettings(HDRenderQueue.k_RenderQueue_AllOpaqueRaytracing)
             {
                 excludeMotionVectorObjects = false
             };
@@ -109,6 +109,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             drawSettings.overrideMaterial = m_RaytracingFlagMaterial;
             drawSettings.overrideMaterialPassIndex = 0;
             renderContext.DrawRenderers(cull, ref drawSettings, ref filterSettings);
+
+            // Set the renderqueue range for the transparent set
+            filterSettings.renderQueueRange = HDRenderQueue.k_RenderQueue_AllTransparentRaytracing;
 
             // Then let's render the transparent objects
             m_RaytracingFlagMaterial.renderQueue = (int)HDRenderQueue.Priority.RaytracingTransparent;

@@ -25,7 +25,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Bilateral,
             Nvidia
         };
-        public AOFilterMode aoFilterMode = AOFilterMode.Bilateral;
+        public AOFilterMode aoFilterMode = AOFilterMode.None;
 
         // Max Ray Length for the AO
         [Range(0.001f, 20.0f)]
@@ -60,14 +60,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Number of Samples for the Reflections
         [Range(1, 64)]
-        public int reflNumMaxSamples = 13;
+        public int reflNumMaxSamples = 8;
 
         public enum ReflectionsFilterMode
         {
             None,
             Bilateral
         };
-        public ReflectionsFilterMode reflFilterMode = ReflectionsFilterMode.Bilateral;
+        public ReflectionsFilterMode reflFilterMode = ReflectionsFilterMode.None;
 
         // Reflection Bilateral Filter Data
         [Range(1, 27)]
