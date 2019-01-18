@@ -26,7 +26,6 @@ namespace UnityEditor.ShaderGraph.Drawing
         MaterialPropertyBlock m_PreviewPropertyBlock;
         PreviewSceneResources m_SceneResources;
         Texture2D m_ErrorTexture;
-        Texture2D m_WaitTexture;
         string m_OutputIdName;
         Vector2? m_NewMasterPreviewSize;
 
@@ -42,7 +41,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_PreviewMaterial = new Material(Shader.Find("Unlit/Color")) { hideFlags = HideFlags.HideAndDontSave };
             m_PreviewPropertyBlock = new MaterialPropertyBlock();
             m_ErrorTexture = GenerateFourSquare(Color.magenta, Color.black);
-            m_WaitTexture = GenerateFourSquare(Color.cyan, Color.black);
             m_SceneResources = new PreviewSceneResources();
             m_MasterRenderData = new PreviewRenderData
             {
@@ -366,7 +364,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             ShaderUtil.UpdateShaderAsset(shaderData.shader, shaderStr, false);
             ShaderUtil.CompilePass(shaderData.mat, 0);
             shaderData.isCompiling = true;
-            renderData.texture = m_WaitTexture;
+            renderData.NotifyPreviewChanged();
         }
 
         void RenderPreview(PreviewRenderData renderData, Mesh mesh, Matrix4x4 transform)

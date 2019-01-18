@@ -549,6 +549,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                     m_PreviewImage.image = m_PreviewRenderData.texture;
                 else
                     m_PreviewImage.MarkDirtyRepaint();
+
+                if (m_PreviewRenderData.shaderData.isCompiling)
+                    m_PreviewImage.tintColor = new Color(1.0f, 1.0f, 1.0f, 0.3f);
+                else
+                    m_PreviewImage.tintColor = Color.white;
             }
         }
 
