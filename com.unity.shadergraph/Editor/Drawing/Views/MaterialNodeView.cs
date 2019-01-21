@@ -145,6 +145,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 RegisterCallback<MouseEnterEvent>(OnMouseHover);
                 RegisterCallback<MouseLeaveEvent>(OnMouseHover);
+                AddToClassList("property");
             }
 
             var masterNode = node as IMasterNode;
