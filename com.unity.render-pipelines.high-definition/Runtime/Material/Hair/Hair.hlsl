@@ -358,10 +358,11 @@ void BSDF(  float3 V, float3 L, float NdotL, float3 positionWS, PreLightData pre
     float LdotV, NdotH, LdotH, NdotV, invLenLV;
     GetBSDFAngle(V, L, NdotL, preLightData.NdotV, LdotV, NdotH, LdotH, NdotV, invLenLV);
 
+    float3 hairStrandDirection = -Orthonormalize(bsdfData.bitangentWS, bsdfData.normalWS);
+
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_HAIR_KAJIYA_KAY))
     {
         // Must shift with bitangent and not tangent? <= TODO: check this
-        float3 hairStrandDirection = -Orthonormalize(bsdfData.bitangentWS, bsdfData.normalWS);
         float3 t1 = ShiftTangent(hairStrandDirection, bsdfData.normalWS, bsdfData.specularShift);
         float3 t2 = ShiftTangent(hairStrandDirection, bsdfData.normalWS, bsdfData.secondarySpecularShift);
 
