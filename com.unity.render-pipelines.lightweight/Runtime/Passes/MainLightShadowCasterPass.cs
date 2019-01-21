@@ -236,6 +236,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         //seongdae;vxsm
         void SetMainLightShadowReceiverConstantsToVxShadowMap()
         {
+            if (m_DirVxShadowMap == null)
+                return;
+
             m_DirVxShadowMap.cascadesCount = m_ShadowCasterCascadesCount;
             for (int i = 0; i < m_MainLightShadowMatrices.Length; ++i)
                 m_DirVxShadowMap.cascadesMatrices[i] = m_MainLightShadowMatrices[i];
