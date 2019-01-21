@@ -156,7 +156,7 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     }
 
     bsdfData.bitangentWS = surfaceData.bitangentWS;
-    surfaceData.tangentWS = cross(surfaceData.bitangentWS, surfaceData.normalWS);
+    bsdfData.tangentWS = cross(surfaceData.bitangentWS, surfaceData.normalWS);
 
     // Kajiya kay
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_HAIR_KAJIYA_KAY))
