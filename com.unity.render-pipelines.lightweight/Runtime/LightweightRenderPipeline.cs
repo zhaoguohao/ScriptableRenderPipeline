@@ -9,6 +9,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Experimental.GlobalIllumination;
 using Lightmapping = UnityEngine.Experimental.GlobalIllumination.Lightmapping;
+using UnityEngine.Experimental.VoxelizedShadowMaps;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 {
@@ -74,6 +75,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             public float shadowDepthBias { get; private set; }
             public float shadowNormalBias { get; private set; }
             public bool supportsSoftShadows { get; private set; }
+            public bool supportsVxShadowMaps { get; private set; } //seongdae;vxsm
+            public VxShadowMapsQuality vxShadowMapsQuality { get; private set; } //seongdae;vxsm
             public bool supportsDynamicBatching { get; private set; }
             public bool mixedLightingSupported { get; private set; }
 
@@ -109,6 +112,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 cache.shadowDepthBias = asset.shadowDepthBias;
                 cache.shadowNormalBias = asset.shadowNormalBias;
                 cache.supportsSoftShadows = asset.supportsSoftShadows;
+                cache.supportsVxShadowMaps = asset.supportsVxShadowMaps; //seongdae;vxsm
+                cache.vxShadowMapsQuality = asset.vxShadowMapsQuality; //seongdae;vxsm
 
                 // Advanced settings
                 cache.supportsDynamicBatching = asset.supportsDynamicBatching;
@@ -236,7 +241,9 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             SupportedRenderingFeatures.active = new SupportedRenderingFeatures()
             {
                 reflectionProbeSupportFlags = SupportedRenderingFeatures.ReflectionProbeSupportFlags.None,
-                defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeMode.Subtractive,
+                //seongdae;vxsm
+                defaultMixedLightingMode = SupportedRenderingFeatures.LightmapMixedBakeMode.IndirectOnly,
+                //seongdae;vxsm
                 supportedMixedLightingModes = SupportedRenderingFeatures.LightmapMixedBakeMode.Subtractive,
                 supportedLightmapBakeTypes = LightmapBakeType.Baked | LightmapBakeType.Mixed,
                 supportedLightmapsModes = LightmapsMode.CombinedDirectional | LightmapsMode.NonDirectional,
@@ -374,6 +381,14 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             // Until we can have keyword stripping forcing single cascade hard shadows on gles2
             bool supportsScreenSpaceShadows = SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES2;
 
+            //seongdae;vxsm
+            // compute shader for screen space shadows.
+            // todo : need to fix retransform for world space in screen space on OpenGLES3.1
+            bool supportsComputeScreenSpaceShadows =
+                SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES2 &&
+                SystemInfo.graphicsDeviceType != GraphicsDeviceType.OpenGLES3;
+            //seongdae;vxsm
+
             shadowData.supportsMainLightShadows = settings.supportsMainLightShadows && mainLightCastShadows;
 
             // we resolve shadows in screenspace when cascades are enabled to save ALU as computing cascade index + shadowCoord on fragment is expensive
@@ -396,6 +411,25 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                     shadowData.mainLightShadowCascadesSplit = settings.cascade4Split;
                     break;
             }
+
+            //seongdae;vxsm
+            if (shadowData.supportsMainLightShadows && settings.supportsVxShadowMaps)
+            {
+                int mainLightIndex = GetMainLight(settings, visibleLights);
+                var mainLight = visibleLights[mainLightIndex].light;
+                var dirVxShadowMap = mainLight.GetComponent<DirectionalVxShadowMap>();
+
+                bool dirVxShadowMapIsValid = dirVxShadowMap != null && dirVxShadowMap.IsValid();
+
+                shadowData.requiresScreenSpaceShadowCompute = dirVxShadowMapIsValid;
+                shadowData.mainLightVxShadowQuality = (int)settings.vxShadowMapsQuality;
+            }
+            else
+            {
+                shadowData.requiresScreenSpaceShadowCompute = false;
+                shadowData.mainLightVxShadowQuality = 0;
+            }
+            //seongdae;vxsm
 
             shadowData.supportsAdditionalLightShadows = settings.supportsAdditionalLightShadows && additionalLightsCastShadows;
             shadowData.additionalLightsShadowmapWidth = shadowData.additionalLightsShadowmapHeight = settings.additionalLightsShadowmapResolution;

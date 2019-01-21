@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Experimental.VoxelizedShadowMaps;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.LightweightPipeline
@@ -31,6 +32,8 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
         Matrix4x4[] m_MainLightShadowMatrices;
         ShadowSliceData[] m_CascadeSlices;
         Vector4[] m_CascadeSplitDistances;
+
+        DirectionalVxShadowMap m_DirVxShadowMap = null; //seongdae;vxsm
 
         const string k_RenderMainLightShadowmapTag = "Render Main Shadowmap";
 
@@ -99,6 +102,18 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 if (!success)
                     return false;
             }
+
+            //seongdae;vxsm
+            m_DirVxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
+
+            bool canNotCastDynamicShadows =
+                m_DirVxShadowMap != null &&
+                m_DirVxShadowMap.IsValid() &&
+                m_DirVxShadowMap.shadowsBlendMode == ShadowsBlendMode.OnlyVxShadowMaps;
+
+            if (canNotCastDynamicShadows)
+                return false;
+            //seongdae;vxsm
 
             return true;
         }
@@ -170,6 +185,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 }
 
                 SetupMainLightShadowReceiverConstants(cmd, ref shadowData, shadowLight);
+                SetMainLightShadowReceiverConstantsToVxShadowMap(); //seongdae;vxsm
             }
 
             CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
@@ -216,5 +232,16 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
             cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowmapSize, new Vector4(invShadowAtlasWidth, invShadowAtlasHeight,
                 shadowData.mainLightShadowmapWidth, shadowData.mainLightShadowmapHeight));
         }
+
+        //seongdae;vxsm
+        void SetMainLightShadowReceiverConstantsToVxShadowMap()
+        {
+            m_DirVxShadowMap.cascadesCount = m_ShadowCasterCascadesCount;
+            for (int i = 0; i < m_MainLightShadowMatrices.Length; ++i)
+                m_DirVxShadowMap.cascadesMatrices[i] = m_MainLightShadowMatrices[i];
+            for (int i = 0; i < m_CascadeSplitDistances.Length; ++i)
+                m_DirVxShadowMap.cascadeSplitDistances[i] = m_CascadeSplitDistances[i];
+        }
+        //seongdae;vxsm
     };
 }

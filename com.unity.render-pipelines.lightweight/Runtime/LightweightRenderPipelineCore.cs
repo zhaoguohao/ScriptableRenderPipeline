@@ -56,10 +56,12 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
     {
         public bool supportsMainLightShadows;
         public bool requiresScreenSpaceShadowResolve;
+        public bool requiresScreenSpaceShadowCompute; //seongdae;vxsm
         public int mainLightShadowmapWidth;
         public int mainLightShadowmapHeight;
         public int mainLightShadowCascadesCount;
         public Vector3 mainLightShadowCascadesSplit;
+        public int mainLightVxShadowQuality; //seongdae;vxsm
         public bool supportsAdditionalLightShadows;
         public int additionalLightsShadowmapWidth;
         public int additionalLightsShadowmapHeight;

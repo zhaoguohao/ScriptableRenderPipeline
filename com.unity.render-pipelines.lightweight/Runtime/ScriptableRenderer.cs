@@ -110,6 +110,7 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
         const string k_ReleaseResourcesTag = "Release Resources";
         readonly Material[] m_Materials;
+        readonly ComputeShader[] m_ComputeShaders; //seongdae;vxsm
 
         public ScriptableRenderer(LightweightRenderPipelineAsset pipelineAsset)
         {
@@ -124,6 +125,13 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
                 CoreUtils.CreateEngineMaterial(pipelineAsset.blitShader),
                 CoreUtils.CreateEngineMaterial(pipelineAsset.screenSpaceShadowShader),
             };
+
+            //seongdae;vxsm
+            m_ComputeShaders = new[]
+            {
+                pipelineAsset.screenSpaceShadowComputeShader,
+            };
+            //seongdae;vxsm
 
             postProcessingContext = new PostProcessRenderContext();
         }
@@ -172,6 +180,21 @@ namespace UnityEngine.Experimental.Rendering.LightweightPipeline
 
             return m_Materials[handleID];
         }
+
+        //seongdae;vxsm
+        public ComputeShader GetComputeShader(ComputeShaderHandle handle)
+        {
+            int handleID = (int)handle;
+            if (handleID >= m_ComputeShaders.Length)
+            {
+                Debug.LogError(string.Format("ComputeShader {0} is not registered.",
+                    Enum.GetName(typeof(ComputeShaderHandle), handleID)));
+                return null;
+            }
+
+            return m_ComputeShaders[handleID];
+        }
+        //seongdae;vxsm
 
         public void Clear()
         {
