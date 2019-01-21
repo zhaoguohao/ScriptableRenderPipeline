@@ -65,7 +65,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public enum ReflectionsFilterMode
         {
             None,
-            Bilateral
+            Bilateral,
+            Nvidia
         };
         public ReflectionsFilterMode reflFilterMode = ReflectionsFilterMode.None;
 
