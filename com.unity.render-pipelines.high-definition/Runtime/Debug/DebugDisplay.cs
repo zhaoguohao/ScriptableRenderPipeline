@@ -74,6 +74,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Raytracing
             public bool countRays = false;
+            public Color rayCountFontColor = Color.white;
             public bool showRayCountTex = false;
 
             public int debugCameraToFreeze = 0;
@@ -301,6 +302,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
 #if ENABLE_RAYTRACING
             list.Add(new DebugUI.BoolField { displayName = "Display Ray Count", getter = () => data.countRays, setter = value => data.countRays = value, onValueChanged = RefreshDisplayStatsDebug });
+            list.Add(new DebugUI.ColorField { displayName = "Ray Count Font Color", getter = () => data.rayCountFontColor, setter = value => data.rayCountFontColor = value });
 #endif
 
             m_DebugDisplayStatsItems = list.ToArray();
