@@ -21,6 +21,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
         const int k_MaxCascades = 4;
 
         [HideInInspector] public int cascadesCount;
+        // todo : allocate here not MainLightShadowCasterPass.cs
         [HideInInspector] public Matrix4x4[] cascadesMatrices = new Matrix4x4[k_MaxCascades + 1];
         [HideInInspector] public Vector4[] cascadeSplitDistances = new Vector4[k_MaxCascades];
 
