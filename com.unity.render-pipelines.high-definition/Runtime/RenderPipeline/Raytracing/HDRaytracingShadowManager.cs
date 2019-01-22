@@ -73,7 +73,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RTHandles.Release(m_SNBuffer);
         }
 
-        public bool RenderAreaShadows(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext)
+        public bool RenderAreaShadows(HDCamera hdCamera, CommandBuffer cmd, ScriptableRenderContext renderContext, RTHandleSystem.RTHandle rayCountTex)
         {
             // Bind the texture because everyone needs it
             cmd.SetGlobalTexture(_AreaShadowTexture, m_AreaShadowTextureArray);
@@ -151,6 +151,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[1], m_GbufferManager.GetBuffer(1));
                     cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[2], m_GbufferManager.GetBuffer(2));
                     cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[3], m_GbufferManager.GetBuffer(3));
+                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._RayCountTexture, rayCountTex);
 
                     // Set the output textures
                     cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, _SNBuffer, m_SNBuffer);

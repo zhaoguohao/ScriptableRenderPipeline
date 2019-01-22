@@ -36,6 +36,7 @@ int                                     _RaytracingNumSamples;
 // Output structure of the shadows raytrace shader
 RWTexture2D<float4>     _SNTextureUAV;
 RWTexture2D<float4>     _UNTextureUAV;
+RWTexture2D<float4>     _RayCountTexture;
 
 [shader("miss")]
 void MissShaderShadows(inout RayIntersection rayIntersection : SV_RayPayload)
@@ -177,6 +178,10 @@ void RayGenShadows()
     float3 v1 = areaLightPosWS + areaLightData.right *  halfWidth - areaLightData.up * halfHeight;
     float3 v2 = areaLightPosWS - areaLightData.right * halfWidth - areaLightData.up * halfHeight;
     float3 v3 = areaLightPosWS - areaLightData.right * halfWidth + areaLightData.up *  halfHeight;
+    
+    // TODO ifdef debug or something like that
+    _RayCountTexture[currentPixelCoord].z = _RayCountTexture[currentPixelCoord].z + (float)_RaytracingNumSamples;
+    // endif
 
     for(int i  = 0; i < _RaytracingNumSamples; ++i)
     {
