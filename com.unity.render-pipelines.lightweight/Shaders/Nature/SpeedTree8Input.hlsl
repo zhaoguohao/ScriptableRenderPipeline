@@ -27,6 +27,9 @@ int _TwoSided;
     int _PassValue;
 #endif
 
+TEXTURE2D(_MainTex);
+SAMPLER(sampler_MainTex);
+
 #ifdef EFFECT_EXTRA_TEX
     sampler2D _ExtraTex;
 #else

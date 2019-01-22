@@ -22,6 +22,9 @@
     #include "SpeedTreeWind.cginc"
 #endif
 
+TEXTURE2D(_MainTex);
+SAMPLER(sampler_MainTex);
+
 #ifdef EFFECT_HUE_VARIATION
     half4 _HueVariation;
 #endif
