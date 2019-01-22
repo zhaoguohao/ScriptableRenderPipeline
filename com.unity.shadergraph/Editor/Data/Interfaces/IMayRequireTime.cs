@@ -12,8 +12,7 @@ namespace UnityEditor.ShaderGraph
     {
         public static bool RequiresTime(this INode node)
         {
-            var mayRequireTime = node as IMayRequireTime;
-            return mayRequireTime != null && mayRequireTime.RequiresTime();
+            return node is IMayRequireTime mayRequireTime && mayRequireTime.RequiresTime();
         }
     }
 }
