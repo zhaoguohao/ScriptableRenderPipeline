@@ -2007,9 +2007,9 @@ MonoBehaviour:
   ImageComparisonSettings:
     TargetWidth: 1080
     TargetHeight: 608
-    PerPixelCorrectnessThreshold: 0.001
-    AverageCorrectnessThreshold: 0.0001
-  WaitFrames: 0
+    PerPixelCorrectnessThreshold: 0.0001
+    AverageCorrectnessThreshold: 0.00001
+  WaitFrames: 10
 --- !u!1 &366823146
 GameObject:
   m_ObjectHideFlags: 0
@@ -2755,7 +2755,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &507897635
 Transform:
   m_ObjectHideFlags: 0
@@ -4256,7 +4256,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &801207485
 Transform:
   m_ObjectHideFlags: 0
@@ -5712,7 +5712,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1114000234
 Transform:
   m_ObjectHideFlags: 0

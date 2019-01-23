@@ -1176,8 +1176,8 @@ MonoBehaviour:
   ImageComparisonSettings:
     TargetWidth: 1080
     TargetHeight: 600
-    PerPixelCorrectnessThreshold: 0.001
-    AverageCorrectnessThreshold: 0.0001
+    PerPixelCorrectnessThreshold: 0.0001
+    AverageCorrectnessThreshold: 0.00001
   WaitFrames: 0
 --- !u!1 &1649735165
 GameObject:

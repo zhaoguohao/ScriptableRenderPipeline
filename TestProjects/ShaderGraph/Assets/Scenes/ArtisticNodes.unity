@@ -951,8 +951,8 @@ MonoBehaviour:
   ImageComparisonSettings:
     TargetWidth: 1080
     TargetHeight: 720
-    PerPixelCorrectnessThreshold: 0.001
-    AverageCorrectnessThreshold: 0.0001
+    PerPixelCorrectnessThreshold: 0.0001
+    AverageCorrectnessThreshold: 0.00001
   WaitFrames: 0
 --- !u!20 &487053998
 Camera:
@@ -980,7 +980,7 @@ Camera:
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
-  orthographic: 1
+  orthographic: 0
   orthographic size: 6
   m_Depth: -1
   m_CullingMask:
@@ -1005,7 +1005,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 487053996}
   m_LocalRotation: {x: 0.5, y: 0.5, z: -0.5, w: 0.5}
-  m_LocalPosition: {x: 0, y: 60, z: 0}
+  m_LocalPosition: {x: 0, y: 11, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}

@@ -523,8 +523,8 @@ MonoBehaviour:
   ImageComparisonSettings:
     TargetWidth: 350
     TargetHeight: 175
-    PerPixelCorrectnessThreshold: 0.001
-    AverageCorrectnessThreshold: 0.0001
+    PerPixelCorrectnessThreshold: 0.0001
+    AverageCorrectnessThreshold: 0.00001
   WaitFrames: 0
 --- !u!20 &487053998
 Camera:
