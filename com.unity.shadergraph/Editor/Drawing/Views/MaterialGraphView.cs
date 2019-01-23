@@ -253,6 +253,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 var propNode = new PropertyNode();
                 propNode.drawState = node.drawState;
+                propNode.groupGuid = node.groupGuid;
                 graph.AddNode(propNode);
                 propNode.propertyGuid = prop.guid;
 
@@ -291,6 +292,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         DropdownMenuAction.Status ConvertToSubgraphStatus(DropdownMenuAction action)
         {
             if (onConvertToSubgraphClick == null) return DropdownMenuAction.Status.Hidden;
+            if (graph as SubGraph != null) return DropdownMenuAction.Status.Hidden;
             return selection.OfType<IShaderNodeView>().Any(v => v.node != null) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden;
         }
 
