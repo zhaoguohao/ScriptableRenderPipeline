@@ -1,12 +1,5 @@
 {
-    "m_SerializedProperties": [
-        {
-            "typeInfo": {
-                "fullName": "UnityEditor.ShaderGraph.CubemapShaderProperty"
-            },
-            "JSONnodeData": "{\n    \"m_Value\": {\n        \"m_SerializedCubemap\": \"\",\n        \"m_Guid\": \"52623e1d259f0c142937766516c55b23\"\n    },\n    \"m_Name\": \"Cubemap\",\n    \"m_GeneratePropertyBlock\": true,\n    \"m_Guid\": {\n        \"m_GuidSerialized\": \"21a8f887-848e-47ae-99a1-e1d639e4e717\"\n    },\n    \"m_DefaultReferenceName\": \"Cubemap_E35DF532\",\n    \"m_OverrideReferenceName\": \"\",\n    \"m_Modifiable\": true\n}"
-        }
-    ],
+    "m_SerializedProperties": [],
     "m_GUID": {
         "m_GuidSerialized": "d86c0749-1fd6-4f40-b7d4-ba9c5c78ed74"
     },
@@ -25,9 +18,9 @@
         },
         {
             "typeInfo": {
-                "fullName": "UnityEditor.ShaderGraph.PropertyNode"
+                "fullName": "UnityEditor.ShaderGraph.CubemapAssetNode"
             },
-            "JSONnodeData": "{\n    \"m_GuidSerialized\": \"926ff6ad-5e9f-4f60-a8e9-9562b875253a\",\n    \"m_GroupGuidSerialized\": \"00000000-0000-0000-0000-000000000000\",\n    \"m_Name\": \"Property\",\n    \"m_DrawState\": {\n        \"m_Expanded\": true,\n        \"m_Position\": {\n            \"serializedVersion\": \"2\",\n            \"x\": -517.0,\n            \"y\": -8.0,\n            \"width\": 99.0,\n            \"height\": 77.0\n        }\n    },\n    \"m_SerializableSlots\": [\n        {\n            \"typeInfo\": {\n                \"fullName\": \"UnityEditor.ShaderGraph.CubemapMaterialSlot\"\n            },\n            \"JSONnodeData\": \"{\\n    \\\"m_Id\\\": 0,\\n    \\\"m_DisplayName\\\": \\\"Cubemap\\\",\\n    \\\"m_SlotType\\\": 1,\\n    \\\"m_Priority\\\": 2147483647,\\n    \\\"m_Hidden\\\": false,\\n    \\\"m_ShaderOutputName\\\": \\\"Out\\\",\\n    \\\"m_StageCapability\\\": 3\\n}\"\n        }\n    ],\n    \"m_PreviewExpanded\": true,\n    \"m_PropertyGuidSerialized\": \"21a8f887-848e-47ae-99a1-e1d639e4e717\"\n}"
+            "JSONnodeData": "{\n    \"m_GuidSerialized\": \"036111d3-e982-4d69-b96f-ee46e6dee1b0\",\n    \"m_GroupGuidSerialized\": \"00000000-0000-0000-0000-000000000000\",\n    \"m_Name\": \"Cubemap Asset\",\n    \"m_DrawState\": {\n        \"m_Expanded\": true,\n        \"m_Position\": {\n            \"serializedVersion\": \"2\",\n            \"x\": -577.0,\n            \"y\": -37.0,\n            \"width\": 131.0,\n            \"height\": 104.0\n        }\n    },\n    \"m_SerializableSlots\": [\n        {\n            \"typeInfo\": {\n                \"fullName\": \"UnityEditor.ShaderGraph.CubemapMaterialSlot\"\n            },\n            \"JSONnodeData\": \"{\\n    \\\"m_Id\\\": 0,\\n    \\\"m_DisplayName\\\": \\\"Out\\\",\\n    \\\"m_SlotType\\\": 1,\\n    \\\"m_Priority\\\": 2147483647,\\n    \\\"m_Hidden\\\": false,\\n    \\\"m_ShaderOutputName\\\": \\\"Out\\\",\\n    \\\"m_StageCapability\\\": 3\\n}\"\n        }\n    ],\n    \"m_PreviewExpanded\": true,\n    \"m_Cubemap\": {\n        \"m_SerializedCubemap\": \"\",\n        \"m_Guid\": \"2b48bfd19f2a3514f980189831184d75\"\n    }\n}"
         }
     ],
     "m_Groups": [],
@@ -36,13 +29,13 @@
             "typeInfo": {
                 "fullName": "UnityEditor.Graphing.Edge"
             },
-            "JSONnodeData": "{\n    \"m_OutputSlot\": {\n        \"m_SlotId\": 0,\n        \"m_NodeGUIDSerialized\": \"926ff6ad-5e9f-4f60-a8e9-9562b875253a\"\n    },\n    \"m_InputSlot\": {\n        \"m_SlotId\": 1,\n        \"m_NodeGUIDSerialized\": \"13ce2405-e357-4edc-9579-18fbdb4bb9bb\"\n    }\n}"
+            "JSONnodeData": "{\n    \"m_OutputSlot\": {\n        \"m_SlotId\": 0,\n        \"m_NodeGUIDSerialized\": \"13ce2405-e357-4edc-9579-18fbdb4bb9bb\"\n    },\n    \"m_InputSlot\": {\n        \"m_SlotId\": 0,\n        \"m_NodeGUIDSerialized\": \"333812a6-5e88-4340-bbb3-f9ef94923b72\"\n    }\n}"
         },
         {
             "typeInfo": {
                 "fullName": "UnityEditor.Graphing.Edge"
             },
-            "JSONnodeData": "{\n    \"m_OutputSlot\": {\n        \"m_SlotId\": 0,\n        \"m_NodeGUIDSerialized\": \"13ce2405-e357-4edc-9579-18fbdb4bb9bb\"\n    },\n    \"m_InputSlot\": {\n        \"m_SlotId\": 0,\n        \"m_NodeGUIDSerialized\": \"333812a6-5e88-4340-bbb3-f9ef94923b72\"\n    }\n}"
+            "JSONnodeData": "{\n    \"m_OutputSlot\": {\n        \"m_SlotId\": 0,\n        \"m_NodeGUIDSerialized\": \"036111d3-e982-4d69-b96f-ee46e6dee1b0\"\n    },\n    \"m_InputSlot\": {\n        \"m_SlotId\": 1,\n        \"m_NodeGUIDSerialized\": \"13ce2405-e357-4edc-9579-18fbdb4bb9bb\"\n    }\n}"
         }
     ],
     "m_PreviewData": {
