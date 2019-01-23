@@ -21,7 +21,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _CubemapAsset_C7CE92A7_Out:
-        m_Texture: {fileID: 8900000, guid: 2b48bfd19f2a3514f980189831184d75, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats: []
