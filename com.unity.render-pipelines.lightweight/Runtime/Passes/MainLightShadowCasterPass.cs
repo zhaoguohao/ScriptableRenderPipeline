@@ -232,6 +232,15 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         //seongdae;vxsm
         void SetMainLightShadowReceiverConstantsToVxShadowMap()
         {
+            if (m_DirVxShadowMap == null)
+                return;
+
+            // todo : allocate not here
+            if (m_DirVxShadowMap.cascadesMatrices.Length < (k_MaxCascades + 1))
+                m_DirVxShadowMap.cascadesMatrices = new Matrix4x4[k_MaxCascades + 1];
+            if (m_DirVxShadowMap.cascadeSplitDistances.Length < k_MaxCascades)
+                m_DirVxShadowMap.cascadeSplitDistances = new Vector4[k_MaxCascades];
+
             m_DirVxShadowMap.cascadesCount = m_ShadowCasterCascadesCount;
             for (int i = 0; i < m_MainLightShadowMatrices.Length; ++i)
                 m_DirVxShadowMap.cascadesMatrices[i] = m_MainLightShadowMatrices[i];
