@@ -2005,10 +2005,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ImageComparisonSettings:
-    TargetWidth: 1080
-    TargetHeight: 608
-    PerPixelCorrectnessThreshold: 0.0001
-    AverageCorrectnessThreshold: 0.00001
+    TargetWidth: 1620
+    TargetHeight: 912
+    PerPixelCorrectnessThreshold: 0.0004
+    AverageCorrectnessThreshold: 0.0001
   WaitFrames: 10
 --- !u!1 &366823146
 GameObject:
