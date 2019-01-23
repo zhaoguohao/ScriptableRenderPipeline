@@ -16,6 +16,7 @@
 //#define USE_IMITATED_CLZ
 
 #define DO_RETRAVERSAL
+//#define VISUALIZE_TRAVERSAL
 
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
@@ -383,7 +384,11 @@ float ComputeVxShadowMapAttenuationNoFiltering(float3 positionWS)
 
     uint4 result = TraverseVxShadowMapPosQ(posQ);
     if (result.w == 0)
+#ifdef VISUALIZE_TRAVERSAL
+        return result.y ? 0.75 : 0.25;
+#else
         return result.y ? 1.0 : 0.0;
+#endif
 
     uint2 bitmask2 = TraverseVxShadowMapLeaf(posQ.z, result);
     float attenuation = PointSampleShadowBitmask(bitmask2, posQ);
@@ -416,7 +421,11 @@ float ComputeVxShadowMapAttenuationBiFiltering(float3 positionWS)
     bool2 inner = (posQ.xy % edgeQ) < (edgeQ - 1);
 
     if (all(inner) && result.w == 0)
+#ifdef VISUALIZE_TRAVERSAL
+        return result.y ? 0.75 : 0.25;
+#else
         return result.y ? 1.0 : 0.0;
+#endif
 
     uint2 rescale = uint2(
         CalculateRescale(posQ.x, posQ.x + 1),
@@ -458,7 +467,11 @@ float ComputeVxShadowMapAttenuationTriFiltering(float3 positionWS)
     bool3 inner = (posQ % edgeQ) < (edgeQ - 1);
 
     if (all(inner) && result.w == 0)
+#ifdef VISUALIZE_TRAVERSAL
+        return result.y ? 0.75 : 0.25;
+#else
         return result.y ? 1.0 : 0.0;
+#endif
 
     uint3 rescale = uint3(
         CalculateRescale(posQ.x, posQ.x + 1),

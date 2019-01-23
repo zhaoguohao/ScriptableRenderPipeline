@@ -420,25 +420,6 @@ namespace UnityEngine.Rendering.LWRP
                     break;
             }
 
-            //seongdae;vxsm
-            if (shadowData.supportsMainLightShadows && settings.supportsVxShadowMaps)
-            {
-                int mainLightIndex = GetMainLightIndex(settings, visibleLights);
-                var mainLight = visibleLights[mainLightIndex].light;
-                var dirVxShadowMap = mainLight.GetComponent<DirectionalVxShadowMap>();
-
-                bool dirVxShadowMapIsValid = dirVxShadowMap != null && dirVxShadowMap.IsValid();
-
-                shadowData.requiresScreenSpaceShadowCompute = dirVxShadowMapIsValid;
-                shadowData.mainLightVxShadowQuality = (int)settings.vxShadowMapsQuality;
-            }
-            else
-            {
-                shadowData.requiresScreenSpaceShadowCompute = false;
-                shadowData.mainLightVxShadowQuality = 0;
-            }
-            //seongdae;vxsm
-
             shadowData.mainLightShadowCascadesCount = (shadowData.requiresScreenSpaceShadowResolve) ? shadowCascadesCount : 1;
             shadowData.mainLightShadowmapWidth = settings.mainLightShadowmapResolution;
             shadowData.mainLightShadowmapHeight = settings.mainLightShadowmapResolution;
@@ -457,6 +438,25 @@ namespace UnityEngine.Rendering.LWRP
                     shadowData.mainLightShadowCascadesSplit = settings.cascade4Split;
                     break;
             }
+
+            //seongdae;vxsm
+            if (shadowData.supportsMainLightShadows && settings.supportsVxShadowMaps)
+            {
+                int mainLightIndex = GetMainLightIndex(settings, visibleLights);
+                var mainLight = visibleLights[mainLightIndex].light;
+                var dirVxShadowMap = mainLight.GetComponent<DirectionalVxShadowMap>();
+
+                bool dirVxShadowMapIsValid = dirVxShadowMap != null && dirVxShadowMap.IsValid();
+
+                shadowData.requiresScreenSpaceShadowCompute = dirVxShadowMapIsValid;
+                shadowData.mainLightVxShadowQuality = (int)settings.vxShadowMapsQuality;
+            }
+            else
+            {
+                shadowData.requiresScreenSpaceShadowCompute = false;
+                shadowData.mainLightVxShadowQuality = 0;
+            }
+            //seongdae;vxsm
 
             shadowData.supportsAdditionalLightShadows = settings.supportsAdditionalLightShadows && additionalLightsCastShadows;
             shadowData.additionalLightsShadowmapWidth = shadowData.additionalLightsShadowmapHeight = settings.additionalLightsShadowmapResolution;
