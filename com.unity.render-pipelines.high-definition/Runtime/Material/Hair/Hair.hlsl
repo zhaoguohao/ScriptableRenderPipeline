@@ -374,9 +374,18 @@ void BSDF(  float3 V, float3 L, float NdotL, float3 positionWS, PreLightData pre
         float3 F = F_Schlick(bsdfData.fresnel0, LdotH);
         specularLighting = F * (hairSpec1 + hairSpec2);
 
-        // Diffuse lighting
-        float diffuseTerm = Lambert();
-        diffuseLighting = bsdfData.diffuseColor * diffuseTerm;
+		//Scatter test
+		float3 scatterL = L + bsdfData.normalWS*0.3;
+		float scatterInvVdotL = saturate(dot(V, -scatterL));
+        float scatterLightPower = max(1, bsdfData.thickness);
+        float scatterFresnelLight = pow(scatterInvVdotL,scatterLightPower)*(1.0 - NdotV)*(1.0 - NdotL);
+        float scatterFresnelObject = pow((1 - NdotV), max(1,bsdfData.thickness*bsdfData.thickness));
+        float scatterFresnel = 20 * scatterFresnelLight + 5 * scatterFresnelObject;
+		float3 transColor = saturate(scatterFresnel * bsdfData.transmittance *bsdfData.specularOcclusion*bsdfData.specularOcclusion);
+
+		// Diffuse lighting
+		float diffuseTerm = Lambert();
+		diffuseLighting = bsdfData.diffuseColor * diffuseTerm + transColor;
     }
     else
     {
