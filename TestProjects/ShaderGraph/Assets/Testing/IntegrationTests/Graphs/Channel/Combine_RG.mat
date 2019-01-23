@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_Split_Vector2
-  m_Shader: {fileID: -6465566751694194690, guid: 8559193eb3d6b8449a941e33e1969cf2,
+  m_Name: Combine_RG
+  m_Shader: {fileID: -6465566751694194690, guid: ee0a58116c01ead4ab94c29b9b4a485c,
     type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4

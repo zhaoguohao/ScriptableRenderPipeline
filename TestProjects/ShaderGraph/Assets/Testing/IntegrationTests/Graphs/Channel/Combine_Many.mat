@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Shader Graphs_Combine_RGBA
-  m_Shader: {fileID: -6465566751694194690, guid: bb91fa0ba7107524ba681ad6a993243e,
+  m_Name: Combine_Many
+  m_Shader: {fileID: -6465566751694194690, guid: 34fafe09415bc1a43990ad0f5f634abe,
     type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
