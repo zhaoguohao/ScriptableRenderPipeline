@@ -100,15 +100,22 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             }
 
             //seongdae;vxsm
-            m_DirVxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
+            if (renderingData.shadowData.supportsMainLightVxShadows)
+            {
+                m_DirVxShadowMap = light.GetComponent<DirectionalVxShadowMap>();
 
-            bool canNotCastDynamicShadows =
-                m_DirVxShadowMap != null &&
-                m_DirVxShadowMap.IsValid() &&
-                m_DirVxShadowMap.shadowsBlendMode == ShadowsBlendMode.OnlyVxShadowMaps;
+                bool canNotCastDynamicShadows =
+                    m_DirVxShadowMap != null &&
+                    m_DirVxShadowMap.IsValid() &&
+                    m_DirVxShadowMap.shadowsBlendMode == ShadowsBlendMode.OnlyVxShadowMaps;
 
-            if (canNotCastDynamicShadows)
-                return false;
+                if (canNotCastDynamicShadows)
+                    return false;
+            }
+            else
+            {
+                m_DirVxShadowMap = null;
+            }
             //seongdae;vxsm
 
             return true;

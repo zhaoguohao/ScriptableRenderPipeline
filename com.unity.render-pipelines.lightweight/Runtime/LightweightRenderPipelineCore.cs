@@ -57,6 +57,7 @@ namespace UnityEngine.Rendering.LWRP
     public struct ShadowData
     {
         public bool supportsMainLightShadows;
+        public bool supportsMainLightVxShadows; //seongdae;vxsm
         public bool requiresScreenSpaceShadowResolve;
         public bool requiresScreenSpaceShadowCompute; //seongdae;vxsm
         public int mainLightShadowmapWidth;

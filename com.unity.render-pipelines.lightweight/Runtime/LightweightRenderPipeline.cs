@@ -400,6 +400,7 @@ namespace UnityEngine.Rendering.LWRP
             //seongdae;vxsm
 
             shadowData.supportsMainLightShadows = settings.supportsMainLightShadows && mainLightCastShadows;
+            shadowData.supportsMainLightVxShadows = settings.supportsVxShadowMaps && mainLightCastShadows; //seongdae;vxsm
 
             // we resolve shadows in screenspace when cascades are enabled to save ALU as computing cascade index + shadowCoord on fragment is expensive
             shadowData.requiresScreenSpaceShadowResolve = shadowData.supportsMainLightShadows && supportsScreenSpaceShadows && settings.shadowCascadeOption != ShadowCascadesOption.NoCascades;
