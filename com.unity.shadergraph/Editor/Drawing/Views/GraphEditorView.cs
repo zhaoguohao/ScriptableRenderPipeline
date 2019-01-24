@@ -215,7 +215,9 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     var nodeView = (MaterialNodeView)graphView.selection.First();
                     if (nodeView.node.documentationURL != null)
+                    {
                         System.Diagnostics.Process.Start(nodeView.node.documentationURL);
+                    }
                 }
             }
         }

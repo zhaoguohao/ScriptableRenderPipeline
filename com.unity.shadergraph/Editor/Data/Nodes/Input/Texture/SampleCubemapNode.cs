@@ -14,7 +14,7 @@ namespace UnityEditor.ShaderGraph
         public const int NormalInputId = 3;
         public const int SamplerInputId = 5;
         public const int LODInputId = 4;
-        
+
         const string kOutputSlotName = "Out";
         const string kCubemapInputName = "Cube";
         const string kViewDirInputName = "ViewDir";
@@ -30,10 +30,6 @@ namespace UnityEditor.ShaderGraph
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Sample-Cubemap-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {
