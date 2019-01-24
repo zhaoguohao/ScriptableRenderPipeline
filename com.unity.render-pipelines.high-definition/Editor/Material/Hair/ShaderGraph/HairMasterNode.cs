@@ -492,10 +492,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/Hair-Master-Node"; }
-        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {

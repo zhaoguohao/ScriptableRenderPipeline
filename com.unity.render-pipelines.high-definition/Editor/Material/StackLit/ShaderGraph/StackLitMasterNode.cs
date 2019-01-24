@@ -633,10 +633,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             UpdateNodeAfterDeserialization();
         }
 
-        public override string documentationURL
-        {
-            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/StackLit-Master-Node"; }
-        }
 
         public bool HasDistortion()
         {
