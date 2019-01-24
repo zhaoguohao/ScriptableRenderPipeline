@@ -107,7 +107,6 @@ namespace UnityEditor.ShaderGraph
             var lodSlot = GetSlotValue(LODInput, generationMode);
 
             var id = GetSlotValue(TextureInputId, generationMode);
-
             var result = string.Format("{0}4 {1} = SAMPLE_TEXTURE2D_LOD({2}, {3}, {4}, {5});"
                     , precision
                     , GetVariableNameForSlot(OutputSlotRGBAId)
