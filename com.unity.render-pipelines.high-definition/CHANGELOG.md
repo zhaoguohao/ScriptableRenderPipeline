@@ -4,15 +4,23 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [4.8.0-preview] - 2018-XX-XX
+## [4.9.0-preview] - 2019-XX-XX
+
+### Fixed
+- Fixed baked probe texture size issue.
+- Fixed an issue with SceneColor node in shader graph not taking correctly resize of screen into account
+
+## [4.8.0-preview] - 2019-01-16
 
 ### Fixed
 - Fixed remove sync with render thread when updating decal texture atlas
 - Fixed issue with TerrainLit not compiling with depth only pass and normal buffer
 - Fixed geometric normal use for shadow bias with PBR master node in forward
 - Fixed error message when having more than one directional light casting shadow
+- Fixed issue with MicroShadowing and SpecularOcclusion
+- Fixed issue with vertex animation in shader graph not compatible with SRP Batcher
 
-## [4.7.0-preview] - 2018-01-13
+## [4.7.0-preview] - 2019-01-13
 
 ### Added
 - Added replace blending mode for distortion
