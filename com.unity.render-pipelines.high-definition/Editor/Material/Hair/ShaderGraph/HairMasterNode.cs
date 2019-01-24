@@ -492,6 +492,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             UpdateNodeAfterDeserialization();
         }
 
+        public override string documentationURL
+        {
+            get { return null; }
+        }
 
         public sealed override void UpdateNodeAfterDeserialization()
         {

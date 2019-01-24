@@ -583,7 +583,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             UpdateNodeAfterDeserialization();
         }
 
-
+        public override string documentationURL
+        {
+            get { return "https://github.com/Unity-Technologies/ShaderGraph/wiki/HD-Lit-Master-Node"; }
+        }
+        
         public bool HasRefraction()
         {
             return (surfaceType == SurfaceType.Transparent && !drawBeforeRefraction.isOn && refractionModel != ScreenSpaceRefraction.RefractionModel.None);
