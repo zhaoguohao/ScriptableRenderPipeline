@@ -153,7 +153,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     case HDRaytracingEnvironment.ReflectionsFilterMode.Nvidia:
                     {
-                        cmd.DenoiseReflectionTexture(m_IntermediateBuffer, m_HitDistanceBuffer, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetNormalBuffer(), m_SharedRTManager.GetNormalBuffer(), outputTexture, hdCamera.viewMatrix, hdCamera.projMatrix);
+                            cmd.DenoiseReflectionTexture(m_IntermediateBuffer, m_HitDistanceBuffer, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetNormalBuffer(), m_SharedRTManager.GetNormalBuffer(), outputTexture,
+                                                        hdCamera.viewMatrix, hdCamera.projMatrix,
+                                                        rtEnvironement.lowerRoughnessTransitionPoint, rtEnvironement.upperRoughnessTransitionPoint,
+                                                        rtEnvironement.minSamplingBias, rtEnvironement.maxSamplingBias,
+                                                        rtEnvironement.useLogSpace, rtEnvironement.logSpaceParam,
+                                                        (uint)rtEnvironement.normalWeightMode);
                     }
                     break;
                     case HDRaytracingEnvironment.ReflectionsFilterMode.Bilateral:

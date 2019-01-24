@@ -68,6 +68,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Bilateral,
             Nvidia
         };
+
         public ReflectionsFilterMode reflFilterMode = ReflectionsFilterMode.None;
 
         // Reflection Bilateral Filter Data
@@ -75,6 +76,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public int reflBilateralRadius = 10;
         [Range(0.001f, 9.0f)]
         public float reflBilateralSigma = 5.0f;
+
+        // Reflection Nvidia Filter Data
+        [Range(0.0f, 1.0f)]
+        public float lowerRoughnessTransitionPoint = 0.22f;
+        [Range(0.0f, 1.0f)]
+        public float upperRoughnessTransitionPoint = 0.27f;
+        [Range(0.0f, 1.0f)]
+        public float minSamplingBias = 0.7f;
+        [Range(0.0f, 1.0f)]
+        public float maxSamplingBias = 1.0f;
+        public bool useLogSpace = false;
+        public float logSpaceParam = 1.0f;
+
+        public enum NormalWeightMode
+        {
+            None = 0,           // Ignore differences in normal
+            WorldSpace = 1,     // Use worldspace normal; has risk of filtering curved geometries
+            TangentSpace = 2    // Use normal differences in surface tangent space; best quality but requires smooth normal buffer as input
+        };
+        public NormalWeightMode normalWeightMode;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////
         // Light Cluster

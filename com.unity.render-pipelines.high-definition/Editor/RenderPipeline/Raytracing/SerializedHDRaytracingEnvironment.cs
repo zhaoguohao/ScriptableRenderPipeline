@@ -36,6 +36,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public SerializedProperty reflFilterMode;
         public SerializedProperty reflBilateralRadius;
         public SerializedProperty reflBilateralSigma;
+        public SerializedProperty reflNormalWeightMode;
+        public SerializedProperty reflUseLogSpace;
+        public SerializedProperty reflLogSpaceParam;
+        public SerializedProperty reflLowerRoughnessTransitionPt;
+        public SerializedProperty reflUpperRoughnessTransitionPt;
+        public SerializedProperty reflMinSamplingBias;
+        public SerializedProperty reflMaxSamplingBias;
 
         // Primary visiblity raytracing
         public SerializedProperty raytracedObjects;
@@ -74,6 +81,13 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             reflFilterMode = o.Find(x => x.reflFilterMode);
             reflBilateralRadius = o.Find(x => x.reflBilateralRadius);
             reflBilateralSigma = o.Find(x => x.reflBilateralSigma);
+            reflNormalWeightMode = o.Find(x => x.normalWeightMode);
+            reflUseLogSpace = o.Find(x => x.useLogSpace);
+            reflLogSpaceParam = o.Find(x => x.logSpaceParam);
+            reflLowerRoughnessTransitionPt = o.Find(x => x.lowerRoughnessTransitionPoint);
+            reflUpperRoughnessTransitionPt = o.Find(x => x.upperRoughnessTransitionPoint);
+            reflMinSamplingBias = o.Find(x => x.minSamplingBias);
+            reflMaxSamplingBias = o.Find(x => x.maxSamplingBias);
 
             // Shadows Attributes
             raytracedShadows = o.Find(x => x.raytracedShadows);

@@ -43,6 +43,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Reflections Bilateral Filter Data
             public static GUIContent reflBilateralRadius = new GUIContent("Reflections Bilateral Radius");
             public static GUIContent reflBilateralSigma = new GUIContent("Reflections Bilateral Sigma");
+
+            // Reflections NVidia Filter Data
+            public static GUIContent reflLowerRoughnessTransitionPt = new GUIContent("Lower Roughness Transition Point");
+            public static GUIContent reflUpperRoughnessTransitionPt = new GUIContent("Upper Roughness Transition Point");
+            public static GUIContent reflMinSamplingBias = new GUIContent("Min Sampling Bias");
+            public static GUIContent reflMaxSamplingBias = new GUIContent("Max Sampling Bias");
+            public static GUIContent reflUseLogSpace = new GUIContent("Filter in log space?");
+            public static GUIContent reflLogSpaceParam = new GUIContent("Logspace Param");
+            public static GUIContent reflNormalWeightMode = new GUIContent("Normal Weight Mode");
+
             /////////////////////////////////////////////////////////////////////////////////////////////////
             // Area Light Shadow
             public static GUIContent shadowEnableText = new GUIContent("Enable");
@@ -142,11 +152,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (rtEnv.raytracedReflections.boolValue)
             {
                 EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(rtEnv.reflFilterMode, Styles.reflFilterModeText);
-
                 EditorGUILayout.PropertyField(rtEnv.reflRayLength, Styles.reflRayLengthText);
                 EditorGUILayout.PropertyField(rtEnv.reflNumMaxSamples, Styles.reflNumSamplesText);
 
+                EditorGUILayout.PropertyField(rtEnv.reflFilterMode, Styles.reflFilterModeText);
                 EditorGUI.indentLevel++;
                 switch ((HDRaytracingEnvironment.ReflectionsFilterMode)rtEnv.reflFilterMode.enumValueIndex)
                 {
@@ -154,6 +163,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         {
                             EditorGUILayout.PropertyField(rtEnv.reflBilateralRadius, Styles.reflBilateralRadius);
                             EditorGUILayout.PropertyField(rtEnv.reflBilateralSigma, Styles.reflBilateralSigma);
+                        }
+                        break;
+                    case HDRaytracingEnvironment.ReflectionsFilterMode.Nvidia:
+                        {
+                            EditorGUILayout.PropertyField(rtEnv.reflLowerRoughnessTransitionPt, Styles.reflLowerRoughnessTransitionPt);
+                            EditorGUILayout.PropertyField(rtEnv.reflUpperRoughnessTransitionPt, Styles.reflUpperRoughnessTransitionPt);
+                            EditorGUILayout.PropertyField(rtEnv.reflMinSamplingBias, Styles.reflMinSamplingBias);
+                            EditorGUILayout.PropertyField(rtEnv.reflMaxSamplingBias, Styles.reflMaxSamplingBias);
+                            if (rtEnv.reflLowerRoughnessTransitionPt.floatValue > rtEnv.reflUpperRoughnessTransitionPt.floatValue
+                                || rtEnv.reflMinSamplingBias.floatValue > rtEnv.reflMaxSamplingBias.floatValue)
+                                EditorGUILayout.HelpBox("Lower roughness transition point must be less than upper roughness transition point. Minimum sampling bias must be less than maximum sampling bias.", MessageType.Error);
+                            EditorGUILayout.PropertyField(rtEnv.reflNormalWeightMode, Styles.reflNormalWeightMode);
+                            EditorGUILayout.PropertyField(rtEnv.reflUseLogSpace, Styles.reflUseLogSpace);
+                            if (rtEnv.reflUseLogSpace.boolValue)
+                            {
+                                EditorGUI.indentLevel++;
+                                EditorGUILayout.PropertyField(rtEnv.reflLogSpaceParam, Styles.reflLogSpaceParam);
+                                EditorGUI.indentLevel--;
+                            }
                         }
                         break;
                 }
