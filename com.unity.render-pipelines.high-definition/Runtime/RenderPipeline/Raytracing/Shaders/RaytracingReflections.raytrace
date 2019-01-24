@@ -136,6 +136,9 @@ void RayGenReflections()
 
 	// Alright we are done :D
     _SsrLightingTextureRW[currentPixelCoord] = float4(finalColor, 1.0f);
+
+    if (minDistance == 1e+38f)
+        minDistance = 0.0f;
     _RaytracingHitDistanceTexture[currentPixelCoord] = minDistance;
 }
 
