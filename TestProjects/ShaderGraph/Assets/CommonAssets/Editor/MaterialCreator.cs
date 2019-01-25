@@ -6,7 +6,7 @@ using System.Linq;
 
 public class MaterialCreator : MonoBehaviour
 {
-    [MenuItem("Assets/SG Tests/Materials From Selected Shaders")]
+    [MenuItem("Tools/SG Tests/Materials From Selected Shaders")]
     static void CreateMaterials()
     {
         IEnumerable<Shader> shaders = Selection.objects.Where(s => s is Shader).Cast<Shader>();
@@ -24,7 +24,7 @@ public class MaterialCreator : MonoBehaviour
         AssetDatabase.SaveAssets();
     }
 
-    [MenuItem("Assets/SG Tests/Add Mats to Scene")]
+    [MenuItem("Tools/SG Tests/Add Mats to Scene")]
     static void PlaceMaterialsInScene()
     {
         Transform nodesXform = GameObject.Find("Nodes").transform;
