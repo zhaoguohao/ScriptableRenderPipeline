@@ -27,7 +27,18 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_Graph = graph;
             m_Port = port;
 
-            AddRow("Default", new TextField());
+            var defaultField = new FloatField { value = port.defaultValue.vectorValue.x };
+            defaultField.RegisterValueChangedCallback(evt =>
+            {
+                m_Graph.owner.RegisterCompleteObjectUndo("Change port value");
+                var value = (float)evt.newValue;
+                port.defaultValue.vectorValue.Set(value, 0f, 0f, 0f);
+                this.MarkDirtyRepaint();
+            });
+            AddRow("Default", defaultField);
+            AddRow("PleaseHelp", new TextField());
+            Debug.Log("Portview constructed");
+            
             //put the drawing of port binding options here based on slot type
 
 //            AddRow("Type", new TextField());

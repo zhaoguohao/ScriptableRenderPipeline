@@ -55,14 +55,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_Graph = graph;
             m_PropertyRows = new Dictionary<Guid, BlackboardRow>();
 
-            blackboard = new Blackboard()
-            {
-                scrollable = true,
-                subTitle = FormatPath(graph.path),
-                editTextRequested = EditTextRequested,
-                addItemRequested = AddItemRequested,
-                moveItemRequested = MoveItemRequested
-            };
+            blackboard = GetBlackboard(graph);
 
             m_PathLabel = blackboard.hierarchy.ElementAt(0).Q<Label>("subTitleLabel");
             m_PathLabel.RegisterCallback<MouseDownEvent>(OnMouseDownEvent);
@@ -77,8 +70,26 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             // m_ResizeBorderFrame = new ResizeBorderFrame(blackboard) { name = "resizeBorderFrame" };
             // blackboard.shadow.Add(m_ResizeBorderFrame);
-
+            
             m_Section = new BlackboardSection { headerVisible = false };
+            AddBlackBoardSections(blackboard, graph);
+        }
+
+        internal virtual Blackboard GetBlackboard(AbstractMaterialGraph graph)
+        {
+            blackboard = new Blackboard()
+            {
+                scrollable = true,
+                subTitle = FormatPath(graph.path),
+                editTextRequested = EditTextRequested,
+                addItemRequested = AddItemRequested,
+                moveItemRequested = MoveItemRequested
+            };
+            return blackboard;
+        }
+
+        internal virtual void AddBlackBoardSections(Blackboard blackboard, AbstractMaterialGraph graph)
+        {
             foreach (var property in graph.properties)
                 AddProperty(property);
             blackboard.Add(m_Section);
@@ -267,11 +278,13 @@ namespace UnityEditor.ShaderGraph.Drawing
         //make new method for addport instead of addproperty for subgraphs. pill is drawn in addport
         void AddPort(InputDescriptor port, bool create = false, int index = -1)
         {
+            Debug.Log("Add port triggered");
             var icon = exposedIcon;
             var field = new BlackboardField(icon, port.name, port.portType.ToString()) { userData = port };
             var portView = new BlackboardFieldPortView(field, m_Graph, port);
             var row = new BlackboardRow(field, portView);
             var pill = row.Q<Pill>();
+            
 
             if (create)
             {
@@ -282,6 +295,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         }
         void AddProperty(IShaderProperty property, bool create = false, int index = -1)
         {
+            Debug.Log("Add Property triggered");
             if (m_PropertyRows.ContainsKey(property.guid))
                 return;
 
