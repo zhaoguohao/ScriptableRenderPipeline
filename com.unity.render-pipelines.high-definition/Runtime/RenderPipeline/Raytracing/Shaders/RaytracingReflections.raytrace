@@ -23,6 +23,7 @@ Texture2D<float>						_DepthTexture;
 // Output structure of the reflection raytrace shader
 RWTexture2D<float4> 					_SsrLightingTextureRW;
 RWTexture2D<float> 						_RaytracingHitDistanceTexture;
+RWTexture2D<float>						_InvertedDepthTexture;
 
 [shader("miss")]
 void MissShaderReflections(inout RayIntersection rayIntersection : SV_RayPayload)
@@ -54,6 +55,9 @@ void RayGenReflections()
 
 	// Read the depth value
 	float depthValue  = _DepthTexture[currentPixelCoord];
+    
+    _InvertedDepthTexture[currentPixelCoord] = 1.0f - depthValue; // Needed for nvidia denoise
+
 	if(depthValue == 0.0f)
 		return;
 
@@ -137,9 +141,8 @@ void RayGenReflections()
 	// Alright we are done :D
     _SsrLightingTextureRW[currentPixelCoord] = float4(finalColor, 1.0f);
 
-    if (minDistance == 1e+38f)
-        minDistance = 0.0f;
     _RaytracingHitDistanceTexture[currentPixelCoord] = minDistance;
+
 }
 
 [shader("closesthit")]

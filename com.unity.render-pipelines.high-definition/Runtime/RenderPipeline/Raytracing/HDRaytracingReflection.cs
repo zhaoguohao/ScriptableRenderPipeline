@@ -16,11 +16,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // The target denoising kernel
         static int m_KernelFilter;
 
+        static readonly int _InvertedDepthTexture = Shader.PropertyToID("_InvertedDepthTexture");
+
         // Intermediate buffer that stores the reflection pre-denoising
         RTHandleSystem.RTHandle m_IntermediateBuffer = null;
 
         // Hit distance texture
         RTHandleSystem.RTHandle m_HitDistanceBuffer = null;
+
+        RTHandleSystem.RTHandle m_InvertedDepthTexture = null;
 
         // Light cluster structure
         public HDRaytracingLightCluster m_LightCluster = null;
@@ -66,7 +70,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Buffer that holds the average distance of the rays
             // TODO share hit distance and normal buffers with AO?
             m_HitDistanceBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16_SFloat, enableRandomWrite: true, useMipMap: false, name: "HitDistanceBuffer");
-            
+            m_InvertedDepthTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16_SFloat, enableRandomWrite: true, name: "InvertedDepthBuffer");
+
             // Allocate the light cluster
             m_LightCluster = new HDRaytracingLightCluster();
             m_LightCluster.Initialize(asset, raytracingManager);
@@ -122,6 +127,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Set the data for the ray generation
             cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._SsrLightingTextureRW, m_IntermediateBuffer);
             cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._RaytracingHitDistanceTexture, m_HitDistanceBuffer);
+            cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, _InvertedDepthTexture, m_InvertedDepthTexture);
             cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
             cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
 
@@ -153,7 +159,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     case HDRaytracingEnvironment.ReflectionsFilterMode.Nvidia:
                     {
-                            cmd.DenoiseReflectionTexture(m_IntermediateBuffer, m_HitDistanceBuffer, m_SharedRTManager.GetDepthStencilBuffer(), m_SharedRTManager.GetNormalBuffer(), m_SharedRTManager.GetNormalBuffer(), outputTexture,
+                            cmd.NVDenoiseReflectionTexture(m_IntermediateBuffer, m_HitDistanceBuffer, m_InvertedDepthTexture, m_SharedRTManager.GetNormalBuffer(), outputTexture,
                                                         hdCamera.viewMatrix, hdCamera.projMatrix,
                                                         rtEnvironement.lowerRoughnessTransitionPoint, rtEnvironement.upperRoughnessTransitionPoint,
                                                         rtEnvironement.minSamplingBias, rtEnvironement.maxSamplingBias,
