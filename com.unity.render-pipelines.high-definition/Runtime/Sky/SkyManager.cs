@@ -92,7 +92,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
 #if UNITY_EDITOR
     #if UNITY_2019_2_OR_NEWER
-            // UnityEditor.Lightmapping.bakeStarted += OnBakeStarted;
+            UnityEditor.Lightmapping.bakeStarted += OnBakeStarted;
     #else
             UnityEditor.Lightmapping.started += OnBakeStarted;
     #endif
@@ -103,7 +103,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
 #if UNITY_EDITOR
     #if UNITY_2019_2_OR_NEWER
-            // UnityEditor.Lightmapping.bakeStarted -= OnBakeStarted;
+            UnityEditor.Lightmapping.bakeStarted -= OnBakeStarted;
     #else
             UnityEditor.Lightmapping.started -= OnBakeStarted;
     #endif
