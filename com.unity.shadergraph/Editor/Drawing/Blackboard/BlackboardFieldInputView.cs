@@ -11,35 +11,25 @@ using UnityEditor.Experimental.GraphView;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    class BlackboardFieldPortView : VisualElement
+    class BlackboardFieldInputView : VisualElement
     {
         readonly BlackboardField m_BlackboardField;
         readonly AbstractMaterialGraph m_Graph;
 
-        InputDescriptor m_Port;
+        InputDescriptor m_Input;
 
         static Type s_ContextualMenuManipulator = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypesOrNothing()).FirstOrDefault(t => t.FullName == "UnityEngine.UIElements.ContextualMenuManipulator");
         
-        public BlackboardFieldPortView(BlackboardField blackboardField, AbstractMaterialGraph graph, InputDescriptor port)
+        public BlackboardFieldInputView(BlackboardField blackboardField, AbstractMaterialGraph graph, InputDescriptor input)
         {
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/ShaderGraphBlackboard"));
             m_BlackboardField = blackboardField;
             m_Graph = graph;
-            m_Port = port;
+            m_Input = input;
 
-            var defaultField = new FloatField { value = port.defaultValue.vectorValue.x };
-            defaultField.RegisterValueChangedCallback(evt =>
-            {
-                m_Graph.owner.RegisterCompleteObjectUndo("Change port value");
-                var value = (float)evt.newValue;
-                port.defaultValue.vectorValue.Set(value, 0f, 0f, 0f);
-                this.MarkDirtyRepaint();
-            });
-            AddRow("Default", defaultField);
-            AddRow("PleaseHelp", new TextField());
-            Debug.Log("Portview constructed");
+            Add(input.control.GetControl(new ShaderParameter(input)));
             
-            //put the drawing of port binding options here based on slot type
+            //put the drawing of input binding options here based on slot type
 
 //            AddRow("Type", new TextField());
 //            AddRow("Exposed", new Toggle(null));
@@ -48,7 +38,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 //            AddRow("Tooltip", new TextField());
 
 
-            AddToClassList("sgblackboardFieldPortView");
+            AddToClassList("sgblackboardFieldInputView");
 
             
         }

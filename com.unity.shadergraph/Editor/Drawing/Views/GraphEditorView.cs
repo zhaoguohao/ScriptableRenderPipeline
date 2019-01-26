@@ -152,7 +152,15 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
                 content.Add(m_GraphView);
 
-                m_BlackboardProvider = new BlackboardProvider(graph);
+                if (graph is SubGraph subgraph)
+                {
+                    m_BlackboardProvider = new BlackboardSubgraphProvider(subgraph);
+                }
+                else
+                {
+                    m_BlackboardProvider = new BlackboardProvider(graph);
+                }
+                
                 m_GraphView.Add(m_BlackboardProvider.blackboard);
                 Rect blackboardLayout = m_BlackboardProvider.blackboard.layout;
                 blackboardLayout.x = 10f;

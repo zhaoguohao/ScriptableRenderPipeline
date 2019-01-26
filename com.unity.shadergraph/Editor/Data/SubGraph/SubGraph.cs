@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor.Graphing;
-
 namespace UnityEditor.ShaderGraph
 {
     [Serializable]
@@ -13,7 +12,6 @@ namespace UnityEditor.ShaderGraph
     {
         [NonSerialized]
         private SubGraphOutputNode m_OutputNode;
-
         public SubGraphOutputNode outputNode
         {
             get
@@ -21,17 +19,38 @@ namespace UnityEditor.ShaderGraph
                 // find existing node
                 if (m_OutputNode == null)
                     m_OutputNode = GetNodes<SubGraphOutputNode>().FirstOrDefault();
-
                 return m_OutputNode;
             }
         }
-
+        [NonSerialized]
+        List<InputDescriptor> m_Inputs = new List<InputDescriptor>();
+        public IEnumerable<InputDescriptor> inputs
+        {
+            get { return m_Inputs; }
+        }
+        [NonSerialized]
+        List<InputDescriptor> m_AddedInputs = new List<InputDescriptor>();
+        public IEnumerable<InputDescriptor> addedInputs
+        {
+            get { return m_AddedInputs; }
+        }
+        [NonSerialized]
+        List<int> m_RemovedInputs = new List<int>();
+        public IEnumerable<int> removedInputs
+        {
+            get { return m_RemovedInputs; }
+        }
+        [NonSerialized]
+        List<InputDescriptor> m_MovedInputs = new List<InputDescriptor>();
+        public IEnumerable<InputDescriptor> movedInputs
+        {
+            get { return m_MovedInputs; }
+        }
         public override void OnAfterDeserialize()
         {
             base.OnAfterDeserialize();
             m_OutputNode = null;
         }
-
         public override void AddNode(INode node)
         {
             var materialNode = node as AbstractMaterialNode;
@@ -46,7 +65,6 @@ namespace UnityEditor.ShaderGraph
             }
             base.AddNode(node);
         }
-
         public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
         {
             foreach (var node in activeNodes)
@@ -55,7 +73,6 @@ namespace UnityEditor.ShaderGraph
                     (node as IGeneratesBodyCode).GenerateNodeCode(visitor, graphContext, generationMode);
             }
         }
-
         public void GenerateNodeFunction(FunctionRegistry registry, GraphContext graphContext, GenerationMode generationMode)
         {
             foreach (var node in activeNodes)
@@ -65,12 +82,10 @@ namespace UnityEditor.ShaderGraph
                     (node as IGeneratesFunction).GenerateNodeFunction(registry, graphContext, generationMode);
             }
         }
-
         public IEnumerable<IShaderProperty> graphInputs
         {
             get { return properties.OrderBy(x => x.guid); }
         }
-
         public IEnumerable<MaterialSlot> graphOutputs
         {
             get
@@ -78,45 +93,36 @@ namespace UnityEditor.ShaderGraph
                 return outputNode != null ? outputNode.graphOutputs : new List<MaterialSlot>();
             }
         }
-
         public void GenerateSubGraphFunction(string functionName, FunctionRegistry registry, GraphContext graphContext, ShaderGraphRequirements reqs, GenerationMode generationMode)
         {
             registry.ProvideFunction(functionName, s =>
                 {
                     s.AppendLine("// Subgraph function");
-
                     // Generate arguments... first INPUTS
                     var arguments = new List<string>();
                     foreach (var prop in graphInputs)
                         arguments.Add(string.Format("{0}", prop.GetPropertyAsArgumentString()));
-
                     // now pass surface inputs
                     arguments.Add(string.Format("{0} IN", graphContext.graphInputStructName));
-
                     // Now generate outputs
                     foreach (var slot in graphOutputs)
                         arguments.Add(string.Format("out {0} {1}", slot.concreteValueType.ToString(outputNode.precision), slot.shaderOutputName));
-
                     // Create the function protoype from the arguments
                     s.AppendLine("void {0}({1})"
                         , functionName
                         , arguments.Aggregate((current, next) => string.Format("{0}, {1}", current, next)));
-
                     // now generate the function
                     using (s.BlockScope())
                     {
                         // Just grab the body from the active nodes
                         var bodyGenerator = new ShaderGenerator();
                         GenerateNodeCode(bodyGenerator, graphContext, generationMode);
-
                         if (outputNode != null)
                             outputNode.RemapOutputs(bodyGenerator, generationMode);
-
                         s.Append(bodyGenerator.GetShaderString(1));
                     }
                 });
         }
-
         public override void CollectShaderProperties(PropertyCollector collector, GenerationMode generationMode)
         {
             // if we are previewing the graph we need to
@@ -129,14 +135,12 @@ namespace UnityEditor.ShaderGraph
                 foreach (var prop in properties)
                     collector.AddShaderProperty(prop);
             }
-
             foreach (var node in activeNodes)
             {
                 if (node is IGenerateProperties)
                     (node as IGenerateProperties).CollectShaderProperties(collector, generationMode);
             }
         }
-
         public IEnumerable<PreviewProperty> GetPreviewProperties()
         {
             List<PreviewProperty> props = new List<PreviewProperty>();
@@ -144,7 +148,6 @@ namespace UnityEditor.ShaderGraph
                 node.CollectPreviewMaterialProperties(props);
             return props;
         }
-
         public IEnumerable<AbstractMaterialNode> activeNodes
         {
             get

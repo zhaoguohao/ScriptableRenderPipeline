@@ -16,7 +16,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         readonly BlackboardSection m_Section;
         //WindowDraggable m_WindowDraggable;
         //ResizeBorderFrame m_ResizeBorderFrame;
-        public Blackboard blackboard { get; private set; }
+        public Blackboard blackboard { get;  set; }
         Label m_PathLabel;
         TextField m_PathLabelTextField;
         bool m_EditPathCancelled = false;
@@ -48,6 +48,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 blackboard.title = value;
             }
+        }
+        public BlackboardProvider()
+        {
+
         }
 
         public BlackboardProvider(AbstractMaterialGraph graph)
@@ -206,26 +210,17 @@ namespace UnityEditor.ShaderGraph.Drawing
         void AddItemRequested(Blackboard blackboard)
         {
             var gm = new GenericMenu();
-            if (m_Graph as SubGraph == null)
-            {
-                gm.AddItem(new GUIContent("Vector1"), false, () => AddProperty(new Vector1ShaderProperty(), true));
-                gm.AddItem(new GUIContent("Vector2"), false, () => AddProperty(new Vector2ShaderProperty(), true));
-                gm.AddItem(new GUIContent("Vector3"), false, () => AddProperty(new Vector3ShaderProperty(), true));
-                gm.AddItem(new GUIContent("Vector4"), false, () => AddProperty(new Vector4ShaderProperty(), true));
-                gm.AddItem(new GUIContent("Color"), false, () => AddProperty(new ColorShaderProperty(), true));
-                gm.AddItem(new GUIContent("Texture2D"), false, () => AddProperty(new TextureShaderProperty(), true));
-                gm.AddItem(new GUIContent("Texture2D Array"), false, () => AddProperty(new Texture2DArrayShaderProperty(), true));
-                gm.AddItem(new GUIContent("Texture3D"), false, () => AddProperty(new Texture3DShaderProperty(), true));
-                gm.AddItem(new GUIContent("Cubemap"), false, () => AddProperty(new CubemapShaderProperty(), true));
-                gm.AddItem(new GUIContent("Boolean"), false, () => AddProperty(new BooleanShaderProperty(), true));
-            }
-            else
-            {
-                gm.AddItem(new GUIContent("Vector1"), false, () => AddProperty(new Vector1ShaderProperty(), true));
-                gm.AddItem(new GUIContent("TestInputVector"), false, () => AddPort(new InputDescriptor(1, "TestInputVector", ConcreteSlotValueType.Vector1, new Vector1Control())));
-                //placeholder, replace with port draw 
-                //create new addport to use instead of addproperty
-            }
+            gm.AddItem(new GUIContent("Vector1"), false, () => AddProperty(new Vector1ShaderProperty(), true));
+            gm.AddItem(new GUIContent("Vector2"), false, () => AddProperty(new Vector2ShaderProperty(), true));
+            gm.AddItem(new GUIContent("Vector3"), false, () => AddProperty(new Vector3ShaderProperty(), true));
+            gm.AddItem(new GUIContent("Vector4"), false, () => AddProperty(new Vector4ShaderProperty(), true));
+            gm.AddItem(new GUIContent("Color"), false, () => AddProperty(new ColorShaderProperty(), true));
+            gm.AddItem(new GUIContent("Texture2D"), false, () => AddProperty(new TextureShaderProperty(), true));
+            gm.AddItem(new GUIContent("Texture2D Array"), false, () => AddProperty(new Texture2DArrayShaderProperty(), true));
+            gm.AddItem(new GUIContent("Texture3D"), false, () => AddProperty(new Texture3DShaderProperty(), true));
+            gm.AddItem(new GUIContent("Cubemap"), false, () => AddProperty(new CubemapShaderProperty(), true));
+            gm.AddItem(new GUIContent("Boolean"), false, () => AddProperty(new BooleanShaderProperty(), true));
+            
             
             gm.ShowAsContext();
         }
@@ -275,24 +270,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             m_ExpandedProperties.Clear();
         }
 
-        //make new method for addport instead of addproperty for subgraphs. pill is drawn in addport
-        void AddPort(InputDescriptor port, bool create = false, int index = -1)
-        {
-            Debug.Log("Add port triggered");
-            var icon = exposedIcon;
-            var field = new BlackboardField(icon, port.name, port.portType.ToString()) { userData = port };
-            var portView = new BlackboardFieldPortView(field, m_Graph, port);
-            var row = new BlackboardRow(field, portView);
-            var pill = row.Q<Pill>();
-            
-
-            if (create)
-            {
-                m_Graph.owner.RegisterCompleteObjectUndo("Create Blackboard Port");
-                field.OpenTextEditor();
-            }
-
-        }
         void AddProperty(IShaderProperty property, bool create = false, int index = -1)
         {
             Debug.Log("Add Property triggered");
