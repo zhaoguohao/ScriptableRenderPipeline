@@ -549,7 +549,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDRPShaderStructs.AddActiveFieldsFromPixelGraphRequirements(activeFields, pixelRequirements);
 
             // build the graph outputs structure, and populate activeFields with the fields of that structure
-            GraphUtil.GenerateSurfaceDescriptionStruct(pixelGraphOutputs, pixelSlots, true, pixelGraphOutputStructName, activeFields);
+            GraphUtil.GenerateSurfaceDescriptionStruct(pixelGraphOutputs, pixelSlots, GenerationMode.ForReals, pixelGraphOutputStructName, activeFields);
 
             // Build the graph evaluation code, to evaluate the specified slots
             GraphUtil.GenerateSurfaceDescriptionFunction(

@@ -331,7 +331,7 @@ namespace UnityEditor.Rendering.LWRP
             // -------------------------------------
             // Generate Output structure for Surface Description function
 
-            GraphUtil.GenerateSurfaceDescriptionStruct(surfaceDescriptionStruct, pixelSlots, true);
+            GraphUtil.GenerateSurfaceDescriptionStruct(surfaceDescriptionStruct, pixelSlots, GenerationMode.ForReals);
 
             // -------------------------------------
             // Generate Surface Description function
