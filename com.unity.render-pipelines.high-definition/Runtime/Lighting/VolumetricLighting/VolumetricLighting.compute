@@ -115,6 +115,7 @@ struct JitteredRay
     float3 jitterDirWS;
     float3 xDirDerivWS;
     float3 yDirDerivWS;
+    float  tMax;
 };
 
 struct VoxelLighting
@@ -474,6 +475,9 @@ void FillVolumetricLightingBuffer(LightLoopContext context, uint featureFlags,
 
         float e1 = slice * de + de; // (slice + 1) / sliceCount
         float t1 = DecodeLogarithmicDepthGeneralized(e1, _VBufferDistanceDecodingParams);
+
+        t1 = min(t1, ray.tMax);
+
         float dt = t1 - t0;
 
         // Accurately compute the center of the voxel in the log space. It's important to perform
@@ -493,49 +497,64 @@ void FillVolumetricLightingBuffer(LightLoopContext context, uint featureFlags,
         // Prevent division by 0.
         extinction = max(extinction, FLT_MIN);
 
-        // Perform per-pixel randomization by adding an offset and then sampling uniformly
-        // (in the log space) in a vein similar to Stochastic Universal Sampling:
-        // https://en.wikipedia.org/wiki/Stochastic_universal_sampling
-        float perPixelRandomOffset = GenerateHashedRandomFloat(posInput.positionSS);
-
-    #if ENABLE_REPROJECTION
-        // This is a time-based sequence of 7 equidistant numbers from 1/14 to 13/14.
-        // Each of them is the centroid of the interval of length 2/14.
-        float rndVal = frac(perPixelRandomOffset + _VBufferSampleOffset.z);
-    #else
-        float rndVal = frac(perPixelRandomOffset + 0.5);
-    #endif
-
         VoxelLighting aggregateLighting;
         ZERO_INITIALIZE(VoxelLighting, aggregateLighting);
 
-        if (featureFlags & LIGHTFEATUREFLAGS_DIRECTIONAL)
+    #if ENABLE_REPROJECTION
+        float4 normalizedVoxelValue = float4(0, 0, 0, extinction);
+    #endif
+
+        // Do all the work for non-zero intervals,
+        // otherwise just store 0 and perform temporal blending.
+        if (dt > 0)
         {
-            VoxelLighting lighting = EvaluateVoxelLightingDirectional(context, featureFlags, posInput,
-                                                                      centerWS, ray, t0, t1, dt, rndVal,
-                                                                      extinction, anisotropy);
+            // Perform per-pixel randomization by adding an offset and then sampling uniformly
+            // (in the log space) in a vein similar to Stochastic Universal Sampling:
+            // https://en.wikipedia.org/wiki/Stochastic_universal_sampling
+            float perPixelRandomOffset = GenerateHashedRandomFloat(posInput.positionSS);
 
-            aggregateLighting.radianceNoPhase  += lighting.radianceNoPhase;
-            aggregateLighting.radianceComplete += lighting.radianceComplete;
-        }
-
-        #if (SUPPORT_LOCAL_LIGHTS != 0)
-        {
-            VoxelLighting lighting = EvaluateVoxelLightingLocal(context, featureFlags, posInput,
-                                                                lightCount, lightStart,
-                                                                centerWS, ray, t0, t1, dt, rndVal,
-                                                                extinction, anisotropy);
-
-            aggregateLighting.radianceNoPhase  += lighting.radianceNoPhase;
-            aggregateLighting.radianceComplete += lighting.radianceComplete;
-        }
+        #if ENABLE_REPROJECTION
+            // This is a time-based sequence of 7 equidistant numbers from 1/14 to 13/14.
+            // Each of them is the centroid of the interval of length 2/14.
+            float rndVal = frac(perPixelRandomOffset + _VBufferSampleOffset.z);
+        #else
+            float rndVal = frac(perPixelRandomOffset + 0.5);
         #endif
 
+
+            if (featureFlags & LIGHTFEATUREFLAGS_DIRECTIONAL)
+            {
+                VoxelLighting lighting = EvaluateVoxelLightingDirectional(context, featureFlags, posInput,
+                                                                          centerWS, ray, t0, t1, dt, rndVal,
+                                                                          extinction, anisotropy);
+
+                aggregateLighting.radianceNoPhase  += lighting.radianceNoPhase;
+                aggregateLighting.radianceComplete += lighting.radianceComplete;
+            }
+
+            #if (SUPPORT_LOCAL_LIGHTS != 0)
+            {
+                VoxelLighting lighting = EvaluateVoxelLightingLocal(context, featureFlags, posInput,
+                                                                    lightCount, lightStart,
+                                                                    centerWS, ray, t0, t1, dt, rndVal,
+                                                                    extinction, anisotropy);
+
+                aggregateLighting.radianceNoPhase  += lighting.radianceNoPhase;
+                aggregateLighting.radianceComplete += lighting.radianceComplete;
+            }
+            #endif
+
+        #if ENABLE_REPROJECTION
+            // Clamp here to prevent generation of NaNs.
+            float4 voxelValue           = float4(aggregateLighting.radianceNoPhase, extinction * dt);
+            float4 linearizedVoxelValue = LinearizeRGBD(voxelValue);
+
+            // normalizedVoxelValue = linearizedVoxelValue * rcp(dt);
+            normalizedVoxelValue = float4(linearizedVoxelValue.rgb * rcp(dt), extinction);
+        #endif
+        }
+
     #if ENABLE_REPROJECTION
-        // Clamp here to prevent generation of NaNs.
-        float4 voxelValue           = float4(aggregateLighting.radianceNoPhase, extinction * dt);
-        float4 linearizedVoxelValue = LinearizeRGBD(voxelValue);
-        float4 normalizedVoxelValue = linearizedVoxelValue * rcp(dt);
         float4 normalizedBlendValue = normalizedVoxelValue;
 
         // Reproject the history at 'centerWS'.
@@ -676,6 +695,18 @@ void VolumetricLighting(uint2 groupId       : SV_GroupID,
 #else
     ray.jitterDirWS = ray.centerDirWS;
 #endif
+
+    // Compute the max distance along the ray to perform per-sample depth test.
+    // First, take a point along the jittered direction and project it onto the screen plane.
+    float2 rayPosNDC  = ComputeNormalizedDeviceCoordinates(ray.originWS + ray.jitterDirWS, UNITY_MATRIX_VP);
+    float2 rayPosSS   = rayPosNDC * _ScreenSize.xy;
+    // Then, use the projected coordinate to sample the depth buffer.
+    float  maxDepth   = LOAD_TEXTURE2D(_CameraDepthTexture, (int2)rayPosSS).r;
+    // And compute the distance associated with this depth value.
+    // TODO: is there a faster way to convert depth to distance?
+    float3 rayEndPtWS = ComputeWorldSpacePosition(rayPosNDC, maxDepth, UNITY_MATRIX_I_VP);
+    // Limit the distance along the ray.
+    ray.tMax = distance(ray.originWS, rayEndPtWS);
 
     PositionInputs posInput = GetPositionInput(voxelCoord, _VBufferResolution.zw, tileCoord);
 
