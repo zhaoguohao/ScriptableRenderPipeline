@@ -227,6 +227,28 @@ namespace UnityEditor.ShaderGraph.Drawing
             container.Add(valueContainer);
             m_ControlItems.Add(container);
             return container;
+        }
+        private VisualElement GetControlForShaderInput(InputDescriptor input)
+        {
+            var container = new VisualElement { name = "Container" };
+            container.style.maxWidth = 200;
+            container.style.marginLeft = 6;
+            container.style.marginRight = 6;
+            container.style.flexDirection = FlexDirection.Row;
+
+            var labelContainer = new VisualElement { name = "LabelContainer" };
+            labelContainer.style.width = 60;
+            var label = new Label(input.name);
+            label.style.paddingTop = 4;
+            labelContainer.Add(label);
+            container.Add(labelContainer);
+
+            var valueContainer = new VisualElement { name = "ValueContainer" };
+            valueContainer.Add(input.control.GetControl(new ShaderParameter(input)));
+            valueContainer.style.flexGrow = 1;
+            container.Add(valueContainer);
+            m_ControlItems.Add(container);
+            return container;
         } 
 
         public void AttachError(string errString)

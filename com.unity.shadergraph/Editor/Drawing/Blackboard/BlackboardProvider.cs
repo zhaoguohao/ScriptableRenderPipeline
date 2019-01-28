@@ -239,7 +239,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        public void HandleGraphChanges()
+        public virtual void HandleGraphChanges()
         {
             foreach (var propertyGuid in m_Graph.removedProperties)
             {
@@ -272,7 +272,6 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddProperty(IShaderProperty property, bool create = false, int index = -1)
         {
-            Debug.Log("Add Property triggered");
             if (m_PropertyRows.ContainsKey(property.guid))
                 return;
 
@@ -326,7 +325,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        public BlackboardRow GetBlackboardRow(Guid guid)
+        public virtual BlackboardRow GetBlackboardRow(Guid guid)
         {
             return m_PropertyRows[guid];
         }

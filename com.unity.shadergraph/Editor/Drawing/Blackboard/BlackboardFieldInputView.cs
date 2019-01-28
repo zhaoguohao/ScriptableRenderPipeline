@@ -22,51 +22,36 @@ namespace UnityEditor.ShaderGraph.Drawing
         
         public BlackboardFieldInputView(BlackboardField blackboardField, AbstractMaterialGraph graph, InputDescriptor input)
         {
-            styleSheets.Add(Resources.Load<StyleSheet>("Styles/ShaderGraphBlackboard"));
+            styleSheets.Add(Resources.Load<StyleSheet>("Styles/SubGraphBlackboard"));
             m_BlackboardField = blackboardField;
             m_Graph = graph;
             m_Input = input;
 
-            Add(input.control.GetControl(new ShaderParameter(input)));
-            
-            //put the drawing of input binding options here based on slot type
-
-//            AddRow("Type", new TextField());
-//            AddRow("Exposed", new Toggle(null));
-//            AddRow("Range", new Toggle(null));
-//            AddRow("Default", new TextField());
-//            AddRow("Tooltip", new TextField());
-
-
+            Add(GetControlForShaderParameter(new ShaderValue(input, graph)));
             AddToClassList("sgblackboardFieldInputView");
-
-            
         }
 
-        VisualElement CreateRow(string labelText, VisualElement control)
+        private VisualElement GetControlForShaderParameter(ShaderValue parameter)
         {
-            VisualElement rowView = new VisualElement();
+            var container = new VisualElement { name = "Container" };
+            container.style.marginLeft = 6;
+            container.style.marginRight = 6;
+            container.style.flexDirection = FlexDirection.Row;
 
-            rowView.AddToClassList("rowView");
+            var labelContainer = new VisualElement { name = "LabelContainer" };
+            labelContainer.style.width = 60;
+            var label = new Label("Default");
+            label.style.paddingTop = 4;
+            labelContainer.Add(label);
+            container.Add(labelContainer);
 
-            Label label = new Label(labelText);
-
-            label.AddToClassList("rowViewLabel");
-            rowView.Add(label);
-
-            control.AddToClassList("rowViewControl");
-            rowView.Add(control);
-
-            return rowView;
+            var valueContainer = new VisualElement { name = "ValueContainer" };
+            valueContainer.Add(parameter.control.GetControl(parameter));
+            valueContainer.style.flexGrow = 1;
+            valueContainer.style.flexDirection = FlexDirection.Row;
+            container.Add(valueContainer);
+            return container;
         }
-
-        VisualElement AddRow(string labelText, VisualElement control)
-        {
-            VisualElement rowView = CreateRow(labelText, control);
-            Add(rowView);
-            return rowView;
-        }
-
         void RemoveElements(VisualElement[] elements)
         {
             for (int i = 0; i < elements.Length; i++)

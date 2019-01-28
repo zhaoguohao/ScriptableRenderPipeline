@@ -24,31 +24,50 @@ namespace UnityEditor.ShaderGraph
         }
         [NonSerialized]
         List<InputDescriptor> m_Inputs = new List<InputDescriptor>();
-        public IEnumerable<InputDescriptor> inputs
-        {
-            get { return m_Inputs; }
-        }
+      
         [NonSerialized]
-        List<InputDescriptor> m_AddedInputs = new List<InputDescriptor>();
-        public IEnumerable<InputDescriptor> addedInputs
-        {
-            get { return m_AddedInputs; }
-        }
+        List<InputDescriptor> m_AddedInputs = new List<InputDescriptor>();  
+
         [NonSerialized]
-        List<int> m_RemovedInputs = new List<int>();
-        public IEnumerable<int> removedInputs
-        {
-            get { return m_RemovedInputs; }
-        }
+        List<Guid> m_RemovedInputs = new List<Guid>();
+
         [NonSerialized]
         List<InputDescriptor> m_MovedInputs = new List<InputDescriptor>();
-        public IEnumerable<InputDescriptor> movedInputs
-        {
-            get { return m_MovedInputs; }
-        }
+
+        [SerializeField]
+        List<SerializationHelper.JSONSerializedElement> m_SerializedInputs = new List<SerializationHelper.JSONSerializedElement>();
+        
+        public IEnumerable<InputDescriptor> inputs => m_Inputs;
+        public IEnumerable<InputDescriptor> addedInputs => m_AddedInputs;
+        public IEnumerable<Guid> removedInputs => m_RemovedInputs;
+        public IEnumerable<InputDescriptor> movedInputs => m_MovedInputs;
         public override void OnAfterDeserialize()
         {
-            base.OnAfterDeserialize();
+            m_Inputs = SerializationHelper.Deserialize<InputDescriptor>(m_SerializedInputs, GraphUtil.GetLegacyTypeRemapping());
+
+            var nodes = SerializationHelper.Deserialize<INode>(m_SerializableNodes, GraphUtil.GetLegacyTypeRemapping());
+            m_Nodes = new List<AbstractMaterialNode>(nodes.Count);
+            m_NodeDictionary = new Dictionary<Guid, INode>(nodes.Count);
+            foreach (var node in nodes.OfType<AbstractMaterialNode>())
+            {
+                node.owner = this;
+                node.UpdateNodeAfterDeserialization();
+                node.tempId = new Identifier(m_Nodes.Count);
+                m_Nodes.Add(node);
+                m_NodeDictionary.Add(node.guid, node);
+
+                if(m_GroupNodes.ContainsKey(node.groupGuid))
+                    m_GroupNodes[node.groupGuid].Add(node);
+                else
+                    m_GroupNodes.Add(node.groupGuid, new List<AbstractMaterialNode>(){node});
+            }
+
+            m_SerializableNodes = null;
+
+            m_Edges = SerializationHelper.Deserialize<IEdge>(m_SerializableEdges, GraphUtil.GetLegacyTypeRemapping());
+            m_SerializableEdges = null;
+            foreach (var edge in m_Edges)
+                AddEdgeToNodeEdges(edge);
             m_OutputNode = null;
         }
         public override void AddNode(INode node)
@@ -157,5 +176,14 @@ namespace UnityEditor.ShaderGraph
                 return nodes.OfType<AbstractMaterialNode>();
             }
         }
+
+        new public void OnBeforeSerialize()
+        {
+            m_SerializableNodes = SerializationHelper.Serialize(GetNodes<INode>());
+            m_SerializableEdges = SerializationHelper.Serialize<IEdge>(m_Edges);
+            m_SerializedInputs = SerializationHelper.Serialize<InputDescriptor>(m_Inputs);
+        }
+
+        
     }
 }

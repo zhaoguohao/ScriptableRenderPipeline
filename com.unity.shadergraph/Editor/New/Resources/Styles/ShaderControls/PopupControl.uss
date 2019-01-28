@@ -1,5 +1,6 @@
 VisualElement > #PopupControl {
     flex-direction: row;
+    flex-grow: 1;
     margin-top: 2;
     margin-bottom: 2;
 }

@@ -1,0 +1,87 @@
+﻿using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEditor.Graphing;
+
+namespace UnityEditor.ShaderGraph
+{
+    [Serializable]
+    class ShaderValue : IShaderValue
+    {
+        public ShaderValue(InputDescriptor portDescriptor, AbstractMaterialGraph graph)
+        {
+            m_Id = portDescriptor.id;
+            m_DisplayName = portDescriptor.name;
+            m_ShaderOutputName = NodeUtils.GetHLSLSafeName(portDescriptor.name);
+            m_ConcreteSlotValueType = portDescriptor.valueType;
+            m_ShaderValueData = portDescriptor.defaultValue;
+            control = portDescriptor.control;
+            m_Graph = graph;
+        }
+
+        [SerializeField]
+        int m_Id;
+
+        [SerializeField]
+        string m_DisplayName = "Not Initilaized";
+
+        [SerializeField]
+        string m_ShaderOutputName;
+
+        [SerializeField]
+        private ConcreteSlotValueType m_ConcreteSlotValueType = ConcreteSlotValueType.Vector1;
+
+        [SerializeField]
+        private ShaderValueData m_ShaderValueData;
+
+        [SerializeField]
+        private SerializableControl m_SerializableControl = new SerializableControl();
+
+        public INode owner { get; set; }
+
+        private AbstractMaterialGraph m_Graph;
+
+        public int id => m_Id;
+        public string displayName => m_DisplayName;
+        public string shaderOutputName => m_ShaderOutputName;
+        public ConcreteSlotValueType concreteValueType => m_ConcreteSlotValueType;
+        public ShaderValueData value => m_ShaderValueData;
+
+        private IShaderControl m_Control;
+        public IShaderControl control
+        {
+            get
+            {
+                if (m_Control == null)
+                    m_Control = m_SerializableControl.control;
+                return m_Control;
+            }
+            set
+            {
+                m_Control = value;
+                m_SerializableControl.control = value;
+            }
+        }
+
+        public void UpdateValue(ShaderValueData value)
+        {
+            if(!m_ShaderValueData.Equals(value))
+            {
+                m_ShaderValueData = value;
+                m_Graph.owner.RegisterCompleteObjectUndo("Shader Value Change");
+                foreach (var node in m_Graph.GetNodes<PropertyNode>())
+                    node.Dirty(ModificationScope.Graph);
+            }
+        }
+
+        public void CopyValuesFrom(ShaderValue parameter)
+        {
+            if (parameter != null)
+            {
+                m_ConcreteSlotValueType = parameter.concreteValueType;
+                m_ShaderValueData = parameter.value;
+                control = parameter.control;
+            }
+        }
+    }
+}

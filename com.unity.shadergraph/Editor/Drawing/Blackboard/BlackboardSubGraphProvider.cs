@@ -11,8 +11,7 @@ namespace UnityEditor.ShaderGraph.Drawing
     class BlackboardSubgraphProvider : BlackboardProvider
     {
         readonly AbstractMaterialGraph m_Graph; //specific to subgraph
-        public static readonly Texture2D exposedIcon = Resources.Load<Texture2D>("GraphView/Nodes/BlackboardFieldExposed");
-        readonly Dictionary<int, BlackboardRow> m_InputRows; //specific to subgraph
+        readonly Dictionary<Guid, BlackboardRow> m_InputRows; //specific to subgraph
         readonly BlackboardSection m_Section;
         Label m_PathLabel;
         TextField m_PathLabelTextField;
@@ -30,7 +29,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         public BlackboardSubgraphProvider(SubGraph graph)
         {
             m_Graph = graph;
-            m_InputRows = new Dictionary<int, BlackboardRow>();
+            m_InputRows = new Dictionary<Guid, BlackboardRow>();
 
             blackboard = new Blackboard()
             {
@@ -158,11 +157,11 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void MoveItemRequested(Blackboard blackboard, int newIndex, VisualElement visualElement)
         {
-            var input = visualElement.userData as IShaderProperty;
+            var input = visualElement.userData as InputDescriptor;
             if (input == null)
                 return;
-            m_Graph.owner.RegisterCompleteObjectUndo("Move input");
-            m_Graph.MoveShaderProperty(input, newIndex);
+            //m_Graph.owner.RegisterCompleteObjectUndo("Move input");
+            //m_Graph.MoveShaderProperty(input, newIndex);
         }
 
         void AddItemRequested(Blackboard blackboard)
@@ -171,8 +170,17 @@ namespace UnityEditor.ShaderGraph.Drawing
             gm.AddItem(new GUIContent("Vector1"), false, () => AddInput(new InputDescriptor(0, "Vector1", ConcreteSlotValueType.Vector1), true));
             gm.AddItem(new GUIContent("Vector2"), false, () => AddInput(new InputDescriptor(1, "Vector2", ConcreteSlotValueType.Vector2), true));
             gm.AddItem(new GUIContent("Vector3"), false, () => AddInput(new InputDescriptor(2, "Vector3", ConcreteSlotValueType.Vector3), true));
-            gm.AddItem(new GUIContent("Gradient"), false, () => AddInput(new InputDescriptor(3, "Gradient", ConcreteSlotValueType.Gradient), true));
+            gm.AddItem(new GUIContent("Vector4"), false, () => AddInput(new InputDescriptor(3, "Vector4", ConcreteSlotValueType.Vector4), true));
             gm.AddItem(new GUIContent("Texture2D"), false, () => AddInput(new InputDescriptor(4, "Texture2D", ConcreteSlotValueType.Texture2D), true));
+            gm.AddItem(new GUIContent("Texture2D Array"), false, () => AddInput(new InputDescriptor(5, "Texture2D Array", ConcreteSlotValueType.Texture2DArray), true));
+            gm.AddItem(new GUIContent("Texture3D"), false, () => AddInput(new InputDescriptor(6, "Texture3D", ConcreteSlotValueType.Texture3D), true));
+            gm.AddItem(new GUIContent("Cubemap"), false, () => AddInput(new InputDescriptor(7, "Cubemap", ConcreteSlotValueType.Cubemap), true));
+            gm.AddItem(new GUIContent("Boolean"), false, () => AddInput(new InputDescriptor(8, "Boolean", ConcreteSlotValueType.Boolean), true));
+            gm.AddItem(new GUIContent("Gradient"), false, () => AddInput(new InputDescriptor(9, "Gradient", ConcreteSlotValueType.Gradient), true));
+            gm.AddItem(new GUIContent("Sampler State"), false, () => AddInput(new InputDescriptor(10, "Sampler State", ConcreteSlotValueType.SamplerState), true));
+            gm.AddItem(new GUIContent("Matrix2"), false, () => AddInput(new InputDescriptor(11, "Matrix2", ConcreteSlotValueType.Matrix2), true));
+            gm.AddItem(new GUIContent("Matrix3"), false, () => AddInput(new InputDescriptor(12, "Matrix3", ConcreteSlotValueType.Matrix3), true));
+            gm.AddItem(new GUIContent("Matrix4"), false, () => AddInput(new InputDescriptor(13, "Matrix4", ConcreteSlotValueType.Matrix4), true));            
             gm.ShowAsContext();
         }
 
@@ -182,23 +190,23 @@ namespace UnityEditor.ShaderGraph.Drawing
             var input = (InputDescriptor)field.userData;
             if (!string.IsNullOrEmpty(newText) && newText != input.name)
             {
-                m_Graph.owner.RegisterCompleteObjectUndo("Edit input Name");
-                newText = m_Graph.SanitizePropertyName(newText, input.id);
-                input.name = newText;
+                //m_Graph.owner.RegisterCompleteObjectUndo("Edit input Name");
+                //newText = m_Graph.SanitizePropertyName(newText, input.id);
+                //input.name = newText;
                 field.text = newText;
                 DirtyNodes();
             }
         }
 
-        new public void HandleGraphChanges()
+        public override void HandleGraphChanges()
         {
-            foreach (var inputID in subgraph.removedInputs)
+            foreach (var inputGuid in subgraph.removedInputs)
             {
                 BlackboardRow row;
-                if (m_InputRows.TryGetValue(inputID, out row))
+                if (m_InputRows.TryGetValue(inputGuid, out row))
                 {
                     row.RemoveFromHierarchy();
-                    m_InputRows.Remove(inputID);
+                    m_InputRows.Remove(inputGuid);
                 }
             }
 
@@ -207,7 +215,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var inputDict in expandedDescriptors)
             {
-                SessionState.SetBool(inputDict.Key.id.ToString(), inputDict.Value);
+                SessionState.SetBool(inputDict.Key.guid.ToString(), inputDict.Value);
             }
 
             if (subgraph.movedInputs.Any())
@@ -216,15 +224,20 @@ namespace UnityEditor.ShaderGraph.Drawing
                     row.RemoveFromHierarchy();
 
                 foreach (var input in subgraph.inputs)
-                    m_Section.Add(m_InputRows[input.id]);
+                    m_Section.Add(m_InputRows[input.guid]);
             }
-            expandedProperties.Clear();
+            m_ExpandedDescriptors.Clear();
         }
 
         void AddInput(InputDescriptor input, bool create = false, int index = -1)
-        {
-            if (m_InputRows.ContainsKey(input.id))
+        {            
+            if (m_InputRows.ContainsKey(input.guid))
                 return;
+
+            //make a property for the input right here
+            var newProperty = input.InputToShaderProperty();
+            //set the inputdescriptor guid now
+            //input.guid = newProperty.guid;
 
             var icon = exposedIcon;
             var field = new BlackboardField(icon, input.name, input.valueType.ToString()) { userData = input };
@@ -246,21 +259,22 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_Section.Add(row);
             else
                 m_Section.Insert(index, row);
-            m_InputRows[input.id] = row;
+            m_InputRows[input.guid] = row;
 
-            m_InputRows[input.id].expanded = SessionState.GetBool(input.id.ToString(), true);
+            m_InputRows[input.guid].expanded = SessionState.GetBool(input.id.ToString(), true);
 
             if (create)
             {
                 row.expanded = true;
-                m_Graph.owner.RegisterCompleteObjectUndo("Create input");
+                //m_Graph.owner.RegisterCompleteObjectUndo("Create input");
+                m_Graph.AddShaderProperty(newProperty);
                 field.OpenTextEditor();
             }
         }
 
         void OnExpanded(MouseDownEvent evt, InputDescriptor input)
         {
-            expandedDescriptors[input] = !m_InputRows[input.id].expanded;
+            expandedDescriptors[input] = !m_InputRows[input.guid].expanded;
         }
 
         void DirtyNodes()
@@ -272,7 +286,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        public BlackboardRow GetBlackboardRow(int guid)
+        public override BlackboardRow GetBlackboardRow(Guid guid)
         {
             return m_InputRows[guid];
         }

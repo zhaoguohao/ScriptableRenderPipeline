@@ -67,10 +67,10 @@ namespace UnityEditor.ShaderGraph
         Stack<Identifier> m_FreeNodeTempIds = new Stack<Identifier>();
 
         [NonSerialized]
-        List<AbstractMaterialNode> m_Nodes = new List<AbstractMaterialNode>();
+        public List<AbstractMaterialNode> m_Nodes = new List<AbstractMaterialNode>();
 
         [NonSerialized]
-        Dictionary<Guid, INode> m_NodeDictionary = new Dictionary<Guid, INode>();
+        public Dictionary<Guid, INode> m_NodeDictionary = new Dictionary<Guid, INode>();
 
         public IEnumerable<T> GetNodes<T>() where T : INode
         {
@@ -78,7 +78,7 @@ namespace UnityEditor.ShaderGraph
         }
 
         [SerializeField]
-        List<SerializationHelper.JSONSerializedElement> m_SerializableNodes = new List<SerializationHelper.JSONSerializedElement>();
+        public List<SerializationHelper.JSONSerializedElement> m_SerializableNodes = new List<SerializationHelper.JSONSerializedElement>();
 
         [NonSerialized]
         List<INode> m_AddedNodes = new List<INode>();
@@ -149,7 +149,7 @@ namespace UnityEditor.ShaderGraph
         }
 
         [NonSerialized]
-        Dictionary<Guid, List<AbstractMaterialNode>> m_GroupNodes = new Dictionary<Guid, List<AbstractMaterialNode>>();
+        public Dictionary<Guid, List<AbstractMaterialNode>> m_GroupNodes = new Dictionary<Guid, List<AbstractMaterialNode>>();
 
         public IEnumerable<AbstractMaterialNode> GetNodesInGroup(GroupData groupData)
         {
@@ -166,7 +166,7 @@ namespace UnityEditor.ShaderGraph
         #region Edge data
 
         [NonSerialized]
-        List<IEdge> m_Edges = new List<IEdge>();
+        public List<IEdge> m_Edges = new List<IEdge>();
 
         public IEnumerable<IEdge> edges
         {
@@ -174,7 +174,7 @@ namespace UnityEditor.ShaderGraph
         }
 
         [SerializeField]
-        List<SerializationHelper.JSONSerializedElement> m_SerializableEdges = new List<SerializationHelper.JSONSerializedElement>();
+        public List<SerializationHelper.JSONSerializedElement> m_SerializableEdges = new List<SerializationHelper.JSONSerializedElement>();
 
         [NonSerialized]
         Dictionary<Guid, List<IEdge>> m_NodeEdges = new Dictionary<Guid, List<IEdge>>();
@@ -375,7 +375,7 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
-        void AddEdgeToNodeEdges(IEdge edge)
+        public void AddEdgeToNodeEdges(IEdge edge)
         {
             List<IEdge> inputEdges;
             if (!m_NodeEdges.TryGetValue(edge.inputSlot.nodeGuid, out inputEdges))
@@ -864,7 +864,7 @@ namespace UnityEditor.ShaderGraph
             ValidateGraph();
         }
 
-        public void OnBeforeSerialize()
+        public virtual void OnBeforeSerialize()
         {
             m_SerializableNodes = SerializationHelper.Serialize(GetNodes<INode>());
             m_SerializableEdges = SerializationHelper.Serialize<IEdge>(m_Edges);
