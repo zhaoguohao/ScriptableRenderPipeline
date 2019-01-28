@@ -1,0 +1,56 @@
+#if !(defined(VFX_VARYING_PS_INPUTS) && defined(VFX_VARYING_POSCS))
+#error VFX_VARYING_PS_INPUTS, VFX_VARYING_POSCS and VFX_VARYING_UV must be defined.
+#endif
+
+${VFXPerPassInclude}
+${VFXGeneratedBlockFunction}
+
+#pragma vertex vert
+VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID)
+{
+	uint index = id / 3;
+	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
+	
+	${VFXLoadAttributesOrCull}
+	${VFXProcessBlocks}
+	
+	if (!alive)
+		return o;
+	
+	const float2 kOffsets[] = {
+		float2(-0.5f, 	-0.288675129413604736328125f),
+		float2(0.0f, 	0.57735025882720947265625f),
+		float2(0.5f,	-0.288675129413604736328125f),
+	};
+	
+	const float kUVScale = 0.866025388240814208984375f;
+	
+	const float2 vOffsets = kOffsets[id % 3];
+	o.VFX_VARYING_UV = (vOffsets * kUVScale) + 0.5f;
+	
+	${VFXLoadSize}
+	
+	const float4x4 elementToVFX = GetElementToVFXMatrix(axisX,axisY,axisZ,float3(angleX,angleY,angleZ),float3(pivotX,pivotY,pivotZ),size3,position);
+	const float3 vPos = mul(elementToVFX,float4(vOffsets,0.0f,1.0f)).xyz;
+
+	o.VFX_VARYING_POSCS = TransformPositionVFXToClip(vPos);
+	
+	#ifdef VFX_VARYING_NORMAL
+	float normalFlip = (size3.x * size3.y * size3.z) < 0 ? -1 : 1;
+	o.VFX_VARYING_NORMAL = normalFlip * normalize(TransformDirectionVFXToWorld(normalize(-transpose(elementToVFX)[2].xyz)));
+	#endif
+	#ifdef VFX_VARYING_TANGENT
+	o.VFX_VARYING_TANGENT = normalize(TransformDirectionVFXToWorld(normalize(transpose(elementToVFX)[0].xyz)));
+	#endif
+
+	${VFXVertexCommonProcess}
+	
+	${VFXVertexSetFlipbooksInterpolants}
+
+	${VFXVertexAdditionalProcess}
+
+	return o;
+}
+
+${VFXFragmentCommonFunctions}
+
