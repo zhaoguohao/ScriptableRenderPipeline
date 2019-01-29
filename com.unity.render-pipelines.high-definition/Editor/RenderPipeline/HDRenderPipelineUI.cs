@@ -120,10 +120,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
             EditorGUILayout.PropertyField(serialized.diffusionProfileSettings, diffusionProfileSettingsContent);
             // EditorGUILayout.PropertyField(serialized.allowShaderVariantStripping, enableShaderVariantStrippingContent);
+            diffusionProfileUI.drawElement = DrawDiffusionProfileElement;
             diffusionProfileUI.OnGUI(serialized.diffusionProfileSettingsList);
 
             EditorGUILayout.PropertyField(serialized.enableSRPBatcher, enableSRPBatcher);
             EditorGUILayout.PropertyField(serialized.shaderVariantLogLevel, shaderVariantLogLevel);
+        }
+
+        static void DrawDiffusionProfileElement(SerializedProperty element, Rect rect, int index)
+        {
+            EditorGUI.ObjectField(rect, element, new GUIContent("Profile " + index));
         }
     }
 }

@@ -23,7 +23,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public const string TangentSlotName = "Tangent";
         public const string SubsurfaceMaskSlotName = "SubsurfaceMask";
         public const string ThicknessSlotName = "Thickness";
-        public const string DiffusionProfileSlotName = "DiffusionProfile";
+        public const string DiffusionProfileHashSlotName = "DiffusionProfile";
         public const string IridescenceMaskSlotName = "IridescenceMask";
         public const string IridescenceThicknessSlotName = "IridescenceThickness";
         public const string SpecularColorSlotName = "Specular";
@@ -649,7 +649,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
             if (MaterialTypeUsesSlotMask(SlotMask.DiffusionProfile))
             {
-                AddSlot(new DiffusionProfileInputMaterialSlot(DiffusionProfileSlotId, DiffusionProfileSlotName, DiffusionProfileSlotName, ShaderStageCapability.Fragment));
+                AddSlot(new DiffusionProfileInputMaterialSlot(DiffusionProfileSlotId, DiffusionProfileHashSlotName, DiffusionProfileHashSlotName, ShaderStageCapability.Fragment));
                 validSlots.Add(DiffusionProfileSlotId);
             }
             if (MaterialTypeUsesSlotMask(SlotMask.IridescenceMask))
