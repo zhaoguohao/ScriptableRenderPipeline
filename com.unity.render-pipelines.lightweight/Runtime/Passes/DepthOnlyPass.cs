@@ -20,16 +20,15 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         private RenderTargetHandle depthAttachmentHandle { get; set; }
         internal RenderTextureDescriptor descriptor { get; private set; }
         private FilteringSettings opaqueFilterSettings { get; set; }
-        private readonly int eyeIndex;
+        int eyeIndex = 0;
 
         /// <summary>
         /// Create the DepthOnlyPass
         /// </summary>
-        public DepthOnlyPass(int eye)
+        public DepthOnlyPass()
         {
             RegisterShaderPassName("DepthOnly");
             opaqueFilterSettings = new FilteringSettings(RenderQueueRange.opaque);
-            eyeIndex = eye;
         }
         
         /// <summary>
@@ -75,21 +74,41 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
-                var sortFlags = renderingData.cameraData.defaultOpaqueSortFlags;
-                var drawSettings = CreateDrawingSettings(renderingData.cameraData.camera, sortFlags, PerObjectData.None, renderingData.supportsDynamicBatching);
-                var filteringSettings = opaqueFilterSettings;
-                
                 if (renderingData.cameraData.isStereoEnabled)
                 {
                     Camera camera = renderingData.cameraData.camera;
-                    context.StartMultiEye(camera, eyeIndex);
-                    context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref filteringSettings);
-                    context.StopMultiEye(camera);
+                    if (renderingData.numberOfStereoPasses > 1)
+                    {
+                        Camera.StereoscopicEye eye = (Camera.StereoscopicEye)eyeIndex;
+                        cmd.SetViewProjectionMatrices(camera.GetStereoViewMatrix(eye), camera.GetStereoProjectionMatrix(eye));
+                        context.ExecuteCommandBuffer(cmd);
+                        ++eyeIndex;
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 2; ++i)
+                        {
+                            Camera.StereoscopicEye eye = (Camera.StereoscopicEye)i;
+                            cmd.SetViewProjectionMatrices(camera.GetStereoViewMatrix(eye), camera.GetStereoProjectionMatrix(eye), true, i);
+                            context.ExecuteCommandBuffer(cmd);
+                        }
+                    }
+
+                    cmd.Clear();
                 }
-                else
-                    context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref filteringSettings);
+
+                var sortFlags = renderingData.cameraData.defaultOpaqueSortFlags;
+                var drawSettings = CreateDrawingSettings(renderingData.cameraData.camera, sortFlags, PerObjectData.None, renderingData.supportsDynamicBatching);
+                var filteringSettings = opaqueFilterSettings;
+
+                context.DrawRenderers(renderingData.cullResults, ref drawSettings, ref filteringSettings);
+
+                cmd.SetGlobalTexture(depthAttachmentHandle.id, depthAttachmentHandle.Identifier());
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
             }
             context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
             CommandBufferPool.Release(cmd);
         }
 
@@ -98,7 +117,9 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         {
             if (cmd == null)
                 throw new ArgumentNullException("cmd");
-            
+
+            eyeIndex = 0;
+
             if (depthAttachmentHandle != RenderTargetHandle.CameraTarget)
             {
                 cmd.ReleaseTemporaryRT(depthAttachmentHandle.id);

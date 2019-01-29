@@ -19,12 +19,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     /// </summary>
     internal class SetupForwardRenderingPass : ScriptableRenderPass
     {
-        private readonly int eyeIndex;
-
-        public SetupForwardRenderingPass(int eye)
-        {
-            eyeIndex = eye;
-        }
+        private int eyeIndex = 0;
 
         /// <inheritdoc/>
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
@@ -33,6 +28,12 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 throw new ArgumentNullException("renderer");
 
             context.SetupCameraProperties(renderingData.cameraData.camera, renderingData.cameraData.isStereoEnabled, eyeIndex);
+            ++eyeIndex;
+        }
+
+        public override void FrameCleanup(CommandBuffer cmd)
+        {
+            eyeIndex = 0;
         }
     }
 }

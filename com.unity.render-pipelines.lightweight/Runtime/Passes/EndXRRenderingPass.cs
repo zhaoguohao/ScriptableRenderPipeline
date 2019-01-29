@@ -14,12 +14,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     /// </summary>
     internal class EndXRRenderingPass : ScriptableRenderPass
     {
-        private readonly int eyeIndex;
-
-        public EndXRRenderingPass(int eye)
-        {
-            eyeIndex = eye;
-        }
+        private int eyeIndex = 0;
 
         /// <inheritdoc/>
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
@@ -30,8 +25,14 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             Camera camera = renderingData.cameraData.camera;
             context.StopMultiEye(camera);
 
-            bool isLastPass = eyeIndex == renderingData.totalEyes-1;
+            bool isLastPass = eyeIndex == renderingData.numberOfStereoPasses-1;
             context.StereoEndRender(camera, eyeIndex, isLastPass);
+            ++eyeIndex;
         }
-    }
+
+        public override void FrameCleanup(CommandBuffer cmd)
+        {
+            eyeIndex = 0;
+        }
+        }
 }

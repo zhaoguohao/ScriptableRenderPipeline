@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
 
@@ -23,6 +23,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
         Color clearColor { get; set; }
 
         PerObjectData rendererConfiguration;
+        private int eyeIndex = 0;
 
         public RenderOpaqueForwardPass()
         {
@@ -83,6 +84,26 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 cmd.Clear();
 
                 Camera camera = renderingData.cameraData.camera;
+                if(renderingData.cameraData.isStereoEnabled)
+                {
+                    if (renderingData.numberOfStereoPasses > 1)
+                    {
+                        Camera.StereoscopicEye eye = (Camera.StereoscopicEye)eyeIndex;
+                        cmd.SetViewProjectionMatrices(camera.GetStereoViewMatrix(eye), camera.GetStereoProjectionMatrix(eye));
+                    }
+                    else
+                    {
+                        for (int i = 0; i < 2; ++i)
+                        {
+                            Camera.StereoscopicEye eye = (Camera.StereoscopicEye)i;
+                            cmd.SetViewProjectionMatrices(camera.GetStereoViewMatrix(eye), camera.GetStereoProjectionMatrix(eye), true, i);
+                        }
+                    }
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+                    ++eyeIndex;
+                }
+
                 XRUtils.DrawOcclusionMesh(cmd, camera, renderingData.cameraData.isStereoEnabled);
                 var sortFlags = renderingData.cameraData.defaultOpaqueSortFlags;
                 var drawSettings = CreateDrawingSettings(camera, sortFlags, rendererConfiguration, renderingData.supportsDynamicBatching, renderingData.lightData.mainLightIndex);
@@ -92,6 +113,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 renderer.RenderObjectsWithError(context, ref renderingData.cullResults, camera, m_OpaqueFilterSettings, SortingCriteria.None);
             }
             context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
             CommandBufferPool.Release(cmd);
         }
 
@@ -121,6 +143,11 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 case CameraClearFlags.Nothing:
                     return RenderBufferLoadAction.Load;
             }
+        }
+
+        public override void FrameCleanup(CommandBuffer cmd)
+        {
+            eyeIndex = 0;
         }
     }
 }

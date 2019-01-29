@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Unity.Collections;
@@ -295,7 +295,9 @@ namespace UnityEngine.Experimental.Rendering.LWRP
 
             if (cameraData.isStereoEnabled)
             {
-                return XRGraphics.eyeTextureDesc;
+                desc = XRGraphics.eyeTextureDesc;
+                desc.allowVerticalFlip = true;
+                return desc;
             }
             else
             {

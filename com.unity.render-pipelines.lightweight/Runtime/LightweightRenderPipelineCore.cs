@@ -20,7 +20,7 @@ namespace UnityEngine.Rendering.LWRP
         public ShadowData shadowData;
         public bool supportsDynamicBatching;
         public bool killAlphaInFinalBlit;
-        public int totalEyes;
+        public int numberOfStereoPasses;
     }
 
     public struct LightData

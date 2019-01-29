@@ -359,10 +359,11 @@ namespace UnityEngine.Rendering.LWRP
             InitializeShadowData(settings, visibleLights, mainLightCastShadows, additionalLightsCastShadows && !renderingData.lightData.shadeAdditionalLightsPerVertex, out renderingData.shadowData);
             renderingData.supportsDynamicBatching = settings.supportsDynamicBatching;
 
-            renderingData.totalEyes = 1;
-            if (renderingData.cameraData.isStereoEnabled &&
+            renderingData.numberOfStereoPasses = 1;
+            if (!renderingData.cameraData.isSceneViewCamera && 
+                renderingData.cameraData.isStereoEnabled &&
                 XR.XRSettings.stereoRenderingMode == XR.XRSettings.StereoRenderingMode.MultiPass)
-                renderingData.totalEyes = 2;
+                renderingData.numberOfStereoPasses = 2;
 
             bool platformNeedsToKillAlpha = Application.platform == RuntimePlatform.IPhonePlayer ||
                 Application.platform == RuntimePlatform.Android ||

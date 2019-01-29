@@ -17,12 +17,7 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     /// </summary>
     internal class BeginXRRenderingPass : ScriptableRenderPass
     {
-        private readonly int eyeIndex;
-
-        public BeginXRRenderingPass(int eye)
-        {
-            eyeIndex = eye;
-        }
+        private int eyeIndex = 0;
 
         /// <inheritdoc/>
         public override void Execute(ScriptableRenderer renderer, ScriptableRenderContext context, ref RenderingData renderingData)
@@ -32,6 +27,12 @@ namespace UnityEngine.Experimental.Rendering.LWRP
             
             Camera camera = renderingData.cameraData.camera;
             context.StartMultiEye(camera, eyeIndex);
+            ++eyeIndex;
+        }
+
+        public override void FrameCleanup(CommandBuffer cmd)
+        {
+            eyeIndex = 0;
         }
     }
 }

@@ -9,15 +9,12 @@ namespace UnityEngine.Experimental.Rendering.LWRP
     {
         const string k_CollectShadowsTag = "Collect Shadows";
         RenderTextureFormat m_ColorFormat;
-        private readonly int eyeIndex;
 
-        public ScreenSpaceShadowResolvePass(int eye)
+        public ScreenSpaceShadowResolvePass()
         {
             m_ColorFormat = SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.R8)
                 ? RenderTextureFormat.R8
                 : RenderTextureFormat.ARGB32;
-
-            eyeIndex = eye;
         }
 
         private RenderTargetHandle colorAttachmentHandle { get; set; }
@@ -57,19 +54,12 @@ namespace UnityEngine.Experimental.Rendering.LWRP
                 ClearFlag.Color | ClearFlag.Depth, Color.white, descriptor.dimension);
             cmd.Blit(screenSpaceOcclusionTexture, screenSpaceOcclusionTexture, renderer.GetMaterial(MaterialHandle.ScreenSpaceShadow));
 
-            if (renderingData.cameraData.isStereoEnabled)
-            {
-                Camera camera = renderingData.cameraData.camera;
-                context.StartMultiEye(camera, eyeIndex);
-                context.ExecuteCommandBuffer(cmd);
-                context.StopMultiEye(camera);
-            }
-            else
-                context.ExecuteCommandBuffer(cmd);
+            context.ExecuteCommandBuffer(cmd);
 
             cmd.Clear();
             cmd.SetGlobalTexture(colorAttachmentHandle.id, screenSpaceOcclusionTexture);
             context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
 
             CommandBufferPool.Release(cmd);
         }
