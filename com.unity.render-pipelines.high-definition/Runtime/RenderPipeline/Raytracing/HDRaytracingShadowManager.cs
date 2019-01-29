@@ -31,12 +31,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _UNBuffer = Shader.PropertyToID("_UNTextureUAV");
         public static readonly int _UBuffer = Shader.PropertyToID("_UTextureUAV");
 
-        // Denoise data
+        // Denoising data
         public static readonly int _DenoiseRadius = Shader.PropertyToID("_DenoiseRadius");
         public static readonly int _GaussianSigma = Shader.PropertyToID("_GaussianSigma");
-
-        // output Slot
-        public static readonly int _ShadowSlot = Shader.PropertyToID("_ShadowSlot");
 
         // Temporary variable that allows us to store the world to local matrix
         Matrix4x4 worldToLocalArea = new Matrix4x4();
@@ -99,10 +96,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Let's check all the resources and states to see if we should render the effect
             HDRaytracingEnvironment rtEnvironement = m_RaytracingManager.CurrentEnvironment();
-            Texture2DArray noiseTexture = m_RaytracingManager.m_RGNoiseTexture;
+            BlueNoise blueNoise = m_RaytracingManager.GetBlueNoiseManager();
             RaytracingShader shadowsShader = m_PipelineAsset.renderPipelineResources.shaders.shadowsRaytracing;
             ComputeShader bilateralFilter = m_PipelineAsset.renderPipelineResources.shaders.areaBillateralFilterCS;
-            bool invalidState = rtEnvironement == null || noiseTexture == null || !rtEnvironement.raytracedShadows || shadowsShader  == null || bilateralFilter == null || hdCamera.frameSettings.litShaderMode != LitShaderMode.Deferred;
+            bool invalidState = rtEnvironement == null || blueNoise == null || !rtEnvironement.raytracedShadows || shadowsShader  == null || bilateralFilter == null || hdCamera.frameSettings.litShaderMode != LitShaderMode.Deferred;
 
             // Try to grab the acceleration structure for the target camera
             RaytracingAccelerationStructure accelerationStructure = m_RaytracingManager.RequestAccelerationStructure(hdCamera);
@@ -120,10 +117,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Set the acceleration structure for the pass
             cmd.SetRaytracingAccelerationStructure(shadowsShader, HDShaderIDs._RaytracingAccelerationStructureName, accelerationStructure);
 
+            // Fetch the screen space coherent noise texture array
+            Texture2DArray rgCoherentNoise = blueNoise.textureArray128RGCoherent;
+
             // Inject the ray-tracing noise data
-            cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._RaytracingNoiseTexture, noiseTexture);
-            cmd.SetRaytracingIntParams(shadowsShader, HDShaderIDs._RaytracingNoiseResolution, noiseTexture.width);
-            cmd.SetRaytracingIntParams(shadowsShader, HDShaderIDs._RaytracingNumNoiseLayers, noiseTexture.depth);
+            cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._RaytracingNoiseTexture, rgCoherentNoise);
+            cmd.SetRaytracingIntParams(shadowsShader, HDShaderIDs._RaytracingNoiseResolution, rgCoherentNoise.width);
+            cmd.SetRaytracingIntParams(shadowsShader, HDShaderIDs._RaytracingNumNoiseLayers, rgCoherentNoise.depth);
 
             // Inject the ray generation data
             cmd.SetGlobalFloat(HDShaderIDs._RaytracingRayBias, rtEnvironement.rayBias);
@@ -186,7 +186,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
                     cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.shadowFilterRadius);
                     cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.shadowFilterSigma);
-                    cmd.SetComputeIntParam(bilateralFilter, _ShadowSlot, m_LightLoop.m_lightList.lights[lightIdx].shadowIndex);
+                    cmd.SetComputeIntParam(bilateralFilter, HDShaderIDs._RaytracingShadowSlot, m_LightLoop.m_lightList.lights[lightIdx].shadowIndex);
 
                     // Set the output slot
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._AreaShadowTexture, m_AreaShadowTextureArray);
