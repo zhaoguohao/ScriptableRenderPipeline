@@ -23,6 +23,15 @@ namespace UnityEngine.Rendering.LWRP
         private Shader m_AutodeskInteractiveMaskedShader = null;
 
         [SerializeField]
+        private Shader m_TerrainDetailLitShader = null;
+
+        [SerializeField]
+        private Shader m_TerrainDetailGrassShader = null;
+
+        [SerializeField]
+        private Shader m_TerrainDetailGrassBillboardShader = null;
+		
+        [SerializeField]
         private Shader m_SpeedTree7Shader = null;
 
         [SerializeField]
@@ -58,6 +67,21 @@ namespace UnityEngine.Rendering.LWRP
             get { return m_AutodeskInteractiveMaskedShader; }
         }
 
+        public Shader terrainDetailLitShader
+        {
+            get { return m_TerrainDetailLitShader; }
+        }
+
+        public Shader terrainDetailGrassShader
+        {
+            get { return m_TerrainDetailGrassShader; }
+        }
+
+        public Shader terrainDetailGrassBillboardShader
+        {
+            get { return m_TerrainDetailGrassBillboardShader; }
+        }
+		
         public Shader defaultSpeedTree7Shader
         {
             get { return m_SpeedTree7Shader; }
