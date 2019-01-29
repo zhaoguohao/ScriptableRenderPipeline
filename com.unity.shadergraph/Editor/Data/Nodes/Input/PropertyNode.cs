@@ -83,6 +83,11 @@ namespace UnityEditor.ShaderGraph
                 AddSlot(new BooleanMaterialSlot(OutputSlotId, property.displayName, "Out", SlotType.Output, false));
                 RemoveSlotsNameNotMatching(new[] { OutputSlotId });
             }
+            if (property.concreteValueType == ConcreteSlotValueType.Gradient)
+            {
+                AddSlot(new GradientMaterialSlot(OutputSlotId, property.displayName, "Out", SlotType.Output));
+                RemoveSlotsNameNotMatching(new[] { OutputSlotId });
+            }
         }
 
         public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)

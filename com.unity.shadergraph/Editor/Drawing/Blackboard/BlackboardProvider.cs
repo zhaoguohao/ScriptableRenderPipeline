@@ -203,8 +203,8 @@ namespace UnityEditor.ShaderGraph.Drawing
             var gm = new GenericMenu();
             if (m_Graph is SubGraph subgraph)
             {
-                InputDescriptor inputPort =  new InputDescriptor(0, "Vector1", ConcreteSlotValueType.Vector1);
-                gm.AddItem(new GUIContent("Vector1"), false, () => AddProperty(new ShaderPort(inputPort), true));
+                gm.AddItem(new GUIContent("Vector1"), false, () => AddProperty(new ShaderPort(new InputDescriptor(-1, "Vector1", ConcreteSlotValueType.Vector1)), true));
+                gm.AddItem(new GUIContent("Gradient"), false, () => AddProperty(new ShaderPort(new InputDescriptor(-1, "Gradient", ConcreteSlotValueType.Gradient)), true));
             }
             else
             {

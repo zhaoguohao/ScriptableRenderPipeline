@@ -171,82 +171,33 @@ namespace UnityEditor.ShaderGraph
             var props = referencedGraph.graphInputs;
             foreach (var prop in props)
             {
-                var propType = prop.propertyType;
-                SlotValueType slotType;
-
-                switch (propType)
-                {
-                    case PropertyType.Color:
-                        slotType = SlotValueType.Vector4;
-                        break;
-                    case PropertyType.Texture2D:
-                        slotType = SlotValueType.Texture2D;
-                        break;
-                    case PropertyType.Texture2DArray:
-                        slotType = SlotValueType.Texture2DArray;
-                        break;
-                    case PropertyType.Texture3D:
-                        slotType = SlotValueType.Texture3D;
-                        break;
-                    case PropertyType.Cubemap:
-                        slotType = SlotValueType.Cubemap;
-                        break;
-                    case PropertyType.Gradient:
-                        slotType = SlotValueType.Gradient;
-                        break;
-                    case PropertyType.Vector1:
-                        slotType = SlotValueType.Vector1;
-                        break;
-                    case PropertyType.Vector2:
-                        slotType = SlotValueType.Vector2;
-                        break;
-                    case PropertyType.Vector3:
-                        slotType = SlotValueType.Vector3;
-                        break;
-                    case PropertyType.Vector4:
-                        slotType = SlotValueType.Vector4;
-                        break;
-                    case PropertyType.Boolean:
-                        slotType = SlotValueType.Boolean;
-                        break;
-                    case PropertyType.Matrix2:
-                        slotType = SlotValueType.Matrix2;
-                        break;
-                    case PropertyType.Matrix3:
-                        slotType = SlotValueType.Matrix3;
-                        break;
-                    case PropertyType.Matrix4:
-                        slotType = SlotValueType.Matrix4;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
+                SlotValueType slotType = prop.concreteValueType.ToSlotValueType();
 
                 var id = prop.guid.GetHashCode();
-                MaterialSlot slot = MaterialSlot.CreateMaterialSlot(slotType, id, prop.displayName, prop.referenceName, SlotType.Input, prop.value.vectorValue, ShaderStageCapability.All);
+                MaterialSlot slot = MaterialSlot.CreateMaterialSlot(slotType, id, prop.displayName, prop.shaderOutputName, SlotType.Input, prop.value.vectorValue, ShaderStageCapability.All);
                 // copy default for texture for niceness
-                if (slotType == SlotValueType.Texture2D && propType == PropertyType.Texture2D)
+                if (slotType == SlotValueType.Texture2D)
                 {
                     var tSlot = slot as Texture2DInputMaterialSlot;
                     if (tSlot != null && prop != null)
                         tSlot.texture = (Texture2D)prop.value.textureValue;
                 }
                 // copy default for texture array for niceness
-                else if (slotType == SlotValueType.Texture2DArray && propType == PropertyType.Texture2DArray)
+                else if (slotType == SlotValueType.Texture2DArray)
                 {
                     var tSlot = slot as Texture2DArrayInputMaterialSlot;
                     if (tSlot != null && prop != null)
                         tSlot.textureArray = (Texture2DArray)prop.value.textureValue;
                 }
                 // copy default for texture 3d for niceness
-                else if (slotType == SlotValueType.Texture3D && propType == PropertyType.Texture3D)
+                else if (slotType == SlotValueType.Texture3D)
                 {
                     var tSlot = slot as Texture3DInputMaterialSlot;
                     if (tSlot != null && prop != null)
                         tSlot.texture = (Texture3D)prop.value.textureValue;
                 }
                 // copy default for cubemap for niceness
-                else if (slotType == SlotValueType.Cubemap && propType == PropertyType.Cubemap)
+                else if (slotType == SlotValueType.Cubemap)
                 {
                     var tSlot = slot as CubemapInputMaterialSlot;
                     if (tSlot != null && prop != null)
