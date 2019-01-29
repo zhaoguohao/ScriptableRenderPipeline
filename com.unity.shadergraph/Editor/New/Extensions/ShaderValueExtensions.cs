@@ -63,9 +63,39 @@ namespace UnityEditor.ShaderGraph
 
         internal static string ToVariableDefinition(this IShaderValue shaderValue, AbstractMaterialNode.OutputPrecision precision)
         {
-            return string.Format("{0} {1}",
-                NodeUtils.ConvertConcreteSlotValueTypeToString(precision, shaderValue.concreteValueType),
-                shaderValue.ToVariableName());
+            //return string.Format("{0} {1}",
+            //    NodeUtils.ConvertConcreteSlotValueTypeToString(precision, shaderValue.concreteValueType),
+            //    shaderValue.ToVariableName());
+            switch(propertyType)
+            {
+                case PropertyType.Boolean:
+                case PropertyType.Color:
+                    return string.Format("float {0}{1}", referenceName, delimiter);
+                case PropertyType.Cubemap:
+                    return string.Format("TEXTURECUBE({0}){1} SAMPLER(sampler{0}){1}", referenceName, delimiter);
+                case PropertyType.Gradient:
+                    return GetGradientDeclarationString();
+                case PropertyType.Matrix2:
+                case PropertyType.Matrix3:
+                case PropertyType.Matrix4:
+                    return string.Format("float4x4 {0} = float4x4(1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0){1}", referenceName, delimiter);
+                case PropertyType.SamplerState:
+                    return string.Format(@"SAMPLER({0}){1}", referenceName, delimiter);
+                case PropertyType.Texture2DArray:
+                    return string.Format("TEXTURE2D_ARRAY({0}){1} SAMPLER(sampler{0}){1}", referenceName, delimiter);
+                case PropertyType.Texture2D:
+                    return string.Format("TEXTURE2D({0}){1} SAMPLER(sampler{0}); float4 {0}_TexelSize{1}", referenceName, delimiter);
+                case PropertyType.Vector1:
+                    return string.Format("float {0}{1}", referenceName, delimiter);
+                case PropertyType.Vector2:
+                    return string.Format("float2 {0}{1}", referenceName, delimiter);
+                case PropertyType.Vector3:
+                    return string.Format("float3 {0}{1}", referenceName, delimiter);
+                case PropertyType.Vector4:
+                    return string.Format("float4 {0}{1}", referenceName, delimiter);
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         internal static string ToVariableReference(this IShaderValue shaderValue, AbstractMaterialNode.OutputPrecision precision, GenerationMode generationMode)

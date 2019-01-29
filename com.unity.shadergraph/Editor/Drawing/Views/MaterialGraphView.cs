@@ -359,7 +359,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var field = selectable as BlackboardField;
                 if (field != null && field.userData != null)
                 {
-                    var property = (ShaderProperty)field.userData;
+                    var property = (IShaderValue)field.userData;
                     graph.RemoveShaderProperty(property.guid);
                 }
             }
@@ -530,7 +530,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             var blackboardField = obj as BlackboardField;
             if (blackboardField != null)
             {
-                ShaderProperty property = blackboardField.userData as ShaderProperty;
+                IShaderValue property = blackboardField.userData as IShaderValue;
                 if (property != null)
                 {
                     graph.owner.RegisterCompleteObjectUndo("Drag Property");

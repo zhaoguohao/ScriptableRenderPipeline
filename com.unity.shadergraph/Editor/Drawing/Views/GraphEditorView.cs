@@ -151,16 +151,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.elementsAddedToGroup = OnElementsAddedToGroup;
                 m_GraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
                 content.Add(m_GraphView);
-
-                if (graph is SubGraph subgraph)
-                {
-                    m_BlackboardProvider = new BlackboardSubgraphProvider(subgraph);
-                }
-                else
-                {
-                    m_BlackboardProvider = new BlackboardProvider(graph);
-                }
-                
+                m_BlackboardProvider = new BlackboardProvider(graph);                
                 m_GraphView.Add(m_BlackboardProvider.blackboard);
                 Rect blackboardLayout = m_BlackboardProvider.blackboard.layout;
                 blackboardLayout.x = 10f;
@@ -282,7 +273,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             if (graphViewChange.elementsToRemove != null)
             {
-                m_Graph.owner.RegisterCompleteObjectUndo("Remove Elements");
+                //m_Graph.owner.RegisterCompleteObjectUndo("Remove Elements");
                 m_Graph.RemoveElements(graphViewChange.elementsToRemove.OfType<MaterialNodeView>().Select(v => (INode)v.node),
                     graphViewChange.elementsToRemove.OfType<Edge>().Select(e => (IEdge)e.userData),
                     graphViewChange.elementsToRemove.OfType<ShaderGroup>().Select(g => (GroupData)g.userData));

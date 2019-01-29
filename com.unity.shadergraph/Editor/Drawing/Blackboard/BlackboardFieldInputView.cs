@@ -16,22 +16,25 @@ namespace UnityEditor.ShaderGraph.Drawing
         readonly BlackboardField m_BlackboardField;
         readonly AbstractMaterialGraph m_Graph;
 
-        InputDescriptor m_Input;
+        ShaderPort m_Input;
 
         static Type s_ContextualMenuManipulator = AppDomain.CurrentDomain.GetAssemblies().SelectMany(x => x.GetTypesOrNothing()).FirstOrDefault(t => t.FullName == "UnityEngine.UIElements.ContextualMenuManipulator");
-        
-        public BlackboardFieldInputView(BlackboardField blackboardField, AbstractMaterialGraph graph, InputDescriptor input)
+        public BlackboardFieldInputView()
+        {
+            
+        }
+        public BlackboardFieldInputView(BlackboardField blackboardField, AbstractMaterialGraph graph, ShaderPort input)
         {
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/SubGraphBlackboard"));
             m_BlackboardField = blackboardField;
             m_Graph = graph;
             m_Input = input;
 
-            Add(GetControlForShaderParameter(new ShaderValue(input, graph)));
+            Add(GetControlForShaderParameter(input));
             AddToClassList("sgblackboardFieldInputView");
         }
 
-        private VisualElement GetControlForShaderParameter(ShaderValue parameter)
+        private VisualElement GetControlForShaderParameter(ShaderPort parameter)
         {
             var container = new VisualElement { name = "Container" };
             container.style.marginLeft = 6;
@@ -51,20 +54,6 @@ namespace UnityEditor.ShaderGraph.Drawing
             valueContainer.style.flexDirection = FlexDirection.Row;
             container.Add(valueContainer);
             return container;
-        }
-        void RemoveElements(VisualElement[] elements)
-        {
-            for (int i = 0; i < elements.Length; i++)
-            {
-                if (elements[i].parent == this)
-                    Remove(elements[i]);
-            }
-        }
-
-        void DirtyNodes(ModificationScope modificationScope = ModificationScope.Node)
-        {
-            foreach (var node in m_Graph.GetNodes<PropertyNode>())
-                node.Dirty(modificationScope);
         }
     }
 }
