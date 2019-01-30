@@ -352,6 +352,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_PreviewFiller.RemoveFromClassList("expanded");
                 m_PreviewFiller.AddToClassList("collapsed");
             }
+            UpdatePreviewTexture();
         }
 
         void UpdateTitle()

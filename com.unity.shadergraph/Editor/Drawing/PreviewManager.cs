@@ -265,7 +265,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             
             foreach (var node in m_TimedNodes.Union(m_NodesToDraw).Cast<AbstractMaterialNode>())
             {
-                if(node == null || !node.hasPreview)
+                if(node == null || !node.hasPreview || !node.previewExpanded)
                     continue;
                 
                 var renderData = GetRenderData(node.tempId);
@@ -442,7 +442,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         void RenderPreview(PreviewRenderData renderData, Mesh mesh, Matrix4x4 transform)
         {
             var node = renderData.shaderData.node as AbstractMaterialNode;
-            Assert.IsTrue((node != null && node.hasPreview) || node == masterRenderData.shaderData?.node);
+            Assert.IsTrue((node != null && node.hasPreview && node.previewExpanded) || node == masterRenderData.shaderData?.node);
             
             if (renderData.shaderData.hasError)
             {
