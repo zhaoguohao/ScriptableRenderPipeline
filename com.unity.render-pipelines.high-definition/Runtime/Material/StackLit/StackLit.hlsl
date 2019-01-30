@@ -648,17 +648,21 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     bsdfData.diffuseColor = ComputeDiffuseColor(surfaceData.baseColor, metallic);
     bsdfData.fresnel0 = HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR) ? surfaceData.specularColor : ComputeFresnel0(surfaceData.baseColor, surfaceData.metallic, IorToFresnel0(surfaceData.dielectricIor));
 
+#ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING))
     {
         // Assign profile id and overwrite fresnel0
         FillMaterialSSS(surfaceData.diffusionProfile, surfaceData.subsurfaceMask, bsdfData);
     }
+#endif
 
+#ifdef MATERIAL_INCLUDE_TRANSMISSION
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
     {
         // Assign profile id and overwrite fresnel0
         FillMaterialTransmission(surfaceData.diffusionProfile, surfaceData.thickness, bsdfData);
     }
+#endif
 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_ANISOTROPY))
     {
@@ -2435,11 +2439,13 @@ void ModifyBakedDiffuseLighting(float3 V, PositionInputs posInput, SurfaceData s
         builtinData.bakeDiffuseLighting += builtinData.backBakeDiffuseLighting * bsdfData.transmittance;
     }
 
+#ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
     // For SSS we need to take into account the state of diffuseColor 
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING))
     {
         bsdfData.diffuseColor = GetModifiedDiffuseColorForSSS(bsdfData);
     }
+#endif
 
     // Premultiply baked (possibly with back facing added) diffuse lighting information with diffuse
     // pre-integration and energy term.
@@ -3891,8 +3897,12 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
     float3 GTAOMultiBounceTintBase = (bsdfData.diffuseColor * preLightData.diffuseEnergy);
     GetApplyScreenSpaceDiffuseOcclusionForDirect(GTAOMultiBounceTintBase, preLightData.screenSpaceAmbientOcclusion, directAmbientOcclusion, lighting);
 
+#ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
     // Subsurface scattering mode
     float3 modifiedDiffuseColor = GetModifiedDiffuseColorForSSS(bsdfData);
+#else
+    float3 modifiedDiffuseColor = bsdfData.diffuseColor;
+#endif
 
     // Compute diffuseOcclusion combining both the effects of the occlusion from data and from screen space, the
     // later which has already been sampled in GetPreLightData (also see comments about GTAOMultiBounceTintBase

@@ -118,12 +118,14 @@ void Frag(PackedVaryingsToPS packedInput,
         specularLighting *= GetCurrentExposureMultiplier();
 
 #ifdef OUTPUT_SPLIT_LIGHTING
+    #ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
         if (_EnableSubsurfaceScattering != 0 && ShouldOutputSplitLighting(bsdfData))
         {
             outColor = float4(specularLighting, 1.0);
             outDiffuseLighting = float4(TagLightingForSSS(diffuseLighting), 1.0);
         }
         else
+    #endif
         {
             outColor = float4(diffuseLighting + specularLighting, 1.0);
             outDiffuseLighting = 0;

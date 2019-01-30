@@ -140,12 +140,14 @@ Shader "Hidden/HDRP/Deferred"
                 Outputs outputs;
 
             #ifdef OUTPUT_SPLIT_LIGHTING
+                #ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
                 if (_EnableSubsurfaceScattering != 0 && ShouldOutputSplitLighting(bsdfData))
                 {
                     outputs.specularLighting = float4(specularLighting, 1.0);
                     outputs.diffuseLighting  = TagLightingForSSS(diffuseLighting);
                 }
                 else
+                #endif
                 {
                     outputs.specularLighting = float4(diffuseLighting + specularLighting, 1.0);
                     outputs.diffuseLighting  = 0;

@@ -429,17 +429,21 @@ BSDFData ConvertSurfaceDataToBSDFData(uint2 positionSS, SurfaceData surfaceData)
     // However in practice we keep parity between deferred and forward, so we should constrain the various features.
     // The UI is in charge of setuping the constrain, not the code. So if users is forward only and want unleash power, it is easy to unleash by some UI change
 
+#ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING))
     {
         // Assign profile id and overwrite fresnel0
         FillMaterialSSS(surfaceData.diffusionProfile, surfaceData.subsurfaceMask, bsdfData);
     }
+#endif
 
+#ifdef MATERIAL_INCLUDE_TRANSMISSION
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
     {
         // Assign profile id and overwrite fresnel0
         FillMaterialTransmission(surfaceData.diffusionProfile, surfaceData.thickness, bsdfData);
     }
+#endif
 
     if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_LIT_ANISOTROPY))
     {
@@ -793,17 +797,21 @@ uint DecodeFromGBuffer(uint2 positionSS, uint tileFeatureFlags, out BSDFData bsd
         // Note: both function assign profile and overwrite fresnel0 (both SSS and Transmission)
         // in case one feature is enabled and not the other.
 
+#ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
         // The neutral value of subsurfaceMask is 0 (handled by ZERO_INITIALIZE).
         if (HasFlag(pixelFeatureFlags, MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING))
         {
             FillMaterialSSS(sssData.diffusionProfile, sssData.subsurfaceMask, bsdfData);
         }
+#endif
 
+#ifdef MATERIAL_INCLUDE_TRANSMISSION
         // The neutral value of thickness and transmittance is 0 (handled by ZERO_INITIALIZE).
         if (HasFlag(pixelFeatureFlags, MATERIALFEATUREFLAGS_LIT_TRANSMISSION))
         {
             FillMaterialTransmission(sssData.diffusionProfile, inGBuffer2.g, bsdfData);
         }
+#endif
     }
     else
     {
@@ -1132,11 +1140,13 @@ void ModifyBakedDiffuseLighting(float3 V, PositionInputs posInput, SurfaceData s
         builtinData.bakeDiffuseLighting += builtinData.backBakeDiffuseLighting * bsdfData.transmittance;
     }
 
+#ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
     // For SSS we need to take into account the state of diffuseColor 
     if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING))
     {
         bsdfData.diffuseColor = GetModifiedDiffuseColorForSSS(bsdfData);
     }
+#endif
 
     // Premultiply (back) bake diffuse lighting information with DisneyDiffuse pre-integration
     builtinData.bakeDiffuseLighting *= preLightData.diffuseFGD * bsdfData.diffuseColor;
@@ -1838,8 +1848,12 @@ void PostEvaluateBSDF(  LightLoopContext lightLoopContext,
 #endif
     ApplyAmbientOcclusionFactor(aoFactor, builtinData, lighting);
 
+#ifdef MATERIAL_INCLUDE_SUBSURFACESCATTERING
     // Subsurface scattering mode
     float3 modifiedDiffuseColor = GetModifiedDiffuseColorForSSS(bsdfData);
+#else
+    float3 modifiedDiffuseColor = bsdfData.diffuseColor;
+#endif
 
     // Apply the albedo to the direct diffuse lighting (only once). The indirect (baked)
     // diffuse lighting has already multiply the albedo in ModifyBakedDiffuseLighting().
