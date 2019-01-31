@@ -81,7 +81,7 @@ namespace UnityEngine.Rendering.LWRP
             public float shadowDepthBias { get; private set; }
             public float shadowNormalBias { get; private set; }
             public bool supportsSoftShadows { get; private set; }
-            public bool supportsVxShadowMaps { get; private set; } //seongdae;vxsm
+            public bool supportsVxShadows { get; private set; } //seongdae;vxsm
             public VxShadowMapsQuality vxShadowMapsQuality { get; private set; } //seongdae;vxsm
             public bool supportsDynamicBatching { get; private set; }
             public bool mixedLightingSupported { get; private set; }
@@ -119,7 +119,7 @@ namespace UnityEngine.Rendering.LWRP
                 cache.shadowDepthBias = asset.shadowDepthBias;
                 cache.shadowNormalBias = asset.shadowNormalBias;
                 cache.supportsSoftShadows = asset.supportsSoftShadows;
-                cache.supportsVxShadowMaps = asset.supportsVxShadowMaps; //seongdae;vxsm
+                cache.supportsVxShadows = asset.supportsVxShadows; //seongdae;vxsm
                 cache.vxShadowMapsQuality = asset.vxShadowMapsQuality; //seongdae;vxsm
 
                 // Advanced settings
@@ -400,7 +400,7 @@ namespace UnityEngine.Rendering.LWRP
             //seongdae;vxsm
 
             shadowData.supportsMainLightShadows = settings.supportsMainLightShadows && mainLightCastShadows;
-            shadowData.supportsMainLightVxShadows = settings.supportsVxShadowMaps && mainLightCastShadows; //seongdae;vxsm
+            shadowData.supportsMainLightVxShadows = settings.supportsVxShadows && mainLightCastShadows; //seongdae;vxsm
 
             // we resolve shadows in screenspace when cascades are enabled to save ALU as computing cascade index + shadowCoord on fragment is expensive
             shadowData.requiresScreenSpaceShadowResolve = shadowData.supportsMainLightShadows && supportsScreenSpaceShadows && settings.shadowCascadeOption != ShadowCascadesOption.NoCascades;
@@ -441,7 +441,7 @@ namespace UnityEngine.Rendering.LWRP
             }
 
             //seongdae;vxsm
-            if (shadowData.supportsMainLightShadows && settings.supportsVxShadowMaps)
+            if (shadowData.supportsMainLightShadows && settings.supportsVxShadows)
             {
                 int mainLightIndex = GetMainLightIndex(settings, visibleLights);
                 var mainLight = visibleLights[mainLightIndex].light;
