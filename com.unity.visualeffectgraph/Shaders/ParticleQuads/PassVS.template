@@ -1,17 +1,41 @@
 #pragma vertex vert
 VFX_VARYING_PS_INPUTS vert(uint id : SV_VertexID, uint instanceID : SV_InstanceID)
 {
+#if VFX_PRIMITIVE_TRIANGLE
+	uint index = 0;
+#elif VFX_PRIMITIVE_QUAD
 	uint index = (id >> 2) + instanceID * 2048;
+#elif VFX_PRIMITIVE_OCTAGON
+	uint index = (id >> 4) + instanceID * 1024;
+#endif
+
 	VFX_VARYING_PS_INPUTS o = (VFX_VARYING_PS_INPUTS)0;
-	
+
 	${VFXLoadAttributesOrCull}
 	${VFXProcessBlocks}
 	
 	if (!alive)
 		return o;
 	
+#if VFX_PRIMITIVE_QUAD
 	o.VFX_VARYING_UV.x = float(id & 1);
 	o.VFX_VARYING_UV.y = float((id & 2) >> 1);
+#elif VFX_PRIMITIVE_OCTAGON	
+	const float2 kUvs[8] = 
+	{
+		float2(0.0f,	0.0f),
+		float2(0.0f,	0.5f),
+		float2(0.0f,	1.0f),
+		float2(0.5f,	1.0f),
+		float2(1.0f,	1.0f),
+		float2(1.0f,	0.5f),
+		float2(1.0f,	0.0f),
+		float2(0.5f,	0.0f),
+	};
+	
+	${VFXLoadParameter:{cropFactor}}
+	o.VFX_VARYING_UV = lerp(kUvs[(id + (id & 1)) & 7],kUvs[(id + 1 - (id & 1)) & 7],cropFactor);
+#endif
 	
 	${VFXLoadSize}
 	
