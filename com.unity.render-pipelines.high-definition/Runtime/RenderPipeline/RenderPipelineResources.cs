@@ -136,6 +136,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public ComputeShader reflectionBilateralFilterCS;
             public ComputeShader lightClusterBuildCS;
             public ComputeShader lightClusterDebugCS;
+            public ComputeShader countTracedRays;
+            public Shader debugViewRayCountPS;
 #endif
         }
 
@@ -304,19 +306,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 bloomBlurCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/BloomBlur.compute"),
                 bloomUpsampleCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/BloomUpsample.compute"),
                 finalPassPS = Load<Shader>(HDRenderPipelinePath + "PostProcessing/Shaders/FinalPass.shader")
-            
+            };
+
 #if ENABLE_RAYTRACING
-                ,
-                aoRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingAmbientOcclusion.raytrace"),
-                reflectionRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingReflections.raytrace"),
-                shadowsRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingAreaShadows.raytrace"),
-                areaBillateralFilterCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/AreaBilateralShadow.compute"),
-                jointBilateralFilterCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/JointBilateralFilter.compute"),
-                reflectionBilateralFilterCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingReflectionFilter.compute"),
-                lightClusterBuildCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingLightCluster.compute"),
-                lightClusterDebugCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/DebugLightCluster.compute")
+            LoadRayTraceShaders();
 #endif
-        };
 
             // Materials
             materials = new MaterialResources
@@ -368,6 +362,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 textures.coherentRGNoise128[i] = Load<Texture2D>(HDRenderPipelinePath + "RenderPipelineResources/Texture/CoherentNoise128/sample_" + i + "_xy.bmp");
             }
         }
+#if ENABLE_RAYTRACING
+        public void LoadRayTraceShaders()
+        {
+            string HDRenderPipelinePath = HDUtils.GetHDRenderPipelinePath() + "Runtime/";
+            shaders.aoRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingAmbientOcclusion.raytrace");
+            shaders.reflectionRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingReflections.raytrace");
+            shaders.shadowsRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingAreaShadows.raytrace");
+            shaders.raytracingFlagMask = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingFlagMask.shader");
+            shaders.forwardRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingRenderer.raytrace");
+            shaders.areaBillateralFilterCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/AreaBilateralShadow.compute");
+            shaders.jointBilateralFilterCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/JointBilateralFilter.compute");
+            shaders.reflectionBilateralFilterCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingReflectionFilter.compute");
+            shaders.lightClusterBuildCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingLightCluster.compute");
+            shaders.lightClusterDebugCS = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/DebugLightCluster.compute");
+            shaders.countTracedRays = Load<ComputeShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/CountTracedRays.compute");
+            shaders.debugViewRayCountPS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/DebugViewRayCount.shader");
+        }
+#endif
 #endif
     }
 }

@@ -1346,6 +1346,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_CurrentDebugDisplaySettings = m_DebugDisplaySettings;
             }
 
+#if ENABLE_RAYTRACING
+            // Must update after getting DebugDisplaySettings
+            m_RayTracingManager.rayCountManager.Update(cmd, hdCamera, m_CurrentDebugDisplaySettings.data.countRays);
+#endif
+
             m_DbufferManager.enableDecals = false;
             if (hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals))
             {
@@ -2985,8 +2990,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
                 }
 
-                m_LightLoop.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth, cullResults);
+#if ENABLE_RAYTRACING
+                m_RayTracingManager.rayCountManager.RenderRayCount(cmd, hdCamera, m_CameraColorBuffer, m_CurrentDebugDisplaySettings.data.rayCountFontColor);
+#endif
 
+                m_LightLoop.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth, cullResults);
+                
                 DecalSystem.instance.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth);
 
                 if (m_CurrentDebugDisplaySettings.data.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None || m_CurrentDebugDisplaySettings.data.falseColorDebugSettings.falseColor || m_CurrentDebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuminanceMeter)
