@@ -896,7 +896,7 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
-        static void Visit(List<INode> outputList, Dictionary<Guid, INode> unmarkedNodes, INode node)
+        static void Visit(List<AbstractMaterialNode> outputList, Dictionary<Guid, AbstractMaterialNode> unmarkedNodes, AbstractMaterialNode node)
         {
             if (!unmarkedNodes.ContainsKey(node.guid))
                 return;
@@ -912,13 +912,13 @@ namespace UnityEditor.ShaderGraph
             outputList.Add(node);
         }
 
-        public static GenerationResults GetShader(this AbstractMaterialGraph graph, AbstractMaterialNode node,
+        public static GenerationResults GetShader(this GraphData graph, AbstractMaterialNode node,
             GenerationMode mode, string name)
         {
-            return GetShader(graph, node, new List<INode>(), mode, name);
+            return GetShader(graph, node, new List<AbstractMaterialNode>(), mode, name);
         }
         
-        public static GenerationResults GetShader(this AbstractMaterialGraph graph, AbstractMaterialNode node, ICollection<INode> excludedNodes, GenerationMode mode, string name)
+        public static GenerationResults GetShader(this GraphData graph, AbstractMaterialNode node, ICollection<AbstractMaterialNode> excludedNodes, GenerationMode mode, string name)
         {
             // ----------------------------------------------------- //
             //                         SETUP                         //
@@ -945,7 +945,7 @@ namespace UnityEditor.ShaderGraph
             // -------------------------------------
             // Get Slot and Node lists
 
-            var activeNodeList = ListPool<INode>.Get();
+            var activeNodeList = ListPool<AbstractMaterialNode>.Get();
             NodeUtils.DepthFirstCollectNodesFromNode(activeNodeList, node);
 
             var slots = new List<MaterialSlot>();
@@ -1092,7 +1092,7 @@ namespace UnityEditor.ShaderGraph
                 finalShader.AppendLine(@"ENDHLSL");
 
                 finalShader.AppendLines(ShaderGenerator.GetPreviewSubShader(node, requirements));
-                ListPool<INode>.Release(activeNodeList);
+                ListPool<AbstractMaterialNode>.Release(activeNodeList);
             }
 
             // -------------------------------------
@@ -1126,9 +1126,9 @@ namespace UnityEditor.ShaderGraph
         }
 
         public static void GenerateSurfaceDescriptionFunction(
-            List<INode> activeNodeList,
+            List<AbstractMaterialNode> activeNodeList,
             AbstractMaterialNode rootNode,
-            AbstractMaterialGraph graph,
+            GraphData graph,
             ShaderStringBuilder surfaceDescriptionFunction,
             FunctionRegistry functionRegistry,
             PropertyCollector shaderProperties,
@@ -1241,12 +1241,12 @@ namespace UnityEditor.ShaderGraph
         }
 
         public static void GenerateVertexDescriptionFunction(
-            AbstractMaterialGraph graph,
+            GraphData graph,
             ShaderStringBuilder builder,
             FunctionRegistry functionRegistry,
             PropertyCollector shaderProperties,
             GenerationMode mode,
-            List<INode> nodes,
+            List<AbstractMaterialNode> nodes,
             List<MaterialSlot> slots,
             string graphInputStructName = "VertexDescriptionInputs",
             string functionName = "PopulateVertexData",
@@ -1291,7 +1291,7 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
-        public static GenerationResults GetPreviewShader(this AbstractMaterialGraph graph, AbstractMaterialNode node)
+        public static GenerationResults GetPreviewShader(this GraphData graph, AbstractMaterialNode node)
         {
             return graph.GetShader(node, GenerationMode.Preview, String.Format("hidden/preview/{0}", node.GetVariableNameForNode()));
         }
