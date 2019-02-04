@@ -47,6 +47,8 @@ Shader "HDRP/Unlit"
         [HideInInspector] _BlendMode("__blendmode", Float) = 0.0
         [HideInInspector] _SrcBlend("__src", Float) = 1.0
         [HideInInspector] _DstBlend("__dst", Float) = 0.0
+        [HideInInspector] _AlphaSrcBlend("__alphaSrc", Float) = 1.0
+        [HideInInspector] _AlphaDstBlend("__alphaDst", Float) = 0.0
         [HideInInspector] _ZWrite("__zw", Float) = 1.0
         [HideInInspector] _CullMode("__cullmode", Float) = 2.0
         [HideInInspector] _ZTestModeDistortion("_ZTestModeDistortion", Int) = 8
@@ -152,7 +154,7 @@ Shader "HDRP/Unlit"
 
         Pass
         {
-            Name "Depth prepass"
+            Name "DepthForwardOnly"
             Tags{ "LightMode" = "DepthForwardOnly" }
 
             Cull[_CullMode]
@@ -181,7 +183,7 @@ Shader "HDRP/Unlit"
 
         Pass
         {
-            Name "Motion Vectors"
+            Name "MotionVectors"
             Tags{ "LightMode" = "MotionVectors" } // Caution, this need to be call like this to setup the correct parameters by C++ (legacy Unity)
 
             // If velocity pass (motion vectors) is enabled we tag the stencil so it don't perform CameraMotionVelocity
@@ -199,7 +201,7 @@ Shader "HDRP/Unlit"
 
             HLSLPROGRAM
             #pragma multi_compile _ WRITE_MSAA_DEPTH
-            
+
             #define SHADERPASS SHADERPASS_VELOCITY
 
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
@@ -218,10 +220,10 @@ Shader "HDRP/Unlit"
         // Unlit shader always render in forward
         Pass
         {
-            Name "Forward Unlit"
+            Name "ForwardOnly"
             Tags { "LightMode" = "ForwardOnly" }
 
-            Blend [_SrcBlend] [_DstBlend]
+            Blend [_SrcBlend] [_DstBlend], [_AlphaSrcBlend] [_AlphaDstBlend]
             ZWrite [_ZWrite]
             Cull [_CullMode]
 
@@ -252,7 +254,7 @@ Shader "HDRP/Unlit"
         Pass
         {
             Name "META"
-            Tags{ "LightMode" = "Meta" }
+            Tags{ "LightMode" = "META" }
 
             Cull Off
 
@@ -278,7 +280,7 @@ Shader "HDRP/Unlit"
 
         Pass
         {
-            Name "Distortion" // Name is not used
+            Name "DistortionVectors"
             Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
 
             Blend [_DistortionSrcBlend] [_DistortionDstBlend], [_DistortionBlurSrcBlend] [_DistortionBlurDstBlend]
@@ -308,7 +310,7 @@ Shader "HDRP/Unlit"
     {
         Pass
         {
-            Name "RTRaytrace_Reflections"
+            Name "ReflectionDXR"
             Tags{ "LightMode" = "ReflectionDXR" }
 
             HLSLPROGRAM
@@ -332,30 +334,30 @@ Shader "HDRP/Unlit"
 
         Pass
         {
-            Name "RTRaytrace_Forward"
+            Name "ForwardDXR"
             Tags{ "LightMode" = "ForwardDXR" }
 
             HLSLPROGRAM
 
-            #pragma raytracing test      
+            #pragma raytracing test
 
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingMacros.hlsl"
 
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
- 
+
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingIntersection.hlsl"
-            
+
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/Unlit.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/UnlitRaytracingData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderpassRaytracingForward.hlsl"
 
             ENDHLSL
         }
-        
+
         Pass
         {
-            Name "RTRaytrace_Visibility"
+            Name "ShadowsDXR"
             Tags{ "LightMode" = "ShadowsDXR" }
 
             HLSLPROGRAM
@@ -372,7 +374,7 @@ Shader "HDRP/Unlit"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/Shaders/RaytracingIntersection.hlsl"
 
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/Unlit.hlsl"
-            
+
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/UnlitRaytracingData.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderpassRaytracingVisibility.hlsl"
 

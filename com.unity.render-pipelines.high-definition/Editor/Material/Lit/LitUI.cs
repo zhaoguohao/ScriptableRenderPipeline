@@ -311,6 +311,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             get { return refractionModel == null || refractionModel.floatValue == 0f; }
         }
+        protected override bool showAfterPostProcessPass { get { return false; } }
+        protected override bool showLowResolutionPass { get { return false; } }
 
         protected void FindMaterialLayerProperties(MaterialProperty[] props)
         {
@@ -593,12 +595,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        protected void DoLayerGUI(Material material, int layerIndex, bool isLayeredLit, bool showHeightMap, string layerPrefix = "", uint inputToggle = (uint)Expandable.Input, uint detailToggle = (uint)Expandable.Detail, Color colorDot = default(Color))
+        protected void DoLayerGUI(Material material, int layerIndex, bool isLayeredLit, bool showHeightMap, uint inputToggle = (uint)Expandable.Input, uint detailToggle = (uint)Expandable.Detail, Color colorDot = default(Color), bool subHeader = false)
         {
             UVBaseMapping uvBaseMapping = (UVBaseMapping)UVBase[layerIndex].floatValue;
             float X, Y, Z, W;
 
-            using (var header = new HeaderScope(layerPrefix + Styles.InputsText, inputToggle, this, colorDot: colorDot))
+            using (var header = new HeaderScope(Styles.InputsText, inputToggle, this, colorDot: colorDot, subHeader: subHeader))
             {
                 if (header.expanded)
                 {
@@ -683,12 +685,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                                     HeightmapParametrization parametrization = (HeightmapParametrization)heightParametrization[layerIndex].floatValue;
                                     if (parametrization == HeightmapParametrization.MinMax)
                                     {
+                                        EditorGUI.BeginChangeCheck();
                                         m_MaterialEditor.ShaderProperty(heightMin[layerIndex], Styles.heightMapMinText);
+                                        if (EditorGUI.EndChangeCheck())
+                                            heightMin[layerIndex].floatValue = Mathf.Min(heightMin[layerIndex].floatValue, heightMax[layerIndex].floatValue);
+                                        EditorGUI.BeginChangeCheck();
                                         m_MaterialEditor.ShaderProperty(heightMax[layerIndex], Styles.heightMapMaxText);
+                                        if (EditorGUI.EndChangeCheck())
+                                            heightMax[layerIndex].floatValue = Mathf.Max(heightMin[layerIndex].floatValue, heightMax[layerIndex].floatValue);
                                     }
                                     else
                                     {
+                                        EditorGUI.BeginChangeCheck();
                                         m_MaterialEditor.ShaderProperty(heightTessAmplitude[layerIndex], Styles.heightMapAmplitudeText);
+                                        if (EditorGUI.EndChangeCheck())
+                                            heightTessAmplitude[layerIndex].floatValue = Mathf.Max(0f, heightTessAmplitude[layerIndex].floatValue);
                                         m_MaterialEditor.ShaderProperty(heightTessCenter[layerIndex], Styles.heightMapCenterText);
                                     }
 
@@ -766,7 +777,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
-            using (var header = new HeaderScope(layerPrefix + Styles.detailText, detailToggle, this, colorDot: colorDot))
+            using (var header = new HeaderScope(Styles.detailText, detailToggle, this, colorDot: colorDot, subHeader: subHeader))
             {
                 if (header.expanded)
                 {
@@ -868,7 +879,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     EditorGUI.BeginChangeCheck();
                     m_MaterialEditor.ShaderProperty(useEmissiveIntensity, Styles.useEmissiveIntensityText);
                     bool updateEmissiveColor = EditorGUI.EndChangeCheck();
-                        
+
                     if (useEmissiveIntensity.floatValue == 0)
                     {
                         EditorGUI.BeginChangeCheck();
