@@ -873,7 +873,7 @@ namespace UnityEditor.ShaderGraph
 
         public override void Action(int instanceId, string pathName, string resourceFile)
         {
-            var graph = new MaterialGraph();
+            var graph = new GraphData();
             graph.AddNode(node);
             graph.path = "Shader Graphs";
             File.WriteAllText(pathName, EditorJsonUtility.ToJson(graph));
@@ -951,7 +951,7 @@ namespace UnityEditor.ShaderGraph
         {
             return GetShader(graph, node, new List<AbstractMaterialNode>(), mode, name);
         }
-        
+
         public static GenerationResults GetShader(this GraphData graph, AbstractMaterialNode node, ICollection<AbstractMaterialNode> excludedNodes, GenerationMode mode, string name)
         {
             // ----------------------------------------------------- //
