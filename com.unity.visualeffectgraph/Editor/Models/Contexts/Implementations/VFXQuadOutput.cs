@@ -10,15 +10,8 @@ namespace UnityEditor.VFX
     [VFXInfo]
     class VFXQuadOutput : VFXAbstractParticleOutput
     {
-        public enum PrimitiveType
-        {
-            Triangle,
-            Quad,
-            Octagon,
-        }
-
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
-        protected PrimitiveType primitiveType = PrimitiveType.Quad;
+        protected VFXPrimitiveType primitiveType = VFXPrimitiveType.Quad;
 
         //[VFXSetting] // tmp dont expose as settings atm
         public bool useGeometryShader = false;
@@ -27,13 +20,7 @@ namespace UnityEditor.VFX
         {
             get
             {
-                switch (primitiveType)
-                {
-                    case PrimitiveType.Triangle: return "Triangle Output";
-                    case PrimitiveType.Quad: return "Quad Output";
-                    case PrimitiveType.Octagon: return "Octagon Output";
-                    default: throw new NotImplementedException();
-                }
+                return primitiveType.ToString() + " Output";
             }
         }
         public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleQuad"); } }
@@ -44,13 +31,7 @@ namespace UnityEditor.VFX
                 if (useGeometryShader)
                     return VFXTaskType.ParticlePointOutput;
 
-                switch (primitiveType)
-                {
-                    case PrimitiveType.Triangle:    return VFXTaskType.ParticleTriangleOutput;
-                    case PrimitiveType.Quad:        return VFXTaskType.ParticleQuadOutput;
-                    case PrimitiveType.Octagon:     return VFXTaskType.ParticleOctagonOutput;
-                    default:                        throw new NotImplementedException();
-                }
+                return VFXPlanarPrimitiveHelper.GetTaskType(primitiveType);
             }
         }
         public override bool supportsUV { get { return true; } }
@@ -65,12 +46,7 @@ namespace UnityEditor.VFX
                 if (useGeometryShader)
                     yield return "USE_GEOMETRY_SHADER";
 
-                switch (primitiveType)
-                {
-                    case PrimitiveType.Triangle:    yield return "VFX_PRIMITIVE_TRIANGLE"; break;
-                    case PrimitiveType.Quad:        yield return "VFX_PRIMITIVE_QUAD"; break;
-                    case PrimitiveType.Octagon:     yield return "VFX_PRIMITIVE_OCTAGON"; break;
-                }
+                yield return VFXPlanarPrimitiveHelper.GetShaderDefine(primitiveType);
             }
         }
 
@@ -113,7 +89,7 @@ namespace UnityEditor.VFX
             get
             {
                 var properties = base.inputProperties;
-                if (primitiveType == PrimitiveType.Octagon)
+                if (primitiveType == VFXPrimitiveType.Octagon)
                     properties = properties.Concat(PropertiesFromType("OctagonInputProperties"));
                 return properties;
             }
@@ -125,7 +101,7 @@ namespace UnityEditor.VFX
                 yield return exp;
 
             yield return slotExpressions.First(o => o.name == "mainTexture");
-            if (primitiveType == PrimitiveType.Octagon)
+            if (primitiveType == VFXPrimitiveType.Octagon)
                 yield return slotExpressions.First(o => o.name == "cropFactor");
         }
 
