@@ -142,8 +142,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             BakedBackGI = 1 << BackLightingSlotId
         }
 
-        const SlotMask KajiyaKaySlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.SpecularOcclusion | SlotMask.BentNormal | SlotMask.HairStrandDirection | SlotMask.SubsurfaceMask 
-                                            | SlotMask.Thickness | SlotMask.DiffusionProfile | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaClipThreshold | SlotMask.AlphaClipThresholdDepthPrepass 
+        const SlotMask KajiyaKaySlotMask = SlotMask.Position | SlotMask.Albedo | SlotMask.Normal | SlotMask.SpecularOcclusion | SlotMask.BentNormal | SlotMask.HairStrandDirection | SlotMask.SubsurfaceMask
+                                            | SlotMask.Thickness | SlotMask.DiffusionProfile | SlotMask.Smoothness | SlotMask.Occlusion | SlotMask.Alpha | SlotMask.AlphaClipThreshold | SlotMask.AlphaClipThresholdDepthPrepass
                                                 | SlotMask.AlphaClipThresholdDepthPostpass | SlotMask.SpecularTint | SlotMask.SpecularShift | SlotMask.SecondarySpecularTint | SlotMask.SecondarySmoothness | SlotMask.SecondarySpecularShift | SlotMask.AlphaClipThresholdShadow | SlotMask.BakedGI;
 
         // This could also be a simple array. For now, catch any mismatched data.
@@ -379,6 +379,20 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 if (m_ReceivesSSR == value.isOn)
                     return;
                 m_ReceivesSSR = value.isOn;
+                Dirty(ModificationScope.Graph);
+            }
+        }
+
+        [SerializeField]
+        bool m_UseLightFacingNormal = false;
+        public ToggleData useLightFacingNormal
+        {
+            get { return new ToggleData(m_UseLightFacingNormal); }
+            set
+            {
+                if (m_UseLightFacingNormal == value.isOn)
+                    return;
+                m_UseLightFacingNormal = value.isOn;
                 Dirty(ModificationScope.Graph);
             }
         }

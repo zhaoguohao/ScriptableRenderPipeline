@@ -202,6 +202,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
                 });
             });
 
+            ps.Add(new PropertyRow(CreateLabel("Use Light Facing Normal", indentLevel)), (row) =>
+            {
+                row.Add(new Toggle(), (toggle) =>
+                {
+                    toggle.value = m_Node.useLightFacingNormal.isOn;
+                    toggle.OnToggleChanged(ChangeUseLightFacingNormal);
+                });
+            });
+
             Add(ps);
         }
 
@@ -359,6 +368,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
             m_Node.overrideBakedGI = td;
         }
 
+        void ChangeUseLightFacingNormal(ChangeEvent<bool> evt)
+        {
+            m_Node.owner.owner.RegisterCompleteObjectUndo("Use Light Facing Normal Change");
+            ToggleData td = m_Node.useLightFacingNormal;
+            td.isOn = evt.newValue;
+            m_Node.useLightFacingNormal = td;
+        }
+
         public AlphaMode GetAlphaMode(HairMasterNode.AlphaModeLit alphaModeLit)
         {
             switch (alphaModeLit)
@@ -374,7 +391,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
                         Debug.LogWarning("Not supported: " + alphaModeLit);
                         return AlphaMode.Alpha;
                     }
-                    
+
             }
         }
 
@@ -392,7 +409,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
                     {
                         Debug.LogWarning("Not supported: " + alphaMode);
                         return HairMasterNode.AlphaModeLit.Alpha;
-                    }                    
+                    }
             }
         }
     }

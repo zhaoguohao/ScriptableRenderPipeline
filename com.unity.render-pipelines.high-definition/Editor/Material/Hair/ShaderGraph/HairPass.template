@@ -49,6 +49,7 @@ Pass
     $DisableDecals:                     #define _DISABLE_DECALS 1
     $DisableSSR:                        #define _DISABLE_SSR 1
     $DoubleSided:                       #define _DOUBLESIDED_ON 1
+    $UseLightFacingNormal:              #define _USE_LIGHT_FACING_NORMAL 1
 
     //-------------------------------------------------------------------------------------
     // End Variant Definitions
@@ -61,7 +62,7 @@ Pass
     #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
     #define OUTPUT_SPLIT_LIGHTING
     #endif
-    
+
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 
     #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
@@ -179,7 +180,7 @@ $include("SharedCode.template.hlsl")
         // copy across graph values, if defined
         $SurfaceDescription.Albedo:                         surfaceData.diffuseColor =                  surfaceDescription.Albedo;
         $SurfaceDescription.SpecularOcclusion:              surfaceData.specularOcclusion =             surfaceDescription.SpecularOcclusion;
-        $SurfaceDescription.Smoothness:                     surfaceData.perceptualSmoothness =          surfaceDescription.Smoothness;        
+        $SurfaceDescription.Smoothness:                     surfaceData.perceptualSmoothness =          surfaceDescription.Smoothness;
         $SurfaceDescription.Occlusion:                      surfaceData.ambientOcclusion =              surfaceDescription.Occlusion;
         $SurfaceDescription.DiffusionProfile:               surfaceData.diffusionProfile =              surfaceDescription.DiffusionProfile;
         $SurfaceDescription.SubsurfaceMask:                 surfaceData.subsurfaceMask =                surfaceDescription.SubsurfaceMask;
@@ -191,7 +192,7 @@ $include("SharedCode.template.hlsl")
         $SurfaceDescription.SecondarySmoothness:            surfaceData.secondaryPerceptualSmoothness = surfaceDescription.SecondarySmoothness;
         $SurfaceDescription.SecondarySpecularTint:          surfaceData.secondarySpecularTint =         surfaceDescription.SecondarySpecularTint;
         $SurfaceDescription.SecondarySpecularShift:         surfaceData.secondarySpecularShift =        surfaceDescription.SecondarySpecularShift;
-     
+
         // These static material feature allow compile time optimization
         surfaceData.materialFeatures = 0;
 
@@ -247,6 +248,8 @@ $include("SharedCode.template.hlsl")
         // By default we use the ambient occlusion with Tri-ace trick (apply outside) for specular occlusion.
         // If user provide bent normal then we process a better term
         surfaceData.specularOcclusion = 1.0;
+
+        $UseLightFacingNormal: surfaceData.normalWS = V; //Orthonormalize(V, surfaceData.hairStrandDirectionWS);
 
 #if defined(_SPECULAR_OCCLUSION_CUSTOM)
         // Just use the value passed through via the slot (not active otherwise)
@@ -311,9 +314,9 @@ $include("SharedCode.template.hlsl")
 
         float3 bentNormalWS;
         BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
-    
+
         // Builtin Data
-        // For back lighting we use the oposite vertex normal 
+        // For back lighting we use the oposite vertex normal
         InitBuiltinData(surfaceDescription.Alpha, bentNormalWS, -fragInputs.worldToTangent[2], fragInputs.positionRWS, fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
         // override sampleBakedGI:
