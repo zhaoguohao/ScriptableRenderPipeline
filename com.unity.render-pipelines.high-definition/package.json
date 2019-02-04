@@ -6,6 +6,10 @@
     "displayName": "High Definition RP",
     "dependencies": {
         "com.unity.render-pipelines.core": "6.0.0",
-        "com.unity.shadergraph": "6.0.0"
-    }
+        "com.unity.shadergraph": "6.0.0",
+        "com.unity.test-framework.performance": "0.1.49-preview"
+    },
+    "testables": [
+    	"com.unity.test-framework.performance"
+    ]
 }
