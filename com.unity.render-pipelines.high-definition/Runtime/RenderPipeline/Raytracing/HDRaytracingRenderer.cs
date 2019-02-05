@@ -149,7 +149,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_LightCluster.EvaluateLightClusters(cmd, hdCamera, lightData);
 
             // Define the shader pass to use for the reflection pass
-            cmd.SetRaytracingShaderPass(forwardShader, "RTRaytrace_Forward");
+            cmd.SetRaytracingShaderPass(forwardShader, "ForwardDXR");
 
             // Set the acceleration structure for the pass
             cmd.SetRaytracingAccelerationStructure(forwardShader, HDShaderIDs._RaytracingAccelerationStructureName, accelerationStructure);

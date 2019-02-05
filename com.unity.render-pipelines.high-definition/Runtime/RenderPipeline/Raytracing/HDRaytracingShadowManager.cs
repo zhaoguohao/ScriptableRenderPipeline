@@ -112,7 +112,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_KernelFilter = bilateralFilter.FindKernel("AreaBilateralShadow");
 
             // Define the shader pass to use for the reflection pass
-            cmd.SetRaytracingShaderPass(shadowsShader, "RTRaytrace_Visibility");
+            cmd.SetRaytracingShaderPass(shadowsShader, "VisibilityDXR");
 
             // Set the acceleration structure for the pass
             cmd.SetRaytracingAccelerationStructure(shadowsShader, HDShaderIDs._RaytracingAccelerationStructureName, accelerationStructure);

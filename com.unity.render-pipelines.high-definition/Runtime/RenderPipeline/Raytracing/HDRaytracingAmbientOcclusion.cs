@@ -89,7 +89,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
             
             // Define the shader pass to use for the reflection pass
-            cmd.SetRaytracingShaderPass(aoShader, "RTRaytrace_Visibility");
+            cmd.SetRaytracingShaderPass(aoShader, "VisibilityDXR");
 
             // Set the acceleration structure for the pass
             cmd.SetRaytracingAccelerationStructure(aoShader, HDShaderIDs._RaytracingAccelerationStructureName, accelerationStructure);

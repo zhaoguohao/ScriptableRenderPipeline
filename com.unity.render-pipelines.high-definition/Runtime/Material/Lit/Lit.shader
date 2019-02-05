@@ -833,8 +833,8 @@ Shader "HDRP/Lit"
 
         Pass
         {
-            Name "ShadowsDXR"
-            Tags{ "LightMode" = "ShadowsDXR" }
+            Name "VisibilityDXR"
+            Tags{ "LightMode" = "VisibilityDXR" }
 
             HLSLPROGRAM
 
