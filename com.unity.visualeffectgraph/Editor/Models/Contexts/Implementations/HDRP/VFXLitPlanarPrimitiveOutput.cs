@@ -7,19 +7,50 @@ using UnityEngine.Experimental.VFX;
 namespace UnityEditor.VFX
 {
     [VFXInfo]
-    class VFXTriangleOutput : VFXAbstractParticleOutput
+    class VFXLitPlanarPrimitiveOutput : VFXAbstractParticleHDRPLitOutput
     {
-        public override string name { get { return "Triangle Output"; } }
-        public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleTriangle"); } }
-        public override VFXTaskType taskType { get { return VFXTaskType.ParticleTriangleOutput; } }
+        public override string name { get { return "Lit " + primitiveType.ToString() + " Output"; } }
+        public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleLitPlanarPrimitive"); } }
+        public override VFXTaskType taskType { get { return VFXPlanarPrimitiveHelper.GetTaskType(primitiveType); } }
         public override bool supportsUV { get { return true; } }
+
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
+        protected VFXPrimitiveType primitiveType = VFXPrimitiveType.Quad;
+
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
+        protected bool normalBending = false;
+
+        public class NormalBendingProperties
+        {
+            [Range(0, 1)]
+            public float bentNormalFactor = 0.1f;
+        }
+
+        public override void OnEnable()
+        {
+            base.OnEnable();
+        }
+
+        protected override IEnumerable<VFXPropertyWithValue> inputProperties
+        {
+            get
+            {
+                var properties = base.inputProperties;
+                if (normalBending)
+                    properties = properties.Concat(PropertiesFromType("NormalBendingProperties"));
+                if (primitiveType == VFXPrimitiveType.Octagon)
+                    properties = properties.Concat(PropertiesFromType(typeof(VFXPlanarPrimitiveHelper.OctagonInputProperties)));
+                return properties;
+            }
+        }
 
         public override IEnumerable<VFXAttributeInfo> attributes
         {
             get
             {
                 yield return new VFXAttributeInfo(VFXAttribute.Position, VFXAttributeMode.Read);
-                yield return new VFXAttributeInfo(VFXAttribute.Color, VFXAttributeMode.Read);
+                if (colorMode != ColorMode.None)
+                    yield return new VFXAttributeInfo(VFXAttribute.Color, VFXAttributeMode.Read);
                 yield return new VFXAttributeInfo(VFXAttribute.Alpha, VFXAttributeMode.Read);
                 yield return new VFXAttributeInfo(VFXAttribute.Alive, VFXAttributeMode.Read);
                 yield return new VFXAttributeInfo(VFXAttribute.AxisX, VFXAttributeMode.Read);
@@ -47,12 +78,24 @@ namespace UnityEditor.VFX
             foreach (var exp in base.CollectGPUExpressions(slotExpressions))
                 yield return exp;
 
-            yield return slotExpressions.First(o => o.name == "mainTexture");
+            if (normalBending)
+                yield return slotExpressions.First(o => o.name == "bentNormalFactor");
+            if (primitiveType == VFXPrimitiveType.Octagon)
+                yield return slotExpressions.First(o => o.name == "cropFactor");
         }
 
-        public class InputProperties
+        public override IEnumerable<string> additionalDefines
         {
-            public Texture2D mainTexture = VFXResources.defaultResources.particleTexture;
+            get
+            {
+                foreach (var d in base.additionalDefines)
+                    yield return d;
+
+                if (normalBending)
+                    yield return "USE_NORMAL_BENDING";
+
+                yield return VFXPlanarPrimitiveHelper.GetShaderDefine(primitiveType);
+            }
         }
     }
 }

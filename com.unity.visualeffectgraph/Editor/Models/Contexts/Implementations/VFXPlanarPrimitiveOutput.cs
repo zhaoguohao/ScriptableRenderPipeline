@@ -8,7 +8,7 @@ using UnityEngine.Experimental.VFX;
 namespace UnityEditor.VFX
 {
     [VFXInfo]
-    class VFXQuadOutput : VFXAbstractParticleOutput
+    class VFXPlanarPrimitiveOutput : VFXAbstractParticleOutput
     {
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
         protected VFXPrimitiveType primitiveType = VFXPrimitiveType.Quad;
@@ -17,7 +17,7 @@ namespace UnityEditor.VFX
         public bool useGeometryShader = false;
 
         public override string name { get { return primitiveType.ToString() + " Output"; } }
-        public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleQuad"); } }
+        public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticlePlanarPrimitive"); } }
         public override VFXTaskType taskType
         {
             get
