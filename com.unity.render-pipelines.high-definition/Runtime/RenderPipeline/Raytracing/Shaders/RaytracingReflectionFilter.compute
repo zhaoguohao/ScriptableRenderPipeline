@@ -1,6 +1,8 @@
 #pragma kernel RaytracingReflectionFilter
 #pragma kernel TemporalAccumulationFilter
 
+#pragma only_renderers d3d11
+
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
