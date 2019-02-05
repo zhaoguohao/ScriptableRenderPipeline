@@ -294,7 +294,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (masterNode != null)
                 return masterNode.GetShader(GenerationMode.ForReals, node.name, out textureInfo);
 
-            var graph = (AbstractMaterialGraph)node.owner;
+            var graph = (GraphData)node.owner;
             return graph.GetShader(node, GenerationMode.ForReals, node.name).shader;
         }
 
@@ -435,7 +435,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             UpdatePortInputs();
             UpdatePortInputVisibilities();
 
-            foreach (var listener in m_ControlItems.Children().OfType<INodeModificationListener>())
+            foreach (var listener in m_ControlItems.Children().OfType<AbstractMaterialNodeModificationListener>())
             {
                 if (listener != null)
                     listener.OnNodeModified(scope);
@@ -515,7 +515,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var control in m_ControlItems.Children())
             {
-                var listener = control as INodeModificationListener;
+                var listener = control as AbstractMaterialNodeModificationListener;
                 if (listener != null)
                     listener.OnNodeModified(ModificationScope.Graph);
             }

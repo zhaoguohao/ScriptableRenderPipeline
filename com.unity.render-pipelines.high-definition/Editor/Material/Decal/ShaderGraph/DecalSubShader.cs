@@ -296,7 +296,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         };
 
 
-        private static HashSet<string> GetActiveFieldsFromMasterNode(INode iMasterNode, Pass pass)
+        private static HashSet<string> GetActiveFieldsFromMasterNode(AbstractMaterialNode iMasterNode, Pass pass)
         {
             HashSet<string> activeFields = new HashSet<string>();
 
@@ -354,7 +354,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             subShader.AddShaderChunk("{", true);
             subShader.Indent();
             {
-                SurfaceMaterialTags materialTags = HDSubShaderUtilities.BuildMaterialTags(SurfaceType.Opaque, false, false, 0);
+                HDMaterialTags materialTags = HDSubShaderUtilities.BuildMaterialTags(HDRenderQueue.RenderQueueType.Opaque, 0, false);
 
                 // Add tags at the SubShader level
                 {

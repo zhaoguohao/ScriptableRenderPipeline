@@ -34,7 +34,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         MaterialGraphView m_GraphView;
         MasterPreviewView m_MasterPreviewView;
 
-        AbstractMaterialGraph m_Graph;
+        GraphData m_Graph;
         PreviewManager m_PreviewManager;
         MessageManager m_MessageManager;
         SearchWindowProvider m_SearchWindowProvider;
@@ -82,7 +82,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        public GraphEditorView(EditorWindow editorWindow, AbstractMaterialGraph graph, MessageManager messageManager)
+        public GraphEditorView(EditorWindow editorWindow, GraphData graph, MessageManager messageManager)
         {
             m_Graph = graph;
             m_MessageManager = messageManager;
@@ -198,7 +198,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 AddGroup(graphGroup);
             }
 
-            foreach (var node in graph.GetNodes<INode>())
+            foreach (var node in graph.GetNodes<AbstractMaterialNode>())
                 AddNode(node);
 
             foreach (var edge in graph.edges)
@@ -260,7 +260,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 foreach (var element in graphViewChange.movedElements)
                 {
-                    var node = element.userData as INode;
+                    var node = element.userData as AbstractMaterialNode;
                     if (node == null)
                         continue;
 
@@ -372,12 +372,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        void OnNodeChanged(INode inNode, ModificationScope scope)
+        void OnNodeChanged(AbstractMaterialNode inNode, ModificationScope scope)
         {
             if (m_GraphView == null)
                 return;
 
-            var dependentNodes = new List<INode>();
+            var dependentNodes = new List<AbstractMaterialNode>();
             NodeUtils.CollectNodesNodeFeedsInto(dependentNodes, inNode);
             foreach (var node in dependentNodes)
             {
@@ -472,7 +472,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 if (edgeView != null)
                 {
                     var nodeView = (IShaderNodeView)edgeView.input.node;
-                    nodesToUpdate.Add(nodeView);
+                        nodesToUpdate.Add(nodeView);
 
                     edgeView.output.Disconnect(edgeView);
                     edgeView.input.Disconnect(edgeView);
@@ -532,7 +532,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         List<GraphElement> m_AddNodeGraphElements = new List<GraphElement>();
 
-        void AddNode(INode node)
+        void AddNode(AbstractMaterialNode node)
         {
             var materialNode = (AbstractMaterialNode)node;
             Node nodeView;

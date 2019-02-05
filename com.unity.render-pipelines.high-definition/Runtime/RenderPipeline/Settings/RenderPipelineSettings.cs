@@ -59,9 +59,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool supportRuntimeDebugDisplay = true;
         public bool supportDitheringCrossFade = true;
         public bool supportRayTracing =  false;
+        public LayerMask editorRaytracingFilterLayerMask = -1;
 
         public GlobalLightLoopSettings  lightLoopSettings = new GlobalLightLoopSettings();
         public HDShadowInitParameters   hdShadowInitParams = new HDShadowInitParameters();
         public GlobalDecalSettings      decalSettings = new GlobalDecalSettings();
+        public GlobalPostProcessSettings postProcessSettings = new GlobalPostProcessSettings();
+        public GlobalDynamicResolutionSettings dynamicResolutionSettings = new GlobalDynamicResolutionSettings();
     }
 }
