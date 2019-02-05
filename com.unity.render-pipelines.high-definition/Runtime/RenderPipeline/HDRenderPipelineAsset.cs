@@ -283,6 +283,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if(needUpdate)
             {
                 UnityEditor.PlayerSettings.SetScriptingDefineSymbolsForGroup(UnityEditor.BuildTargetGroup.Standalone, string.Join(";", defineArray.ToArray()));
+#if ENABLE_RAYTRACING
+                m_RenderPipelineResources.LoadRayTraceShaders();
+#endif
             }
 #endif
         }
