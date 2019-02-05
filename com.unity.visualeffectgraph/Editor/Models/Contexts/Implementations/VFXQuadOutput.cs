@@ -16,13 +16,7 @@ namespace UnityEditor.VFX
         //[VFXSetting] // tmp dont expose as settings atm
         public bool useGeometryShader = false;
 
-        public override string name
-        {
-            get
-            {
-                return primitiveType.ToString() + " Output";
-            }
-        }
+        public override string name { get { return primitiveType.ToString() + " Output"; } }
         public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleQuad"); } }
         public override VFXTaskType taskType
         {
@@ -78,19 +72,13 @@ namespace UnityEditor.VFX
             }
         }
 
-        public class OctagonInputProperties
-        {
-            [Range(0, 1)]
-            public float cropFactor = 0.5f * (1.0f - Mathf.Tan(Mathf.PI / 8.0f)); // regular octagon
-        }
-
         protected override IEnumerable<VFXPropertyWithValue> inputProperties
         {
             get
             {
                 var properties = base.inputProperties;
                 if (primitiveType == VFXPrimitiveType.Octagon)
-                    properties = properties.Concat(PropertiesFromType("OctagonInputProperties"));
+                    properties = properties.Concat(PropertiesFromType(typeof(VFXPlanarPrimitiveHelper.OctagonInputProperties)));
                 return properties;
             }
         }

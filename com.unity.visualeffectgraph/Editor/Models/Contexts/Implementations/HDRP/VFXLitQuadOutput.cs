@@ -9,10 +9,13 @@ namespace UnityEditor.VFX
     [VFXInfo]
     class VFXLitQuadOutput : VFXAbstractParticleHDRPLitOutput
     {
-        public override string name { get { return "Lit Quad Output"; } }
+        public override string name { get { return "Lit " + primitiveType.ToString() + " Output"; } }
         public override string codeGeneratorTemplate { get { return RenderPipeTemplate("VFXParticleLitQuad"); } }
-        public override VFXTaskType taskType { get { return VFXTaskType.ParticleQuadOutput; } }
+        public override VFXTaskType taskType { get { return VFXPlanarPrimitiveHelper.GetTaskType(primitiveType); } }
         public override bool supportsUV { get { return true; } }
+
+        [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
+        protected VFXPrimitiveType primitiveType = VFXPrimitiveType.Quad;
 
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
         protected bool normalBending = false;
@@ -35,7 +38,8 @@ namespace UnityEditor.VFX
                 var properties = base.inputProperties;
                 if (normalBending)
                     properties = properties.Concat(PropertiesFromType("NormalBendingProperties"));
-
+                if (primitiveType == VFXPrimitiveType.Octagon)
+                    properties = properties.Concat(PropertiesFromType(typeof(VFXPlanarPrimitiveHelper.OctagonInputProperties)));
                 return properties;
             }
         }
@@ -76,6 +80,8 @@ namespace UnityEditor.VFX
 
             if (normalBending)
                 yield return slotExpressions.First(o => o.name == "bentNormalFactor");
+            if (primitiveType == VFXPrimitiveType.Octagon)
+                yield return slotExpressions.First(o => o.name == "cropFactor");
         }
 
         public override IEnumerable<string> additionalDefines
@@ -87,6 +93,8 @@ namespace UnityEditor.VFX
 
                 if (normalBending)
                     yield return "USE_NORMAL_BENDING";
+
+                yield return VFXPlanarPrimitiveHelper.GetShaderDefine(primitiveType);
             }
         }
     }
