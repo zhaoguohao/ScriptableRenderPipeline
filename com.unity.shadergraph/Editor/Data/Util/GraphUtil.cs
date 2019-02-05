@@ -862,7 +862,7 @@ namespace UnityEditor.ShaderGraph
 
 
 
-    class NewGraphItem : EndNameEditAction
+    class NewGraphAction : EndNameEditAction
     {
         AbstractMaterialNode m_Node;
         public AbstractMaterialNode node
@@ -906,7 +906,7 @@ namespace UnityEditor.ShaderGraph
 
         public static void CreateNewGraph(AbstractMaterialNode node)
         {
-            var graphItem = ScriptableObject.CreateInstance<NewGraphItem>();
+            var graphItem = ScriptableObject.CreateInstance<NewGraphAction>();
             graphItem.node = node;
             ProjectWindowUtil.StartNameEditingIfProjectWindowExists(0, graphItem,
                 string.Format("New Shader Graph.{0}", ShaderGraphImporter.Extension), null, null);
