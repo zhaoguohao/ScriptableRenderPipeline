@@ -1,3 +1,4 @@
+// https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_Online_algorithm
 struct VarianceEstimator
 {
     int num;

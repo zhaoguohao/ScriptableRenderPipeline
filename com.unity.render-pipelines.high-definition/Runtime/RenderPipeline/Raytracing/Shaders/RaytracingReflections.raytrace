@@ -68,8 +68,8 @@ void RayGenHalfRes()
     // Read the depth value
     float depthValue  = _DepthTexture[sourceCoord];
 
-    // This point is part of the background, we don't really care 
-    if(depthValue == 0.0f)
+    // This point is part of the background, we don't really care
+    if (depthValue == UNITY_RAW_FAR_CLIP_VALUE)
         return;
 
     // Let's compute the full resolution of the texture
@@ -82,13 +82,13 @@ void RayGenHalfRes()
 
     // Compute the incident vector on the surfaces
     float3 viewWS = normalize(_WorldSpaceCameraPos - positionWS);
-    
+
     // Decode the world space normal
-    NormalData normalData;    
+    NormalData normalData;
     DecodeFromNormalBuffer(sourceCoord, normalData);
 
-    // If this value is beyond the smothness that we allow, no need to compute it
-    if(_RaytracingReflectionMinSmoothness > PerceptualSmoothnessToPerceptualRoughness(normalData.perceptualRoughness))
+    // If this value is beyond the smoothness that we allow, no need to compute it
+    if (_RaytracingReflectionMinSmoothness > PerceptualRoughnessToPerceptualSmoothness(normalData.perceptualRoughness))
         return;
 
     // Create the local ortho basis
@@ -106,11 +106,11 @@ void RayGenHalfRes()
     // TODO: use Eric's paper on visible normal distribution sampling in order to make all samples worth it
     SampleGGXDir2(sample, viewWS, localToWorld, roughness, sampleDir, NdotL, NdotH, VdotH, LdotH, false);
 
-    // If this direction is under the surface, let's generate a new one that won't be 
+    // If this direction is under the surface, let's generate a new one that won't be
     // TODO: use Eric's paper on visible normal distribution sampling
-    for(int i = 1; i < 8; ++i)
+    for (int i = 1; i < 8; ++i)
     {
-        if(dot(sampleDir, normalData.normalWS) >= 0.00f && dot(normalData.normalWS, viewWS) >= 0.00f)
+        if (dot(sampleDir, normalData.normalWS) >= 0.00f && dot(normalData.normalWS, viewWS) >= 0.00f)
             break;
 
         sample = Sample02(_RaytracingFrameIndex + i, scramble);
@@ -134,15 +134,15 @@ void RayGenHalfRes()
     // In order to achieve filtering for the textures, we need to compute the spread angle of the pixel
     rayIntersection.cone.spreadAngle = _RaytracingPixelSpreadAngle;
     rayIntersection.cone.width = distanceToCamera * _RaytracingPixelSpreadAngle;
-    
+
     // Evaluate the ray intersection
     TraceRay(_RaytracingAccelerationStructure, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 1, 0, rayDescriptor, rayIntersection);
-    
+
     // Compute the PDF
     float samplePDF = 1.0f;
 
     // Given that GGX is invalid for a pure smooth material, we handle the case this by stating that the pdf == 1.0
-    if(roughness > 0.001)
+    if (roughness > 0.001)
     {
         float H = normalize(sampleDir + viewWS);
         float NdotV = (dot(normalData.normalWS, viewWS));
@@ -174,8 +174,8 @@ void RayGenIntegration()
     // Read the depth value
     float depthValue  = _DepthTexture[currentCoord];
 
-    // This point is part of the background, we don't really care 
-    if(depthValue == 0.0f)
+    // This point is part of the background, we don't really care
+    if (depthValue == UNITY_RAW_FAR_CLIP_VALUE)
         return;
 
     // Convert this to a world space position
@@ -183,23 +183,23 @@ void RayGenIntegration()
     float distanceToCamera = length(posInput.positionWS);
 
     // Should we compute the reflection for this pixel?
-    //if(_RaytracingReflectionMaxDistance < distanceToCamera)
+    //if (_RaytracingReflectionMaxDistance < distanceToCamera)
     //    return;
 
     float3 positionWS = GetAbsolutePositionWS(posInput.positionWS);
 
     // Compute the incident vector on the surfaces
     float3 viewWS = normalize(_WorldSpaceCameraPos - positionWS);
-    
+
     // Decode the world space normal
-    NormalData normalData;    
+    NormalData normalData;
     DecodeFromNormalBuffer(currentCoord, normalData);
 
     // Create the local ortho basis
     float3x3 localToWorld = GetLocalFrame(normalData.normalWS);
 
     // If this value is beyond the smothness that we allow, no need to compute it
-    if(_RaytracingReflectionMinSmoothness > PerceptualSmoothnessToPerceptualRoughness(normalData.perceptualRoughness))
+    if (_RaytracingReflectionMinSmoothness > PerceptualRoughnessToPerceptualSmoothness(normalData.perceptualRoughness))
         return;
 
     // Compute the actual roughness
@@ -212,7 +212,7 @@ void RayGenIntegration()
     float3 finalColor = float3(0.0, 0.0, 0.0);
 
     // Loop through the samples and add their contribution
-    for(int sampleIndex = 0; sampleIndex < _RaytracingNumSamples; ++sampleIndex)
+    for (int sampleIndex = 0; sampleIndex < _RaytracingNumSamples; ++sampleIndex)
     {
     	// Generate the new sample (follwing values of the sequence)
 	    float2 sample = Sample02(_RaytracingFrameIndex * _RaytracingNumSamples + sampleIndex, scramble);
@@ -239,14 +239,14 @@ void RayGenIntegration()
         // In order to achieve filtering for the textures, we need to compute the spread angle of the pixel
         rayIntersection.cone.spreadAngle = _RaytracingPixelSpreadAngle;
         rayIntersection.cone.width = distanceToCamera * _RaytracingPixelSpreadAngle;
-        
+
         // Evaluate the ray intersection
         TraceRay(_RaytracingAccelerationStructure, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 1, 0, rayDescriptor, rayIntersection);
-        
+
         // Contribute to the pixel
         finalColor += rayIntersection.color;
     }
-   	
+
    	// Normalize the value
     finalColor *= 1.0f / _RaytracingNumSamples;
 
@@ -259,7 +259,7 @@ void RayGenIntegration()
 
 [shader("closesthit")]
 void ClosestHitMain(inout RayIntersection rayIntersection : SV_RayPayload, AttributeData attributeData : SV_IntersectionAttributes)
-{   
+{
 	// When we do not hit any known closest hit, that means that no shader was specified for the target object meaning either it has nothing to do in the acceleration structure or we need to add raytracing subshaders to it
 	rayIntersection.color = float3(1.0, 0.0, 0.5);
 }
