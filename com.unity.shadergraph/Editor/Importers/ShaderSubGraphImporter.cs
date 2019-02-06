@@ -18,7 +18,7 @@ class ShaderSubGraphImporter : ScriptedImporter
 
         if (graph == null)
             return;
-        
+
         graph.isSubGraph = true;
 
         var sourceAssetDependencyPaths = new List<string>();
@@ -28,7 +28,8 @@ class ShaderSubGraphImporter : ScriptedImporter
         var graphAsset = ScriptableObject.CreateInstance<MaterialSubGraphAsset>();
         graphAsset.subGraph = graph;
 
-        ctx.AddObjectToAsset("MainAsset", graphAsset);
+        Texture2D texture = Resources.Load<Texture2D>("Icons/Subgraph@64");
+        ctx.AddObjectToAsset("MainAsset", graphAsset, texture);
         ctx.SetMainObject(graphAsset);
 
         foreach (var sourceAssetDependencyPath in sourceAssetDependencyPaths.Distinct())

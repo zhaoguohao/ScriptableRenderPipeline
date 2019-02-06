@@ -76,7 +76,8 @@ Shader ""Hidden/GraphErrorShader2""
                 configuredTextures.Where(x => !x.modifiable).Select(x => x.name).ToArray(),
                 configuredTextures.Where(x => !x.modifiable).Select(x => EditorUtility.InstanceIDToObject(x.textureId) as Texture).ToArray());
 
-            ctx.AddObjectToAsset("MainAsset", shader);
+            Texture2D texture = Resources.Load<Texture2D>("Icons/Shadergraph@64");
+            ctx.AddObjectToAsset("MainAsset", shader, texture);
             ctx.SetMainObject(shader);
 
             foreach (var sourceAssetDependencyPath in sourceAssetDependencyPaths.Distinct())
