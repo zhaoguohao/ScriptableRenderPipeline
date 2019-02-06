@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Add customizable function in VariantProvider to replace the default cartesian product
 - Add Inverse Lerp node
 - Expose light probes parameters in VisualEffect inspector
+- Add Triangle and Octagon primitives for particle outputs
 
 ### Fixed
 - Some fixes in noise library
