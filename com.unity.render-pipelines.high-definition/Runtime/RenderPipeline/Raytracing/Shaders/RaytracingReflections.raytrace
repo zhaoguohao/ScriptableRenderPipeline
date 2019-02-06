@@ -90,7 +90,9 @@ void RayGenNVFilter()
     // Store unpacked normals and roughness for filtering
     _BumpNormalTexture[currentCoord].xyz = normalData.normalWS;
     _BumpNormalTexture[currentCoord].w = 1.0;
-    _SmoothNormalTexture[currentCoord].xyz = _PackedSmoothNormals[currentCoord].xyz;
+    NormalData unpackedSmoothNormals;
+    DecodeFromNormalBuffer(_PackedSmoothNormals[currentCoord], currentCoord, unpackedSmoothNormals);
+    _SmoothNormalTexture[currentCoord].xyz = unpackedSmoothNormals.normalWS;
     _SmoothNormalTexture[currentCoord].w = 1.0;
     
     // Create the ray descriptor for this pixel
