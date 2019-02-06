@@ -61,7 +61,7 @@ namespace UnityEditor.ShaderGraph
             });
         }
 
-        public IShaderProperty AsShaderProperty()
+        public AbstractShaderProperty AsShaderProperty()
         {
             var prop = new TextureShaderProperty { value = m_Texture };
             if (texture != null)

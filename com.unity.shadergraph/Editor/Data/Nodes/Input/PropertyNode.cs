@@ -24,7 +24,7 @@ namespace UnityEditor.ShaderGraph
 
         private void UpdateNode()
         {
-            var graph = owner as AbstractMaterialGraph;
+            var graph = owner as GraphData;
             var property = graph.properties.FirstOrDefault(x => x.guid == propertyGuid);
             if (property == null)
                 return;
@@ -83,7 +83,7 @@ namespace UnityEditor.ShaderGraph
 
         public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
         {
-            var graph = owner as AbstractMaterialGraph;
+            var graph = owner as GraphData;
             var property = graph.properties.FirstOrDefault(x => x.guid == propertyGuid);
             if (property == null)
                 return;
@@ -146,7 +146,7 @@ namespace UnityEditor.ShaderGraph
                 if (m_PropertyGuid == value)
                     return;
 
-                var graph = owner as AbstractMaterialGraph;
+                var graph = owner as GraphData;
                 var property = graph.properties.FirstOrDefault(x => x.guid == value);
                 if (property == null)
                     return;
@@ -160,7 +160,7 @@ namespace UnityEditor.ShaderGraph
 
         public override string GetVariableNameForSlot(int slotId)
         {
-            var graph = owner as AbstractMaterialGraph;
+            var graph = owner as GraphData;
             var property = graph.properties.FirstOrDefault(x => x.guid == propertyGuid);
 
             if (!(property is TextureShaderProperty) &&
@@ -174,7 +174,7 @@ namespace UnityEditor.ShaderGraph
 
         protected override bool CalculateNodeHasError(ref string errorMessage)
         {
-            var graph = owner as AbstractMaterialGraph;
+            var graph = owner as GraphData;
 
             if (!propertyGuid.Equals(Guid.Empty) && !graph.properties.Any(x => x.guid == propertyGuid))
                 return true;

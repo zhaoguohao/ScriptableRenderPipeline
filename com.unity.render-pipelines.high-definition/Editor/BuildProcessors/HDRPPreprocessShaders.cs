@@ -24,6 +24,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         return true;
             }
 
+            // CAUTION: Pass Name and Lightmode name must match in master node and .shader.
+            // HDRP use LightMode to do drawRenderer and pass name is use here for stripping!
+
             // Remove editor only pass
             bool isSceneSelectionPass = snippet.passName == "SceneSelectionPass";
             if (isSceneSelectionPass)
@@ -35,7 +38,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Only our Lit (and inherited) shader use _SURFACE_TYPE_TRANSPARENT, so the specific stripping based on this keyword is in LitShadePreprocessor.
             // Here we can't strip based on opaque or transparent but we will strip based on HDRP Asset configuration.
 
-            bool isMotionPass = snippet.passName == "Motion Vectors";
+            bool isMotionPass = snippet.passName == "MotionVectors";
             bool isTransparentPrepass = snippet.passName == "TransparentDepthPrepass";
             bool isTransparentPostpass = snippet.passName == "TransparentDepthPostpass";
             bool isTransparentBackface = snippet.passName == "TransparentBackface";
@@ -143,9 +146,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             materialList = HDEditorUtils.GetBaseShaderPreprocessorList();
         }
 
-        void LogShaderVariants(Shader shader, ShaderSnippetData snippetData, uint prevVariantsCount, uint currVariantsCount)
+        void LogShaderVariants(Shader shader, ShaderSnippetData snippetData, ShaderVariantLogLevel logLevel, uint prevVariantsCount, uint currVariantsCount)
         {
-            if (shader.name.Contains("HDRenderPipeline"))
+            if (logLevel == ShaderVariantLogLevel.AllShaders ||
+                (logLevel == ShaderVariantLogLevel.OnlyHDRPShaders && shader.name.Contains("HDRP")))
             {
                 float percentageCurrent = ((float)currVariantsCount / prevVariantsCount) * 100.0f;
                 float percentageTotal = ((float)m_TotalVariantsOutputCount / m_TotalVariantsInputCount) * 100.0f;
@@ -196,11 +200,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
             }
 
-            if(hdPipelineAsset.enableVariantStrippingLog)
+            if (hdPipelineAsset.shaderVariantLogLevel != ShaderVariantLogLevel.Disabled)
             {
                 m_TotalVariantsInputCount += preStrippingCount;
                 m_TotalVariantsOutputCount += (uint)inputData.Count;
-                LogShaderVariants(shader, snippet, preStrippingCount, (uint)inputData.Count);
+                LogShaderVariants(shader, snippet, hdPipelineAsset.shaderVariantLogLevel, preStrippingCount, (uint)inputData.Count);
             }
         }
     }

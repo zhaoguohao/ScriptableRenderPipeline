@@ -59,7 +59,7 @@ namespace UnityEditor.ShaderGraph
             visitor.AddShaderChunk(s, true);
         }
 
-        public IShaderProperty AsShaderProperty()
+        public AbstractShaderProperty AsShaderProperty()
         {
             var slotX = FindInputSlot<Vector1MaterialSlot>(InputSlotXId);
             var slotY = FindInputSlot<Vector1MaterialSlot>(InputSlotYId);
