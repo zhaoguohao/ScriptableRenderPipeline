@@ -45,6 +45,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Reflections Quarter Res
             public static GUIContent reflTemporalAccumulationWeight = new GUIContent("Reflections Temporal Accumulation Weight");
 
+            // Reflections NVidia Filter Data
+            public static GUIContent reflLowerRoughnessTransitionPt = new GUIContent("Lower Roughness Transition Point");
+            public static GUIContent reflUpperRoughnessTransitionPt = new GUIContent("Upper Roughness Transition Point");
+            public static GUIContent reflMinSamplingBias = new GUIContent("Min Sampling Bias");
+            public static GUIContent reflMaxSamplingBias = new GUIContent("Max Sampling Bias");
+            public static GUIContent reflUseLogSpace = new GUIContent("Filter in log space");
+            public static GUIContent reflLogSpaceParam = new GUIContent("Logspace Param");
+            public static GUIContent reflNormalWeightMode = new GUIContent("Normal Weight Mode");
+
             // Relections Integration
             public static GUIContent reflNumMaxSamplesText = new GUIContent("Reflections Num Samples");
             /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,6 +170,25 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         {
                             EditorGUILayout.PropertyField(rtEnv.reflTemporalAccumulationWeight, Styles.reflTemporalAccumulationWeight);
                             
+                        }
+                    break;
+                    case HDRaytracingEnvironment.ReflectionsQuality.Nvidia:
+                        {
+                            EditorGUILayout.PropertyField(rtEnv.reflLowerRoughnessTransitionPt, Styles.reflLowerRoughnessTransitionPt);
+                            EditorGUILayout.PropertyField(rtEnv.reflUpperRoughnessTransitionPt, Styles.reflUpperRoughnessTransitionPt);
+                            EditorGUILayout.PropertyField(rtEnv.reflMinSamplingBias, Styles.reflMinSamplingBias);
+                            EditorGUILayout.PropertyField(rtEnv.reflMaxSamplingBias, Styles.reflMaxSamplingBias);
+                            if (rtEnv.reflLowerRoughnessTransitionPt.floatValue > rtEnv.reflUpperRoughnessTransitionPt.floatValue
+                                || rtEnv.reflMinSamplingBias.floatValue > rtEnv.reflMaxSamplingBias.floatValue)
+                                EditorGUILayout.HelpBox("Lower roughness transition point must be less than upper roughness transition point. Minimum sampling bias must be less than maximum sampling bias.", MessageType.Error);
+                            EditorGUILayout.PropertyField(rtEnv.reflNormalWeightMode, Styles.reflNormalWeightMode);
+                            EditorGUILayout.PropertyField(rtEnv.reflUseLogSpace, Styles.reflUseLogSpace);
+                            if (rtEnv.reflUseLogSpace.boolValue)
+                            {
+                                EditorGUI.indentLevel++;
+                                EditorGUILayout.PropertyField(rtEnv.reflLogSpaceParam, Styles.reflLogSpaceParam);
+                                EditorGUI.indentLevel--;
+                            }
                         }
                     break;
                     case HDRaytracingEnvironment.ReflectionsQuality.Integration:

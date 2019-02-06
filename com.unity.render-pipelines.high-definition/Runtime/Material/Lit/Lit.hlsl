@@ -635,7 +635,7 @@ void EncodeIntoGBuffer( SurfaceData surfaceData
     outGBuffer3 *= GetCurrentExposureMultiplier();
 
 #ifdef LIGHT_LAYERS
-    OUT_GBUFFER_LIGHT_LAYERS = float4(0.0, 0.0, 0.0, builtinData.renderingLayers / 255.0);
+    OUT_GBUFFER_LIGHT_LAYERS = float4(surfaceData.geomNormalWS.xyz, builtinData.renderingLayers / 255.0);
 #endif
 
 #ifdef SHADOWS_SHADOWMASK

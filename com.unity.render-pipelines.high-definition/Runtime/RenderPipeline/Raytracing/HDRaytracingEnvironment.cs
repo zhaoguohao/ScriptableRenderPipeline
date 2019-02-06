@@ -74,8 +74,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // 1 ray for every 4 pixels
             QuarterRes,
             // Full integration
-            Integration
+            Integration,
+			// 1 spp with Nvidia filtering
+            Nvidia
         };
+
         public ReflectionsQuality reflQualityMode = ReflectionsQuality.QuarterRes;
 
         // Reflection Quarter Res Data
@@ -86,6 +89,27 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Number of Samples for the integration
         [Range(1, 64)]
         public int reflNumMaxSamples = 8;
+
+        // Reflection Nvidia Filter Data
+        [Range(0.0f, 1.0f)]
+        public float lowerRoughnessTransitionPoint = 0.22f;
+        [Range(0.0f, 1.0f)]
+        public float upperRoughnessTransitionPoint = 0.27f;
+        [Range(0.0f, 1.0f)]
+        public float minSamplingBias = 0.7f;
+        [Range(0.0f, 1.0f)]
+        public float maxSamplingBias = 1.0f;
+        public bool useLogSpace = false;
+        [Range(0.0f, 5.0f)]
+        public float logSpaceParam = 1.0f;
+
+        public enum NormalWeightMode
+        {
+            None = 0,           // Ignore differences in normal
+            WorldSpace = 1,     // Use worldspace normal; has risk of filtering curved geometries
+            TangentSpace = 2    // Use normal differences in surface tangent space; best quality but requires smooth normal buffer as input
+        };
+        public NormalWeightMode normalWeightMode;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////
         // Light Cluster

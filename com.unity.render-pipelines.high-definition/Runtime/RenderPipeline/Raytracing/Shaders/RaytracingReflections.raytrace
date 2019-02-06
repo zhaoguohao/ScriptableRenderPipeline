@@ -25,6 +25,7 @@
 // The target acceleration structure that we will evaluate the reflexion in
 Texture2D<float>                        _StencilTexture;
 Texture2D<float>                        _DepthTexture;
+Texture2D<float4>                       _PackedSmoothNormals;
 
 // Flag value that defines if a given pixel recieves reflections or not
 // int                                       _SsrStencilExclusionValue;
@@ -33,11 +34,96 @@ Texture2D<float>                        _DepthTexture;
 RWTexture2D<float4>                     _SsrLightingTextureRW;
 RWTexture2D<float4>                     _SsrHitPointTexture;
 
+// Needed for NVReflectionFilter
+RWTexture2D<float4> _BumpNormalTexture;
+RWTexture2D<float4> _SmoothNormalTexture;
+RWTexture2D<float>  _RaytracingHitDistanceTexture;
+RWTexture2D<float>  _RoughnessTexture;
+
 [shader("miss")]
 void MissShaderReflections(inout RayIntersection rayIntersection : SV_RayPayload)
 {
     rayIntersection.color = SAMPLE_TEXTURECUBE_ARRAY_LOD(_SkyTexture, s_trilinear_clamp_sampler, rayIntersection.incidentDirection, 0.0f, 0);
     rayIntersection.t = _RaytracingRayMaxLength;
+}
+
+[shader("raygeneration")]
+void RayGenNVFilter()
+{
+    // Grab the dimensions of the current dispatch
+    uint3 LaunchIndex = DispatchRaysIndex();
+    uint3 LaunchDim = DispatchRaysDimensions();
+    
+    // Compute the pixel coordinate to evaluate
+    uint2 currentCoord = uint2(LaunchIndex.x, LaunchDim.y - LaunchIndex.y - 1);
+    
+    // Read the depth value
+    float depthValue  = _DepthTexture[currentCoord];
+
+    // Clear the textures 
+    _SsrLightingTextureRW[currentCoord] = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    _BumpNormalTexture[currentCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    _SmoothNormalTexture[currentCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    _RoughnessTexture[currentCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    _RaytracingHitDistanceTexture[currentCoord] = 0.0f; 
+
+    // This point is part of the background, we don't really care 
+    if(depthValue == 0.0f)
+        return;
+
+    // Convert this to a world space position
+    PositionInputs posInput = GetPositionInput(currentCoord, 1.0f/LaunchDim.xy, depthValue, _InvViewProjMatrix, _ViewMatrix, 0);
+    float distanceToCamera = length(posInput.positionWS);
+    float3 positionWS = GetAbsolutePositionWS(posInput.positionWS);
+
+    // Compute the incident vector on the surfaces
+    float3 viewWS = normalize(_WorldSpaceCameraPos - positionWS);
+    
+    // Decode the world space normal
+    NormalData normalData;    
+    DecodeFromNormalBuffer(currentCoord, normalData);
+    // If this value is beyond the smothness that we allow, no need to compute it
+    if(_RaytracingReflectionMinSmoothness > PerceptualSmoothnessToPerceptualRoughness(normalData.perceptualRoughness))
+        return;
+
+    // Create the local ortho basis
+    float3x3 localToWorld = GetLocalFrame(normalData.normalWS);
+    
+    // Store unpacked normals and roughness for filtering
+    _BumpNormalTexture[currentCoord].xyz = normalData.normalWS;
+    _BumpNormalTexture[currentCoord].w = 1.0;
+    _RoughnessTexture[currentCoord].r = normalData.perceptualRoughness * normalData.perceptualRoughness;
+    _SmoothNormalTexture[currentCoord].xyz = _PackedSmoothNormals[currentCoord].xyz;
+    _SmoothNormalTexture[currentCoord].w = 1.0;
+    
+    // Create the ray descriptor for this pixel
+    RayDesc rayDescriptor;
+    rayDescriptor.Origin = positionWS + normalData.normalWS * _RaytracingRayBias;
+    rayDescriptor.Direction = reflect(-viewWS, normalData.normalWS).xyz;
+    rayDescriptor.TMin = 0;
+    rayDescriptor.TMax = _RaytracingRayMaxLength;
+
+    // Create and init the RayIntersection structure for this
+    RayIntersection rayIntersection;
+    rayIntersection.color = float3(0.0, 0.0, 0.0);
+    rayIntersection.incidentDirection = rayDescriptor.Direction;
+    rayIntersection.origin = rayDescriptor.Origin;
+    rayIntersection.t = -1.0f;
+
+    // In order to achieve filtering for the textures, we need to compute the spread angle of the pixel
+    rayIntersection.cone.spreadAngle = _RaytracingPixelSpreadAngle;
+    rayIntersection.cone.width = distanceToCamera * _RaytracingPixelSpreadAngle;
+    
+    // Evaluate the ray intersection
+    TraceRay(_RaytracingAccelerationStructure, RAY_FLAG_CULL_BACK_FACING_TRIANGLES, 0xFF, 0, 1, 0, rayDescriptor, rayIntersection);
+    
+    _RaytracingHitDistanceTexture[currentCoord] = rayIntersection.t;
+
+    // Make sure we pre-expose and then we clamp
+    float3 exposedValue = clamp(rayIntersection.color * GetCurrentExposureMultiplier(), 0.0, _RaytracingIntensityClamp);
+
+    // We store the clamped, pre-exposed valuein the first texture
+    _SsrLightingTextureRW[currentCoord] = float4(exposedValue, 1.0f);
 }
 
 [shader("raygeneration")]
