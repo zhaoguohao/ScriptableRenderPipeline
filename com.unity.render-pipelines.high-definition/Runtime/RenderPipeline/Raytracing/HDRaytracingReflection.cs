@@ -233,7 +233,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     case HDRaytracingEnvironment.ReflectionsQuality.Nvidia:
                     {
-                        cmd.NVFilterReflectionTexture(m_LightingTexture /*raw reflections*/, m_HitDistanceTexture /*hitT*/, m_SharedRTManager.GetDepthStencilBuffer() /*reverseZ depth*/, 
+                        cmd.FilterReflectionTexture(m_LightingTexture /*raw reflections*/, m_HitDistanceTexture /*hitT*/, m_SharedRTManager.GetDepthStencilBuffer() /*reverseZ depth*/, 
                                                     m_BumpNormalTexture /*Bumpmapped normals*/, m_PipelineAsset.renderPipelineSettings.supportLightLayers ? m_SmoothNormalTexture : m_BumpNormalTexture /*Smooth normals*/, m_SharedRTManager.GetNormalBuffer() /*Octal roughness (in alpha channel)*/,
                                                     outputTexture /*filtered reflections*/,
                                                     hdCamera.viewMatrix, hdCamera.projMatrix, hdCamera.viewProjMatrix, hdCamera.viewProjMatrix.inverse,
