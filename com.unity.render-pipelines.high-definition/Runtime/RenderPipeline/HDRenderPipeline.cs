@@ -827,10 +827,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             CoreUtils.SetKeyword(cmd, "LIGHT_LAYERS", hdCamera.frameSettings.IsEnabled(FrameSettingsField.LightLayers));
             cmd.SetGlobalInt(HDShaderIDs._EnableLightLayers, hdCamera.frameSettings.IsEnabled(FrameSettingsField.LightLayers) ? 1 : 0);
 
-#if ENABLE_RAYTRACING
-            CoreUtils.SetKeyword(cmd, "ENABLE_RAYTRACING", true); // Propagate scripting define to shader define
-#endif
-
             // configure keyword for both decal.shader and material
             if (m_Asset.renderPipelineSettings.supportDecals)
             {
