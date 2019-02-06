@@ -38,7 +38,6 @@ RWTexture2D<float4>                     _SsrHitPointTexture;
 RWTexture2D<float4> _BumpNormalTexture;
 RWTexture2D<float4> _SmoothNormalTexture;
 RWTexture2D<float>  _RaytracingHitDistanceTexture;
-RWTexture2D<float>  _RoughnessTexture;
 
 [shader("miss")]
 void MissShaderReflections(inout RayIntersection rayIntersection : SV_RayPayload)
@@ -64,7 +63,6 @@ void RayGenNVFilter()
     _SsrLightingTextureRW[currentCoord] = float4(0.0f, 0.0f, 0.0f, 0.0f);
     _BumpNormalTexture[currentCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
     _SmoothNormalTexture[currentCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    _RoughnessTexture[currentCoord] = float4(0.0f, 0.0f, 0.0f, 1.0f);
     _RaytracingHitDistanceTexture[currentCoord] = 0.0f; 
 
     // This point is part of the background, we don't really care 
@@ -92,7 +90,6 @@ void RayGenNVFilter()
     // Store unpacked normals and roughness for filtering
     _BumpNormalTexture[currentCoord].xyz = normalData.normalWS;
     _BumpNormalTexture[currentCoord].w = 1.0;
-    _RoughnessTexture[currentCoord].r = normalData.perceptualRoughness * normalData.perceptualRoughness;
     _SmoothNormalTexture[currentCoord].xyz = _PackedSmoothNormals[currentCoord].xyz;
     _SmoothNormalTexture[currentCoord].w = 1.0;
     

@@ -635,7 +635,13 @@ void EncodeIntoGBuffer( SurfaceData surfaceData
     outGBuffer3 *= GetCurrentExposureMultiplier();
 
 #ifdef LIGHT_LAYERS
-    OUT_GBUFFER_LIGHT_LAYERS = float4(surfaceData.geomNormalWS.xyz, builtinData.renderingLayers / 255.0);
+    // fixme for some reason ifdef ENABLE_RAYTRACING was never being hit here. debug and add it later
+    NormalData smoothNormalData;
+    float4 outSmoothNormals;
+    smoothNormalData.normalWS = surfaceData.geomNormalWS.xyz;
+    smoothNormalData.perceptualRoughness = 1.0; // Unused
+    EncodeIntoNormalBuffer(smoothNormalData, positionSS, outSmoothNormals);
+    OUT_GBUFFER_LIGHT_LAYERS = float4(outSmoothNormals.xyz, builtinData.renderingLayers / 255.0);
 #endif
 
 #ifdef SHADOWS_SHADOWMASK
