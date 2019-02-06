@@ -147,5 +147,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             return null;
         }
+        public RTHandleSystem.RTHandle GetLightLayersBuffer(int index)
+        {
+            int currentIndex = 0;
+            for (int gbufferIndex = 0; gbufferIndex < m_BufferCount; ++gbufferIndex)
+            {
+                if (m_GBufferUsage[gbufferIndex] == GBufferUsage.LightLayers)
+                {
+                    if (currentIndex == index)
+                        return m_RTs[gbufferIndex];
+
+                    // This is not the index we are looking for, find the next one
+                    currentIndex++;
+                }
+            }
+
+            return null;
+        }
     }
 }

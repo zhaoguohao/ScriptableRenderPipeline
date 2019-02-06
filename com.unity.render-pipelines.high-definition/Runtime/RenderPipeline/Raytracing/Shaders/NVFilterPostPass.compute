@@ -1,0 +1,12 @@
+#pragma kernel CSMain
+
+RWTexture2D<float4> _Result;
+float               _RaytracingRayMaxLength;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    float convertHitTToAlpha = (_RaytracingRayMaxLength - _Result[id.xy].w) / _RaytracingRayMaxLength;
+    _Result[id.xy] = float4(_Result[id.xy].x, _Result[id.xy].y, _Result[id.xy].z, 1.0);
+}

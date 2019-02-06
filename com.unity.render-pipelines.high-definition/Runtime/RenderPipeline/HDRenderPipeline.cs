@@ -379,7 +379,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_MRTWithSSS = new RenderTargetIdentifier[2 + m_SSSBufferManager.sssBufferCount];
 #if ENABLE_RAYTRACING
             m_RayTracingManager.Init(m_Asset.renderPipelineSettings, m_Asset.renderPipelineResources, m_BlueNoise);
-            m_RaytracingReflections.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager);
+            m_RaytracingReflections.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager, m_GbufferManager);
             m_RaytracingShadows.Init(m_Asset, m_RayTracingManager, m_SharedRTManager, m_LightLoop, m_GbufferManager);
             m_RaytracingRenderer.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager);
             m_LightLoop.InitRaytracing(m_RayTracingManager);
@@ -826,6 +826,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             CoreUtils.SetKeyword(cmd, "LIGHT_LAYERS", hdCamera.frameSettings.IsEnabled(FrameSettingsField.LightLayers));
             cmd.SetGlobalInt(HDShaderIDs._EnableLightLayers, hdCamera.frameSettings.IsEnabled(FrameSettingsField.LightLayers) ? 1 : 0);
+
+#if ENABLE_RAYTRACING
+            CoreUtils.SetKeyword(cmd, "ENABLE_RAYTRACING", true); // Propagate scripting define to shader define
+#endif
 
             // configure keyword for both decal.shader and material
             if (m_Asset.renderPipelineSettings.supportDecals)
