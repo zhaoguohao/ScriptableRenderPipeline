@@ -23,11 +23,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     public enum LightUnit
     {
-        Lumen,
-        Candela,
-        Lux,
-        Luminance,
-        Ev100,
+        Lumen,      // lm = total power/flux emitted by the light
+        Candela,    // lm/sr = flux per steradian
+        Lux,        // lm/m² = flux per unit area
+        Luminance,  // lm/m²/sr = flux per unit area and per steradian
+        Ev100,      // ISO 100 Exposure Value (https://en.wikipedia.org/wiki/Exposure_value)
     }
 
     // Light layering
@@ -50,6 +50,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     struct TimelineWorkaround
     {
         public float oldDisplayLightIntensity;
+        public float oldLuxAtDistance;
         public float oldSpotAngle;
         public bool oldEnableSpotReflector;
         public Color oldLightColor;
@@ -98,6 +99,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         // Only for Spotlight, should be hide for other light
         public bool enableSpotReflector = false;
+        // Lux unity for all light except directional require a distance
+        public float luxAtDistance = 1.0f;
 
         [Range(0.0f, 100.0f)]
         public float m_InnerSpotPercent; // To display this field in the UI this need to be public
@@ -170,6 +173,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // When true, a mesh will be display to represent the area light (Can only be change in editor, component is added in Editor)
         public bool displayAreaLightEmissiveMesh = false;
 
+        // Optional cookie for rectangular area lights
+        public Texture2D areaLightCookie = null;
+        
         // Duplication of HDLightEditor.k_MinAreaWidth, maybe do something about that
         const float k_MinAreaWidth = 0.01f; // Provide a small size of 1cm for line light
 
@@ -192,10 +198,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public int      blockerSampleCount = 24;
         [Range(1, 64)]
         public int      filterSampleCount = 16;
+        [Range(0, 0.001f)]
+        public float minFilterSize = 0.00001f;
+
+        // Improved Moment Shadows settings
+        [Range(1, 32)]
+        public int kernelSize = 5;
+        [Range(0.0f, 9.0f)]
+        public float lightAngle = 1.0f;
+        [Range(0.0001f, 0.01f)]
+        public float maxDepthBias = 0.001f;
 
         HDShadowRequest[]   shadowRequests;
         bool                m_WillRenderShadows;
         int[]               m_ShadowRequestIndices;
+
+
+        #if ENABLE_RAYTRACING
+        // Temporary index that stores the current shadow index for the light
+        [System.NonSerialized] public int shadowIndex;
+        #endif
 
         [System.NonSerialized] HDShadowSettings    _ShadowSettings = null;
         HDShadowSettings    m_ShadowSettings
@@ -228,8 +250,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             Bounds bounds;
             float cameraDistance = Vector3.Distance(camera.transform.position, transform.position);
+            
+            #if ENABLE_RAYTRACING
+            m_WillRenderShadows = m_Light.shadows != LightShadows.None && frameSettings.IsEnabled(FrameSettingsField.Shadow) && lightTypeExtent == LightTypeExtent.Punctual;
+            #else
+            m_WillRenderShadows = m_Light.shadows != LightShadows.None && frameSettings.IsEnabled(FrameSettingsField.Shadow);
+            #endif
 
-            m_WillRenderShadows = m_Light.shadows != LightShadows.None && frameSettings.enableShadow;
             m_WillRenderShadows &= cullResults.GetShadowCasterBounds(lightIndex, out bounds);
             // When creating a new light, at the first frame, there is no AdditionalShadowData so we can't really render shadows
             m_WillRenderShadows &= m_ShadowData != null && m_ShadowData.shadowDimmer > 0;
@@ -400,11 +427,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             shadowRequest.lightIndex = lightIndex;
             // We don't allow shadow resize for directional cascade shadow
             shadowRequest.allowResize = m_Light.type != LightType.Directional;
+            shadowRequest.lightType = (int) m_Light.type;
 
             // Shadow algorithm parameters
             shadowRequest.shadowSoftness = shadowSoftness / 100f;
             shadowRequest.blockerSampleCount = blockerSampleCount;
             shadowRequest.filterSampleCount = filterSampleCount;
+            shadowRequest.minFilterSize = minFilterSize;
+
+            shadowRequest.kernelSize = (uint)kernelSize;
+            shadowRequest.lightAngle = (lightAngle * Mathf.PI / 180.0f);
+            shadowRequest.maxDepthBias = maxDepthBias;
         }
 
 #if UNITY_EDITOR
@@ -443,6 +476,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else if (lightUnit == LightUnit.Ev100)
             {
                 m_Light.intensity = LightUtils.ConvertEvToLuminance(intensity);
+            }
+            else if ((m_Light.type == LightType.Spot || m_Light.type == LightType.Point) && lightUnit == LightUnit.Lux)
+            {
+                // Box are local directional light with lux unity without at distance
+                if ((m_Light.type == LightType.Spot) && (spotLightShape == SpotLightShape.Box))
+                    m_Light.intensity = intensity;
+                else
+                    m_Light.intensity = LightUtils.ConvertLuxToCandela(intensity, luxAtDistance);
             }
             else
                 m_Light.intensity = intensity;
@@ -533,7 +574,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Vector3 shape = new Vector3(shapeWidth, shapeHeight, shapeRadius);
 
             // Check if the intensity have been changed by the inspector or an animator
-            if (timelineWorkaround.oldDisplayLightIntensity != displayLightIntensity
+            if (displayLightIntensity != timelineWorkaround.oldDisplayLightIntensity
+                || luxAtDistance != timelineWorkaround.oldLuxAtDistance
                 || lightTypeExtent != timelineWorkaround.oldLightTypeExtent
                 || transform.localScale != timelineWorkaround.oldLocalScale
                 || shape != timelineWorkaround.oldShape
@@ -542,6 +584,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 RefreshLightIntensity();
                 UpdateAreaLightEmissiveMesh();
                 timelineWorkaround.oldDisplayLightIntensity = displayLightIntensity;
+                timelineWorkaround.oldLuxAtDistance = luxAtDistance;
                 timelineWorkaround.oldLocalScale = transform.localScale;
                 timelineWorkaround.oldLightTypeExtent = lightTypeExtent;
                 timelineWorkaround.oldLightColorTemperature = m_Light.colorTemperature;
@@ -638,8 +681,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     break;
             }
 
-            if (emissiveMeshRenderer.sharedMaterial == null)
-                emissiveMeshRenderer.material = new Material(Shader.Find("HDRenderPipeline/Unlit"));
+            // NOTE: When the user duplicates a light in the editor, the material is not duplicated and when changing the properties of one of them (source or duplication)
+            // It either overrides both or is overriden. Given that when we duplicate an object the name changes, this approach works. When the name of the game object is then changed again
+            // the material is not re-created until one of the light properties is changed again.
+            if (emissiveMeshRenderer.sharedMaterial == null || emissiveMeshRenderer.sharedMaterial.name != gameObject.name)
+            {
+                emissiveMeshRenderer.sharedMaterial = new Material(Shader.Find("HDRP/Unlit"));
+                emissiveMeshRenderer.sharedMaterial.name = gameObject.name;
+            }
 
             // Update Mesh emissive properties
             emissiveMeshRenderer.sharedMaterial.SetColor("_UnlitColor", Color.black);
@@ -647,15 +696,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // m_Light.intensity is in luminance which is the value we need for emissive color
             Color value = m_Light.color.linear * m_Light.intensity;
             if (useColorTemperature)
-                value *= LightUtils.CorrelatedColorTemperatureToRGB(m_Light.colorTemperature);
-            value.r = Mathf.Clamp01(value.r);
-            value.g = Mathf.Clamp01(value.g);
-            value.b = Mathf.Clamp01(value.b);
-            value.a = Mathf.Clamp01(value.a);
+                value *= Mathf.CorrelatedColorTemperatureToRGB(m_Light.colorTemperature);
 
             value *= lightDimmer;
 
             emissiveMeshRenderer.sharedMaterial.SetColor("_EmissiveColor", value);
+
+            // Set the cookie (if there is one) and raise or remove the shader feature
+            emissiveMeshRenderer.sharedMaterial.SetTexture("_EmissiveColorMap", areaLightCookie);
+            CoreUtils.SetKeyword(emissiveMeshRenderer.sharedMaterial, "_EMISSIVE_COLOR_MAP", areaLightCookie != null);
         }
 
 #endif
@@ -668,6 +717,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             data.areaIntensity = areaIntensity;
 #pragma warning restore 618
             data.enableSpotReflector = enableSpotReflector;
+            data.luxAtDistance = luxAtDistance;
             data.m_InnerSpotPercent = m_InnerSpotPercent;
             data.lightDimmer = lightDimmer;
             data.volumetricDimmer = volumetricDimmer;

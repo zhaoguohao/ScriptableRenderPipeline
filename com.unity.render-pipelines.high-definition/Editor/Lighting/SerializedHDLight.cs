@@ -12,6 +12,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             public SerializedProperty intensity;
             public SerializedProperty enableSpotReflector;
+            public SerializedProperty luxAtDistance;
             public SerializedProperty spotInnerPercent;
             public SerializedProperty lightDimmer;
             public SerializedProperty fadeDistance;
@@ -34,8 +35,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public SerializedProperty shadowSoftness;
             public SerializedProperty blockerSampleCount;
             public SerializedProperty filterSampleCount;
+            public SerializedProperty minFilterSize;
             public SerializedProperty sunDiskSize;
             public SerializedProperty sunHaloSize;
+            public SerializedProperty areaLightCookie;   // We can't use default light cookies because the cookie gets reset by some safety measure on C++ side... :/
+
+            // Improved moment shadows data
+            public SerializedProperty lightAngle;
+            public SerializedProperty kernelSize;
+            public SerializedProperty maxDepthBias;
 
             // Editor stuff
             public SerializedProperty useOldInspector;
@@ -90,6 +98,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 {
                     intensity = o.Find(x => x.displayLightIntensity),
                     enableSpotReflector = o.Find(x => x.enableSpotReflector),
+                    luxAtDistance = o.Find(x => x.luxAtDistance),
                     spotInnerPercent = o.Find(x => x.m_InnerSpotPercent),
                     lightDimmer = o.Find(x => x.lightDimmer),
                     volumetricDimmer = o.Find(x => x.volumetricDimmer),
@@ -112,8 +121,15 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     shadowSoftness = o.Find(x => x.shadowSoftness),
                     blockerSampleCount = o.Find(x => x.blockerSampleCount),
                     filterSampleCount = o.Find(x => x.filterSampleCount),
+                    minFilterSize = o.Find(x => x.minFilterSize),
                     sunDiskSize = o.Find(x => x.sunDiskSize),
                     sunHaloSize = o.Find(x => x.sunHaloSize),
+                    areaLightCookie = o.Find(x => x.areaLightCookie),
+                    
+                    // Moment light
+                    lightAngle = o.Find(x => x.lightAngle),
+                    kernelSize = o.Find(x => x.kernelSize),
+                    maxDepthBias = o.Find(x => x.maxDepthBias),
 
                     // Editor stuff
                     useOldInspector = o.Find(x => x.useOldInspector),

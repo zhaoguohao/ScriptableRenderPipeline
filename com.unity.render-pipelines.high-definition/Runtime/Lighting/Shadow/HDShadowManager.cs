@@ -70,6 +70,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Store the final shadow indice in the shadow data array
         // Warning: the index is computed during ProcessShadowRequest and so is invalid before calling this function
         public int                  shadowIndex;
+        public int                  lightType;
 
         // Determine in which atlas the shadow will be rendered
         public bool                 allowResize = true;
@@ -88,6 +89,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float                shadowSoftness;
         public int                  blockerSampleCount;
         public int                  filterSampleCount;
+        public float                minFilterSize;
+
+        // IMS parameters
+        public float                kernelSize;
+        public float                lightAngle;
+        public float                maxDepthBias;
     }
 
     public enum HDShadowQuality
@@ -95,6 +102,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Low = 0,
         Medium = 1,
         High = 2,
+        VeryHigh = 3,
+    }
+
+    public enum DirectionalShadowAlgorithm
+    {
+        PCF5x5,
+        PCF7x7,
+        PCSS,
+        IMS
     }
 
     [Serializable]
@@ -142,7 +158,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int                         m_ShadowRequestCount;
         int                         m_CascadeCount;
 
-        public HDShadowManager(int width, int height, int maxShadowRequests, DepthBits atlasDepthBits, Shader clearShader)
+        public HDShadowManager(RenderPipelineResources renderPipelineResources, int width, int height, int maxShadowRequests, DepthBits atlasDepthBits, Shader clearShader)
         {
             Material clearMaterial = CoreUtils.CreateEngineMaterial(clearShader);
 
@@ -152,14 +168,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_ShadowRequests = new HDShadowRequest[maxShadowRequests];
 
             // The cascade atlas will be allocated only if there is a directional light
-            m_Atlas = new HDShadowAtlas(width, height, HDShaderIDs._ShadowAtlasSize, clearMaterial, depthBufferBits: atlasDepthBits, name: "Shadow Map Atlas");
+            m_Atlas = new HDShadowAtlas(renderPipelineResources, width, height, HDShaderIDs._ShadowAtlasSize, clearMaterial, false, depthBufferBits: atlasDepthBits, name: "Shadow Map Atlas");
             // Cascade atlas render texture will only be allocated if there is a shadow casting directional light
-            m_CascadeAtlas = new HDShadowAtlas(1, 1, HDShaderIDs._CascadeShadowAtlasSize, clearMaterial, depthBufferBits: atlasDepthBits, name: "Cascade Shadow Map Atlas");
+            bool useMomentShadows = GetDirectionaShadowAlgorithm() == DirectionalShadowAlgorithm.IMS;
+            m_CascadeAtlas = new HDShadowAtlas(renderPipelineResources, 1, 1, HDShaderIDs._CascadeShadowAtlasSize, clearMaterial, useMomentShadows, depthBufferBits: atlasDepthBits, name: "Cascade Shadow Map Atlas");
 
             m_ShadowDataBuffer = new ComputeBuffer(maxShadowRequests, System.Runtime.InteropServices.Marshal.SizeOf(typeof(HDShadowData)));
             m_DirectionalShadowDataBuffer = new ComputeBuffer(1, System.Runtime.InteropServices.Marshal.SizeOf(typeof(HDDirectionalShadowData)));
 
             m_MaxShadowRequests = maxShadowRequests;
+        }
+
+        public static DirectionalShadowAlgorithm GetDirectionaShadowAlgorithm()
+        {
+            var hdAsset = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset);
+            switch (hdAsset.renderPipelineSettings.hdShadowInitParams.shadowQuality)
+            {
+                case HDShadowQuality.Low:
+                {
+                    return DirectionalShadowAlgorithm.PCF5x5;
+                }
+                case HDShadowQuality.Medium:
+                {
+                    return DirectionalShadowAlgorithm.PCF7x7;
+                }
+                case HDShadowQuality.High:
+                {
+                    return DirectionalShadowAlgorithm.PCSS;
+                }
+                case HDShadowQuality.VeryHigh:
+                {
+                    return DirectionalShadowAlgorithm.IMS;
+                }
+            };
+            return DirectionalShadowAlgorithm.PCF5x5;
         }
 
         public void UpdateDirectionalShadowResolution(int resolution, int cascadeCount)
@@ -170,10 +212,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 atlasResolution.x *= 2;
             if (cascadeCount > 2)
                 atlasResolution.y *= 2;
-            
+
             m_CascadeAtlas.UpdateSize(atlasResolution);
         }
-        
+
         public int ReserveShadowResolutions(Vector2 resolution, bool allowResize)
         {
             if (m_ShadowRequestCount >= m_MaxShadowRequests)
@@ -190,7 +232,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_Atlas.ReserveResolution(resolutionRequest);
             else
                 m_CascadeAtlas.ReserveResolution(resolutionRequest);
-            
+
             m_ShadowResolutionRequests.Add(resolutionRequest);
             m_ShadowRequestCount = m_ShadowResolutionRequests.Count;
 
@@ -201,7 +243,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (index < 0 || index >= m_ShadowRequestCount)
                 return Vector2.zero;
-            
+
             return m_ShadowResolutionRequests[index].resolution;
         }
 
@@ -265,7 +307,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             data.shadowFilterParams0.x = shadowRequest.shadowSoftness;
             data.shadowFilterParams0.y = HDShadowUtils.Asfloat(shadowRequest.blockerSampleCount);
             data.shadowFilterParams0.z = HDShadowUtils.Asfloat(shadowRequest.filterSampleCount);
-            data.shadowFilterParams0.w = 0;
+            data.shadowFilterParams0.w = shadowRequest.minFilterSize;
+
+
+            var hdAsset = (GraphicsSettings.renderPipelineAsset as HDRenderPipelineAsset);
+            if (hdAsset.renderPipelineSettings.hdShadowInitParams.shadowQuality == HDShadowQuality.VeryHigh && shadowRequest.lightType == (int)LightType.Directional)
+            {
+                data.shadowFilterParams0.x = shadowRequest.kernelSize;
+                data.shadowFilterParams0.y = shadowRequest.lightAngle;
+                data.shadowFilterParams0.z = shadowRequest.maxDepthBias;
+            }
 
             return data;
         }
@@ -298,7 +349,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Assign a position to all the shadows in the atlas, and scale shadows if needed
             if (m_CascadeAtlas != null && !m_CascadeAtlas.Layout(false))
-                Debug.LogWarning("Cascade Shadow atlasing has failed, try reducing the shadow resolution of the directional light or increase the shadow atlas size");
+                Debug.LogError("Cascade Shadow atlasing has failed, only one directional light can cast shadows at a time");
             m_Atlas.Layout();
         }
 
@@ -334,10 +385,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else
                 m_DirectionalShadowData.cascadeDirection = Vector4.zero;
 
-            m_DirectionalShadowData.cascadeDirection.w = k_DirectionalShadowCascadeCount;
+            m_DirectionalShadowData.cascadeDirection.w = VolumeManager.instance.stack.GetComponent<HDShadowSettings>().cascadeShadowSplitCount;
         }
 
-        public void RenderShadows(ScriptableRenderContext renderContext, CommandBuffer cmd, CullingResults cullResults)
+        public void RenderShadows(ScriptableRenderContext renderContext, CommandBuffer cmd, CullingResults cullResults, HDCamera hdCamera)
         {
             // Avoid to do any commands if there is no shadow to draw
             if (m_ShadowRequestCount == 0)
@@ -349,6 +400,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Clear atlas render targets and draw shadows
             m_Atlas.RenderShadows(renderContext, cmd, dss);
             m_CascadeAtlas.RenderShadows(renderContext, cmd, dss);
+
+            // If the shadow algorithm is the improved moment shadow
+            if (GetDirectionaShadowAlgorithm() == DirectionalShadowAlgorithm.IMS)
+            {
+                m_CascadeAtlas.ComputeMomentShadows(cmd, hdCamera);
+            }
         }
 
         public void SyncData()
@@ -391,19 +448,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         // Warning: must be called after ProcessShadowRequests and RenderShadows to have valid informations
-        public void DisplayShadowAtlas(CommandBuffer cmd, Material debugMaterial, float screenX, float screenY, float screenSizeX, float screenSizeY, float minValue, float maxValue, bool flipY)
+        public void DisplayShadowAtlas(CommandBuffer cmd, Material debugMaterial, float screenX, float screenY, float screenSizeX, float screenSizeY, float minValue, float maxValue)
         {
-            m_Atlas.DisplayAtlas(cmd, debugMaterial, new Rect(0, 0, m_Atlas.width, m_Atlas.height), screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue, flipY);
+            m_Atlas.DisplayAtlas(cmd, debugMaterial, new Rect(0, 0, m_Atlas.width, m_Atlas.height), screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue);
         }
 
         // Warning: must be called after ProcessShadowRequests and RenderShadows to have valid informations
-        public void DisplayShadowCascadeAtlas(CommandBuffer cmd, Material debugMaterial, float screenX, float screenY, float screenSizeX, float screenSizeY, float minValue, float maxValue, bool flipY)
+        public void DisplayShadowCascadeAtlas(CommandBuffer cmd, Material debugMaterial, float screenX, float screenY, float screenSizeX, float screenSizeY, float minValue, float maxValue)
         {
-            m_CascadeAtlas.DisplayAtlas(cmd, debugMaterial, new Rect(0, 0, m_CascadeAtlas.width, m_CascadeAtlas.height), screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue, flipY);
+            m_CascadeAtlas.DisplayAtlas(cmd, debugMaterial, new Rect(0, 0, m_CascadeAtlas.width, m_CascadeAtlas.height), screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue);
         }
 
         // Warning: must be called after ProcessShadowRequests and RenderShadows to have valid informations
-        public void DisplayShadowMap(int shadowIndex, CommandBuffer cmd, Material debugMaterial, float screenX, float screenY, float screenSizeX, float screenSizeY, float minValue, float maxValue, bool flipY)
+        public void DisplayShadowMap(int shadowIndex, CommandBuffer cmd, Material debugMaterial, float screenX, float screenY, float screenSizeX, float screenSizeY, float minValue, float maxValue)
         {
             if (shadowIndex >= m_ShadowRequestCount)
                 return;
@@ -411,9 +468,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDShadowRequest   shadowRequest = m_ShadowRequests[shadowIndex];
 
             if (shadowRequest.allowResize)
-                m_Atlas.DisplayAtlas(cmd, debugMaterial, shadowRequest.atlasViewport, screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue, flipY);
+                m_Atlas.DisplayAtlas(cmd, debugMaterial, shadowRequest.atlasViewport, screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue);
             else
-                m_CascadeAtlas.DisplayAtlas(cmd, debugMaterial, shadowRequest.atlasViewport, screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue, flipY);
+                m_CascadeAtlas.DisplayAtlas(cmd, debugMaterial, shadowRequest.atlasViewport, screenX, screenY, screenSizeX, screenSizeY, minValue, maxValue);
         }
 
         public void Dispose()

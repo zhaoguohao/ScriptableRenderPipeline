@@ -123,10 +123,28 @@ namespace UnityEditor.VFX.UI
 
             set
             {
-                if (m_ComponentBoard == null)
+                if (m_ComponentBoard == null || m_ComponentBoard.parent == null)
                     ShowComponentBoard();
                 if (m_ComponentBoard != null)
                     m_ComponentBoard.Attach(value);
+            }
+        }
+
+        public void RemoveAnchorEdges(VFXDataAnchor anchor)
+        {
+            foreach (var edge in dataEdges.Where(t => t.Value.input == anchor || t.Value.output == anchor).ToArray())
+            {
+                RemoveElement(edge.Value);
+                dataEdges.Remove(edge.Key);
+            }
+        }
+
+        public void RemoveNodeEdges(VFXNodeUI node)
+        {
+            foreach (var edge in dataEdges.Where(t => t.Value.input.node == node || t.Value.output.node == node).ToArray())
+            {
+                RemoveElement(edge.Value);
+                dataEdges.Remove(edge.Key);
             }
         }
 
@@ -232,11 +250,11 @@ namespace UnityEditor.VFX.UI
             toggleBlackboard.RegisterCallback<ChangeEvent<bool>>(ToggleBlackboard);
             m_Toolbar.Add(toggleBlackboard);
 
-            Toggle toggleComponentBoard = new Toggle();
-            toggleComponentBoard.text = "Target GameObject";
-            toggleComponentBoard.AddToClassList("toolbarItem");
-            toggleComponentBoard.RegisterCallback<ChangeEvent<bool>>(ToggleComponentBoard);
-            m_Toolbar.Add(toggleComponentBoard);
+            m_ToggleComponentBoard = new Toggle();
+            m_ToggleComponentBoard.text = "Target GameObject";
+            m_ToggleComponentBoard.AddToClassList("toolbarItem");
+            m_ToggleComponentBoard.RegisterCallback<ChangeEvent<bool>>(ToggleComponentBoard);
+            m_Toolbar.Add(m_ToggleComponentBoard);
 
 
             spacer = new VisualElement();
@@ -360,6 +378,8 @@ namespace UnityEditor.VFX.UI
             BoardPreferenceHelper.SetVisible(BoardPreferenceHelper.Board.componentBoard, true);
 
             m_ComponentBoard.RegisterCallback<GeometryChangedEvent>(OnFirstComponentBoardGeometryChanged);
+
+            m_ToggleComponentBoard.SetValueWithoutNotify(true);
         }
 
         void OnFirstComponentBoardGeometryChanged(GeometryChangedEvent e)
@@ -393,6 +413,7 @@ namespace UnityEditor.VFX.UI
             UnregisterCallback<GeometryChangedEvent>(OnFirstResize);
         }
 
+        Toggle m_ToggleComponentBoard;
         void ToggleComponentBoard(ChangeEvent<bool> e)
         {
             if (m_ComponentBoard == null || m_ComponentBoard.parent == null)
@@ -403,6 +424,7 @@ namespace UnityEditor.VFX.UI
             {
                 m_ComponentBoard.RemoveFromHierarchy();
                 BoardPreferenceHelper.SetVisible(BoardPreferenceHelper.Board.componentBoard, false);
+                m_ToggleComponentBoard.SetValueWithoutNotify(false);
             }
         }
 
@@ -1497,7 +1519,6 @@ namespace UnityEditor.VFX.UI
 
         public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
         {
-            var targetSystem = evt.target as VFXSystemBorder;
             if (evt.target is VFXGroupNode || evt.target is VFXSystemBorder) // Default behaviour only shows the OnCreateNode if the target is the view itself.
                 evt.target = this;
 
@@ -1514,11 +1535,20 @@ namespace UnityEditor.VFX.UI
             if (evt.target is VFXView)
             {
                 evt.menu.InsertAction(1, "Create Sticky Note", (e) => { AddStickyNote(mousePosition); },(e) => DropdownMenuAction.Status.Normal);
-            }
-            if (targetSystem != null)
-            {
-                evt.menu.InsertSeparator("", 2);
-                evt.menu.InsertAction(3, string.IsNullOrEmpty(targetSystem.controller.title) ? "Name System" : "Rename System", a => targetSystem.OnRename(), e => DropdownMenuAction.Status.Normal);
+
+                if( evt.triggerEvent is IMouseEvent)
+                {
+                    foreach( var system in m_Systems)
+                    {
+                        Rect bounds = system.worldBound;
+                        if (bounds.Contains((evt.triggerEvent as IMouseEvent).mousePosition))
+                        {
+                            evt.menu.InsertSeparator("", 2);
+                            evt.menu.InsertAction(3, string.IsNullOrEmpty(system.controller.title) ? "Name System" : "Rename System", a => system.OnRename(), e => DropdownMenuAction.Status.Normal);
+                            break;
+                        }
+                    }
+                }
             }
 
             if (evt.target is VFXContextUI)
@@ -1550,8 +1580,8 @@ namespace UnityEditor.VFX.UI
             {
                 VFXSystemBorder border = new VFXSystemBorder();
                 m_Systems.Add(border);
-                border.controller = controller.systems[m_Systems.Count()-1];
                 AddElement(border);
+                border.controller = controller.systems[m_Systems.Count() - 1];
             }
         }
         

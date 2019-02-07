@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEditor.Graphing;
+using UnityEditor.Graphing.Util;
 using UnityEditor.ShaderGraph.Drawing.Inspector;
-using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
 
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
-using UnityEngine.UIElements.StyleSheets;
 using Edge = UnityEditor.Experimental.GraphView.Edge;
 
 
@@ -35,11 +34,17 @@ namespace UnityEditor.ShaderGraph.Drawing
         MaterialGraphView m_GraphView;
         MasterPreviewView m_MasterPreviewView;
 
-        AbstractMaterialGraph m_Graph;
+        GraphData m_Graph;
         PreviewManager m_PreviewManager;
+        MessageManager m_MessageManager;
         SearchWindowProvider m_SearchWindowProvider;
         EdgeConnectorListener m_EdgeConnectorListener;
         BlackboardProvider m_BlackboardProvider;
+
+        public BlackboardProvider blackboardProvider
+        {
+            get { return m_BlackboardProvider; }
+        }
 
         const string k_ToggleSettings = "UnityEditor.ShaderGraph.ToggleSettings";
         ToggleSettings m_ToggleSettings;
@@ -77,11 +82,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        public GraphEditorView(EditorWindow editorWindow, AbstractMaterialGraph graph)
+        public GraphEditorView(EditorWindow editorWindow, GraphData graph, MessageManager messageManager)
         {
             m_Graph = graph;
+            m_MessageManager = messageManager;
             styleSheets.Add(Resources.Load<StyleSheet>("Styles/GraphEditorView"));
-            previewManager = new PreviewManager(graph);
+            previewManager = new PreviewManager(graph, messageManager);
 
             string serializedToggle = EditorUserSettings.GetConfigValue(k_ToggleSettings);
             if (!string.IsNullOrEmpty(serializedToggle))
@@ -192,7 +198,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 AddGroup(graphGroup);
             }
 
-            foreach (var node in graph.GetNodes<INode>())
+            foreach (var node in graph.GetNodes<AbstractMaterialNode>())
                 AddNode(node);
 
             foreach (var edge in graph.edges)
@@ -205,9 +211,10 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             if (evt.keyCode == KeyCode.F1)
             {
-                if (m_GraphView.selection.OfType<MaterialNodeView>().Count() == 1)
+                var selection = m_GraphView.selection.OfType<IShaderNodeView>();
+                if (selection.Count() == 1)
                 {
-                    var nodeView = (MaterialNodeView)graphView.selection.First();
+                    var nodeView = selection.First();
                     if (nodeView.node.documentationURL != null)
                         System.Diagnostics.Process.Start(nodeView.node.documentationURL);
                 }
@@ -241,6 +248,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             if (graphViewChange.movedElements != null)
             {
+                m_Graph.owner.RegisterCompleteObjectUndo("Move Elements");
+
                 List<GraphElement> nodesInsideGroup = new List<GraphElement>();
                 foreach (var element in graphViewChange.movedElements)
                 {
@@ -259,7 +268,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 foreach (var element in graphViewChange.movedElements)
                 {
-                    var node = element.userData as INode;
+                    var node = element.userData as AbstractMaterialNode;
                     if (node == null)
                         continue;
 
@@ -275,28 +284,32 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (graphViewChange.elementsToRemove != null)
             {
                 m_Graph.owner.RegisterCompleteObjectUndo("Remove Elements");
-                m_Graph.RemoveElements(graphViewChange.elementsToRemove.OfType<MaterialNodeView>().Select(v => (INode)v.node),
+                m_Graph.RemoveElements(graphViewChange.elementsToRemove.OfType<IShaderNodeView>().Select(v => v.node),
                     graphViewChange.elementsToRemove.OfType<Edge>().Select(e => (IEdge)e.userData),
-                    graphViewChange.elementsToRemove.OfType<ShaderGroup>().Select(g => (GroupData)g.userData));
+                    graphViewChange.elementsToRemove.OfType<ShaderGroup>().Select(g => g.userData));
                 foreach (var edge in graphViewChange.elementsToRemove.OfType<Edge>())
                 {
                     if (edge.input != null)
                     {
-                        var materialNodeView = edge.input.node as MaterialNodeView;
-                        if (materialNodeView != null)
+                        if (edge.input.node is IShaderNodeView materialNodeView)
                             nodesToUpdate.Add(materialNodeView);
                     }
                     if (edge.output != null)
                     {
-                        var materialNodeView = edge.output.node as MaterialNodeView;
-                        if (materialNodeView != null)
+                        if (edge.output.node is IShaderNodeView materialNodeView)
                             nodesToUpdate.Add(materialNodeView);
                     }
                 }
             }
 
             foreach (var node in nodesToUpdate)
-                node.UpdatePortInputVisibilities();
+            {
+                if (node is MaterialNodeView materialNodeView)
+                {
+                    materialNodeView.UpdatePortInputVisibilities();
+                }
+            }
+
 
             UpdateEdgeColors(nodesToUpdate);
 
@@ -318,7 +331,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (groupData != null)
             {
                 var anyChanged = false;
-                foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
+                foreach (var materialNodeView in element.Select(e => e).OfType<IShaderNodeView>())
                 {
                     if (materialNodeView.node.groupGuid != groupData.guid)
                     {
@@ -332,7 +345,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 m_Graph.owner.RegisterCompleteObjectUndo(groupData.title);
 
-                foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
+                foreach (var materialNodeView in element.Select(e => e).OfType<IShaderNodeView>())
                 {
                     m_Graph.SetNodeGroup(materialNodeView.node, groupData);
                 }
@@ -345,9 +358,9 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (groupData != null)
             {
                 var anyChanged = false;
-                foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
+                foreach (var nodeView in element.Select(e => e).OfType<IShaderNodeView>())
                 {
-                    if (materialNodeView.userData != null && materialNodeView.node.groupGuid == groupData.guid)
+                    if (((VisualElement)nodeView).userData != null && nodeView.node.groupGuid == groupData.guid)
                     {
                         anyChanged = true;
                         break;
@@ -359,31 +372,37 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 m_Graph.owner.RegisterCompleteObjectUndo("Ungroup Node(s)");
 
-                foreach (var materialNodeView in element.Select(e => e).OfType<MaterialNodeView>())
+                foreach (var nodeView in element.Select(e => e).OfType<IShaderNodeView>())
                 {
-                    if (materialNodeView.node != null)
-                        m_Graph.SetNodeGroup(materialNodeView.node, null);
+                    if (nodeView.node != null)
+                        m_Graph.SetNodeGroup(nodeView.node, null);
                 }
             }
         }
 
-        void OnNodeChanged(INode inNode, ModificationScope scope)
+        void OnNodeChanged(AbstractMaterialNode inNode, ModificationScope scope)
         {
             if (m_GraphView == null)
                 return;
 
-            var dependentNodes = new List<INode>();
+            var dependentNodes = new List<AbstractMaterialNode>();
             NodeUtils.CollectNodesNodeFeedsInto(dependentNodes, inNode);
             foreach (var node in dependentNodes)
             {
-                var theViews = m_GraphView.nodes.ToList().OfType<MaterialNodeView>();
+                var theViews = m_GraphView.nodes.ToList().OfType<IShaderNodeView>();
                 var viewsFound = theViews.Where(x => x.node.guid == node.guid).ToList();
                 foreach (var drawableNodeData in viewsFound)
                     drawableNodeData.OnModified(scope);
             }
         }
 
-        HashSet<MaterialNodeView> m_NodeViewHashSet = new HashSet<MaterialNodeView>();
+        HashSet<IShaderNodeView> m_NodeViewHashSet = new HashSet<IShaderNodeView>();
+
+        public void UpdatePreviewShaders()
+        {
+            previewManager.ForceShaderUpdate();
+        }
+
         public void HandleGraphChanges()
         {
             previewManager.HandleGraphChanges();
@@ -399,11 +418,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             foreach (var node in m_Graph.removedNodes)
             {
                 node.UnregisterCallback(OnNodeChanged);
-                var nodeView = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().FirstOrDefault(p => p.node != null && p.node.guid == node.guid);
+                var nodeView = m_GraphView.nodes.ToList().OfType<IShaderNodeView>()
+                    .FirstOrDefault(p => p.node != null && p.node.guid == node.guid);
                 if (nodeView != null)
                 {
                     nodeView.Dispose();
-                    m_GraphView.RemoveElement(nodeView);
+                    m_GraphView.RemoveElement((Node)nodeView);
                 }
             }
 
@@ -419,7 +439,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var groupChange in m_Graph.nodeGroupChanges)
             {
-                var nodeView = (MaterialNodeView)m_GraphView.GetNodeByGuid(groupChange.nodeGuid.ToString());
+                var nodeView = m_GraphView.GetNodeByGuid(groupChange.nodeGuid.ToString());
                 if (nodeView != null)
                 {
                     var groupView = nodeView.GetContainingScope() as ShaderGroup;
@@ -445,8 +465,9 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var node in m_Graph.pastedNodes)
             {
-                var nodeView = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().FirstOrDefault(p => p.node != null && p.node.guid == node.guid);
-                m_GraphView.AddToSelection(nodeView);
+                var nodeView = m_GraphView.nodes.ToList().OfType<IShaderNodeView>()
+                    .FirstOrDefault(p => p.node != null && p.node.guid == node.guid);
+                m_GraphView.AddToSelection((Node)nodeView);
             }
 
             var nodesToUpdate = m_NodeViewHashSet;
@@ -454,14 +475,13 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var edge in m_Graph.removedEdges)
             {
-                var edgeView = m_GraphView.graphElements.ToList().OfType<Edge>().FirstOrDefault(p => p.userData is IEdge && Equals((IEdge)p.userData, edge));
+                var edgeView = m_GraphView.graphElements.ToList().OfType<Edge>()
+                    .FirstOrDefault(p => p.userData is IEdge && Equals((IEdge) p.userData, edge));
                 if (edgeView != null)
                 {
-                    var nodeView = edgeView.input.node as MaterialNodeView;
-                    if (nodeView != null && nodeView.node != null)
-                    {
+                    var nodeView = (IShaderNodeView)edgeView.input.node;
                         nodesToUpdate.Add(nodeView);
-                    }
+
                     edgeView.output.Disconnect(edgeView);
                     edgeView.input.Disconnect(edgeView);
 
@@ -476,11 +496,17 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 var edgeView = AddEdge(edge);
                 if (edgeView != null)
-                    nodesToUpdate.Add((MaterialNodeView)edgeView.input.node);
+                    nodesToUpdate.Add((IShaderNodeView)edgeView.input.node);
             }
 
             foreach (var node in nodesToUpdate)
-                node.UpdatePortInputVisibilities();
+            {
+                if (node is MaterialNodeView materialNodeView)
+                {
+                    materialNodeView.UpdatePortInputVisibilities();
+                }
+
+            }
 
             UpdateEdgeColors(nodesToUpdate);
 
@@ -497,19 +523,56 @@ namespace UnityEditor.ShaderGraph.Drawing
                     }
                 }
             }
+
+            UpdateBadges();
+        }
+
+        void UpdateBadges()
+        {
+            if (!m_MessageManager.nodeMessagesChanged)
+                return;
+
+            foreach (var messageData in m_MessageManager.GetNodeMessages())
+            {
+                var node = m_Graph.GetNodeFromTempId(messageData.Key);
+
+                if (!(m_GraphView.GetNodeByGuid(node.guid.ToString()) is MaterialNodeView nodeView))
+                    continue;
+
+                if (messageData.Value.Count == 0)
+                {
+                    var badge = nodeView.Q<IconBadge>();
+                    badge?.Detach();
+                    badge?.RemoveFromHierarchy();
+                }
+                else
+                {
+                    nodeView.AttachError(messageData.Value.First().message);
+                }
+            }
         }
 
         List<GraphElement> m_AddNodeGraphElements = new List<GraphElement>();
 
-        void AddNode(INode node)
+        void AddNode(AbstractMaterialNode node)
         {
-            var nodeView = new MaterialNodeView { userData = node };
-
-            m_GraphView.AddElement(nodeView);
             var materialNode = (AbstractMaterialNode)node;
-            nodeView.Initialize(materialNode, m_PreviewManager, m_EdgeConnectorListener);
-            node.RegisterCallback(OnNodeChanged);
+            Node nodeView;
+            if (node is PropertyNode propertyNode)
+            {
+                var tokenNode = new PropertyNodeView(propertyNode, m_EdgeConnectorListener);
+                m_GraphView.AddElement(tokenNode);
+                nodeView = tokenNode;
+            }
+            else
+            {
+                var materialNodeView = new MaterialNodeView { userData = materialNode };
+                m_GraphView.AddElement(materialNodeView);
+                materialNodeView.Initialize(materialNode, m_PreviewManager, m_EdgeConnectorListener);
+                nodeView = materialNodeView;
+            }
 
+            node.RegisterCallback(OnNodeChanged);
             nodeView.MarkDirtyRepaint();
 
             if (m_SearchWindowProvider.nodeNeedsRepositioning && m_SearchWindowProvider.targetSlotReference.nodeGuid.Equals(node.guid))
@@ -517,9 +580,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_SearchWindowProvider.nodeNeedsRepositioning = false;
                 foreach (var element in nodeView.inputContainer.Children().Union(nodeView.outputContainer.Children()))
                 {
-                    var port = element as ShaderPort;
-                    if (port == null)
-                        continue;
+                    var port = (ShaderPort)element;
                     if (port.slot.slotReference.Equals(m_SearchWindowProvider.targetSlotReference))
                     {
                         port.RegisterCallback<GeometryChangedEvent>(RepositionNode);
@@ -559,17 +620,17 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (port == null)
                 return;
             port.UnregisterCallback<GeometryChangedEvent>(RepositionNode);
-            var nodeView = port.node as MaterialNodeView;
+            var nodeView = port.node as IShaderNodeView;
             if (nodeView == null)
                 return;
-            var offset = nodeView.mainContainer.WorldToLocal(port.GetGlobalCenter() + new Vector3(3f, 3f, 0f));
-            var position = nodeView.GetPosition();
+            var offset = nodeView.gvNode.mainContainer.WorldToLocal(port.GetGlobalCenter() + new Vector3(3f, 3f, 0f));
+            var position = nodeView.gvNode.GetPosition();
             position.position -= offset;
-            nodeView.SetPosition(position);
+            nodeView.gvNode.SetPosition(position);
             var drawState = nodeView.node.drawState;
             drawState.position = position;
             nodeView.node.drawState = drawState;
-            nodeView.MarkDirtyRepaint();
+            nodeView.gvNode.MarkDirtyRepaint();
             port.MarkDirtyRepaint();
         }
 
@@ -591,13 +652,13 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
             var targetSlot = targetNode.FindInputSlot<MaterialSlot>(edge.inputSlot.slotId);
 
-            var sourceNodeView = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().FirstOrDefault(x => x.node == sourceNode);
+            var sourceNodeView = m_GraphView.nodes.ToList().OfType<IShaderNodeView>().FirstOrDefault(x => x.node == sourceNode);
             if (sourceNodeView != null)
             {
-                var sourceAnchor = sourceNodeView.outputContainer.Children().OfType<ShaderPort>().FirstOrDefault(x => x.slot.Equals(sourceSlot));
+                var sourceAnchor = sourceNodeView.gvNode.outputContainer.Children().OfType<ShaderPort>().First(x => x.slot.Equals(sourceSlot));
 
-                var targetNodeView = m_GraphView.nodes.ToList().OfType<MaterialNodeView>().FirstOrDefault(x => x.node == targetNode);
-                var targetAnchor = targetNodeView.inputContainer.Children().OfType<ShaderPort>().FirstOrDefault(x => x.slot.Equals(targetSlot));
+                var targetNodeView = m_GraphView.nodes.ToList().OfType<IShaderNodeView>().First(x => x.node == targetNode);
+                var targetAnchor = targetNodeView.gvNode.inputContainer.Children().OfType<ShaderPort>().First(x => x.slot.Equals(targetSlot));
 
                 var edgeView = new Edge
                 {
@@ -608,8 +669,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                 edgeView.output.Connect(edgeView);
                 edgeView.input.Connect(edgeView);
                 m_GraphView.AddElement(edgeView);
-                sourceNodeView.RefreshPorts();
-                targetNodeView.RefreshPorts();
+                sourceNodeView.gvNode.RefreshPorts();
+                targetNodeView.gvNode.RefreshPorts();
                 sourceNodeView.UpdatePortInputTypes();
                 targetNodeView.UpdatePortInputTypes();
 
@@ -619,30 +680,33 @@ namespace UnityEditor.ShaderGraph.Drawing
             return null;
         }
 
-        Stack<MaterialNodeView> m_NodeStack = new Stack<MaterialNodeView>();
+        Stack<Node> m_NodeStack = new Stack<Node>();
 
-        void UpdateEdgeColors(HashSet<MaterialNodeView> nodeViews)
+        void UpdateEdgeColors(HashSet<IShaderNodeView> nodeViews)
         {
             var nodeStack = m_NodeStack;
             nodeStack.Clear();
             foreach (var nodeView in nodeViews)
-                nodeStack.Push(nodeView);
+                nodeStack.Push((Node)nodeView);
             while (nodeStack.Any())
             {
                 var nodeView = nodeStack.Pop();
-                nodeView.UpdatePortInputTypes();
+                if (nodeView is MaterialNodeView materialNodeView)
+                {
+                    materialNodeView.UpdatePortInputTypes();
+                }
                 foreach (var anchorView in nodeView.outputContainer.Children().OfType<Port>())
                 {
-                    foreach (var edgeView in anchorView.connections.OfType<Edge>())
+                    foreach (var edgeView in anchorView.connections)
                     {
                         var targetSlot = edgeView.input.GetSlot();
                         if (targetSlot.valueType == SlotValueType.DynamicVector || targetSlot.valueType == SlotValueType.DynamicMatrix || targetSlot.valueType == SlotValueType.Dynamic)
                         {
-                            var connectedNodeView = edgeView.input.node as MaterialNodeView;
-                            if (connectedNodeView != null && !nodeViews.Contains(connectedNodeView))
+                            var connectedNodeView = edgeView.input.node;
+                            if (connectedNodeView != null && !nodeViews.Contains((IShaderNodeView)connectedNodeView))
                             {
                                 nodeStack.Push(connectedNodeView);
-                                nodeViews.Add(connectedNodeView);
+                                nodeViews.Add((IShaderNodeView)connectedNodeView);
                             }
                         }
                     }
@@ -652,13 +716,13 @@ namespace UnityEditor.ShaderGraph.Drawing
                     var targetSlot = anchorView.GetSlot();
                     if (targetSlot.valueType != SlotValueType.DynamicVector)
                         continue;
-                    foreach (var edgeView in anchorView.connections.OfType<Edge>())
+                    foreach (var edgeView in anchorView.connections)
                     {
-                        var connectedNodeView = edgeView.output.node as MaterialNodeView;
-                        if (connectedNodeView != null && !nodeViews.Contains(connectedNodeView))
+                        var connectedNodeView = edgeView.output.node;
+                        if (connectedNodeView != null && !nodeViews.Contains((IShaderNodeView)connectedNodeView))
                         {
                             nodeStack.Push(connectedNodeView);
-                            nodeViews.Add(connectedNodeView);
+                            nodeViews.Add((IShaderNodeView)connectedNodeView);
                         }
                     }
                 }
@@ -741,7 +805,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 saveRequested = null;
                 convertToSubgraphRequested = null;
                 showInProjectRequested = null;
-                foreach (var node in m_GraphView.Children().OfType<MaterialNodeView>())
+                foreach (var node in m_GraphView.Children().OfType<IShaderNodeView>())
                     node.Dispose();
                 m_GraphView = null;
             }

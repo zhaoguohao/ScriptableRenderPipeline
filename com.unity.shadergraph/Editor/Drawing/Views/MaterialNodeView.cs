@@ -13,7 +13,7 @@ using Node = UnityEditor.Experimental.GraphView.Node;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    sealed class MaterialNodeView : Node
+    sealed class MaterialNodeView : Node, IShaderNodeView
     {
         PreviewRenderData m_PreviewRenderData;
         Image m_PreviewImage;
@@ -144,12 +144,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             var masterNode = node as IMasterNode;
             if (masterNode != null)
             {
+                AddToClassList("master");
+
                 if (!masterNode.IsPipelineCompatible(GraphicsSettings.renderPipelineAsset))
                 {
-                    IconBadge wrongPipeline = IconBadge.CreateError("The current render pipeline is not compatible with this master node.");
-                    Add(wrongPipeline);
-                    VisualElement title = this.Q("title");
-                    wrongPipeline.AttachTo(title, SpriteAlignment.LeftCenter);
+                    AttachError("The current render pipeline is not compatible with this master node.");
                 }
             }
 
@@ -193,6 +192,25 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
+        public void AttachError(string errString)
+        {
+            ClearError();
+            var badge = IconBadge.CreateError(errString);
+            Add(badge);
+            var myTitle = this.Q("title");
+            badge.AttachTo(myTitle, SpriteAlignment.RightCenter);
+        }
+
+        public void ClearError()
+        {
+            var badge = this.Q<IconBadge>();
+            if(badge != null)
+            {
+                badge.Detach();
+                badge.RemoveFromHierarchy();
+            }
+        }
+
         void OnGeometryChanged(GeometryChangedEvent evt)
         {
             // style.positionTop and style.positionLeft are in relation to the parent,
@@ -215,6 +233,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
+        public Node gvNode => this;
         public AbstractMaterialNode node { get; private set; }
 
         public override bool expanded
@@ -241,8 +260,9 @@ namespace UnityEditor.ShaderGraph.Drawing
         {
             if (evt.target is Node)
             {
-                evt.menu.AppendAction("Copy Shader", CopyToClipboard, _ => node.hasPreview ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
-                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode, _ => node.hasPreview ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
+                var canViewShader = node.hasPreview || node is IMasterNode;
+                evt.menu.AppendAction("Copy Shader", CopyToClipboard, _ => canViewShader ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
+                evt.menu.AppendAction("Show Generated Code", ShowGeneratedCode, _ => canViewShader ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden);
             }
 
             base.BuildContextualMenu(evt);
@@ -274,7 +294,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             if (masterNode != null)
                 return masterNode.GetShader(GenerationMode.ForReals, node.name, out textureInfo);
 
-            var graph = (AbstractMaterialGraph)node.owner;
+            var graph = (GraphData)node.owner;
             return graph.GetShader(node, GenerationMode.ForReals, node.name).shader;
         }
 
@@ -415,7 +435,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             UpdatePortInputs();
             UpdatePortInputVisibilities();
 
-            foreach (var listener in m_ControlItems.Children().OfType<INodeModificationListener>())
+            foreach (var listener in m_ControlItems.Children().OfType<AbstractMaterialNodeModificationListener>())
             {
                 if (listener != null)
                     listener.OnNodeModified(scope);
@@ -495,7 +515,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             foreach (var control in m_ControlItems.Children())
             {
-                var listener = control as INodeModificationListener;
+                var listener = control as AbstractMaterialNodeModificationListener;
                 if (listener != null)
                     listener.OnNodeModified(ModificationScope.Graph);
             }
@@ -553,7 +573,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 portInputView.Dispose();
 
             node = null;
-            userData = null;
+            ((VisualElement)this).userData = null;
             if (m_PreviewRenderData != null)
             {
                 m_PreviewRenderData.onPreviewChanged -= UpdatePreviewTexture;
