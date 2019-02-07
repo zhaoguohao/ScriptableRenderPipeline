@@ -121,7 +121,7 @@ namespace UnityEditor.Graphing
                 nodeList.Add(node);
         }
 
-        public static string GetDocumentationString(INode node)
+        public static string GetDocumentationString(AbstractMaterialNode node)
         {
             return $"{docURL}{node.name.Replace(" ", "-")}"+"-Node.md";
         }
