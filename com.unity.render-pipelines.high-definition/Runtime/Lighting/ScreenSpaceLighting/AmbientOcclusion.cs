@@ -213,7 +213,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool IsActive(HDCamera camera, AmbientOcclusion settings) => camera.frameSettings.IsEnabled(FrameSettingsField.SSAO) && settings.intensity.value > 0f;
 
-        public void Render(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager, ScriptableRenderContext renderContext)
+        public void Render(CommandBuffer cmd, HDCamera camera, RTManager rtManager, ScriptableRenderContext renderContext)
         {
 
 #if ENABLE_RAYTRACING
@@ -223,12 +223,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else
 #endif
             {
-                Dispatch(cmd, camera, sharedRTManager);
-                PostDispatchWork(cmd, camera, sharedRTManager);
+                Dispatch(cmd, camera, rtManager);
+                PostDispatchWork(cmd, camera, rtManager);
             }
         }
 
-        public void Dispatch(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager)
+        public void Dispatch(CommandBuffer cmd, HDCamera camera, RTManager rtManager)
         {
             // Grab current settings
             var settings = VolumeManager.instance.stack.GetComponent<AmbientOcclusion>();
@@ -261,12 +261,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 if (msaa)
                 {
-                    depthMap = sharedRTManager.GetDepthValuesTexture();
+                    depthMap = rtManager.GetRenderTarget(RT.DepthValuesMSAA);
                     destination = m_MultiAmbientOcclusionTex;
                 }
                 else
                 {
-                    depthMap = sharedRTManager.GetDepthTexture();
+                    depthMap = rtManager.GetDepthTexture();
                     destination = m_AmbientOcclusionTex;
                 }
 
@@ -286,7 +286,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void PostDispatchWork(CommandBuffer cmd, HDCamera camera, SharedRTManager sharedRTManager)
+        public void PostDispatchWork(CommandBuffer cmd, HDCamera camera, RTManager rtManager)
         {
             // Grab current settings
             var settings = VolumeManager.instance.stack.GetComponent<AmbientOcclusion>();
@@ -305,7 +305,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, "Resolve AO Buffer", CustomSamplerId.ResolveSSAO.GetSampler()))
                 {
                     HDUtils.SetRenderTarget(cmd, camera, m_AmbientOcclusionTex);
-                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._DepthValuesTexture, sharedRTManager.GetDepthValuesTexture());
+                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._DepthValuesTexture, rtManager.GetRenderTarget(RT.DepthValuesMSAA));
                     m_ResolvePropertyBlock.SetTexture(HDShaderIDs._MultiAmbientOcclusionTexture, m_MultiAmbientOcclusionTex);
                     cmd.DrawProcedural(Matrix4x4.identity, m_ResolveMaterial, 0, MeshTopology.Triangles, 3, 1, m_ResolvePropertyBlock);
                 }

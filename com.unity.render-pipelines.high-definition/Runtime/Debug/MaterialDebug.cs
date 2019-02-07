@@ -157,21 +157,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (!isDebugViewMaterialInit)
             {
                 List<RenderPipelineMaterial> materialList = HDUtils.GetRenderPipelineMaterialList();
-
-                // TODO: Share this code to retrieve deferred material with HDRenderPipeline
-                // Find first material that is a deferredMaterial
-                Type bsdfDataDeferredType = null;
-                foreach (RenderPipelineMaterial material in materialList)
-                {
-                    if (material.IsDefferedMaterial())
-                    {
-                        bsdfDataDeferredType = material.GetType().GetNestedType("BSDFData");
-                    }
-                }
-
-                // TODO: Handle the case of no Gbuffer material
-                Debug.Assert(bsdfDataDeferredType != null);
-
                 List<MaterialItem> materialItems = new List<MaterialItem>();
 
                 int numSurfaceDataFields = 0;

@@ -63,6 +63,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             destination = new Texture2D[len];
             destinationArray = new Texture2DArray(size, size, len, format, false, true);
             destinationArray.hideFlags = HideFlags.HideAndDontSave;
+            destinationArray.name = CoreUtils.GetTextureAutoName(size, size, format, depth: len, dim: TextureDimension.Tex2DArray, name: "BlueNoise");
 
             for (int i = 0; i < len; i++)
             {
