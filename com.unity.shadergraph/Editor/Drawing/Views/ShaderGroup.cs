@@ -29,7 +29,7 @@ namespace UnityEditor.ShaderGraph
         {
             if (evt.target is ShaderGroup)
             {
-                evt.menu.AppendAction("Delete Group and content", RemoveNodesInsideGroup, DropdownMenuAction.AlwaysEnabled);
+                evt.menu.AppendAction("Delete group and content", RemoveNodesInsideGroup, DropdownMenuAction.AlwaysEnabled);
             }
         }
 
