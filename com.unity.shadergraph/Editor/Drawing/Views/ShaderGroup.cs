@@ -29,13 +29,13 @@ namespace UnityEditor.ShaderGraph
         {
             if (evt.target is ShaderGroup)
             {
-                evt.menu.AppendAction("Delete group and content", RemoveNodesInsideGroup, DropdownMenuAction.AlwaysEnabled);
+                evt.menu.AppendAction("Delete Group and Contents", RemoveNodesInsideGroup, DropdownMenuAction.AlwaysEnabled);
             }
         }
 
         void RemoveNodesInsideGroup(DropdownMenuAction action)
         {
-            m_Graph.owner.RegisterCompleteObjectUndo("Deleting Group and content");
+            m_Graph.owner.RegisterCompleteObjectUndo("Delete Group and Contents");
             m_Graph.RemoveElements(m_Graph.GetNodesInGroup(userData), Enumerable.Empty<IEdge>(), new [] {userData});
         }
     }
