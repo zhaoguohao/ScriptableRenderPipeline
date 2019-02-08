@@ -241,6 +241,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Reset();
         }
 
+        public bool IsTAAEnabled()
+        {
+            return m_frameSettings.IsEnabled(FrameSettingsField.Postprocess)
+                && antialiasing == HDAdditionalCameraData.AntialiasingMode.TemporalAntialiasing
+                && camera.cameraType == CameraType.Game;
+        }
+
         // Pass all the systems that may want to update per-camera data here.
         // That way you will never update an HDCamera and forget to update the dependent system.
         public void Update(FrameSettings currentFrameSettings, VolumetricLightingSystem vlSys, MSAASamples msaaSamples)
@@ -286,9 +293,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // If TAA is enabled projMatrix will hold a jittered projection matrix. The original,
             // non-jittered projection matrix can be accessed via nonJitteredProjMatrix.
-            bool taaEnabled = m_frameSettings.IsEnabled(FrameSettingsField.Postprocess)
-                && antialiasing == HDAdditionalCameraData.AntialiasingMode.TemporalAntialiasing
-                && camera.cameraType == CameraType.Game;
+            bool taaEnabled = IsTAAEnabled();
 
             if (!taaEnabled)
             {
@@ -363,15 +368,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         isFirstFrame = false;
                     }
                 }
+
+                // XRTODO: fix this
                 isFirstFrame = true; // So that mono vars can still update when stereo active
 
-                screenWidth = XRGraphics.eyeTextureWidth;
-                screenHeight = XRGraphics.eyeTextureHeight;
+                // XRTODO: remove once SPI is working
+                if (XRGraphics.stereoRenderingMode == XRGraphics.StereoRenderingMode.SinglePass)
+                {
+                    Debug.Assert(HDDynamicResolutionHandler.instance.SoftwareDynamicResIsEnabled() == false);
 
-                var xrDesc = XRGraphics.eyeTextureDesc;
-                m_ActualWidth = xrDesc.width;
-                m_ActualHeight = xrDesc.height;
-
+                    var xrDesc = XRGraphics.eyeTextureDesc;
+                    nonScaledSize.x = screenWidth  = m_ActualWidth  = xrDesc.width;
+                    nonScaledSize.y = screenHeight = m_ActualHeight = xrDesc.height;
+                }
             }
 
             if (ShaderConfig.s_CameraRelativeRendering != 0)
@@ -416,8 +425,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (ShaderConfig.s_CameraRelativeRendering != 0)
             {
                 prevWorldSpaceCameraPos = worldSpaceCameraPos - prevWorldSpaceCameraPos;
-                Matrix4x4 cameraDisplacement = Matrix4x4.Translate(prevWorldSpaceCameraPos);
-                prevViewProjMatrix *= cameraDisplacement; // Now prevViewProjMatrix correctly transforms this frame's camera-relative positionWS
+                // This fixes issue with cameraDisplacement stacking in prevViewProjMatrix when same camera renders multiple times each logical frame 
+                // causing glitchy motion blur when editor paused.
+                if (m_LastFrameActive != Time.frameCount)
+                {
+                    Matrix4x4 cameraDisplacement = Matrix4x4.Translate(prevWorldSpaceCameraPos);
+                    prevViewProjMatrix *= cameraDisplacement; // Now prevViewProjMatrix correctly transforms this frame's camera-relative positionWS
+                }
             }
             else
             {
@@ -584,10 +598,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         HDRenderPipeline hdPipeline = RenderPipelineManager.currentPipeline as HDRenderPipeline;
                         // If the override layer is "Everything", we fall-back to "Everything" for the current layer mask to avoid issues by having no current layer
                         // In practice we should never have "Everything" as an override mask as it does not make sense (a warning is issued in the UI)
-                        if (hdPipeline.asset.renderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask == -1)
+                        if (hdPipeline.asset.currentPlatformRenderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask == -1)
                             volumeLayerMask = -1;
                         else
-                            volumeLayerMask = (-1 & ~hdPipeline.asset.renderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask);
+                            volumeLayerMask = (-1 & ~hdPipeline.asset.currentPlatformRenderPipelineSettings.lightLoopSettings.skyLightingOverrideLayerMask);
                     }
                 }
             }
@@ -641,7 +655,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             float jitterY = HaltonSequence.Get((taaFrameIndex & 1023) + 1, 3) - 0.5f;
             taaJitter = new Vector4(jitterX, jitterY, jitterX / camera.pixelWidth, jitterY / camera.pixelHeight);
 
-            const int kMaxSampleCount = 256;
+            const int kMaxSampleCount = 8;
             if (++taaFrameIndex >= kMaxSampleCount)
                 taaFrameIndex = 0;
 
