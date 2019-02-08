@@ -203,6 +203,8 @@ public class TextureCombiner
         combined.Apply();
         RenderTexture.active = previousActive;
 
+        combinedRT.Release();
+
         byte[] bytes = new byte[0];
 
         if (savePath.EndsWith("png"))

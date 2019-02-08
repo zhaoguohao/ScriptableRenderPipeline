@@ -51,16 +51,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_Atlas != null)
                 m_Atlas.Release();
 
-            m_Atlas = RTHandles.Alloc(width, height, filterMode: m_FilterMode, depthBufferBits: m_DepthBufferBits, isShadowMap: true, name: m_Name);
+            //string shadowAtlasName = CoreUtils.GetRenderTargetAutoName(width, height, (int)m_DepthBufferBits, m_Format, m_Name);
+            m_Atlas = RTHandles.Alloc(width, height, filterMode: m_FilterMode, depthBufferBits: m_DepthBufferBits, isShadowMap: true, name: m_Name, memoryTag: RTManager.k_ShadowsMemoryTag);
 
             if (m_SupportMomentShadows)
             {
                 string momentShadowMapName = m_Name + "Moment";
-                m_AtlasMoments = RTHandles.Alloc(width, height, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SFloat, enableRandomWrite: true, name: momentShadowMapName);
+                m_AtlasMoments = RTHandles.Alloc(width, height, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SFloat, enableRandomWrite: true, name: momentShadowMapName, memoryTag: RTManager.k_ShadowsMemoryTag);
                 string intermediateSummedAreaName = m_Name + "IntermediateSummedArea";
-                m_IntermediateSummedAreaTexture = RTHandles.Alloc(width, height, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SInt, enableRandomWrite: true, name: intermediateSummedAreaName);
+                m_IntermediateSummedAreaTexture = RTHandles.Alloc(width, height, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SInt, enableRandomWrite: true, name: intermediateSummedAreaName, memoryTag: RTManager.k_ShadowsMemoryTag);
                 string summedAreaName = m_Name + "SummedAreaFinal";
-                m_SummedAreaTexture = RTHandles.Alloc(width, height, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SInt, enableRandomWrite: true, name: summedAreaName);
+                m_SummedAreaTexture = RTHandles.Alloc(width, height, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SInt, enableRandomWrite: true, name: summedAreaName, memoryTag: RTManager.k_ShadowsMemoryTag);
             }
             identifier = new RenderTargetIdentifier(m_Atlas);
         }

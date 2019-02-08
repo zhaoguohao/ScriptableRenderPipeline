@@ -17,8 +17,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Material m_MaterialFilterAreaLights;
         MaterialPropertyBlock m_MPBFilterAreaLights;
 
-        RenderTexture m_TempRenderTexture0;
-        RenderTexture m_TempRenderTexture1;
+        RTHandleSystem.RTHandle m_TempRenderTexture0;
+        RTHandleSystem.RTHandle m_TempRenderTexture1;
 
         public LTCAreaLightCookieManager(HDRenderPipelineAsset hdAsset, int maxCacheSize)
         {
@@ -47,6 +47,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             CoreUtils.Destroy(m_MaterialFilterAreaLights);
+            RTHandles.Release(m_TempRenderTexture0);
+            RTHandles.Release(m_TempRenderTexture1);
         }
 
         public Texture GetTexCache()
@@ -81,22 +83,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_TempRenderTexture0 == null )
             {
                 string cacheName = m_AreaCookieTexArray.GetCacheName();
-                m_TempRenderTexture0 = new RenderTexture(texCache.width, texCache.height, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
-                {
-                    hideFlags = HideFlags.HideAndDontSave,
-                    useMipMap = true,
-                    autoGenerateMips = false,
-                    name = cacheName + "TempAreaLightRT0"
-                };
+                m_TempRenderTexture0 = RTHandles.Alloc( texCache.width, texCache.height, 1, colorFormat: GraphicsFormat.R8G8B8A8_SRGB,
+                                                        useMipMap: true,
+                                                        autoGenerateMips: false,
+                                                        name: cacheName + "TempAreaLightRT0",
+                                                        memoryTag: RTManager.k_RenderLoopMemoryTag);
 
                 // We start by a horizontal gaussian into mip 1 that reduces the width by a factor 2 but keeps the same height
-                m_TempRenderTexture1 = new RenderTexture(texCache.width >> 1, texCache.height, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB )
-                {
-                    hideFlags = HideFlags.HideAndDontSave,
-                    useMipMap = true,
-                    autoGenerateMips = false,
-                    name = cacheName + "TempAreaLightRT1"
-                };
+                m_TempRenderTexture1 = RTHandles.Alloc( texCache.width >> 1, texCache.height, 1, colorFormat: GraphicsFormat.R8G8B8A8_SRGB,
+                                                        useMipMap: true,
+                                                        autoGenerateMips: false,
+                                                        name: cacheName + "TempAreaLightRT1",
+                                                        memoryTag: RTManager.k_RenderLoopMemoryTag);
             }
 
             int sourceWidth = texCache.width;

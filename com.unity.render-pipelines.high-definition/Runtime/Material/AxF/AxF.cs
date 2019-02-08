@@ -112,10 +112,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // For area lighting - We pack all texture inside a texture array to reduce the number of resource required
         Texture2DArray m_LtcData; // 0: m_LtcGGXMatrix - RGBA;
 
-        Material        m_preIntegratedFGDMaterial_Ward = null;
-        Material        m_preIntegratedFGDMaterial_CookTorrance = null;
-        RenderTexture   m_preIntegratedFGD_Ward = null;
-        RenderTexture   m_preIntegratedFGD_CookTorrance = null;
+        Material                m_preIntegratedFGDMaterial_Ward = null;
+        Material                m_preIntegratedFGDMaterial_CookTorrance = null;
+        RTHandleSystem.RTHandle m_preIntegratedFGD_Ward = null;
+        RTHandleSystem.RTHandle m_preIntegratedFGD_CookTorrance = null;
 
         private bool m_precomputedFGDTablesAreInit = false;
 
@@ -139,21 +139,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 throw new Exception("Failed to create material for Cook-Torrance BRDF pre-integration!");
 
             // Create render textures where we will render the FGD tables
-            m_preIntegratedFGD_Ward = new RenderTexture(128, 128, 0, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear);
-            m_preIntegratedFGD_Ward.hideFlags = HideFlags.HideAndDontSave;
-            m_preIntegratedFGD_Ward.filterMode = FilterMode.Bilinear;
-            m_preIntegratedFGD_Ward.wrapMode = TextureWrapMode.Clamp;
-            m_preIntegratedFGD_Ward.hideFlags = HideFlags.DontSave;
-            m_preIntegratedFGD_Ward.name = CoreUtils.GetRenderTargetAutoName(128, 128, 1, RenderTextureFormat.ARGB2101010, "PreIntegratedFGD_Ward");
-            m_preIntegratedFGD_Ward.Create();
+            m_preIntegratedFGD_Ward = RTHandles.Alloc(  128, 128, 0, colorFormat: GraphicsFormat.A2B10G10R10_UNormPack32,
+                                                        filterMode: FilterMode.Bilinear,
+                                                        wrapMode: TextureWrapMode.Clamp,
+                                                        name: CoreUtils.GetRenderTargetAutoName(128, 128, 1, RenderTextureFormat.ARGB2101010, "PreIntegratedFGD_Ward"),
+                                                        memoryTag: RTManager.k_RenderLoopMemoryTag);
 
-            m_preIntegratedFGD_CookTorrance = new RenderTexture(128, 128, 0, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear);
-            m_preIntegratedFGD_CookTorrance.hideFlags = HideFlags.HideAndDontSave;
-            m_preIntegratedFGD_CookTorrance.filterMode = FilterMode.Bilinear;
-            m_preIntegratedFGD_CookTorrance.wrapMode = TextureWrapMode.Clamp;
-            m_preIntegratedFGD_CookTorrance.hideFlags = HideFlags.DontSave;
-            m_preIntegratedFGD_CookTorrance.name = CoreUtils.GetRenderTargetAutoName(128, 128, 1, RenderTextureFormat.ARGB2101010, "PreIntegratedFGD_CookTorrance");
-            m_preIntegratedFGD_CookTorrance.Create();
+            m_preIntegratedFGD_CookTorrance = RTHandles.Alloc(  128, 128, 0, colorFormat: GraphicsFormat.A2B10G10R10_UNormPack32,
+                                                                filterMode: FilterMode.Bilinear,
+                                                                wrapMode: TextureWrapMode.Clamp,
+                                                                name: CoreUtils.GetRenderTargetAutoName(128, 128, 1, RenderTextureFormat.ARGB2101010, "PreIntegratedFGD_CookTorrance"),
+                                                                memoryTag: RTManager.k_RenderLoopMemoryTag);
 
             // LTC data
 
@@ -173,8 +169,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public override void Cleanup()
         {
-            CoreUtils.Destroy(m_preIntegratedFGD_CookTorrance);
-            CoreUtils.Destroy(m_preIntegratedFGD_Ward);
+            RTHandles.Release(m_preIntegratedFGD_CookTorrance);
+            RTHandles.Release(m_preIntegratedFGD_Ward);
             CoreUtils.Destroy(m_preIntegratedFGDMaterial_CookTorrance);
             CoreUtils.Destroy(m_preIntegratedFGDMaterial_Ward);
             m_preIntegratedFGD_CookTorrance = null;
@@ -196,8 +192,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             using (new ProfilingSample(cmd, "PreIntegratedFGD Material Generation for Ward & Cook-Torrance BRDF"))
             {
-                CoreUtils.DrawFullScreen(cmd, m_preIntegratedFGDMaterial_Ward, new RenderTargetIdentifier(m_preIntegratedFGD_Ward));
-                CoreUtils.DrawFullScreen(cmd, m_preIntegratedFGDMaterial_CookTorrance, new RenderTargetIdentifier(m_preIntegratedFGD_CookTorrance));
+                CoreUtils.DrawFullScreen(cmd, m_preIntegratedFGDMaterial_Ward, m_preIntegratedFGD_Ward);
+                CoreUtils.DrawFullScreen(cmd, m_preIntegratedFGDMaterial_CookTorrance, m_preIntegratedFGD_CookTorrance);
             }
 
             m_precomputedFGDTablesAreInit = true;

@@ -560,6 +560,29 @@ namespace UnityEngine.Rendering
             return animateMaterials;
         }
 
+        public static string HumanizeWeight(long weightInByte)
+        {
+            if (weightInByte < 500)
+            {
+                return weightInByte + " B";
+            }
+            else if (weightInByte < 500000L)
+            {
+                float res = weightInByte / 1000f;
+                return res.ToString("n2") + " KB";
+            }
+            else if (weightInByte < 500000000L)
+            {
+                float res = weightInByte / 1000000f;
+                return res.ToString("n2") + " MB";
+            }
+            else
+            {
+                float res = weightInByte / 1000000000f;
+                return res.ToString("n2") + " GB";
+            }
+        }
+
 #if UNITY_EDITOR
         static Func<List<UnityEditor.MaterialEditor>> materialEditors;
 

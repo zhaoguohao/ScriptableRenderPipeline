@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering
@@ -30,7 +29,8 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             bool xrInstancing = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            string memoryTag = "Default"
             )
         {
             return s_DefaultInstance.Alloc(
@@ -53,7 +53,8 @@ namespace UnityEngine.Experimental.Rendering
                 useDynamicScale,
                 xrInstancing,
                 memoryless,
-                name
+                name,
+                memoryTag
                 );
         }
 
@@ -76,7 +77,8 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             bool xrInstancing = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            string memoryTag = "Default"
             )
         {
             return s_DefaultInstance.Alloc(
@@ -98,7 +100,8 @@ namespace UnityEngine.Experimental.Rendering
                 useDynamicScale,
                 xrInstancing,
                 memoryless,
-                name
+                name,
+                memoryTag
                 );
         }
 
@@ -121,7 +124,8 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             bool xrInstancing = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            string memoryTag = "Default"
             )
         {
             return s_DefaultInstance.Alloc(
@@ -143,7 +147,8 @@ namespace UnityEngine.Experimental.Rendering
                 useDynamicScale,
                 xrInstancing,
                 memoryless,
-                name
+                name,
+                memoryTag
                 );
         }
 

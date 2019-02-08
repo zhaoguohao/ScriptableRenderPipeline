@@ -100,7 +100,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     enableMSAA: false,
                     xrInstancing: source.dimension == TextureDimension.Tex2DArray,
                     useDynamicScale: true,
-                    name: "Temp Gaussian Pyramid Target"
+                    name: "Temp Gaussian Pyramid Target",
+                    memoryTag: RTManager.k_RenderLoopMemoryTag
                 );
             }
 

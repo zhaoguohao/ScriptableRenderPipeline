@@ -19,8 +19,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int                     m_CacheSize;
         IBLFilterGGX            m_IBLFilterGGX;
         TextureCache2D          m_TextureCache;
-        RenderTexture           m_TempRenderTexture;
-        RenderTexture           m_ConvolutionTargetTexture;
+        RTHandleSystem.RTHandle m_TempRenderTexture;
+        RTHandleSystem.RTHandle m_ConvolutionTargetTexture;
         ProbeFilteringState[]   m_ProbeBakingState;
         Material                m_ConvertTextureMaterial;
         MaterialPropertyBlock   m_ConvertTextureMPB;
@@ -52,22 +52,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_TempRenderTexture == null)
             {
                 // Temporary RT used for convolution and compression
-                m_TempRenderTexture = new RenderTexture(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf);
-                m_TempRenderTexture.hideFlags = HideFlags.HideAndDontSave;
-                m_TempRenderTexture.dimension = TextureDimension.Tex2D;
-                m_TempRenderTexture.useMipMap = true;
-                m_TempRenderTexture.autoGenerateMips = false;
-                m_TempRenderTexture.name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf, "PlanarReflectionTemp", mips: true);
-                m_TempRenderTexture.Create();
+                m_TempRenderTexture = RTHandles.Alloc(  m_ProbeSize, m_ProbeSize, 1, colorFormat: GraphicsFormat.R16G16B16A16_SFloat,
+                                                        dimension: TextureDimension.Tex2D,
+                                                        useMipMap: true,
+                                                        autoGenerateMips: false,
+                                                        name: CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf, "PlanarReflectionTemp", mips: true),
+                                                        memoryTag: TextureCache.k_TextureCacheMemoryTag);
 
-                m_ConvolutionTargetTexture = new RenderTexture(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf);
-                m_ConvolutionTargetTexture.hideFlags = HideFlags.HideAndDontSave;
-                m_ConvolutionTargetTexture.dimension = TextureDimension.Tex2D;
-                m_ConvolutionTargetTexture.useMipMap = true;
-                m_ConvolutionTargetTexture.autoGenerateMips = false;
-                m_ConvolutionTargetTexture.name = CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf, "PlanarReflectionConvolution", mips: true);
-                m_ConvolutionTargetTexture.enableRandomWrite = true;
-                m_ConvolutionTargetTexture.Create();
+                m_ConvolutionTargetTexture = RTHandles.Alloc(   m_ProbeSize, m_ProbeSize, 1, colorFormat: GraphicsFormat.R16G16B16A16_SFloat,
+                                                                dimension: TextureDimension.Tex2D,
+                                                                useMipMap: true,
+                                                                autoGenerateMips: false,
+                                                                name: CoreUtils.GetRenderTargetAutoName(m_ProbeSize, m_ProbeSize, 1, RenderTextureFormat.ARGBHalf, "PlanarReflectionConvolution", mips: true),
+                                                                enableRandomWrite: true,
+                                                                memoryTag: TextureCache.k_TextureCacheMemoryTag);
 
                 InitializeProbeBakingStates();
             }
@@ -83,8 +81,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void Release()
         {
             m_TextureCache.Release();
-            CoreUtils.Destroy(m_TempRenderTexture);
-            CoreUtils.Destroy(m_ConvolutionTargetTexture);
+            RTHandles.Release(m_TempRenderTexture);
+            RTHandles.Release(m_ConvolutionTargetTexture);
 
             m_ProbeBakingState = null;
 

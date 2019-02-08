@@ -35,10 +35,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int[] m_refCounting = new int[(int)FGDIndex.Count];
 
         Material[] m_PreIntegratedFGDMaterial = new Material[(int)FGDIndex.Count];
-        RenderTexture[] m_PreIntegratedFGD = new RenderTexture[(int)FGDIndex.Count];
+        RTHandleSystem.RTHandle[] m_PreIntegratedFGD = new RTHandleSystem.RTHandle[(int)FGDIndex.Count];
 
         PreIntegratedFGD()
-        {            
+        {
             for (int i = 0; i < (int)FGDIndex.Count; ++i)
             {
                 m_isInit[i] = false;
@@ -60,22 +60,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     case FGDIndex.FGD_GGXAndDisneyDiffuse:
                         m_PreIntegratedFGDMaterial[(int)index] = CoreUtils.CreateEngineMaterial(hdrp.renderPipelineResources.shaders.preIntegratedFGD_GGXDisneyDiffusePS);
-                        m_PreIntegratedFGD[(int)index] = new RenderTexture(res, res, 0, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear);
-                        m_PreIntegratedFGD[(int)index].hideFlags = HideFlags.HideAndDontSave;
-                        m_PreIntegratedFGD[(int)index].filterMode = FilterMode.Bilinear;
-                        m_PreIntegratedFGD[(int)index].wrapMode = TextureWrapMode.Clamp;
-                        m_PreIntegratedFGD[(int)index].name = CoreUtils.GetRenderTargetAutoName(res, res, 1, RenderTextureFormat.ARGB2101010, "preIntegratedFGD_GGXDisneyDiffuse");
-                        m_PreIntegratedFGD[(int)index].Create();
+                        m_PreIntegratedFGD[(int)index] = RTHandles.Alloc(   res, res, 0, colorFormat: GraphicsFormat.A2B10G10R10_UNormPack32,
+                                                                            filterMode: FilterMode.Bilinear,
+                                                                            wrapMode: TextureWrapMode.Clamp,
+                                                                            name: CoreUtils.GetRenderTargetAutoName(res, res, 1, RenderTextureFormat.ARGB2101010, "preIntegratedFGD_GGXDisneyDiffuse"),
+                                                                            memoryTag: RTManager.k_RenderLoopMemoryTag);
                         break;
 
                     case FGDIndex.FGD_CharlieAndFabricLambert:
                         m_PreIntegratedFGDMaterial[(int)index] = CoreUtils.CreateEngineMaterial(hdrp.renderPipelineResources.shaders.preIntegratedFGD_CharlieFabricLambertPS);
-                        m_PreIntegratedFGD[(int)index] = new RenderTexture(res, res, 0, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear);
-                        m_PreIntegratedFGD[(int)index].hideFlags = HideFlags.HideAndDontSave;
-                        m_PreIntegratedFGD[(int)index].filterMode = FilterMode.Bilinear;
-                        m_PreIntegratedFGD[(int)index].wrapMode = TextureWrapMode.Clamp;
-                        m_PreIntegratedFGD[(int)index].name = CoreUtils.GetRenderTargetAutoName(res, res, 1, RenderTextureFormat.ARGB2101010, "preIntegratedFGD_CharlieFabricLambert");
-                        m_PreIntegratedFGD[(int)index].Create();
+                        m_PreIntegratedFGD[(int)index] = RTHandles.Alloc(res, res, 0, colorFormat: GraphicsFormat.A2B10G10R10_UNormPack32,
+                                                                            filterMode: FilterMode.Bilinear,
+                                                                            wrapMode: TextureWrapMode.Clamp,
+                                                                            name: CoreUtils.GetRenderTargetAutoName(res, res, 1, RenderTextureFormat.ARGB2101010, "preIntegratedFGD_CharlieFabricLambert"),
+                                                                            memoryTag: RTManager.k_RenderLoopMemoryTag);
                         break;
 
                     default:
@@ -92,7 +90,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             // Here we have to test IsCreated because in some circumstances (like loading RenderDoc), the texture is internally destroyed but we don't know from C# side.
             // In this case IsCreated will return false, allowing us to re-render the texture (setting the texture as current RT during DrawFullScreen will automatically re-create it internally)
-            if (m_isInit[(int)index] && m_PreIntegratedFGD[(int)index].IsCreated())
+            if (m_isInit[(int)index] && m_PreIntegratedFGD[(int)index].rt.IsCreated())
                 return;
 
             using (new ProfilingSample(cmd, "PreIntegratedFGD Material Generation"))
@@ -110,7 +108,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (m_refCounting[(int)index] == 0)
             {
                 CoreUtils.Destroy(m_PreIntegratedFGDMaterial[(int)index]);
-                CoreUtils.Destroy(m_PreIntegratedFGD[(int)index]);
+                RTHandles.Release(m_PreIntegratedFGD[(int)index]);
 
                 m_isInit[(int)index] = false;
             }

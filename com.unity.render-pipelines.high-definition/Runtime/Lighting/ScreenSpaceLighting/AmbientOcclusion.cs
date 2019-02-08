@@ -107,7 +107,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableRandomWrite: true,
                 xrInstancing: true,
                 useDynamicScale: true,
-                name: "Ambient Occlusion"
+                name: "Ambient Occlusion",
+                memoryTag: RTManager.k_RenderLoopMemoryTag
             );
 
             if (supportMSAA)
@@ -118,7 +119,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     enableRandomWrite: true,
                     xrInstancing: true,
                     useDynamicScale: true,
-                    name: "Ambient Occlusion MSAA"
+                    name: "Ambient Occlusion MSAA",
+                    memoryTag: RTManager.k_RenderLoopMemoryTag
                 );
 
                 m_ResolveMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.aoResolvePS);
@@ -331,7 +333,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableRandomWrite: uav,
                 filterMode: FilterMode.Point,
                 xrInstancing: true,
-                name: name
+                name: name,
+                memoryTag: RTManager.k_RenderLoopMemoryTag
             );
         }
 
@@ -349,7 +352,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableRandomWrite: uav,
                 filterMode: FilterMode.Point,
                 xrInstancing: true,
-                name: name
+                name: name,
+                memoryTag: RTManager.k_RenderLoopMemoryTag
             );
         }
 

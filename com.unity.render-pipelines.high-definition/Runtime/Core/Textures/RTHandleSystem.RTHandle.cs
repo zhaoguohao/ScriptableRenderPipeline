@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering.HDPipeline;
 
 namespace UnityEngine.Experimental.Rendering
 {
@@ -14,6 +14,7 @@ namespace UnityEngine.Experimental.Rendering
             internal bool                       m_EnableRandomWrite = false;
             internal bool                       m_EnableHWDynamicScale = false;
             internal string                     m_Name;
+            internal string                     m_MemoryTag;
 
             internal Vector2 scaleFactor        = Vector2.one;
             internal ScaleFunc scaleFunc;
@@ -53,7 +54,7 @@ namespace UnityEngine.Experimental.Rendering
                 return handle.nameID;
             }
 
-            internal void SetRenderTexture(RenderTexture rt, RTCategory category)
+            internal void SetRenderTexture(RenderTexture rt)
             {
                 m_RT=  rt;
                 m_NameID = new RenderTargetIdentifier(rt);
@@ -61,6 +62,8 @@ namespace UnityEngine.Experimental.Rendering
 
             public void Release()
             {
+                if (rt != null)
+                    RTManager.UnregisterMemory(m_MemoryTag, rt.name);
                 m_Owner.m_AutoSizedRTs.Remove(this);
                 CoreUtils.Destroy(m_RT);
                 m_NameID = BuiltinRenderTextureType.None;

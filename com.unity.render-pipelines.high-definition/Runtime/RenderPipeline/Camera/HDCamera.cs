@@ -772,7 +772,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             return rtHandleSystem.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat,
                                         enableRandomWrite: true, useMipMap: true, autoGenerateMips: false,
-                                        name: string.Format("CameraColorBufferMipChain{0}", frameIndex));
+                                        name: string.Format("CameraColorBufferMipChain{0}", frameIndex),
+                                        memoryTag: RTManager.k_RenderLoopMemoryTag);
         }
 
         // Pass all the systems that may want to initialize per-camera data here.

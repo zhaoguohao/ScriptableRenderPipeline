@@ -158,6 +158,8 @@ namespace UnityEngine.Experimental.Rendering
 
             if (sizeChanged || msaaSampleChanged)
             {
+                var debugMemory = RTManager.GetDebugMemoryEntry(rth.m_MemoryTag, rt.name);
+
                 // Free this render texture
                 rt.Release();
 
@@ -183,6 +185,9 @@ namespace UnityEngine.Experimental.Rendering
 
                 // Create the new texture
                 rt.Create();
+
+                debugMemory.sizeInByte = RTManager.ComputeRenderTextureSize(rt);
+                debugMemory.name = rt.name;
             }
         }
 
@@ -242,6 +247,9 @@ namespace UnityEngine.Experimental.Rendering
                 // Grab the render texture
                 var renderTexture = rth.m_RT;
 
+                string oldName = renderTexture.name;
+                var debugMemory = RTManager.GetDebugMemoryEntry(rth.m_MemoryTag, renderTexture.name);
+
                 // Free the previous version
                 renderTexture.Release();
 
@@ -262,6 +270,9 @@ namespace UnityEngine.Experimental.Rendering
 
                 // Create the render texture
                 renderTexture.Create();
+
+                debugMemory.sizeInByte = RTManager.ComputeRenderTextureSize(renderTexture);
+                debugMemory.name = renderTexture.name;
             }
         }
 
@@ -287,7 +298,8 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             bool xrInstancing = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            string memoryTag = "Default"
             )
         {
             bool enableMSAA = msaaSamples != MSAASamples.None;
@@ -322,7 +334,7 @@ namespace UnityEngine.Experimental.Rendering
                     useDynamicScale = m_HardwareDynamicResRequested && useDynamicScale,
                     vrUsage = vrUsage,
                     memorylessMode = memoryless,
-                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, format, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples)
+                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, format, name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples),
                 };
 
             }
@@ -346,22 +358,23 @@ namespace UnityEngine.Experimental.Rendering
                     useDynamicScale = m_HardwareDynamicResRequested && useDynamicScale,
                     vrUsage = vrUsage,
                     memorylessMode = memoryless,
-                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, GraphicsFormatUtility.GetRenderTextureFormat(colorFormat), name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples)
+                    name = CoreUtils.GetRenderTargetAutoName(width, height, slices, GraphicsFormatUtility.GetRenderTextureFormat(colorFormat), name, mips: useMipMap, enableMSAA: enableMSAA, msaaSamples: msaaSamples),
                 };
             }
 
             rt.Create();
 
-            RTCategory category = enableMSAA ? RTCategory.MSAA : RTCategory.Regular;
             var newRT = new RTHandle(this);
-            newRT.SetRenderTexture(rt, category);
+            newRT.SetRenderTexture(rt);
             newRT.useScaling = false;
             newRT.m_EnableRandomWrite = enableRandomWrite;
             newRT.m_EnableMSAA = enableMSAA;
             newRT.m_EnableHWDynamicScale = useDynamicScale;
             newRT.m_Name = name;
-
+            newRT.m_MemoryTag = memoryTag;
             newRT.referenceSize = new Vector2Int(width, height);
+
+            RTManager.RegisterMemory(memoryTag, rt.name, RTManager.ComputeRenderTextureSize(rt));
 
             return newRT;
         }
@@ -389,7 +402,8 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             bool xrInstancing = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            string memoryTag = "Default"
             )
         {
             // If an MSAA target is requested, make sure the support was on
@@ -418,7 +432,8 @@ namespace UnityEngine.Experimental.Rendering
                     useDynamicScale,
                     xrInstancing,
                     memoryless,
-                    name
+                    name,
+                    memoryTag
                     );
 
             rth.referenceSize = new Vector2Int(width, height);
@@ -456,7 +471,8 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale = false,
             bool xrInstancing = false,
             RenderTextureMemoryless memoryless = RenderTextureMemoryless.None,
-            string name = ""
+            string name = "",
+            string memoryTag = "Default"
             )
         {
             var scaleFactor = scaleFunc(new Vector2Int(GetMaxWidth(), GetMaxHeight()));
@@ -482,7 +498,8 @@ namespace UnityEngine.Experimental.Rendering
                     useDynamicScale,
                     xrInstancing,
                     memoryless,
-                    name
+                    name,
+                    memoryTag
                     );
 
             rth.referenceSize = new Vector2Int(width, height);
@@ -512,7 +529,8 @@ namespace UnityEngine.Experimental.Rendering
             bool useDynamicScale,
             bool xrInstancing,
             RenderTextureMemoryless memoryless,
-            string name
+            string name,
+            string memoryTag
             )
         {
             // Here user made a mistake in setting up msaa/bindMS, hence the warning
@@ -538,7 +556,6 @@ namespace UnityEngine.Experimental.Rendering
             }
 
             int msaaSamples = allocForMSAA ? (int)m_ScaledRTCurrentMSAASamples : 1;
-            RTCategory category = allocForMSAA ? RTCategory.MSAA : RTCategory.Regular;
 
             // XR override for instancing support
             VRTextureUsage vrUsage = XRGraphics.OverrideRenderTexture(xrInstancing, ref dimension, ref slices);
@@ -593,13 +610,16 @@ namespace UnityEngine.Experimental.Rendering
 
             rt.Create();
 
+            RTManager.RegisterMemory(memoryTag, rt.name, RTManager.ComputeRenderTextureSize(rt));
+
             var rth = new RTHandle(this);
-            rth.SetRenderTexture(rt, category);
+            rth.SetRenderTexture(rt);
             rth.m_EnableMSAA = enableMSAA;
             rth.m_EnableRandomWrite = enableRandomWrite;
             rth.useScaling = true;
             rth.m_EnableHWDynamicScale = useDynamicScale;
             rth.m_Name = name;
+            rth.m_MemoryTag = memoryTag;
             m_AutoSizedRTs.Add(rth);
             return rth;
         }

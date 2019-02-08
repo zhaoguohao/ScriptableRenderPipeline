@@ -127,7 +127,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 wrapMode: TextureWrapMode.Clamp,
                 anisoLevel: 0,
                 useMipMap: false,
-                enableRandomWrite: true
+                enableRandomWrite: true,
+                memoryTag: RTManager.k_PostProcessMemoryTag
             );
 
             // Setup a default exposure textures and clear it to neutral values so that the exposure
@@ -135,7 +136,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Beware that 0 in EV100 maps to a multiplier of 0.833 so the EV100 value in this
             // neutral exposure texture isn't 0
             m_EmptyExposureTexture = RTHandles.Alloc(1, 1, colorFormat: k_ExposureFormat,
-                enableRandomWrite: true, name: "Empty EV100 Exposure"
+                enableRandomWrite: true, name: "Empty EV100 Exposure", memoryTag: RTManager.k_PostProcessMemoryTag
             );
 
             var tex = new Texture2D(1, 1, TextureFormat.RGHalf, false, true);
@@ -150,12 +151,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Misc targets
             m_TempTexture1024 = RTHandles.Alloc(
                 1024, 1024, colorFormat: GraphicsFormat.R16G16_SFloat,
-                enableRandomWrite: true, name: "Average Luminance Temp 1024"
+                enableRandomWrite: true, name: "Average Luminance Temp 1024",
+                memoryTag: RTManager.k_PostProcessMemoryTag
             );
 
             m_TempTexture32 = RTHandles.Alloc(
                 32, 32, colorFormat: GraphicsFormat.R16G16_SFloat,
-                enableRandomWrite: true, name: "Average Luminance Temp 32"
+                enableRandomWrite: true, name: "Average Luminance Temp 32",
+                memoryTag: RTManager.k_PostProcessMemoryTag
             );
 
             ResetHistory();
@@ -510,7 +513,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // r: multiplier, g: EV100
                 return rtHandleSystem.Alloc(1, 1, colorFormat: k_ExposureFormat,
-                    enableRandomWrite: true, name: $"Exposure Texture ({id}) {frameIndex}"
+                    enableRandomWrite: true, name: $"Exposure Texture ({id}) {frameIndex}", memoryTag: RTManager.k_PostProcessMemoryTag
                 );
             }
 
@@ -2069,7 +2072,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 var rt = RTHandles.Alloc(
                     scaleFactor, depthBufferBits: DepthBits.None,
                     filterMode: FilterMode.Point, colorFormat: format, useMipMap: mipmap,
-                    enableRandomWrite: true, useDynamicScale: true, name: "Post-processing Target Pool " + m_Tracker
+                    enableRandomWrite: true, useDynamicScale: true, name: "Post-processing Target Pool " + m_Tracker,
+                    memoryTag: RTManager.k_PostProcessMemoryTag
                 );
 
                 m_Tracker++;

@@ -232,7 +232,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 enableRandomWrite: true,
                 enableMSAA:        false,
                 /* useDynamicScale: true, // <- TODO */
-                name: string.Format("{0}_VBufferHistory{1}", viewName, frameIndex)
+                name: string.Format("{0}_VBufferHistory{1}", viewName, frameIndex),
+                memoryTag: RTManager.k_RenderLoopMemoryTag
                 );
         }
 
@@ -254,7 +255,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     enableRandomWrite: true,
                     enableMSAA:        false,
                     /* useDynamicScale: true, // <- TODO */
-                    name:              "VBufferDensity");
+                    name:              "VBufferDensity",
+                    memoryTag:         RTManager.k_RenderLoopMemoryTag);
 
             m_LightingBufferHandle = RTHandles.Alloc(scaleFunc:         ComputeVBufferResolutionXY,
                     slices:            d,
@@ -263,7 +265,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     enableRandomWrite: true,
                     enableMSAA:        false,
                     /* useDynamicScale: true, // <- TODO */
-                    name:              "VBufferIntegral");
+                    name:              "VBufferIntegral",
+                    memoryTag:         RTManager.k_RenderLoopMemoryTag);
         }
 
         // For the initial allocation, no suballocation happens (the texture is full size).

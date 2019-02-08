@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -67,6 +69,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
     public class RTManager
     {
+        static public readonly string k_RenderLoopMemoryTag = "RenderLoop";
+        static public readonly string k_PostProcessMemoryTag = "PostProcess";
+        static public readonly string k_ShadowsMemoryTag = "Shadows";
+        static public readonly string k_DebugMemoryTag = "Debug";
+
         // Global texture list
         RTHandleSystem.RTHandle[]   m_RenderTargets = new RTHandleSystem.RTHandle[(int)RT.Count];
         bool[]                      m_RenderTargetIsShared = new bool[(int)RT.Count];
@@ -97,7 +104,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             InitializeRenderTextures(hdrpAsset);
         }
 
-        public void Release()
+        public void Cleanup()
         {
             ReleaseRenderTextures();
         }
@@ -198,21 +205,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Depth/Stencil buffer
             m_CameraDepthBufferMipChainInfo = new HDUtils.PackedMipChainInfo();
             m_CameraDepthBufferMipChainInfo.Allocate();
-            m_RenderTargets[(int)RT.DepthStencil] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, filterMode: FilterMode.Point, xrInstancing: true, useDynamicScale: true, name: "CameraDepthStencil");
-            m_RenderTargets[(int)RT.DepthMipChain] = RTHandles.Alloc(ComputeDepthBufferMipChainSize, colorFormat: GraphicsFormat.R32_SFloat, filterMode: FilterMode.Point, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraDepthBufferMipChain");
+            m_RenderTargets[(int)RT.DepthStencil] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth32, filterMode: FilterMode.Point, xrInstancing: true, useDynamicScale: true, name: "CameraDepthStencil", memoryTag: k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.DepthMipChain] = RTHandles.Alloc(ComputeDepthBufferMipChainSize, colorFormat: GraphicsFormat.R32_SFloat, filterMode: FilterMode.Point, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraDepthBufferMipChain", memoryTag: k_RenderLoopMemoryTag);
             // Technically we won't need this buffer in some cases, but nothing that we can determine at init time.
-            m_RenderTargets[(int)RT.StencilCopy] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.None, colorFormat: GraphicsFormat.R8_UNorm, filterMode: FilterMode.Point, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraStencilCopy"); // DXGI_FORMAT_R8_UINT is not supported by Unity
+            m_RenderTargets[(int)RT.StencilCopy] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.None, colorFormat: GraphicsFormat.R8_UNorm, filterMode: FilterMode.Point, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraStencilCopy", memoryTag: k_RenderLoopMemoryTag); // DXGI_FORMAT_R8_UINT is not supported by Unity
 
-            m_RenderTargets[(int)RT.Color] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, useMipMap: false, xrInstancing: true, useDynamicScale: true, name: "CameraColor");
-            m_RenderTargets[(int)RT.SssDiffuseLighting] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLighting");
-            m_RenderTargets[(int)RT.Distortion] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), xrInstancing: true, useDynamicScale: true, name: "Distortion");
+            m_RenderTargets[(int)RT.Color] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, useMipMap: false, xrInstancing: true, useDynamicScale: true, name: "CameraColor", memoryTag: k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.SssDiffuseLighting] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLighting", memoryTag: k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.Distortion] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), xrInstancing: true, useDynamicScale: true, name: "Distortion", memoryTag: k_RenderLoopMemoryTag);
 
             if (settings.supportMotionVectors)
             {
-                m_RenderTargets[(int)RT.Velocity] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), xrInstancing: true, useDynamicScale: true, name: "Velocity");
+                m_RenderTargets[(int)RT.Velocity] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), xrInstancing: true, useDynamicScale: true, name: "Velocity", memoryTag: k_RenderLoopMemoryTag);
                 if (settings.supportMSAA)
                 {
-                    m_RenderTargets[(int)RT.VelocityMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), enableMSAA: true, bindTextureMS: true, xrInstancing: true, useDynamicScale: true, name: "VelocityMSAA");
+                    m_RenderTargets[(int)RT.VelocityMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetVelocityBufferFormat(), enableMSAA: true, bindTextureMS: true, xrInstancing: true, useDynamicScale: true, name: "VelocityMSAA", memoryTag: k_RenderLoopMemoryTag);
                 }
             }
 
@@ -220,11 +227,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // In case of full forward we must allocate the render target for normal buffer (or reuse one already existing)
                 // TODO: Provide a way to reuse a render target
-                m_RenderTargets[(int)RT.Normal] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "NormalBuffer");
+                m_RenderTargets[(int)RT.Normal] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "NormalBuffer", memoryTag: k_RenderLoopMemoryTag);
             }
 
             // Use RG16 as we only have one deferred directional and one screen space shadow light currently
-            m_RenderTargets[(int)RT.ScreenSpaceShadow] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "ScreenSpaceShadowsBuffer");
+            m_RenderTargets[(int)RT.ScreenSpaceShadow] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "ScreenSpaceShadowsBuffer", memoryTag: k_RenderLoopMemoryTag);
         }
 
         protected virtual void InitializeDBuffer(RenderPipelineSettings settings)
@@ -239,12 +246,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 for (int dbufferIndex = 0; dbufferIndex < bufferCount; ++dbufferIndex)
                 {
-                    m_RenderTargets[(int)RT.DBuffer0 + dbufferIndex] = RTHandles.Alloc(Vector2.one, colorFormat: rtFormat[dbufferIndex], filterMode: FilterMode.Point, xrInstancing: true, useDynamicScale: true, name: string.Format("DBuffer{0}", dbufferIndex));
+                    m_RenderTargets[(int)RT.DBuffer0 + dbufferIndex] = RTHandles.Alloc(Vector2.one, colorFormat: rtFormat[dbufferIndex], filterMode: FilterMode.Point, xrInstancing: true, useDynamicScale: true, name: string.Format("DBuffer{0}", dbufferIndex), memoryTag: k_RenderLoopMemoryTag);
                     m_DBufferRTI[dbufferIndex] = m_RenderTargets[(int)RT.DBuffer0 + dbufferIndex];
                 }
 
                 // We use 8x8 tiles in order to match the native GCN HTile as closely as possible.
-                m_RenderTargets[(int)RT.DBufferHTile] = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "DBufferHTile"); // Enable UAV
+                m_RenderTargets[(int)RT.DBufferHTile] = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "DBufferHTile", memoryTag: k_RenderLoopMemoryTag); // Enable UAV
             }
         }
 
@@ -253,20 +260,20 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (settings.supportedLitShaderMode != RenderPipelineSettings.SupportedLitShaderMode.ForwardOnly)
             {
                 m_GBufferCount = 4; // ShadowMask and LightLayers are handled specifically
-                m_RenderTargets[(int)RT.GBuffer0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_SRGB, xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer0"));
-                m_RenderTargets[(int)RT.GBuffer1] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, xrInstancing: true, useDynamicScale: true, enableRandomWrite: true, name: string.Format("GBuffer1"));
-                m_RenderTargets[(int)RT.GBuffer2] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer2"));
-                m_RenderTargets[(int)RT.GBuffer3] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetLightingBufferFormat(), xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer3"));
+                m_RenderTargets[(int)RT.GBuffer0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_SRGB, xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer0"), memoryTag: k_RenderLoopMemoryTag);
+                m_RenderTargets[(int)RT.GBuffer1] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, xrInstancing: true, useDynamicScale: true, enableRandomWrite: true, name: string.Format("GBuffer1"), memoryTag: k_RenderLoopMemoryTag);
+                m_RenderTargets[(int)RT.GBuffer2] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer2"), memoryTag: k_RenderLoopMemoryTag);
+                m_RenderTargets[(int)RT.GBuffer3] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetLightingBufferFormat(), xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer3"), memoryTag: k_RenderLoopMemoryTag);
 
                 if (settings.supportShadowMask)
                 {
-                    m_RenderTargets[(int)RT.GBuffer4] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetShadowMaskBufferFormat(), xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer4"));
+                    m_RenderTargets[(int)RT.GBuffer4] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetShadowMaskBufferFormat(), xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer4"), memoryTag: k_RenderLoopMemoryTag);
                     ShareRT(RT.ShadowMask, RT.GBuffer4); // Alias
                 }
 
                 if (settings.supportLightLayers)
                 {
-                    m_RenderTargets[(int)RT.GBuffer5] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer5"));
+                    m_RenderTargets[(int)RT.GBuffer5] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, xrInstancing: true, useDynamicScale: true, enableRandomWrite: false, name: string.Format("GBuffer5"), memoryTag: k_RenderLoopMemoryTag);
                     ShareRT(RT.LightLayers, RT.GBuffer5); // Alias
                 }
 
@@ -305,8 +312,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (settings.supportSSR)
             {
                 // m_SsrDebugTexture    = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Debug_Texture");
-                m_RenderTargets[(int)RT.SSRHitPoint] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Hit_Point_Texture");
-                m_RenderTargets[(int)RT.SSRLighting] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Lighting_Texture");
+                m_RenderTargets[(int)RT.SSRHitPoint] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Hit_Point_Texture", memoryTag: k_RenderLoopMemoryTag);
+                m_RenderTargets[(int)RT.SSRLighting] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Lighting_Texture", memoryTag: k_RenderLoopMemoryTag);
 
                 //if (settings.supportSSR)
                 //    m_RenderTargets[(int)RT.SSRDebug] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Debug_Texture");
@@ -320,7 +327,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // In case of full forward we must allocate the render target for forward SSS (or reuse one already existing)
                 // TODO: Provide a way to reuse a render target
-                m_RenderTargets[(int)RT.SSS0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_SRGB, xrInstancing: true, useDynamicScale: true, name: "SSSBuffer0");
+                m_RenderTargets[(int)RT.SSS0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_SRGB, xrInstancing: true, useDynamicScale: true, name: "SSSBuffer0", memoryTag: k_RenderLoopMemoryTag);
             }
             else
             {
@@ -331,17 +338,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // We need to allocate the texture if we are in forward or both in case one of the cameras is in enable forward only mode
             if (settings.supportMSAA)
             {
-                m_RenderTargets[(int)RT.SSSMSAA0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_SRGB, enableMSAA: true, bindTextureMS: true, xrInstancing: true, useDynamicScale: true, name: "SSSBufferMSAA0");
+                m_RenderTargets[(int)RT.SSSMSAA0] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_SRGB, enableMSAA: true, bindTextureMS: true, xrInstancing: true, useDynamicScale: true, name: "SSSBufferMSAA0", memoryTag: k_RenderLoopMemoryTag);
             }
 
             if (SubsurfaceScatteringManager.NeedTemporarySubsurfaceBuffer() || settings.supportMSAA)
             {
                 // Caution: must be same format as RT.SssDiffuseLightingBuffer
-                m_RenderTargets[(int)RT.SSSFiltering] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSSCameraFiltering"); // Enable UAV
+                m_RenderTargets[(int)RT.SSSFiltering] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSSCameraFiltering", memoryTag: k_RenderLoopMemoryTag); // Enable UAV
             }
 
             // We use 8x8 tiles in order to match the native GCN HTile as closely as possible.
-            m_RenderTargets[(int)RT.SSSHTile] = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSSHtile"); // Enable UAV
+            m_RenderTargets[(int)RT.SSSHTile] = RTHandles.Alloc(size => new Vector2Int((size.x + 7) / 8, (size.y + 7) / 8), filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSSHtile", memoryTag: k_RenderLoopMemoryTag); // Enable UAV
 
         }
 
@@ -349,15 +356,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (settings.supportMSAA)
             {
-                m_RenderTargets[(int)RT.DepthStencilMSAA] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth24, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraDepthStencilMSAA");
-                m_RenderTargets[(int)RT.DepthValuesMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SFloat, xrInstancing: true, useDynamicScale: true, name: "DepthValuesBuffer");
-                m_RenderTargets[(int)RT.DepthAsColorMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32_SFloat, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "DepthAsColorMSAA");
+                m_RenderTargets[(int)RT.DepthStencilMSAA] = RTHandles.Alloc(Vector2.one, depthBufferBits: DepthBits.Depth24, filterMode: FilterMode.Point, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraDepthStencilMSAA", memoryTag: k_RenderLoopMemoryTag);
+                m_RenderTargets[(int)RT.DepthValuesMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32G32B32A32_SFloat, xrInstancing: true, useDynamicScale: true, name: "DepthValuesBuffer", memoryTag: k_RenderLoopMemoryTag);
+                m_RenderTargets[(int)RT.DepthAsColorMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32_SFloat, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "DepthAsColorMSAA", memoryTag: k_RenderLoopMemoryTag);
 
-                m_RenderTargets[(int)RT.ColorMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraColorMSAA");
-                m_RenderTargets[(int)RT.SssDiffuseLightingMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLightingMSAA");
+                m_RenderTargets[(int)RT.ColorMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraColorMSAA", memoryTag: k_RenderLoopMemoryTag);
+                m_RenderTargets[(int)RT.SssDiffuseLightingMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLightingMSAA", memoryTag: k_RenderLoopMemoryTag);
 
                 // We need to allocate this texture as long as msaa is supported because on both mode, one of the cameras can be forward only using the framesettings
-                m_RenderTargets[(int)RT.NormalMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, enableMSAA: true, bindTextureMS: true, xrInstancing: true, useDynamicScale: true, name: "NormalBufferMSAA");
+                m_RenderTargets[(int)RT.NormalMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, enableMSAA: true, bindTextureMS: true, xrInstancing: true, useDynamicScale: true, name: "NormalBufferMSAA", memoryTag: k_RenderLoopMemoryTag);
 
                 m_ResolveMSAADepthNormalRTI = new RenderTargetIdentifier[2];
                 m_ResolveMSAADepthNormalRTI[0] = GetRenderTarget(RT.DepthValuesMSAA);
@@ -378,10 +385,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (Debug.isDebugBuild)
             {
-                m_RenderTargets[(int)RT.DebugColorPicker] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugColorPicker");
-                m_RenderTargets[(int)RT.DebugFullScreen] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugFullScreen");
+                m_RenderTargets[(int)RT.DebugColorPicker] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugColorPicker", memoryTag: k_DebugMemoryTag);
+                m_RenderTargets[(int)RT.DebugFullScreen] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugFullScreen", memoryTag: k_DebugMemoryTag);
                 // This target is only used in Dev builds as an intermediate destination for post process and where debug rendering will be done.
-                m_RenderTargets[(int)RT.IntermediateAfterPostProcess] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "AfterPostProcess"); // Needs to be FP16 because output target might be HDR
+                m_RenderTargets[(int)RT.IntermediateAfterPostProcess] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "AfterPostProcess", memoryTag: k_DebugMemoryTag); // Needs to be FP16 because output target might be HDR
             }
         }
 
@@ -447,6 +454,111 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_RenderTargets[i] = null;
                 m_RenderTargetIsShared[i] = false;
             }
+        }
+
+        // Memory Logging
+        public class DebugMemoryEntry
+        {
+            public string name;
+            public uint sizeInByte;
+        }
+
+        static Dictionary<string, List<DebugMemoryEntry>> m_DebugMemoryEntries = new Dictionary<string, List<DebugMemoryEntry>>();
+
+        static public void RegisterMemory(string tag, string name, uint sizeInByte)
+        {
+            List<DebugMemoryEntry> elementList;
+            if (!m_DebugMemoryEntries.TryGetValue(tag, out elementList))
+            {
+                elementList = new List<DebugMemoryEntry>();
+                m_DebugMemoryEntries.Add(tag, elementList);
+            }
+
+            elementList.Add(new DebugMemoryEntry { name = name, sizeInByte = sizeInByte });
+        }
+
+        static public DebugMemoryEntry GetDebugMemoryEntry(string tag, string name)
+        {
+            List<DebugMemoryEntry> elementList;
+            if (m_DebugMemoryEntries.TryGetValue(tag, out elementList))
+            {
+                return elementList.Find(entry => entry.name == name);
+            }
+            else
+            {
+                Debug.LogError(string.Format("DebugMemoryEntry {0} with tag {1} not found.", name, tag));
+                return null;
+            }
+        }
+
+        static public void UnregisterMemory(string tag, string name)
+        {
+            List<DebugMemoryEntry> elementList;
+            if (m_DebugMemoryEntries.TryGetValue(tag, out elementList))
+            {
+                elementList.Remove(elementList.Find(entry => entry.name == name));
+            }
+        }
+
+        static public string DumpMemory(bool sortByName = false)
+        {
+            string result = "";
+            uint totalMemory = 0;
+            uint debugMemory = 0;
+            uint textureCount = 0;
+
+            foreach(var tag in m_DebugMemoryEntries)
+            {
+                string tagName = tag.Key;
+                var elementList = tag.Value;
+                uint tagSize = 0;
+                string textureList = "";
+
+                if (sortByName)
+                {
+                    elementList.Sort((element1, element2) => element1.name.CompareTo(element2.name));
+                }
+                else
+                {
+                    elementList.Sort((element1, element2) => element2.sizeInByte.CompareTo(element1.sizeInByte));
+                }
+
+                foreach (var element in elementList)
+                {
+                    textureList = string.Format("{0}\t{1},{2}{3}", textureList, element.name, CoreUtils.HumanizeWeight(element.sizeInByte), Environment.NewLine);
+                    tagSize += element.sizeInByte;
+                }
+
+                string header = string.Format("==== {0} : {1} for {2} textures ===={3}", tagName, CoreUtils.HumanizeWeight(tagSize), elementList.Count, Environment.NewLine);
+                result = string.Format("{0}{1}{2}", result, header, textureList);
+                totalMemory += tagSize;
+                textureCount += (uint)elementList.Count;
+
+                if (tagName == k_DebugMemoryTag)
+                    debugMemory = tagSize;
+            }
+
+            result = string.Format("{0}Total Memory: {1} (including {2} for debug){3}", result, CoreUtils.HumanizeWeight(totalMemory), CoreUtils.HumanizeWeight(debugMemory), Environment.NewLine);
+            result = string.Format("{0}Texture Count: {1}{2}", result, textureCount, Environment.NewLine);
+
+            return result;
+        }
+
+        static public uint ComputeRenderTextureSize(RenderTexture rt)
+        {
+            int width = rt.width;
+            int height = rt.height;
+            int depth = rt.volumeDepth;
+
+            int mipCount = rt.useMipMap ? (int)(Mathf.Log(Math.Max(width, Math.Max(height, depth))) + 1) : 1;
+
+            uint result = 0;
+            for (int i = 0; i < mipCount; ++i)
+            {
+                result += GraphicsFormatUtility.ComputeMipmapSize(Math.Max(width >> i, 1), Math.Max(height >> i, 1), Math.Max(depth >> i, 1), rt.graphicsFormat);
+            }
+
+            return result;
         }
     }
 }

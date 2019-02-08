@@ -1,6 +1,7 @@
 using UnityEditor.AnimatedValues;
 using UnityEditor.Rendering;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Experimental.Rendering.HDPipeline;
 
@@ -8,7 +9,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
     using _ = CoreEditorUtils;
     using CED = CoreEditorDrawer<SerializedGlobalLightLoopSettings>;
-    
+
     static partial class GlobalLightLoopSettingsUI
     {
         enum Expandable
@@ -20,7 +21,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         }
 
         readonly static ExpandedState<Expandable, GlobalLightLoopSettings> k_ExpandedState = new ExpandedState<Expandable, GlobalLightLoopSettings>(~(-1), "HDRP");
-        
+
         static GlobalLightLoopSettingsUI()
         {
             Inspector = CED.Group(
@@ -50,31 +51,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     )
                 );
         }
-        
+
         public static readonly CED.IDrawer Inspector;
-        
-        static string HumanizeWeight(long weightInByte)
-        {
-            if (weightInByte < 500)
-            {
-                return weightInByte + " B";
-            }
-            else if (weightInByte < 500000L)
-            {
-                float res = weightInByte / 1000f;
-                return res.ToString("n2") + " KB";
-            }
-            else if (weightInByte < 500000000L)
-            {
-                float res = weightInByte / 1000000f;
-                return res.ToString("n2") + " MB";
-            }
-            else
-            {
-                float res = weightInByte / 1000000000f;
-                return res.ToString("n2") + " GB";
-            }
-        }
 
         static void Drawer_SectionCookies(SerializedGlobalLightLoopSettings serialized, Editor owner)
         {
@@ -89,12 +67,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (currentCache > LightLoop.k_MaxCacheSize)
             {
                 int reserved = TextureCache2D.GetMaxCacheSizeForWeightInByte(LightLoop.k_MaxCacheSize, serialized.cookieSize.intValue, 1);
-                string message = string.Format(k_CacheErrorFormat, HumanizeWeight(currentCache), reserved);
+                string message = string.Format(k_CacheErrorFormat, CoreUtils.HumanizeWeight(currentCache), reserved);
                 EditorGUILayout.HelpBox(message, MessageType.Error);
             }
             else
             {
-                string message = string.Format(k_CacheInfoFormat, HumanizeWeight(currentCache));
+                string message = string.Format(k_CacheInfoFormat, CoreUtils.HumanizeWeight(currentCache));
                 EditorGUILayout.HelpBox(message, MessageType.Info);
             }
             EditorGUILayout.PropertyField(serialized.pointCookieSize, k_PointCoockieSizeContent);
@@ -108,12 +86,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (currentCache > LightLoop.k_MaxCacheSize)
             {
                 int reserved = TextureCacheCubemap.GetMaxCacheSizeForWeightInByte(LightLoop.k_MaxCacheSize, serialized.pointCookieSize.intValue, 1);
-                string message = string.Format(k_CacheErrorFormat, HumanizeWeight(currentCache), reserved);
+                string message = string.Format(k_CacheErrorFormat, CoreUtils.HumanizeWeight(currentCache), reserved);
                 EditorGUILayout.HelpBox(message, MessageType.Error);
             }
             else
             {
-                string message = string.Format(k_CacheInfoFormat, HumanizeWeight(currentCache));
+                string message = string.Format(k_CacheInfoFormat, CoreUtils.HumanizeWeight(currentCache));
                 EditorGUILayout.HelpBox(message, MessageType.Info);
             }
         }
@@ -132,12 +110,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (currentCache > LightLoop.k_MaxCacheSize)
             {
                 int reserved = ReflectionProbeCache.GetMaxCacheSizeForWeightInByte(LightLoop.k_MaxCacheSize, serialized.reflectionCubemapSize.intValue, serialized.supportFabricConvolution.boolValue ? 2 : 1);
-                string message = string.Format(k_CacheErrorFormat, HumanizeWeight(currentCache), reserved);
+                string message = string.Format(k_CacheErrorFormat, CoreUtils.HumanizeWeight(currentCache), reserved);
                 EditorGUILayout.HelpBox(message, MessageType.Error);
             }
             else
             {
-                string message = string.Format(k_CacheInfoFormat, HumanizeWeight(currentCache));
+                string message = string.Format(k_CacheInfoFormat, CoreUtils.HumanizeWeight(currentCache));
                 EditorGUILayout.HelpBox(message, MessageType.Info);
             }
 
@@ -155,12 +133,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (currentCache > LightLoop.k_MaxCacheSize)
             {
                 int reserved = PlanarReflectionProbeCache.GetMaxCacheSizeForWeightInByte(LightLoop.k_MaxCacheSize, serialized.planarReflectionCubemapSize.intValue, 1);
-                string message = string.Format(k_CacheErrorFormat, HumanizeWeight(currentCache), reserved);
+                string message = string.Format(k_CacheErrorFormat, CoreUtils.HumanizeWeight(currentCache), reserved);
                 EditorGUILayout.HelpBox(message, MessageType.Error);
             }
             else
             {
-                string message = string.Format(k_CacheInfoFormat, HumanizeWeight(currentCache));
+                string message = string.Format(k_CacheInfoFormat, CoreUtils.HumanizeWeight(currentCache));
                 EditorGUILayout.HelpBox(message, MessageType.Info);
             }
 
@@ -184,7 +162,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUILayout.DelayedIntField(serialized.maxAreaLightsOnScreen, k_MaxAreaContent);
             EditorGUILayout.DelayedIntField(serialized.maxEnvLightsOnScreen, k_MaxEnvContent);
             EditorGUILayout.DelayedIntField(serialized.maxDecalsOnScreen, k_MaxDecalContent);
-            
+
             serialized.maxDirectionalLightsOnScreen.intValue = Mathf.Clamp(serialized.maxDirectionalLightsOnScreen.intValue, 1, LightLoop.k_MaxDirectionalLightsOnScreen);
             serialized.maxPunctualLightsOnScreen.intValue = Mathf.Clamp(serialized.maxPunctualLightsOnScreen.intValue, 1, LightLoop.k_MaxPunctualLightsOnScreen);
             serialized.maxAreaLightsOnScreen.intValue = Mathf.Clamp(serialized.maxAreaLightsOnScreen.intValue, 1, LightLoop.k_MaxAreaLightsOnScreen);

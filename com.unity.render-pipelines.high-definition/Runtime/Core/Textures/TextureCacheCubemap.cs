@@ -1,6 +1,7 @@
 using System;
 using UnityEngine.Rendering;
 
+
 namespace UnityEngine.Experimental.Rendering
 {
     public class TextureCacheCubemap : TextureCache
@@ -11,7 +12,7 @@ namespace UnityEngine.Experimental.Rendering
 
         // the member variables below are only in use when TextureCache.supportsCubemapArrayTextures is false
         private Texture2DArray m_CacheNoCubeArray;
-        private RenderTexture[] m_StagingRTs;
+        private RTHandleSystem.RTHandle[] m_StagingRTs;
         private int m_NumPanoMipLevels;
         private Material m_CubeBlitMaterial;
         private int m_CubeMipLevelPropName;
@@ -102,11 +103,15 @@ namespace UnityEngine.Experimental.Rendering
                 };
 
                 m_NumPanoMipLevels = isMipMapped ? GetNumMips(panoWidthTop, panoHeightTop) : 1;
-                m_StagingRTs = new RenderTexture[m_NumPanoMipLevels];
+                m_StagingRTs = new RTHandleSystem.RTHandle[m_NumPanoMipLevels];
                 for (int m = 0; m < m_NumPanoMipLevels; m++)
                 {
-                    m_StagingRTs[m] = new RenderTexture(Mathf.Max(1, panoWidthTop >> m), Mathf.Max(1, panoHeightTop >> m), 0, RenderTextureFormat.ARGBHalf) { hideFlags = HideFlags.HideAndDontSave };
-                    m_StagingRTs[m].name = CoreUtils.GetRenderTargetAutoName(Mathf.Max(1, panoWidthTop >> m), Mathf.Max(1, panoHeightTop >> m), 1, RenderTextureFormat.ARGBHalf, String.Format("PanaCache{0}", m));
+                    m_StagingRTs[m] = RTHandles.Alloc(  Mathf.Max(1, panoWidthTop >> m),
+                                                        Mathf.Max(1, panoHeightTop >> m),
+                                                        0,
+                                                        colorFormat: GraphicsFormat.R16G16B16A16_SFloat,
+                                                        name: CoreUtils.GetRenderTargetAutoName(Mathf.Max(1, panoWidthTop >> m), Mathf.Max(1, panoHeightTop >> m), 1, RenderTextureFormat.ARGBHalf, String.Format("PanaCache{0}", m)),
+                                                        memoryTag: TextureCache.k_TextureCacheMemoryTag);
                 }
 
                 if (m_CubeBlitMaterial)
@@ -137,7 +142,7 @@ namespace UnityEngine.Experimental.Rendering
                 CoreUtils.Destroy(m_CacheNoCubeArray);
                 for (int m = 0; m < m_NumPanoMipLevels; m++)
                 {
-                    m_StagingRTs[m].Release();
+                    RTHandles.Release(m_StagingRTs[m]);
                 }
                 m_StagingRTs = null;
                 CoreUtils.Destroy(m_CubeBlitMaterial);

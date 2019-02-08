@@ -5,7 +5,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public class IBLFilterGGX : IBLFilterBSDF
     {
-        RenderTexture m_GgxIblSampleData;
+        RTHandleSystem.RTHandle m_GgxIblSampleData;
         int           m_GgxIblMaxSampleCount          = TextureCache.isMobileBuildTarget ? 34 : 89;   // Width
         const int     k_GgxIblMipCountMinusOne        = 6;    // Height (UNITY_SPECCUBE_LOD_STEPS)
 
@@ -47,16 +47,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_convolveMaterial = CoreUtils.CreateEngineMaterial(m_RenderPipelineResources.shaders.GGXConvolvePS);
             }
 
-            if (!m_GgxIblSampleData)
+            if (m_GgxIblSampleData == null)
             {
-                m_GgxIblSampleData = new RenderTexture(m_GgxIblMaxSampleCount, k_GgxIblMipCountMinusOne, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
-                m_GgxIblSampleData.useMipMap = false;
-                m_GgxIblSampleData.autoGenerateMips = false;
-                m_GgxIblSampleData.enableRandomWrite = true;
-                m_GgxIblSampleData.filterMode = FilterMode.Point;
-                m_GgxIblSampleData.name = CoreUtils.GetRenderTargetAutoName(m_GgxIblMaxSampleCount, k_GgxIblMipCountMinusOne, 1, RenderTextureFormat.ARGBHalf, "GGXIblSampleData");
-                m_GgxIblSampleData.hideFlags = HideFlags.HideAndDontSave;
-                m_GgxIblSampleData.Create();
+                m_GgxIblSampleData = RTHandles.Alloc(m_GgxIblMaxSampleCount, k_GgxIblMipCountMinusOne, 0, colorFormat: GraphicsFormat.R16G16B16A16_SFloat,
+                                                        useMipMap: false,
+                                                        autoGenerateMips: false,
+                                                        enableRandomWrite: true,
+                                                        filterMode: FilterMode.Point,
+                                                        name: CoreUtils.GetRenderTargetAutoName(m_GgxIblMaxSampleCount, k_GgxIblMipCountMinusOne, 1, RenderTextureFormat.ARGBHalf, "GGXIblSampleData"),
+                                                        memoryTag: RTManager.k_RenderLoopMemoryTag);
 
                 InitializeGgxIblSampleData(cmd);
             }
@@ -81,7 +80,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public override void Cleanup()
         {
             CoreUtils.Destroy(m_convolveMaterial);
-            CoreUtils.Destroy(m_GgxIblSampleData);
+            RTHandles.Release(m_GgxIblSampleData);
         }
 
         void FilterCubemapCommon(CommandBuffer cmd,
@@ -107,9 +106,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Solid angle associated with a texel of the cubemap.
             float invOmegaP = (6.0f * source.width * source.width) / (4.0f * Mathf.PI);
 
-            if (!m_GgxIblSampleData.IsCreated())
+            if (!m_GgxIblSampleData.rt.IsCreated())
             {
-                m_GgxIblSampleData.Create();
+                m_GgxIblSampleData.rt.Create();
                 InitializeGgxIblSampleData(cmd);
             }
 

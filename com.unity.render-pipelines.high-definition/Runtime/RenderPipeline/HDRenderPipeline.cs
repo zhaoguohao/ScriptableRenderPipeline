@@ -195,7 +195,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         bool                            m_FullScreenDebugPushed;
         bool                            m_ValidAPI; // False by default mean we render normally, true mean we don't render anything
         bool                            m_IsDepthBufferCopyValid;
-        RenderTexture                   m_TemporaryTargetForCubemaps;
+        RTHandleSystem.RTHandle         m_TemporaryTargetForCubemaps;
         Stack<Camera>                   m_ProbeCameraPool = new Stack<Camera>();
 
         RenderTargetIdentifier[] m_MRTWithSSS;
@@ -269,7 +269,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // It's done here because we know every HDRP assets have been imported before
             UpgradeResourcesIfNeeded();
 
-
             // Initial state of the RTHandle system.
             // Tells the system that we will require MSAA or not so that we can avoid wasteful render texture allocation.
             // TODO: Might want to initialize to at least the window resolution to avoid un-necessary re-alloc in the player
@@ -296,10 +295,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // General material
             m_CopyStencil = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.copyStencilBufferPS);
-
             m_CameraMotionVectorsMaterial = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.cameraMotionVectorsPS);
             m_DecalNormalBufferMaterial = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.decalNormalBufferPS);
-
             m_CopyDepth = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.copyDepthBufferPS);
 
             InitializeDebugMaterials();
@@ -319,12 +316,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             m_LightLoop.Build(asset, m_IBLFilterArray);
-
             m_SkyManager.Build(asset, m_IBLFilterArray);
-
             m_VolumetricLightingSystem.Build(asset);
 
             m_DebugDisplaySettings.RegisterDebug();
+
 #if UNITY_EDITOR
             // We don't need the debug of Scene View at runtime (each camera have its own debug settings)
             // All scene view will share the same FrameSettings for now as sometimes Dispose is called after
@@ -611,7 +607,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             HDCamera.ClearAll();
 
-            m_RTManager.Release();
+            m_RTManager.Cleanup();
             m_MipGenerator.Release();
             HDCamera.ClearAll();
 
@@ -631,7 +627,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Not always in that order.
 #endif
         }
-
 
         void Resize(HDCamera hdCamera)
         {
@@ -1147,25 +1142,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     {
                         if (m_TemporaryTargetForCubemaps != null)
                         {
-                            if (m_TemporaryTargetForCubemaps.width != size.x
-                                || m_TemporaryTargetForCubemaps.height != size.y)
+                            if (m_TemporaryTargetForCubemaps.rt.width != size.x
+                                || m_TemporaryTargetForCubemaps.rt.height != size.y)
                             {
-                                m_TemporaryTargetForCubemaps.Release();
+                                RTHandles.Release(m_TemporaryTargetForCubemaps);
                                 m_TemporaryTargetForCubemaps = null;
                             }
                         }
                         if (m_TemporaryTargetForCubemaps == null)
                         {
-                            m_TemporaryTargetForCubemaps = new RenderTexture(
-                                size.x, size.y, 1, GraphicsFormat.R16G16B16A16_SFloat
-                            )
-                            {
-                                autoGenerateMips = false,
-                                useMipMap = false,
-                                name = "Temporary Target For Cubemap Face",
-                                volumeDepth = 1,
-                                useDynamicScale = false
-                            };
+                            m_TemporaryTargetForCubemaps = RTHandles.Alloc(
+                                size.x, size.y, 1, colorFormat: GraphicsFormat.R16G16B16A16_SFloat,
+                                autoGenerateMips: false,
+                                useMipMap: false,
+                                name: "Temporary Target For Cubemap Face",
+                                useDynamicScale: false,
+                                memoryTag: RTManager.k_RenderLoopMemoryTag);
                         }
                     }
                 }
@@ -1206,8 +1198,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         //  So we use an intermediate RT to perform a CommandBuffer.CopyTexture in the target Cubemap face
                         if (renderRequest.target.face != CubemapFace.Unknown)
                         {
-                            if (!m_TemporaryTargetForCubemaps.IsCreated())
-                                m_TemporaryTargetForCubemaps.Create();
+                            if (!m_TemporaryTargetForCubemaps.rt.IsCreated())
+                                m_TemporaryTargetForCubemaps.rt.Create();
 
                             var hdCamera = renderRequest.hdCamera;
                             ref var target = ref renderRequest.target;
