@@ -206,10 +206,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
 #if ENABLE_RAYTRACING
-        public void InitRaytracing(HDRaytracingManager raytracingManager, SharedRTManager sharedRTManager)
+        public void InitRaytracing(HDRaytracingManager raytracingManager, RTManager rtManager)
         {
             m_RayTracingManager = raytracingManager;
-            m_RaytracingAmbientOcclusion.Init(m_Resources, m_Settings, m_RayTracingManager, sharedRTManager);
+            m_RaytracingAmbientOcclusion.Init(m_Resources, m_Settings, m_RayTracingManager, rtManager);
         }
 #endif
 

@@ -11,7 +11,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         HDRenderPipelineAsset m_PipelineAsset = null;
         SkyManager m_SkyManager = null;
         HDRaytracingManager m_RaytracingManager = null;
-        SharedRTManager m_SharedRTManager = null;
+        RTManager m_RTManager = null;
 
         // The target denoising kernel
         static int m_KernelFilter;
@@ -44,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
         }
 
-        public void Init(HDRenderPipelineAsset asset, SkyManager skyManager, HDRaytracingManager raytracingManager, SharedRTManager sharedRTManager)
+        public void Init(HDRenderPipelineAsset asset, SkyManager skyManager, HDRaytracingManager raytracingManager, RTManager rtManager)
         {
             // Keep track of the pipeline asset
             m_PipelineAsset = asset;
@@ -56,7 +56,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RaytracingManager = raytracingManager;
 
             // Keep track of the shared rt manager
-            m_SharedRTManager = sharedRTManager;
+            m_RTManager = rtManager;
 
             m_IntermediateBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, useDynamicScale: true, useMipMap: false, name: "IntermediateReflectionBuffer");
 
@@ -113,8 +113,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Set the data for the ray generation
             cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._SsrLightingTextureRW, m_IntermediateBuffer);
-            cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
-            cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
+            cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_RTManager.GetDepthStencilBuffer());
+            cmd.SetRaytracingTextureParam(reflectionShader, m_RayGenShaderName, HDShaderIDs._NormalBufferTexture, m_RTManager.GetNormalBuffer());
 
             // Compute the pixel spread value
             float pixelSpreadAngle = Mathf.Atan(2.0f * Mathf.Tan(hdCamera.camera.fieldOfView * Mathf.PI / 360.0f) / Mathf.Min(hdCamera.actualWidth, hdCamera.actualHeight));
@@ -151,8 +151,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.reflBilateralRadius);
                         cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.reflBilateralSigma);
                         cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_SourceTexture", m_IntermediateBuffer);
-                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
-                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_RTManager.GetDepthStencilBuffer());
+                        cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_RTManager.GetNormalBuffer());
 
                         // Set the output slot
                         cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, "_OutputTexture", outputTexture);

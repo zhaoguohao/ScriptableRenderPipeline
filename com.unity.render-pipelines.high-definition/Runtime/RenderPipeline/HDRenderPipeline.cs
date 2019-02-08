@@ -356,7 +356,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
             m_RayTracingManager.Init(m_Asset.renderPipelineSettings, m_Asset.renderPipelineResources, m_BlueNoise);
             m_RaytracingReflections.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_RTManager);
-            m_RaytracingShadows.Init(m_Asset, m_RayTracingManager, m_RTManager, m_LightLoop, m_GbufferManager);
+            m_RaytracingShadows.Init(m_Asset, m_RayTracingManager, m_RTManager, m_LightLoop);
             m_RaytracingRenderer.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_RTManager);
             m_LightLoop.InitRaytracing(m_RayTracingManager);
             m_AmbientOcclusionSystem.InitRaytracing(m_RayTracingManager, m_RTManager);
@@ -1683,7 +1683,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 RenderTransparentDepthPostpass(cullingResults, hdCamera, renderContext, cmd);
 
 #if ENABLE_RAYTRACING
-                m_RaytracingRenderer.Render(hdCamera, cmd, GetRenderTarget(RT.CameraColor), renderContext, cullingResults);
+                m_RaytracingRenderer.Render(hdCamera, cmd, GetRenderTarget(RT.Color), renderContext, cullingResults);
 #endif
                 RenderColorPyramid(hdCamera, cmd, false);
 
@@ -2601,7 +2601,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (m_Asset.renderPipelineSettings.supportRayTracing && rtEnvironement != null && rtEnvironement.raytracedReflections)
             {
-                m_RaytracingReflections.RenderReflections(hdCamera, cmd, m_SsrLightingTexture, renderContext);
+                m_RaytracingReflections.RenderReflections(hdCamera, cmd, m_RTManager.GetRenderTarget(RT.SSRLighting), renderContext);
 
                 PushFullScreenDebugTexture(hdCamera, cmd, m_RaytracingReflections.m_LightCluster.m_DebugLightClusterTexture, FullScreenDebugMode.LightCluster);
             }

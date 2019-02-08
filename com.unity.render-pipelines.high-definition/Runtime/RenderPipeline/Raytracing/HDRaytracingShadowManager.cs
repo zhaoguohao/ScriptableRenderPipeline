@@ -10,9 +10,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         HDRenderPipelineAsset m_PipelineAsset = null;
 
         HDRaytracingManager m_RaytracingManager = null;
-        SharedRTManager m_SharedRTManager = null;
+        RTManager m_RTManager = null;
         LightLoop m_LightLoop = null;
-        GBufferManager m_GbufferManager = null;
         static int m_KernelFilter;
 
         // Buffers that hold the intermediate data of the shadow algorithm
@@ -45,7 +44,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
         }
 
-        public void Init(HDRenderPipelineAsset asset, HDRaytracingManager raytracingManager, SharedRTManager sharedRTManager, LightLoop lightLoop, GBufferManager gbufferManager)
+        public void Init(HDRenderPipelineAsset asset, HDRaytracingManager raytracingManager, RTManager rtManager, LightLoop lightLoop)
         {
             // Keep track of the pipeline asset
             m_PipelineAsset = asset;
@@ -54,13 +53,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RaytracingManager = raytracingManager;
 
             // Keep track of the shared rt manager
-            m_SharedRTManager = sharedRTManager;
+            m_RTManager = rtManager;
 
             // The lightloop that holds all the lights of the scene
             m_LightLoop = lightLoop;
-
-            // GBuffer manager that holds all the data for shading the samples
-            m_GbufferManager = gbufferManager;
 
             // Allocate the intermediate buffers
             m_SNBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, useMipMap: false, name: "SNBuffer");
@@ -140,7 +136,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 using (new ProfilingSample(cmd, "Raytrace Area Shadow", CustomSamplerId.RaytracingShadowIntegration.GetSampler()))
                 {
                     LightData currentLight = m_LightLoop.m_lightList.lights[lightIdx];
-                    
+
                     // We need to build the world to area light matrix
                     worldToLocalArea.SetColumn(0, currentLight.right);
                     worldToLocalArea.SetColumn(1, currentLight.up);
@@ -161,14 +157,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetRaytracingIntParam(shadowsShader, HDShaderIDs._RaytracingTargetAreaLight, lightIdx);
                     cmd.SetRaytracingIntParam(shadowsShader, HDShaderIDs._RaytracingNumSamples, rtEnvironement.shadowNumSamples);
                     cmd.SetRaytracingMatrixParam(shadowsShader, HDShaderIDs._RaytracingAreaWorldToLocal, worldToLocalArea);
-                    
+
                     // Set the data for the ray generation
-                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
-                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
-                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[0], m_GbufferManager.GetBuffer(0));
-                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[1], m_GbufferManager.GetBuffer(1));
-                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[2], m_GbufferManager.GetBuffer(2));
-                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[3], m_GbufferManager.GetBuffer(3));
+                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_RTManager.GetDepthStencilBuffer());
+                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._NormalBufferTexture, m_RTManager.GetNormalBuffer());
+                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[0], m_RTManager.GetRenderTarget(RT.GBuffer0));
+                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[1], m_RTManager.GetRenderTarget(RT.GBuffer1));
+                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[2], m_RTManager.GetRenderTarget(RT.GBuffer2));
+                    cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, HDShaderIDs._GBufferTexture[3], m_RTManager.GetRenderTarget(RT.GBuffer3));
 
                     // Set the output textures
                     cmd.SetRaytracingTextureParam(shadowsShader, m_RayGenShaderName, _SNBuffer, m_SNBuffer);
@@ -185,8 +181,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Inject all the parameters for the compute
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, _SNBuffer, m_SNBuffer);
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, _UNBuffer, m_UNBuffer);
-                    cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
-                    cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
+                    cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_RTManager.GetDepthStencilBuffer());
+                    cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_RTManager.GetNormalBuffer());
                     cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.shadowFilterRadius);
                     cmd.SetComputeFloatParam(bilateralFilter, _GaussianSigma, rtEnvironement.shadowFilterSigma);
                     cmd.SetComputeIntParam(bilateralFilter, _ShadowSlot, m_LightLoop.m_lightList.lights[lightIdx].shadowIndex);

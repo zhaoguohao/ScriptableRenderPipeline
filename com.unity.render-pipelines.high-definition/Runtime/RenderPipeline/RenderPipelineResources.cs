@@ -81,7 +81,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Shader cubeToPanoPS;
             public Shader blitCubeTextureFacePS;
             public Shader filterAreaLightCookiesPS;
-            
+
             // Shadow
             public Shader shadowClearPS;
             public ComputeShader shadowBlurMomentsCS;
@@ -231,7 +231,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 subsurfaceScatteringCS = Load<ComputeShader>(HDRenderPipelinePath + "Material/SubsurfaceScattering/SubsurfaceScattering.compute"),
                 combineLightingPS = Load<Shader>(HDRenderPipelinePath + "Material/SubsurfaceScattering/CombineLighting.shader"),
-                
+
                 // General
                 cameraMotionVectorsPS = Load<Shader>(HDRenderPipelinePath + "RenderPipeline/RenderPass/MotionVectors/CameraMotionVectors.shader"),
                 copyStencilBufferPS = Load<Shader>(HDRenderPipelinePath + "ShaderLibrary/CopyStencilBuffer.shader"),
@@ -274,7 +274,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // Decal
                 decalNormalBufferPS = Load<Shader>(HDRenderPipelinePath + "Material/Decal/DecalNormalBuffer.shader"),
-                
+
                 // Ambient occlusion
                 aoDownsample1CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/ScreenSpaceLighting/AmbientOcclusionDownsample1.compute"),
                 aoDownsample2CS = Load<ComputeShader>(HDRenderPipelinePath + "Lighting/ScreenSpaceLighting/AmbientOcclusionDownsample2.compute"),
@@ -311,9 +311,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 FXAACS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/FXAA.compute"),
                 finalPassPS = Load<Shader>(HDRenderPipelinePath + "PostProcessing/Shaders/FinalPass.shader"),
 
-            
+
 #if ENABLE_RAYTRACING
-                ,
                 aoRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingAmbientOcclusion.raytrace"),
                 reflectionRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingReflections.raytrace"),
                 shadowsRaytracing = Load<RaytracingShader>(HDRenderPipelinePath + "RenderPipeline/Raytracing/Shaders/RaytracingAreaShadows.raytrace"),

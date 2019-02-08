@@ -11,7 +11,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         HDRenderPipelineAsset m_PipelineAsset = null;
         SkyManager m_SkyManager = null;
         HDRaytracingManager m_RaytracingManager = null;
-        SharedRTManager m_SharedRTManager = null;
+        RTManager m_RTManager = null;
 
         // Intermediate buffer that stores the reflection pre-denoising
         RTHandleSystem.RTHandle m_RaytracingFlagTarget = null;
@@ -36,7 +36,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
         }
 
-        public void Init(HDRenderPipelineAsset asset, SkyManager skyManager, HDRaytracingManager raytracingManager, SharedRTManager sharedRTManager)
+        public void Init(HDRenderPipelineAsset asset, SkyManager skyManager, HDRaytracingManager raytracingManager, RTManager rtManager)
         {
             // Keep track of the pipeline asset
             m_PipelineAsset = asset;
@@ -48,7 +48,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RaytracingManager = raytracingManager;
 
             // Keep track of the shared rt manager
-            m_SharedRTManager = sharedRTManager;
+            m_RTManager = rtManager;
 
             m_RaytracingFlagTarget = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8_SNorm, enableRandomWrite: true, useMipMap: false, name: "RaytracingFlagTexture");
 
@@ -82,7 +82,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             HDUtils.SetRenderTarget(cmd, hdCamera, m_RaytracingFlagTarget, ClearFlag.Color, Color.black);
 
             // Bind out custom color texture
-            HDUtils.SetRenderTarget(cmd, hdCamera, m_RaytracingFlagTarget, m_SharedRTManager.GetDepthStencilBuffer());
+            HDUtils.SetRenderTarget(cmd, hdCamera, m_RaytracingFlagTarget, m_RTManager.GetDepthStencilBuffer());
 
             // This is done here because DrawRenderers API lives outside command buffers so we need to make call this before doing any DrawRenders
             renderContext.ExecuteCommandBuffer(cmd);
@@ -166,7 +166,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Set the data for the ray generation
             cmd.SetRaytracingTextureParam(forwardShader, m_RayGenShaderName, HDShaderIDs._RaytracingFlagMask, m_RaytracingFlagTarget);
-            cmd.SetRaytracingTextureParam(forwardShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
+            cmd.SetRaytracingTextureParam(forwardShader, m_RayGenShaderName, HDShaderIDs._DepthTexture, m_RTManager.GetDepthStencilBuffer());
             cmd.SetRaytracingTextureParam(forwardShader, m_RayGenShaderName, HDShaderIDs._CameraColorTextureRW, outputTexture);
 
             // Compute the pixel spread value
