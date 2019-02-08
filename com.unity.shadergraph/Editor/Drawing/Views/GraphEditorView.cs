@@ -261,6 +261,8 @@ namespace UnityEditor.ShaderGraph.Drawing
                     {
                         nodesInsideGroup.Add(graphElement);
                     }
+
+                    SetGroupPosition(groupNode);
                 }
 
                 if(nodesInsideGroup.Any())
@@ -316,6 +318,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             return graphViewChange;
         }
 
+        void SetGroupPosition(ShaderGroup groupNode)//, GraphElement element)
+        {
+            var pos = groupNode.GetPosition();
+            groupNode.userData.position = new Vector2(pos.x, pos.y);
+        }
+
         void OnGroupTitleChanged(Group graphGroup, string title)
         {
             var groupData = graphGroup.userData as GroupData;
@@ -327,13 +335,12 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsAddedToGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
-            var groupData = graphGroup.userData as GroupData;
-            if (groupData != null)
+            if (graphGroup.userData is GroupData groupData)
             {
                 var anyChanged = false;
-                foreach (var materialNodeView in element.Select(e => e).OfType<IShaderNodeView>())
+                foreach (var materialNodeView in element.OfType<IShaderNodeView>())
                 {
-                    if (materialNodeView.node.groupGuid != groupData.guid)
+                    if (materialNodeView.node != null && materialNodeView.node.groupGuid != groupData.guid)
                     {
                         anyChanged = true;
                         break;
@@ -345,7 +352,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 m_Graph.owner.RegisterCompleteObjectUndo(groupData.title);
 
-                foreach (var materialNodeView in element.Select(e => e).OfType<IShaderNodeView>())
+                foreach (var materialNodeView in element.OfType<IShaderNodeView>())
                 {
                     m_Graph.SetNodeGroup(materialNodeView.node, groupData);
                 }
@@ -354,13 +361,12 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void OnElementsRemovedFromGroup(Group graphGroup, IEnumerable<GraphElement> element)
         {
-            var groupData = graphGroup.userData as GroupData;
-            if (groupData != null)
+            if (graphGroup.userData is GroupData groupData)
             {
                 var anyChanged = false;
-                foreach (var nodeView in element.Select(e => e).OfType<IShaderNodeView>())
+                foreach (var nodeView in element.OfType<IShaderNodeView>())
                 {
-                    if (((VisualElement)nodeView).userData != null && nodeView.node.groupGuid == groupData.guid)
+                    if (nodeView.node != null && nodeView.node.groupGuid == groupData.guid)
                     {
                         anyChanged = true;
                         break;
@@ -372,10 +378,13 @@ namespace UnityEditor.ShaderGraph.Drawing
 
                 m_Graph.owner.RegisterCompleteObjectUndo("Ungroup Node(s)");
 
-                foreach (var nodeView in element.Select(e => e).OfType<IShaderNodeView>())
+                foreach (var nodeView in element.OfType<IShaderNodeView>())
                 {
                     if (nodeView.node != null)
+                    {
                         m_Graph.SetNodeGroup(nodeView.node, null);
+                        SetGroupPosition((ShaderGroup)graphGroup); //, (GraphElement)nodeView);
+                    }
                 }
             }
         }
@@ -397,6 +406,7 @@ namespace UnityEditor.ShaderGraph.Drawing
         }
 
         HashSet<IShaderNodeView> m_NodeViewHashSet = new HashSet<IShaderNodeView>();
+        HashSet<ShaderGroup> m_GroupHashSet = new HashSet<ShaderGroup>();
 
         public void UpdatePreviewShaders()
         {
@@ -408,10 +418,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             previewManager.HandleGraphChanges();
             previewManager.RenderPreviews();
             m_BlackboardProvider.HandleGraphChanges();
-
+            m_GroupHashSet.Clear();
             foreach (GroupData groupData in m_Graph.removedGroups)
             {
-                var group = m_GraphView.graphElements.ToList().OfType<ShaderGroup>().ToList().First(g => g.userData == groupData);
+                var group = m_GraphView.graphElements.ToList().OfType<ShaderGroup>().First(g => g.userData == groupData);
                 m_GraphView.RemoveElement(group);
             }
 
@@ -424,6 +434,12 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     nodeView.Dispose();
                     m_GraphView.RemoveElement((Node)nodeView);
+
+                    if (node.groupGuid != Guid.Empty)
+                    {
+                        var shaderGroup = m_GraphView.graphElements.ToList().OfType<ShaderGroup>().First(g => g.userData.guid == node.groupGuid);
+                        m_GroupHashSet.Add(shaderGroup);
+                    }
                 }
             }
 
@@ -470,6 +486,11 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.AddToSelection((Node)nodeView);
             }
 
+            foreach (var shaderGroup in m_GroupHashSet)
+            {
+                SetGroupPosition(shaderGroup);
+            }
+
             var nodesToUpdate = m_NodeViewHashSet;
             nodesToUpdate.Clear();
 
@@ -480,7 +501,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                 if (edgeView != null)
                 {
                     var nodeView = (IShaderNodeView)edgeView.input.node;
+                    if (nodeView.node != null)
+                    {
                         nodesToUpdate.Add(nodeView);
+                    }
 
                     edgeView.output.Disconnect(edgeView);
                     edgeView.input.Disconnect(edgeView);
@@ -606,10 +630,11 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void AddGroup(GroupData groupData)
         {
-            ShaderGroup graphGroup = new ShaderGroup();
+            ShaderGroup graphGroup = new ShaderGroup(m_Graph);
 
             graphGroup.userData = groupData;
             graphGroup.title = groupData.title;
+            graphGroup.SetPosition(new Rect(graphGroup.userData.position, Vector2.zero));
 
             m_GraphView.AddElement(graphGroup);
         }
