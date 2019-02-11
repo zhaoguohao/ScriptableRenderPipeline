@@ -63,6 +63,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         DebugFullScreen,
         IntermediateAfterPostProcess,
         SSRDebug,
+        DebugLightVolumeCount, // light count
+        DebugLightVolumeAccumulation, // color accumulated value
+        DebugLightVolume, // The output texture of the debug
 
         Count
     }
@@ -386,9 +389,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (Debug.isDebugBuild)
             {
                 m_RenderTargets[(int)RT.DebugColorPicker] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugColorPicker", memoryTag: k_DebugMemoryTag);
-                m_RenderTargets[(int)RT.DebugFullScreen] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugFullScreen", memoryTag: k_DebugMemoryTag);
+                // If used, DebugFullScreen is always done before DebugColorPicker so we can share the target. Currently use of targets is as follows:
+                // (Color, Velocity, etc) => DebugFullScreen/DebugColorPicker => IntermediateAfterPostProcess => DebugColorPicker => IntermediateAfterPostProcess
+                ShareRT(RT.DebugFullScreen, RT.DebugColorPicker);
+
                 // This target is only used in Dev builds as an intermediate destination for post process and where debug rendering will be done.
                 m_RenderTargets[(int)RT.IntermediateAfterPostProcess] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "AfterPostProcess", memoryTag: k_DebugMemoryTag); // Needs to be FP16 because output target might be HDR
+
+                m_RenderTargets[(int)RT.DebugLightVolumeCount] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32_SFloat, enableRandomWrite: false, useMipMap: false, name: "LightVolumeCount", memoryTag: k_DebugMemoryTag);
+                // DebugColorPicker and Color are always already used when doing Light Volume Debug (which is done at the very end of the frame with other overlays)
+                ShareRT(RT.DebugLightVolumeAccumulation, RT.DebugColorPicker);
+                ShareRT(RT.DebugLightVolume, RT.Color);
             }
         }
 
@@ -405,9 +416,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         protected virtual void InitializeRenderTextures(HDRenderPipelineAsset hdrpAsset)
         {
             RenderPipelineSettings settings = hdrpAsset.renderPipelineSettings;
-
-            //if (settings.supportDecals)
-            //    m_DbufferManager.CreateBuffers();
 
             InitializeDBuffer(settings);
             InitializeMainBuffers(settings);

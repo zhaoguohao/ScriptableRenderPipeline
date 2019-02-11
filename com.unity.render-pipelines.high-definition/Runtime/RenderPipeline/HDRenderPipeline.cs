@@ -1696,7 +1696,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 PushFullScreenLightingDebugTexture(hdCamera, cmd, GetRenderTarget(RT.Color));
             }
 
-            // At this point, RTManager.GetRT(RT.CameraColor) has been filled by either debug views are regular rendering so we can push it here.
+            // At this point, RTManager.GetRT(RT.Color) has been filled by either debug views are regular rendering so we can push it here.
             PushColorPickerDebugTexture(cmd, hdCamera, GetRenderTarget(RT.Color));
 
             RenderPostProcess(cullingResults, hdCamera, target.id, renderContext, cmd);
@@ -2799,13 +2799,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void PushColorPickerDebugTexture(CommandBuffer cmd, HDCamera hdCamera, RTHandleSystem.RTHandle textureID)
+        public void PushColorPickerDebugTexture(CommandBuffer cmd, HDCamera hdCamera, RTHandleSystem.RTHandle inputTexture)
         {
             if (m_CurrentDebugDisplaySettings.data.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None || m_DebugDisplaySettings.data.falseColorDebugSettings.falseColor || m_DebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuminanceMeter)
             {
                 using (new ProfilingSample(cmd, "Push To Color Picker"))
                 {
-                    HDUtils.BlitCameraTexture(cmd, hdCamera, textureID, GetRenderTarget(RT.DebugColorPicker));
+                    HDUtils.BlitCameraTexture(cmd, hdCamera, inputTexture, GetRenderTarget(RT.DebugColorPicker));
                 }
             }
         }
@@ -2873,7 +2873,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     PushColorPickerDebugTexture(cmd, hdCamera, GetRenderTarget(RT.IntermediateAfterPostProcess));
                 }
 
+                // Then debug color picking
+                if (m_CurrentDebugDisplaySettings.data.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None || m_CurrentDebugDisplaySettings.data.falseColorDebugSettings.falseColor || m_CurrentDebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuminanceMeter)
+                {
+                    ColorPickerDebugSettings colorPickerDebugSettings = m_CurrentDebugDisplaySettings.data.colorPickerDebugSettings;
+                    FalseColorDebugSettings falseColorDebugSettings = m_CurrentDebugDisplaySettings.data.falseColorDebugSettings;
+                    var falseColorThresholds = new Vector4(falseColorDebugSettings.colorThreshold0, falseColorDebugSettings.colorThreshold1, falseColorDebugSettings.colorThreshold2, falseColorDebugSettings.colorThreshold3);
+
+                    // Here we have three cases:
+                    // - Material debug is enabled, this is the buffer we display
+                    // - Otherwise we display the HDR buffer before postprocess and distortion
+                    // - If fullscreen debug is enabled we always use it
+
+                    m_DebugFullScreenPropertyBlock.SetTexture(HDShaderIDs._DebugColorPickerTexture, GetRenderTarget(RT.DebugColorPicker));
+                    m_DebugFullScreenPropertyBlock.SetColor(HDShaderIDs._ColorPickerFontColor, colorPickerDebugSettings.fontColor);
+                    m_DebugFullScreenPropertyBlock.SetInt(HDShaderIDs._FalseColorEnabled, falseColorDebugSettings.falseColor ? 1 : 0);
+                    m_DebugFullScreenPropertyBlock.SetVector(HDShaderIDs._FalseColorThresholds, falseColorThresholds);
+                    // The material display debug perform sRGBToLinear conversion as the final blit currently hardcodes a linearToSrgb conversion. As when we read with color picker this is not done,
+                    // we perform it inside the color picker shader. But we shouldn't do it for HDR buffer.
+                    m_DebugFullScreenPropertyBlock.SetFloat(HDShaderIDs._ApplyLinearToSRGB, m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled() ? 1.0f : 0.0f);
+
+                    cmd.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, hdCamera.doubleBufferedViewportScale);
+                    HDUtils.DrawFullScreen(cmd, hdCamera, m_DebugColorPicker, GetRenderTarget(RT.IntermediateAfterPostProcess), m_DebugFullScreenPropertyBlock, 0);
+                }
+
                 // Then overlays
+                HDUtils.SetRenderTarget(cmd, hdCamera, GetRenderTarget(RT.IntermediateAfterPostProcess), m_RTManager.GetDepthStencilBuffer());
+
                 HDUtils.ResetOverlay();
                 float x = 0.0f;
                 float overlayRatio = m_CurrentDebugDisplaySettings.data.debugOverlayRatio;
@@ -2893,35 +2919,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     HDUtils.NextOverlayCoord(ref x, ref y, overlaySize, overlaySize, hdCamera);
                 }
 
-                m_LightLoop.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth, cullResults, GetRenderTarget(RT.IntermediateAfterPostProcess));
-
+                m_LightLoop.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth, cullResults, GetRenderTarget(RT.IntermediateAfterPostProcess), m_RTManager);
                 DecalSystem.instance.RenderDebugOverlay(hdCamera, cmd, m_CurrentDebugDisplaySettings, ref x, ref y, overlaySize, hdCamera.actualWidth);
-
-                if (m_CurrentDebugDisplaySettings.data.colorPickerDebugSettings.colorPickerMode != ColorPickerDebugMode.None || m_CurrentDebugDisplaySettings.data.falseColorDebugSettings.falseColor || m_CurrentDebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuminanceMeter)
-                {
-                    ColorPickerDebugSettings colorPickerDebugSettings = m_CurrentDebugDisplaySettings.data.colorPickerDebugSettings;
-                    FalseColorDebugSettings falseColorDebugSettings = m_CurrentDebugDisplaySettings.data.falseColorDebugSettings;
-                    var falseColorThresholds = new Vector4(falseColorDebugSettings.colorThreshold0, falseColorDebugSettings.colorThreshold1, falseColorDebugSettings.colorThreshold2, falseColorDebugSettings.colorThreshold3);
-
-                    // Here we have three cases:
-                    // - Material debug is enabled, this is the buffer we display
-                    // - Otherwise we display the HDR buffer before postprocess and distortion
-                    // - If fullscreen debug is enabled we always use it
-
-                    cmd.SetGlobalTexture(HDShaderIDs._DebugColorPickerTexture, GetRenderTarget(RT.DebugColorPicker)); // No SetTexture with RenderTarget identifier... so use SetGlobalTexture
-                    // TODO: Replace with command buffer call when available
-                    m_DebugColorPicker.SetColor(HDShaderIDs._ColorPickerFontColor, colorPickerDebugSettings.fontColor);
-                    m_DebugColorPicker.SetInt(HDShaderIDs._FalseColorEnabled, falseColorDebugSettings.falseColor ? 1 : 0);
-                    m_DebugColorPicker.SetVector(HDShaderIDs._FalseColorThresholds, falseColorThresholds);
-                    // The material display debug perform sRGBToLinear conversion as the final blit currently hardcodes a linearToSrgb conversion. As when we read with color picker this is not done,
-                    // we perform it inside the color picker shader. But we shouldn't do it for HDR buffer.
-                    m_DebugColorPicker.SetFloat(HDShaderIDs._ApplyLinearToSRGB, m_CurrentDebugDisplaySettings.IsDebugMaterialDisplayEnabled() ? 1.0f : 0.0f);
-                    // Everything we have capture is flipped (as it happen before FinalPass/postprocess/Blit. So if we are not in SceneView
-                    // (i.e. we have perform a flip, we need to flip the input texture) + we need to handle the case were we debug a fullscreen pass that have already perform the flip
-
-                    cmd.SetGlobalVector(HDShaderIDs._ScreenToTargetScale, hdCamera.doubleBufferedViewportScale);
-                    HDUtils.DrawFullScreen(cmd, hdCamera, m_DebugColorPicker, GetRenderTarget(RT.IntermediateAfterPostProcess), m_DebugFullScreenPropertyBlock, 0);
-                }
             }
         }
 

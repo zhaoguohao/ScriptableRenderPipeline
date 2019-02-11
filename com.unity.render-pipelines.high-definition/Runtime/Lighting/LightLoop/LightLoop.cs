@@ -699,7 +699,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_CubeCookieTexArray.Release();
                 m_CubeCookieTexArray = null;
             }
-            
+
             if (m_AreaLightCookieManager != null)
             {
                 m_AreaLightCookieManager.ReleaseResources();
@@ -2903,7 +2903,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        public void RenderDebugOverlay(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings, ref float x, ref float y, float overlaySize, float width, CullingResults cullResults, RTHandleSystem.RTHandle finalRT)
+        public void RenderDebugOverlay(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings, ref float x, ref float y, float overlaySize, float width, CullingResults cullResults, RTHandleSystem.RTHandle finalRT, RTManager rtManager)
         {
             LightingDebugSettings lightingDebug = debugDisplaySettings.data.lightingDebugSettings;
 
@@ -2990,7 +2990,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (lightingDebug.displayLightVolumes)
             {
-                s_lightVolumes.RenderLightVolumes(cmd, hdCamera, cullResults, lightingDebug, finalRT);
+                s_lightVolumes.RenderLightVolumes(cmd, hdCamera, cullResults, lightingDebug, finalRT, rtManager);
             }
         }
 
