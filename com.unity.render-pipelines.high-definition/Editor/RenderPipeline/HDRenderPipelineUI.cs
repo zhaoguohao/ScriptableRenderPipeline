@@ -118,7 +118,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             HDRenderPipelineAsset hdrpAsset = serialized.serializedObject.targetObject as HDRenderPipelineAsset;
             hdrpAsset.renderPipelineEditorResources = EditorGUILayout.ObjectField(renderPipelineEditorResourcesContent, hdrpAsset.renderPipelineEditorResources, typeof(HDRenderPipelineEditorResources), allowSceneObjects: false) as HDRenderPipelineEditorResources;
 
-            EditorGUILayout.PropertyField(serialized.diffusionProfileSettings, diffusionProfileSettingsContent);
             // EditorGUILayout.PropertyField(serialized.allowShaderVariantStripping, enableShaderVariantStrippingContent);
             diffusionProfileUI.drawElement = DrawDiffusionProfileElement;
             diffusionProfileUI.OnGUI(serialized.diffusionProfileSettingsList);
