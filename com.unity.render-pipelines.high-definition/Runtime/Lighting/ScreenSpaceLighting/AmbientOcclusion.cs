@@ -27,6 +27,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         enum MipLevel { Original, L1, L2, L3, L4, L5, L6, Count }
 
+        public static int mipCount { get { return (int)MipLevel.Count; } }
+
         RenderPipelineResources m_Resources;
         RenderPipelineSettings m_Settings;
 
@@ -53,35 +55,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         readonly int[] m_Widths = new int[7];
         readonly int[] m_Heights = new int[7];
 
-        readonly RTHandle m_AmbientOcclusionTex;
-
-        // All the targets needed are pre-allocated and only released on cleanup for now to avoid
-        // having to constantly allo/dealloc on every frame
-        readonly RTHandle m_LinearDepthTex;
-
-        readonly RTHandle m_LowDepth1Tex;
-        readonly RTHandle m_LowDepth2Tex;
-        readonly RTHandle m_LowDepth3Tex;
-        readonly RTHandle m_LowDepth4Tex;
-
-        readonly RTHandle m_TiledDepth1Tex;
-        readonly RTHandle m_TiledDepth2Tex;
-        readonly RTHandle m_TiledDepth3Tex;
-        readonly RTHandle m_TiledDepth4Tex;
-
-        readonly RTHandle m_Occlusion1Tex;
-        readonly RTHandle m_Occlusion2Tex;
-        readonly RTHandle m_Occlusion3Tex;
-        readonly RTHandle m_Occlusion4Tex;
-
-        readonly RTHandle m_Combined1Tex;
-        readonly RTHandle m_Combined2Tex;
-        readonly RTHandle m_Combined3Tex;
-
-        readonly ScaleFunc[] m_ScaleFunctors;
-
         // MSAA-specifics
-        readonly RTHandle m_MultiAmbientOcclusionTex;
         readonly MaterialPropertyBlock m_ResolvePropertyBlock;
         readonly Material m_ResolveMaterial;
 
@@ -100,76 +74,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             bool supportMSAA = hdAsset.renderPipelineSettings.supportMSAA;
 
-            // Destination targets
-            m_AmbientOcclusionTex = RTHandles.Alloc(Vector2.one,
-                filterMode: FilterMode.Bilinear,
-                colorFormat: GraphicsFormat.R8_UNorm,
-                enableRandomWrite: true,
-                xrInstancing: true,
-                useDynamicScale: true,
-                name: "Ambient Occlusion",
-                memoryTag: RTManager.k_RenderLoopMemoryTag
-            );
-
             if (supportMSAA)
             {
-                m_MultiAmbientOcclusionTex = RTHandles.Alloc(Vector2.one,
-                    filterMode: FilterMode.Bilinear,
-                    colorFormat: GraphicsFormat.R8G8_UNorm,
-                    enableRandomWrite: true,
-                    xrInstancing: true,
-                    useDynamicScale: true,
-                    name: "Ambient Occlusion MSAA",
-                    memoryTag: RTManager.k_RenderLoopMemoryTag
-                );
-
                 m_ResolveMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.aoResolvePS);
                 m_ResolvePropertyBlock = new MaterialPropertyBlock();
             }
-
-            // Prepare scale functors
-            m_ScaleFunctors = new ScaleFunc[(int)MipLevel.Count];
-            m_ScaleFunctors[0] = size => size; // 0 is original size (mip0)
-
-            for (int i = 1; i < m_ScaleFunctors.Length; i++)
-            {
-                int mult = i;
-                m_ScaleFunctors[i] = size =>
-                {
-                    int div = 1 << mult;
-                    return new Vector2Int(
-                        (size.x + (div - 1)) / div,
-                        (size.y + (div - 1)) / div
-                    );
-                };
-            }
-
-            var fmtFP16 = supportMSAA ? GraphicsFormat.R16G16_SFloat  : GraphicsFormat.R16_SFloat;
-            var fmtFP32 = supportMSAA ? GraphicsFormat.R32G32_SFloat : GraphicsFormat.R32_SFloat;
-            var fmtFX8  = supportMSAA ? GraphicsFormat.R8G8_UNorm    : GraphicsFormat.R8_UNorm;
-
-            // All of these are pre-allocated to 1x1 and will be automatically scaled properly by
-            // the internal RTHandle system
-            Alloc(out m_LinearDepthTex, MipLevel.Original, fmtFP16, true, "AOLinearDepth");
-
-            Alloc(out m_LowDepth1Tex, MipLevel.L1, fmtFP32, true, "AOLowDepth1");
-            Alloc(out m_LowDepth2Tex, MipLevel.L2, fmtFP32, true, "AOLowDepth2");
-            Alloc(out m_LowDepth3Tex, MipLevel.L3, fmtFP32, true, "AOLowDepth3");
-            Alloc(out m_LowDepth4Tex, MipLevel.L4, fmtFP32, true, "AOLowDepth4");
-
-            AllocArray(out m_TiledDepth1Tex, MipLevel.L3, fmtFP16, true, "AOTiledDepth1");
-            AllocArray(out m_TiledDepth2Tex, MipLevel.L4, fmtFP16, true, "AOTiledDepth2");
-            AllocArray(out m_TiledDepth3Tex, MipLevel.L5, fmtFP16, true, "AOTiledDepth3");
-            AllocArray(out m_TiledDepth4Tex, MipLevel.L6, fmtFP16, true, "AOTiledDepth4");
-
-            Alloc(out m_Occlusion1Tex, MipLevel.L1, fmtFX8, true, "AOOcclusion1");
-            Alloc(out m_Occlusion2Tex, MipLevel.L2, fmtFX8, true, "AOOcclusion2");
-            Alloc(out m_Occlusion3Tex, MipLevel.L3, fmtFX8, true, "AOOcclusion3");
-            Alloc(out m_Occlusion4Tex, MipLevel.L4, fmtFX8, true, "AOOcclusion4");
-
-            Alloc(out m_Combined1Tex, MipLevel.L1, fmtFX8, true, "AOCombined1");
-            Alloc(out m_Combined2Tex, MipLevel.L2, fmtFX8, true, "AOCombined2");
-            Alloc(out m_Combined3Tex, MipLevel.L3, fmtFX8, true, "AOCombined3");
         }
 
         public void Cleanup()
@@ -179,30 +88,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #endif
 
             CoreUtils.Destroy(m_ResolveMaterial);
-
-            RTHandles.Release(m_AmbientOcclusionTex);
-            RTHandles.Release(m_MultiAmbientOcclusionTex);
-
-            RTHandles.Release(m_LinearDepthTex);
-
-            RTHandles.Release(m_LowDepth1Tex);
-            RTHandles.Release(m_LowDepth2Tex);
-            RTHandles.Release(m_LowDepth3Tex);
-            RTHandles.Release(m_LowDepth4Tex);
-
-            RTHandles.Release(m_TiledDepth1Tex);
-            RTHandles.Release(m_TiledDepth2Tex);
-            RTHandles.Release(m_TiledDepth3Tex);
-            RTHandles.Release(m_TiledDepth4Tex);
-
-            RTHandles.Release(m_Occlusion1Tex);
-            RTHandles.Release(m_Occlusion2Tex);
-            RTHandles.Release(m_Occlusion3Tex);
-            RTHandles.Release(m_Occlusion4Tex);
-
-            RTHandles.Release(m_Combined1Tex);
-            RTHandles.Release(m_Combined2Tex);
-            RTHandles.Release(m_Combined3Tex);
         }
 
 #if ENABLE_RAYTRACING
@@ -264,27 +149,50 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 if (msaa)
                 {
                     depthMap = rtManager.GetRenderTarget(RT.DepthValuesMSAA);
-                    destination = m_MultiAmbientOcclusionTex;
+                    destination = rtManager.GetRenderTarget(RT.AmbientOcclusionMSAA);
                 }
                 else
                 {
                     depthMap = rtManager.GetDepthTexture();
-                    destination = m_AmbientOcclusionTex;
+                    destination = rtManager.GetRenderTarget(RT.AmbientOcclusion);
                 }
 
                 // Render logic
-                PushDownsampleCommands(cmd, depthMap, msaa);
+                PushDownsampleCommands(cmd, depthMap, msaa, rtManager);
 
                 float tanHalfFovH = CalculateTanHalfFovHeight(camera);
-                PushRenderCommands(cmd, viewport, m_TiledDepth1Tex, m_Occlusion1Tex, settings, GetSizeArray(MipLevel.L3), tanHalfFovH, msaa);
-                PushRenderCommands(cmd, viewport, m_TiledDepth2Tex, m_Occlusion2Tex, settings, GetSizeArray(MipLevel.L4), tanHalfFovH, msaa);
-                PushRenderCommands(cmd, viewport, m_TiledDepth3Tex, m_Occlusion3Tex, settings, GetSizeArray(MipLevel.L5), tanHalfFovH, msaa);
-                PushRenderCommands(cmd, viewport, m_TiledDepth4Tex, m_Occlusion4Tex, settings, GetSizeArray(MipLevel.L6), tanHalfFovH, msaa);
 
-                PushUpsampleCommands(cmd, viewport, m_LowDepth4Tex, m_Occlusion4Tex, m_LowDepth3Tex,   m_Occlusion3Tex, m_Combined3Tex, settings, GetSize(MipLevel.L4), GetSize(MipLevel.L3),       msaa);
-                PushUpsampleCommands(cmd, viewport, m_LowDepth3Tex, m_Combined3Tex,  m_LowDepth2Tex,   m_Occlusion2Tex, m_Combined2Tex, settings, GetSize(MipLevel.L3), GetSize(MipLevel.L2),       msaa);
-                PushUpsampleCommands(cmd, viewport, m_LowDepth2Tex, m_Combined2Tex,  m_LowDepth1Tex,   m_Occlusion1Tex, m_Combined1Tex, settings, GetSize(MipLevel.L2), GetSize(MipLevel.L1),       msaa);
-                PushUpsampleCommands(cmd, viewport, m_LowDepth1Tex, m_Combined1Tex,  m_LinearDepthTex, null,            destination,    settings, GetSize(MipLevel.L1), GetSize(MipLevel.Original), msaa);
+                var tileDepth1 = rtManager.GetRenderTarget(RT.AOTiledDepth1);
+                var tileDepth2 = rtManager.GetRenderTarget(RT.AOTiledDepth2);
+                var tileDepth3 = rtManager.GetRenderTarget(RT.AOTiledDepth3);
+                var tileDepth4 = rtManager.GetRenderTarget(RT.AOTiledDepth4);
+
+                var occlusion1 = rtManager.GetRenderTarget(RT.AOOcclusion1);
+                var occlusion2 = rtManager.GetRenderTarget(RT.AOOcclusion2);
+                var occlusion3 = rtManager.GetRenderTarget(RT.AOOcclusion3);
+                var occlusion4 = rtManager.GetRenderTarget(RT.AOOcclusion4);
+
+                var lowDepth1 = rtManager.GetRenderTarget(RT.AOLowDepth1);
+                var lowDepth2 = rtManager.GetRenderTarget(RT.AOLowDepth2);
+                var lowDepth3 = rtManager.GetRenderTarget(RT.AOLowDepth3);
+                var lowDepth4 = rtManager.GetRenderTarget(RT.AOLowDepth4);
+
+                var combined1 = rtManager.GetRenderTarget(RT.AOCombined1);
+                var combined2 = rtManager.GetRenderTarget(RT.AOCombined2);
+                var combined3 = rtManager.GetRenderTarget(RT.AOCombined3);
+
+                var linearDepth = rtManager.GetRenderTarget(RT.AOLinearDepth);
+
+
+                PushRenderCommands(cmd, viewport, tileDepth1, occlusion1, settings, GetSizeArray(MipLevel.L3), tanHalfFovH, msaa);
+                PushRenderCommands(cmd, viewport, tileDepth2, occlusion2, settings, GetSizeArray(MipLevel.L4), tanHalfFovH, msaa);
+                PushRenderCommands(cmd, viewport, tileDepth3, occlusion3, settings, GetSizeArray(MipLevel.L5), tanHalfFovH, msaa);
+                PushRenderCommands(cmd, viewport, tileDepth4, occlusion4, settings, GetSizeArray(MipLevel.L6), tanHalfFovH, msaa);
+
+                PushUpsampleCommands(cmd, viewport, lowDepth4, occlusion4, lowDepth3, occlusion3, combined3, settings, GetSize(MipLevel.L4), GetSize(MipLevel.L3), msaa);
+                PushUpsampleCommands(cmd, viewport, lowDepth3, combined3, lowDepth2, occlusion2, combined2, settings, GetSize(MipLevel.L3), GetSize(MipLevel.L2), msaa);
+                PushUpsampleCommands(cmd, viewport, lowDepth2, combined2, lowDepth1, occlusion1, combined1, settings, GetSize(MipLevel.L2), GetSize(MipLevel.L1), msaa);
+                PushUpsampleCommands(cmd, viewport, lowDepth1, combined1, linearDepth, null, destination, settings, GetSize(MipLevel.L1), GetSize(MipLevel.Original), msaa);
             }
         }
 
@@ -293,11 +201,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Grab current settings
             var settings = VolumeManager.instance.stack.GetComponent<AmbientOcclusion>();
 
+            // TODO: All the pushdebug stuff should be centralized somewhere and we should not need to get hdrp like this
+            HDRenderPipeline hdrp = RenderPipelineManager.currentPipeline as HDRenderPipeline;
+
             if (!IsActive(camera, settings))
             {
                 // No AO applied - neutral is black, see the comment in the shaders
                 cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, Texture2D.blackTexture);
                 cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, Vector4.zero);
+
+                if (hdrp.debugDisplaySettings.data.fullScreenDebugMode == FullScreenDebugMode.SSAO)
+                {
+                    // Clear anyway if debug is enabled otherwise we get garbage on screen
+                    HDUtils.SetRenderTarget(cmd, camera, rtManager.GetRenderTarget(RT.AmbientOcclusion), clearFlag: ClearFlag.Color, clearColor: Color.black);
+                    hdrp.PushFullScreenDebugTexture(camera, cmd, rtManager.GetRenderTarget(RT.AmbientOcclusion), FullScreenDebugMode.SSAO);
+                }
+
                 return;
             }
 
@@ -306,56 +225,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 using (new ProfilingSample(cmd, "Resolve AO Buffer", CustomSamplerId.ResolveSSAO.GetSampler()))
                 {
-                    HDUtils.SetRenderTarget(cmd, camera, m_AmbientOcclusionTex);
+                    HDUtils.SetRenderTarget(cmd, camera, rtManager.GetRenderTarget(RT.AmbientOcclusion));
                     m_ResolvePropertyBlock.SetTexture(HDShaderIDs._DepthValuesTexture, rtManager.GetRenderTarget(RT.DepthValuesMSAA));
-                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._MultiAmbientOcclusionTexture, m_MultiAmbientOcclusionTex);
+                    m_ResolvePropertyBlock.SetTexture(HDShaderIDs._MultiAmbientOcclusionTexture, rtManager.GetRenderTarget(RT.AmbientOcclusionMSAA));
                     cmd.DrawProcedural(Matrix4x4.identity, m_ResolveMaterial, 0, MeshTopology.Triangles, 3, 1, m_ResolvePropertyBlock);
                 }
             }
 
-            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, m_AmbientOcclusionTex);
+            cmd.SetGlobalTexture(HDShaderIDs._AmbientOcclusionTexture, rtManager.GetRenderTarget(RT.AmbientOcclusion));
             cmd.SetGlobalVector(HDShaderIDs._AmbientOcclusionParam, new Vector4(0f, 0f, 0f, settings.directLightingStrength.value));
 
-            // TODO: All the pushdebug stuff should be centralized somewhere
-            (RenderPipelineManager.currentPipeline as HDRenderPipeline).PushFullScreenDebugTexture(camera, cmd, m_AmbientOcclusionTex, FullScreenDebugMode.SSAO);
+            hdrp.PushFullScreenDebugTexture(camera, cmd, rtManager.GetRenderTarget(RT.AmbientOcclusion), FullScreenDebugMode.SSAO);
         }
 
-        void Alloc(out RTHandle rt, MipLevel size, GraphicsFormat format, bool uav, string name)
-        {
-            rt = RTHandles.Alloc(
-                scaleFunc: m_ScaleFunctors[(int)size],
-                dimension: TextureDimension.Tex2D,
-                colorFormat: format,
-                depthBufferBits: DepthBits.None,
-                autoGenerateMips: false,
-                enableMSAA: false,
-                useDynamicScale: true,
-                enableRandomWrite: uav,
-                filterMode: FilterMode.Point,
-                xrInstancing: true,
-                name: name,
-                memoryTag: RTManager.k_RenderLoopMemoryTag
-            );
-        }
-
-        void AllocArray(out RTHandle rt, MipLevel size, GraphicsFormat format, bool uav, string name)
-        {
-            rt = RTHandles.Alloc(
-                scaleFunc: m_ScaleFunctors[(int)size],
-                dimension: TextureDimension.Tex2DArray,
-                colorFormat: format,
-                depthBufferBits: DepthBits.None,
-                slices: 16, // XRTODO: multiply by eyeCount and handle indexing in shader
-                autoGenerateMips: false,
-                enableMSAA: false,
-                useDynamicScale: true,
-                enableRandomWrite: uav,
-                filterMode: FilterMode.Point,
-                xrInstancing: true,
-                name: name,
-                memoryTag: RTManager.k_RenderLoopMemoryTag
-            );
-        }
 
         float CalculateTanHalfFovHeight(HDCamera camera)
         {
@@ -372,7 +254,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return new Vector3(m_Widths[(int)mip], m_Heights[(int)mip], 16);
         }
 
-        void PushDownsampleCommands(CommandBuffer cmd, RTHandle depthMap, bool msaa)
+        void PushDownsampleCommands(CommandBuffer cmd, RTHandle depthMap, bool msaa, RTManager rtManager)
         {
             var kernelName = msaa ? "KMain_MSAA" : "KMain";
 
@@ -380,11 +262,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             var cs = m_Resources.shaders.aoDownsample1CS;
             int kernel = cs.FindKernel(kernelName);
 
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._LinearZ, m_LinearDepthTex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS2x, m_LowDepth1Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, m_LowDepth2Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS2xAtlas, m_TiledDepth1Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4xAtlas, m_TiledDepth2Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._LinearZ, rtManager.GetRenderTarget(RT.AOLinearDepth));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS2x, rtManager.GetRenderTarget(RT.AOLowDepth1));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, rtManager.GetRenderTarget(RT.AOLowDepth2));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS2xAtlas, rtManager.GetRenderTarget(RT.AOTiledDepth1));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4xAtlas, rtManager.GetRenderTarget(RT.AOTiledDepth2));
             cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._Depth, depthMap, 0);
 
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L4], m_Heights[(int)MipLevel.L4], 1);
@@ -393,11 +275,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cs = m_Resources.shaders.aoDownsample2CS;
             kernel = cs.FindKernel(kernelName);
 
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, m_LowDepth2Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS8x, m_LowDepth3Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS16x, m_LowDepth4Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS8xAtlas, m_TiledDepth3Tex);
-            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS16xAtlas, m_TiledDepth4Tex);
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS4x, rtManager.GetRenderTarget(RT.AOLowDepth2));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS8x, rtManager.GetRenderTarget(RT.AOLowDepth3));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS16x, rtManager.GetRenderTarget(RT.AOLowDepth4));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS8xAtlas, rtManager.GetRenderTarget(RT.AOTiledDepth3));
+            cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._DS16xAtlas, rtManager.GetRenderTarget(RT.AOTiledDepth4));
 
             cmd.DispatchCompute(cs, kernel, m_Widths[(int)MipLevel.L6], m_Heights[(int)MipLevel.L6], 1);
         }

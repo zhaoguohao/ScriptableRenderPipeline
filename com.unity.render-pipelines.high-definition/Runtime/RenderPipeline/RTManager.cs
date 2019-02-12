@@ -45,6 +45,24 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         DBuffer3,
         DBufferHTile,
 
+        AmbientOcclusion,
+        AOLinearDepth,
+        AOLowDepth1,
+        AOLowDepth2,
+        AOLowDepth3,
+        AOLowDepth4,
+        AOTiledDepth1,
+        AOTiledDepth2,
+        AOTiledDepth3,
+        AOTiledDepth4,
+        AOOcclusion1,
+        AOOcclusion2,
+        AOOcclusion3,
+        AOOcclusion4,
+        AOCombined1,
+        AOCombined2,
+        AOCombined3,
+
         // MSAA specific
         DepthStencilMSAA,
         DepthValuesMSAA,
@@ -57,6 +75,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         SSSMSAA1,
         SSSMSAA2,
         SSSMSAA3,
+        AmbientOcclusionMSAA,
 
         // Debug specific
         DebugColorPicker,
@@ -100,6 +119,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RenderTargetIdentifier[] m_ResolveMSAADepthNormalRTI;
         RenderTargetIdentifier[] m_MSAAPrepassRTI;
         RenderTargetIdentifier[] m_MSAAVelocityPassRTI;
+
+        ScaleFunc[] m_AOScaleFunctors;
 
         // Public interface
         public void Initialize(HDRenderPipelineAsset hdrpAsset)
@@ -369,6 +390,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // We need to allocate this texture as long as msaa is supported because on both mode, one of the cameras can be forward only using the framesettings
                 m_RenderTargets[(int)RT.NormalMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R8G8B8A8_UNorm, enableMSAA: true, bindTextureMS: true, xrInstancing: true, useDynamicScale: true, name: "NormalBufferMSAA", memoryTag: k_RenderLoopMemoryTag);
 
+                m_RenderTargets[(int)RT.AmbientOcclusionMSAA] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: GraphicsFormat.R8G8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "Ambient Occlusion MSAA", memoryTag: RTManager.k_RenderLoopMemoryTag);
+
                 m_ResolveMSAADepthNormalRTI = new RenderTargetIdentifier[2];
                 m_ResolveMSAADepthNormalRTI[0] = GetRenderTarget(RT.DepthValuesMSAA);
                 m_ResolveMSAADepthNormalRTI[1] = GetRenderTarget(RT.Normal);
@@ -384,6 +407,56 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
+        protected virtual void InitializeAOBuffers(RenderPipelineSettings settings)
+        {
+            m_RenderTargets[(int)RT.AmbientOcclusion] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Bilinear, colorFormat: GraphicsFormat.R8_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "Ambient Occlusion", memoryTag: RTManager.k_RenderLoopMemoryTag);
+
+            // Prepare scale functors
+            m_AOScaleFunctors = new ScaleFunc[AmbientOcclusionSystem.mipCount];
+            m_AOScaleFunctors[0] = size => size; // 0 is original size (mip0)
+
+            for (int i = 1; i < m_AOScaleFunctors.Length; i++)
+            {
+                int mult = i;
+                m_AOScaleFunctors[i] = size =>
+                {
+                    int div = 1 << mult;
+                    return new Vector2Int(
+                        (size.x + (div - 1)) / div,
+                        (size.y + (div - 1)) / div
+                    );
+                };
+            }
+
+            bool supportMSAA = settings.supportMSAA;
+
+            var fmtFP16 = supportMSAA ? GraphicsFormat.R16G16_SFloat : GraphicsFormat.R16_SFloat;
+            var fmtFP32 = supportMSAA ? GraphicsFormat.R32G32_SFloat : GraphicsFormat.R32_SFloat;
+            var fmtFX8 = supportMSAA ? GraphicsFormat.R8G8_UNorm : GraphicsFormat.R8_UNorm;
+
+            m_RenderTargets[(int)RT.AOLinearDepth] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[0], colorFormat: fmtFP16, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOLinearDepth", memoryTag: RTManager.k_RenderLoopMemoryTag);
+
+            m_RenderTargets[(int)RT.AOLowDepth1] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[1], colorFormat: fmtFP32, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOLowDepth1", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOLowDepth2] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[2], colorFormat: fmtFP32, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOLowDepth2", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOLowDepth3] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[3], colorFormat: fmtFP32, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOLowDepth3", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOLowDepth4] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[4], colorFormat: fmtFP32, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOLowDepth4", memoryTag: RTManager.k_RenderLoopMemoryTag);
+
+            // XRTODO: multiply slices by eyeCount and handle indexing in shader
+            m_RenderTargets[(int)RT.AOTiledDepth1] = RTHandles.Alloc(dimension: TextureDimension.Tex2DArray, slices: 16, scaleFunc: m_AOScaleFunctors[3], colorFormat: fmtFP16, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOTiledDepth1", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOTiledDepth2] = RTHandles.Alloc(dimension: TextureDimension.Tex2DArray, slices: 16, scaleFunc: m_AOScaleFunctors[4], colorFormat: fmtFP16, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOTiledDepth2", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOTiledDepth3] = RTHandles.Alloc(dimension: TextureDimension.Tex2DArray, slices: 16, scaleFunc: m_AOScaleFunctors[5], colorFormat: fmtFP16, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOTiledDepth3", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOTiledDepth4] = RTHandles.Alloc(dimension: TextureDimension.Tex2DArray, slices: 16, scaleFunc: m_AOScaleFunctors[6], colorFormat: fmtFP16, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOTiledDepth4", memoryTag: RTManager.k_RenderLoopMemoryTag);
+
+            m_RenderTargets[(int)RT.AOOcclusion1] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[1], colorFormat: fmtFX8, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOOcclusion1", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOOcclusion2] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[2], colorFormat: fmtFX8, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOOcclusion2", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOOcclusion3] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[3], colorFormat: fmtFX8, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOOcclusion3", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOOcclusion4] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[4], colorFormat: fmtFX8, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOOcclusion4", memoryTag: RTManager.k_RenderLoopMemoryTag);
+
+            m_RenderTargets[(int)RT.AOCombined1] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[1], colorFormat: fmtFX8, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOCombined1", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOCombined2] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[2], colorFormat: fmtFX8, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOCombined2", memoryTag: RTManager.k_RenderLoopMemoryTag);
+            m_RenderTargets[(int)RT.AOCombined3] = RTHandles.Alloc(scaleFunc: m_AOScaleFunctors[3], colorFormat: fmtFX8, useDynamicScale: true, enableRandomWrite: true, filterMode: FilterMode.Point, xrInstancing: true, name: "AOCombined3", memoryTag: RTManager.k_RenderLoopMemoryTag);
+        }
+
         protected virtual void InitializeDebugBuffers(RenderPipelineSettings settings)
         {
             if (Debug.isDebugBuild)
@@ -396,7 +469,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // This target is only used in Dev builds as an intermediate destination for post process and where debug rendering will be done.
                 m_RenderTargets[(int)RT.IntermediateAfterPostProcess] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "AfterPostProcess", memoryTag: k_DebugMemoryTag); // Needs to be FP16 because output target might be HDR
 
-                m_RenderTargets[(int)RT.DebugLightVolumeCount] = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R32_SFloat, enableRandomWrite: false, useMipMap: false, name: "LightVolumeCount", memoryTag: k_DebugMemoryTag);
+                ShareRT(RT.DebugLightVolumeCount, RT.AOLinearDepth);
+
                 // DebugColorPicker and Color are always already used when doing Light Volume Debug (which is done at the very end of the frame with other overlays)
                 ShareRT(RT.DebugLightVolumeAccumulation, RT.DebugColorPicker);
                 ShareRT(RT.DebugLightVolume, RT.Color);
@@ -422,8 +496,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             InitializeGBuffer(settings);
             InitializeSSSBuffers(settings);
             InitializeSSRBuffers(settings);
-            InitializeDebugBuffers(settings);
             InitializeMSAABuffers(settings);
+            InitializeAOBuffers(settings);
+            InitializeDebugBuffers(settings);
 
             InitializeMRTHandles();
 
@@ -444,7 +519,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void ShareRT(RT newAlias, RT originalTexture)
         {
-            Debug.Assert(m_RenderTargets[(int)originalTexture] != null);
+            if (m_RenderTargets[(int)originalTexture] == null)
+            {
+                Debug.LogError(string.Format("Failed sharing {0} render texture with {1}. Original texture is null. Check initialization order.", originalTexture, newAlias));
+            }
 
             m_RenderTargetIsShared[(int)newAlias] = true;
             m_RenderTargets[(int)newAlias] = m_RenderTargets[(int)originalTexture];
