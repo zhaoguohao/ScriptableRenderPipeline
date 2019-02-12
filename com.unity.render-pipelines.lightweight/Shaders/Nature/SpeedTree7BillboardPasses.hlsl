@@ -4,7 +4,7 @@
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Lighting.hlsl"
 #include "SpeedTree7CommonPasses.hlsl"
 
-void InitializeCommonData(inout SpeedTreeVertexInput input, out half2 outUV, out half outHueVariation)
+void InitializeData(inout SpeedTreeVertexInput input, out half2 outUV, out half outHueVariation)
 {
     // assume no scaling & rotation
     float3 worldPos = input.vertex.xyz + float3(UNITY_MATRIX_M[0].w, UNITY_MATRIX_M[1].w, UNITY_MATRIX_M[2].w);
@@ -61,8 +61,8 @@ SpeedTreeVertexOutput SpeedTree7Vert(SpeedTreeVertexInput input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-	// handle speedtree wind and lod
-    InitializeCommonData(input, output.uvHueVariation.xy, output.uvHueVariation.z);
+    // handle speedtree wind and lod
+    InitializeData(input, output.uvHueVariation.xy, output.uvHueVariation.z);
     
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
     half3 normalWS = input.normal; // Already calculated in world space. Can probably get rid of the world space transform in GetVertexPositionInputs too.
@@ -95,7 +95,7 @@ SpeedTreeVertexOutput SpeedTree7Vert(SpeedTreeVertexInput input)
     output.shadowCoord = GetShadowCoord(vertexInput);
 #endif
 
-	return output;
+    return output;
 }
 
 SpeedTreeVertexDepthOutput SpeedTree7VertDepth(SpeedTreeVertexInput input)
@@ -106,7 +106,7 @@ SpeedTreeVertexDepthOutput SpeedTree7VertDepth(SpeedTreeVertexInput input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     // handle speedtree wind and lod
-    InitializeCommonData(input, output.uvHueVariation.xy, output.uvHueVariation.z);
+    InitializeData(input, output.uvHueVariation.xy, output.uvHueVariation.z);
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
     
 #ifdef SHADOW_CASTER

@@ -164,7 +164,7 @@ half4 SpeedTree7FragDepth(SpeedTreeVertexDepthOutput input) : SV_Target
     #if defined(SCENESELECTIONPASS)
         // We use depth prepass for scene selection in the editor, this code allow to output the outline correctly
         return half4(_ObjectId, _PassValue, 1.0, 1.0);
-    #else    
+    #else
         return half4(0, 0, 0, 0);
     #endif
 }

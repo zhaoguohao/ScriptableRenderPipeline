@@ -35,18 +35,18 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             "IgnoreProjector"="True"
             "RenderType"="TransparentCutout"
             "DisableBatching"="LODFading"
-			"RenderPipeline" = "LightweightPipeline"
+            "RenderPipeline" = "LightweightPipeline"
         }
         LOD 400
         Cull [_TwoSided]
 
-		Pass
+        Pass
         {
             Name "ForwardLit"
             Tags { "LightMode" = "LightweightForward" }
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
 
             #pragma vertex SpeedTree8Vert
             #pragma fragment SpeedTree8Frag
@@ -87,7 +87,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
 
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
@@ -117,8 +117,8 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             Tags{"LightMode" = "ShadowCaster"}
 
             HLSLPROGRAM
-            #pragma target 3.0
-
+            #pragma target 3.5
+            
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
 
@@ -149,7 +149,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
 
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
@@ -177,14 +177,14 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
     {
         Tags
         {
-            "Queue" = "AlphaTest"
-            "IgnoreProjector" = "True"
-            "RenderType" = "TransparentCutout"
-            "DisableBatching" = "LODFading"
+            "Queue"="AlphaTest"
+            "IgnoreProjector"="True"
+            "RenderType"="TransparentCutout"
+            "DisableBatching"="LODFading"
             "RenderPipeline" = "LightweightPipeline"
         }
         LOD 400
-        Cull[_TwoSided]
+        Cull [_TwoSided]
 
         Pass
         {
@@ -192,10 +192,10 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             Tags { "LightMode" = "LightweightForward" }
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
 
             #pragma vertex SpeedTree8Vert
             #pragma fragment SpeedTree8Frag
@@ -208,8 +208,15 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
             #pragma multi_compile_fog
 
+            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
             #pragma shader_feature_local EFFECT_BILLBOARD
+            #pragma shader_feature_local EFFECT_HUE_VARIATION
+            #pragma shader_feature_local EFFECT_SUBSURFACE
+            #pragma shader_feature_local EFFECT_BUMP
             #pragma shader_feature_local EFFECT_EXTRA_TEX
+
+            #define ENABLE_WIND
+            #define EFFECT_BACKSIDE_NORMALS
 
             #include "SpeedTree8Input.hlsl"
             #include "SpeedTree8Passes.hlsl"
@@ -225,27 +232,26 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             ColorMask 0
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
 
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
 
-            #pragma multi_compile_instancing
-            #pragma instancing_options assumeuniformscaling maxcount:50
-
+            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
             #pragma shader_feature_local EFFECT_BILLBOARD
 
+            #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SCENESELECTIONPASS
 
             #include "SpeedTree8Input.hlsl"
             #include "SpeedTree8Passes.hlsl"
-        
+
             ENDHLSL
         }
 
@@ -255,27 +261,25 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             Tags{"LightMode" = "ShadowCaster"}
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
 
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
 
-            #pragma multi_compile_instancing
-            #pragma instancing_options assumeuniformscaling maxcount:50
-
+            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
             #pragma shader_feature_local EFFECT_BILLBOARD
 
+            #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SHADOW_CASTER
 
             #include "SpeedTree8Input.hlsl"
             #include "SpeedTree8Passes.hlsl"
-
             ENDHLSL
         }
 
@@ -284,24 +288,24 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             Name "DepthOnly"
             Tags{"LightMode" = "DepthOnly"}
 
+            ZWrite On
             ColorMask 0
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
 
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
 
-            #pragma multi_compile_instancing
-            #pragma instancing_options assumeuniformscaling maxcount:50
-
+            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
             #pragma shader_feature_local EFFECT_BILLBOARD
 
+            #define ENABLE_WIND
             #define DEPTH_ONLY
 
             #include "SpeedTree8Input.hlsl"
@@ -311,6 +315,5 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
         }
     }
 
-    FallBack "Lightweight Render Pipeline/Simple Lit"
     CustomEditor "SpeedTree8ShaderGUI"
 }

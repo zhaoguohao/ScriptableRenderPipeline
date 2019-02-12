@@ -4,7 +4,7 @@
 #include "Packages/com.unity.render-pipelines.lightweight/ShaderLibrary/Lighting.hlsl"
 #include "SpeedTree7CommonPasses.hlsl"
 
-void InitializeCommonData(inout SpeedTreeVertexInput input, float lodValue)
+void InitializeData(inout SpeedTreeVertexInput input, float lodValue)
 {
     float3 finalPosition = input.vertex.xyz;
 
@@ -105,7 +105,7 @@ SpeedTreeVertexOutput SpeedTree7Vert(SpeedTreeVertexInput input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     // handle speedtree wind and lod
-    InitializeCommonData(input, unity_LODFade.x);
+    InitializeData(input, unity_LODFade.x);
     output.uvHueVariation.xy = input.texcoord.xy;
     
     #ifdef VERTEX_COLOR
@@ -170,7 +170,7 @@ SpeedTreeVertexDepthOutput SpeedTree7VertDepth(SpeedTreeVertexInput input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     // handle speedtree wind and lod
-    InitializeCommonData(input, unity_LODFade.x);
+    InitializeData(input, unity_LODFade.x);
     output.uvHueVariation.xy = input.texcoord.xy;
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
 

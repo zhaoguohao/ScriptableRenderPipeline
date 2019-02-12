@@ -31,7 +31,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             Tags { "LightMode" = "LightweightForward" }
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
 
             #pragma vertex SpeedTree7Vert
             #pragma fragment SpeedTree7Frag
@@ -68,7 +68,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
@@ -93,7 +93,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             Tags{"LightMode" = "ShadowCaster"}
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
@@ -122,7 +122,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.0
+            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
@@ -148,14 +148,14 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
     {
         Tags
         {
-            "Queue" = "AlphaTest"
+            "Queue" = "Geometry"
             "IgnoreProjector" = "True"
-            "RenderType" = "TransparentCutout"
+            "RenderType" = "Opaque"
             "DisableBatching" = "LODFading"
             "RenderPipeline" = "LightweightPipeline"
         }
         LOD 400
-        Cull[_TwoSided]
+        Cull [_Cull]
 
         Pass
         {
@@ -163,10 +163,10 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             Tags { "LightMode" = "LightweightForward" }
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
 
             #pragma vertex SpeedTree7Vert
             #pragma fragment SpeedTree7Frag
@@ -179,9 +179,11 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
             #pragma multi_compile_fog
 
-            #pragma multi_compile_instancing
-            #pragma instancing_options assumeuniformscaling maxcount:50
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
+            #pragma shader_feature_local EFFECT_BUMP
+            #pragma shader_feature_local EFFECT_HUE_VARIATION
 
+            #define ENABLE_WIND
             #define VERTEX_COLOR
 
             #include "SpeedTree7Input.hlsl"
@@ -198,17 +200,17 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             ColorMask 0
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
-            #pragma multi_compile_instancing
-            #pragma instancing_options assumeuniformscaling maxcount:50
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
 
+            #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SCENESELECTIONPASS
 
@@ -223,19 +225,19 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             Tags{"LightMode" = "ShadowCaster"}
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
-            #pragma multi_compile_instancing
-            #pragma instancing_options assumeuniformscaling maxcount:50
+            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
 
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
+
+            #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SHADOW_CASTER
 
@@ -252,19 +254,19 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             ColorMask 0
 
             HLSLPROGRAM
+            #pragma target 2.0
             // Required to compile gles 2.0 with standard srp library
             #pragma prefer_hlslcc gles
             #pragma exclude_renderers d3d11_9x
-            #pragma target 2.0
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
 
-            #pragma multi_compile_instancing
-            #pragma instancing_options assumeuniformscaling maxcount:50
+            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
 
+            #define ENABLE_WIND
             #define DEPTH_ONLY
 
             #include "SpeedTree7Input.hlsl"
@@ -275,6 +277,5 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
     }
 
     Dependency "BillboardShader" = "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
-    FallBack "Lightweight Render Pipeline/Simple Lit"
     CustomEditor "SpeedTreeMaterialInspector"
 }

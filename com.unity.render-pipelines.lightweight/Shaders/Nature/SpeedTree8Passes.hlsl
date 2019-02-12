@@ -7,19 +7,19 @@ struct SpeedTreeVertexInput
 {
     float4 vertex       : POSITION;
     float3 normal       : NORMAL;
-	float4 tangent      : TANGENT;
+    float4 tangent      : TANGENT;
     float4 texcoord     : TEXCOORD0;
-	float4 texcoord1    : TEXCOORD1;
-	float4 texcoord2    : TEXCOORD2;
-	float4 texcoord3    : TEXCOORD3;
+    float4 texcoord1    : TEXCOORD1;
+    float4 texcoord2    : TEXCOORD2;
+    float4 texcoord3    : TEXCOORD3;
     float4 color        : COLOR;
-	
+
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
 struct SpeedTreeVertexOutput
 {
-    float2 uv                       : TEXCOORD0;
+    half2 uv                        : TEXCOORD0;
     half4 color                     : TEXCOORD1;
     
     half4 fogFactorAndVertexLight   : TEXCOORD2;    // x: fogFactor, yzw: vertex light
@@ -60,7 +60,7 @@ struct SpeedTreeFragmentInput
 #endif
 };
 
-void InitializeCommonData(inout SpeedTreeVertexInput input, float lodValue)
+void InitializeData(inout SpeedTreeVertexInput input, float lodValue)
 {
     // smooth LOD
     #if defined(LOD_FADE_PERCENTAGE) && !defined(EFFECT_BILLBOARD)
@@ -192,8 +192,8 @@ SpeedTreeVertexOutput SpeedTree8Vert(SpeedTreeVertexInput input)
     UNITY_TRANSFER_INSTANCE_ID(input, output);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-	// handle speedtree wind and lod
-	InitializeCommonData(input, unity_LODFade.x);
+    // handle speedtree wind and lod
+    InitializeData(input, unity_LODFade.x);
     
     output.uv = input.texcoord.xy;
     output.color = input.color;
@@ -205,8 +205,8 @@ SpeedTreeVertexOutput SpeedTree8Vert(SpeedTreeVertexInput input)
         float hueVariationAmount = frac(treePos.x + treePos.y + treePos.z);
         output.color.g = saturate(hueVariationAmount * _HueVariationColor.a);
     #endif
-	
-	VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
+    
+    VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);
     half3 normalWS = TransformObjectToWorldNormal(input.normal);
     
     half3 vertexLight = VertexLighting(vertexInput.positionWS, normalWS);
@@ -231,13 +231,13 @@ SpeedTreeVertexOutput SpeedTree8Vert(SpeedTreeVertexInput input)
     #endif
 
     #ifdef _MAIN_LIGHT_SHADOWS
-		output.shadowCoord = GetShadowCoord(vertexInput);
-	#endif
+        output.shadowCoord = GetShadowCoord(vertexInput);
+    #endif
 
     output.positionWS = vertexInput.positionWS;
     output.clipPos = vertexInput.positionCS;
 
-	return output;
+    return output;
 }
 
 SpeedTreeVertexDepthOutput SpeedTree8VertDepth(SpeedTreeVertexInput input)
@@ -248,7 +248,7 @@ SpeedTreeVertexDepthOutput SpeedTree8VertDepth(SpeedTreeVertexInput input)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
     // handle speedtree wind and lod
-    InitializeCommonData(input, unity_LODFade.x);
+    InitializeData(input, unity_LODFade.x);
     output.uv = input.texcoord.xy;
     output.color = input.color;
 
@@ -295,7 +295,7 @@ void InitializeInputData(SpeedTreeFragmentInput input, half3 normalTS, out Input
 
 half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
 {
-	UNITY_SETUP_INSTANCE_ID(input.interpolated);
+    UNITY_SETUP_INSTANCE_ID(input.interpolated);
 
     #ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
         #ifdef EFFECT_BILLBOARD
@@ -311,9 +311,9 @@ half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
 
     half3 albedo = diffuse.rgb;
     half3 emission = 0;
-	half metallic = 0;
-	half smoothness = 0;
-	half occlusion = 0;
+    half metallic = 0;
+    half smoothness = 0;
+    half occlusion = 0;
     half3 specular = 0;
 
     // hue variation
@@ -373,7 +373,6 @@ half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
 
     half4 color = LightweightFragmentPBR(inputData, albedo, metallic, specular, smoothness, occlusion, emission, alpha);
     color.rgb = MixFog(color.rgb, inputData.fogCoord);
-    
     return color;
 }
 
@@ -396,7 +395,7 @@ half4 SpeedTree8FragDepth(SpeedTreeVertexDepthOutput input) : SV_Target
     #if defined(SCENESELECTIONPASS)
         // We use depth prepass for scene selection in the editor, this code allow to output the outline correctly
         return half4(_ObjectId, _PassValue, 1.0, 1.0);
-    #else    
+    #else
         return half4(0, 0, 0, 0);
     #endif
 }
