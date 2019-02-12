@@ -94,6 +94,9 @@ real3 TransformWorldToHClipDir(real3 directionWS)
 // Transforms normal from object to world space
 real3 TransformObjectToWorldNormal(real3 normalOS)
 {
+#if !defined UNITY_GPU_SKINNING
+    normalOS = normalize(normalOS);
+#endif
 #ifdef UNITY_ASSUME_UNIFORM_SCALING
     return TransformObjectToWorldDir(normalOS);
 #else
