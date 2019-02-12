@@ -542,7 +542,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     if (shaderGroup.userData == m_Graph.mostRecentlyCreatedGroup)
                     {
-                        shaderGroup.OpenTextEditor();
+                        shaderGroup.FocusTitleTextField();
                         break;
                     }
                 }
