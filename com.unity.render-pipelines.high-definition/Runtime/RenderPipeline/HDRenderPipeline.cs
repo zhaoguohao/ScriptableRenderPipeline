@@ -1420,16 +1420,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
 #if ENABLE_RAYTRACING
-            // Update Acceleration structure and Light cluster if required
-            m_RayTracingManager.UpdateSubSceneData(cmd, hdCamera);
-
-            // We only request the light cluster if we are gonna use it for debug mode
-            if (FullScreenDebugMode.LightCluster == m_CurrentDebugDisplaySettings.data.fullScreenDebugMode)
-            {
-                HDRaytracingLightCluster lightCluster = m_RayTracingManager.RequestLightCluster(hdCamera);
-                PushFullScreenDebugTexture(hdCamera, cmd, lightCluster.m_DebugLightClusterTexture, FullScreenDebugMode.LightCluster);
-            }
-
             // Must update after getting DebugDisplaySettings
             m_RayTracingManager.rayCountManager.Update(cmd, hdCamera, m_CurrentDebugDisplaySettings.data.countRays);
 #endif
@@ -1634,6 +1624,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     HDUtils.SetRenderTarget(cmd, hdCamera, m_ScreenSpaceShadowsBuffer, ClearFlag.Color, Color.clear);
                 }
 
+#if ENABLE_RAYTRACING
+                // Update Acceleration structure and Light cluster if required
+                m_RayTracingManager.UpdateSubSceneData(cmd, hdCamera);
+
+                // We only request the light cluster if we are gonna use it for debug mode
+                if (FullScreenDebugMode.LightCluster == m_CurrentDebugDisplaySettings.data.fullScreenDebugMode)
+                {
+                    HDRaytracingLightCluster lightCluster = m_RayTracingManager.RequestLightCluster(hdCamera);
+                    PushFullScreenDebugTexture(hdCamera, cmd, lightCluster.m_DebugLightClusterTexture, FullScreenDebugMode.LightCluster);
+                }
+#endif
                 if (!hdCamera.frameSettings.ContactShadowsRunAsync())
                 {
 #if ENABLE_RAYTRACING

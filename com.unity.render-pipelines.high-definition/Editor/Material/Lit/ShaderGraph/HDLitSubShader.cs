@@ -680,7 +680,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             ShaderPassName = "SHADERPASS_RAYTRACING_VISIBILITY",
             ExtraDefines = new List<string>()
             {
-                "#define SHADERPASS SHADERPASS_RAYTRACING",
+                "#define SHADOW_LOW",
             },
             Includes = new List<string>()
             {

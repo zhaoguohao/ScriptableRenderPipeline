@@ -587,7 +587,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_LightDataGPUArray.SetData(m_LightDataCPUArray);
         }
 
-        void EvaluateClusterDebugView(CommandBuffer cmd, HDRaytracingEnvironment currentEnv)
+        void EvaluateClusterDebugView(CommandBuffer cmd, HDCamera hdCamera, HDRaytracingEnvironment currentEnv)
         {
             ComputeShader lightClusterDebugCS = m_RenderPipelineResources.shaders.lightClusterDebugCS;
             if (lightClusterDebugCS == null) return;
@@ -605,14 +605,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetComputeVectorParam(lightClusterDebugCS, _ClusterCellSize, clusterCellSize);
             cmd.SetComputeFloatParam(lightClusterDebugCS, _LightPerCellCount, HDShadowUtils.Asfloat(currentEnv.maxNumLightsPercell));
             cmd.SetComputeTextureParam(lightClusterDebugCS, m_LightClusterDebugKernel, _DebugColorGradientTexture, gradientTexture);
-            cmd.SetComputeTextureParam(lightClusterDebugCS, m_LightClusterDebugKernel, HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthTexture());
+            cmd.SetComputeTextureParam(lightClusterDebugCS, m_LightClusterDebugKernel, HDShaderIDs._CameraDepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
 
             // Target output texture
             cmd.SetComputeTextureParam(lightClusterDebugCS, m_LightClusterDebugKernel, _DebutLightClusterTexture, m_DebugLightClusterTexture);
 
             // Texture dimensions
-            int texWidth = m_DebugLightClusterTexture.rt.width;
-            int texHeight = m_DebugLightClusterTexture.rt.width;
+            int texWidth = hdCamera.actualWidth;
+            int texHeight = hdCamera.actualHeight;
 
             // Dispatch the compute
             int lightVolumesTileSize = 8;
@@ -685,7 +685,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             BuildLightData(cmd, hdCamera, lightArray);
 
             // Generate the debug view
-            EvaluateClusterDebugView(cmd, currentEnv);
+            EvaluateClusterDebugView(cmd, hdCamera, currentEnv);
         }
     }
 #endif

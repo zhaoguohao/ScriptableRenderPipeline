@@ -23,7 +23,7 @@ Texture2D<float>						_DepthTexture;
 // int   									_SsrStencilExclusionValue;
 
 // Output structure of the reflection raytrace shader
-float 									_RaytracingAOIntensity;
+float                                   _RaytracingAOIntensity;
 RWTexture2D<float4> 					_AmbientOcclusionTextureRW;
 RWTexture2D<float> 						_RaytracingHitDistanceTexture;
 RWTexture2D<float4> 					_RaytracingVSNormalTexture;
@@ -121,7 +121,7 @@ void RayGenAmbientOcclusion()
 	completeColor /= (float)numSamples;
 
 	// Alright we are done
-    _AmbientOcclusionTextureRW[currentPixelCoord] = float4((1.0f - completeColor) * _RaytracingAOIntensity, 1.0f);
+    _AmbientOcclusionTextureRW[currentPixelCoord] = float4((1.0f - completeColor) * saturate(_RaytracingAOIntensity), 1.0f);
     _RaytracingHitDistanceTexture[currentPixelCoord] = minDistance;
     float3 normalWS = mul(unity_MatrixInvV, float4(normalData.normalWS, 0.0f)).xyz;
     _RaytracingVSNormalTexture[currentPixelCoord] = float4(normalWS, 1.0f);
