@@ -116,7 +116,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public DiffusionProfileSettings diffusionProfileSettings;
 
         [SerializeField]
-        public DiffusionProfileSettings[] diffusionProfileSettingsList;
+        public DiffusionProfileSettings[] diffusionProfileSettingsList = new DiffusionProfileSettings[0];
 
         [NonSerialized]
         DiffusionProfileSettings m_DefaultDiffusionProfileSettings;
