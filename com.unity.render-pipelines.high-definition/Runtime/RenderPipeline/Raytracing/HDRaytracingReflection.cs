@@ -174,7 +174,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             cmd.SetRaytracingTextureParam(reflectionShader, targetRayGen, HDShaderIDs._SsrHitPointTexture, m_HitPdfTexture);
             cmd.SetRaytracingTextureParam(reflectionShader, targetRayGen, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
             cmd.SetRaytracingTextureParam(reflectionShader, targetRayGen, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
-            cmd.SetRaytracingTextureParam(reflectionShader, targetRayGen, _PackedSmoothNormals, m_PipelineAsset.renderPipelineSettings.supportLightLayers ? m_GBufferManager.GetLightLayersBuffer(0) : m_SharedRTManager.GetNormalBuffer());
+            bool geomNormalsAvailable = m_PipelineAsset.renderPipelineSettings.supportLightLayers && (hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred);
+            cmd.SetRaytracingTextureParam(reflectionShader, targetRayGen, _PackedSmoothNormals, (geomNormalsAvailable) ? m_GBufferManager.GetLightLayersBuffer(0) : m_SharedRTManager.GetNormalBuffer());
 
             // Data required for nvidia filter
             cmd.SetRaytracingTextureParam(reflectionShader, targetRayGen, HDShaderIDs._RaytracingHitDistanceTexture, m_HitDistanceTexture);
