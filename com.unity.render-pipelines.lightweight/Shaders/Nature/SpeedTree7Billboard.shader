@@ -38,6 +38,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
             #pragma multi_compile __ LOD_FADE_CROSSFADE
             #pragma multi_compile_fog
 
@@ -63,6 +64,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
+            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
             #pragma multi_compile __ LOD_FADE_CROSSFADE
 
             #define ENABLE_WIND
@@ -88,6 +90,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
+            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
             #pragma multi_compile __ LOD_FADE_CROSSFADE
             
             #define ENABLE_WIND
@@ -131,6 +134,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
+            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
             #pragma multi_compile_fog
 
             #pragma shader_feature_local EFFECT_BUMP
@@ -158,6 +162,8 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
+            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
+
             #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SHADOW_CASTER
@@ -183,6 +189,8 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
+
+            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
 
             #define ENABLE_WIND
             #define DEPTH_ONLY

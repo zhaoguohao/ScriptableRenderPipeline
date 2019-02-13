@@ -9,9 +9,17 @@ void InitializeData(inout SpeedTreeVertexInput input, out half2 outUV, out half 
     // assume no scaling & rotation
     float3 worldPos = input.vertex.xyz + float3(UNITY_MATRIX_M[0].w, UNITY_MATRIX_M[1].w, UNITY_MATRIX_M[2].w);
 
+#ifdef BILLBOARD_FACE_CAMERA_POS
+    float3 eyeVec = normalize(unity_BillboardCameraPosition - worldPos);
+    float3 billboardTangent = normalize(float3(-eyeVec.z, 0, eyeVec.x));            // cross(eyeVec, {0,1,0})
+    float3 billboardNormal = float3(billboardTangent.z, 0, -billboardTangent.x);    // cross({0,1,0},billboardTangent)
+    float3 angle = atan2(billboardNormal.z, billboardNormal.x);                     // signed angle between billboardNormal to {0,0,1}
+    angle += angle < 0 ? 2 * SPEEDTREE_PI : 0;
+#else
     float3 billboardTangent = unity_BillboardTangent;
     float3 billboardNormal = unity_BillboardNormal;
     float angle = unity_BillboardCameraXZAngle;
+#endif
 
     float widthScale = input.texcoord1.x;
     float heightScale = input.texcoord1.y;
