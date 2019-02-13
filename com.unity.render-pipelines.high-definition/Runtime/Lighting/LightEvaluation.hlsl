@@ -50,7 +50,7 @@ float3 SampleAreaLightCookie(int cookieIndex, float4x3 L, float3 F)
     //          mix of up into right that needs to be subtracted from simple projection on right vector
     //
     float   u = (dot(hitPosition, right) - upRightMixing * v) * recSqLengthRight;
-    float2  hitUV = float2(u, v);
+    float2  hitUV = float2(1.0 - u, v);
 
     // Assuming the original cosine lobe distribution Do is enclosed in a cone of 90° aperture,
     //  following the idea of orthogonal projection upon the area light's plane we find the intersection

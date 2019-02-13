@@ -192,7 +192,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeIntParam(bilateralFilter, HDShaderIDs._RaytracingShadowSlot, m_LightLoop.m_lightList.lights[lightIdx].shadowIndex);
 
                     // Set the output slot
-                    cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._AreaShadowTexture, m_AreaShadowTextureArray);
+                    cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._AreaShadowTextureRW, m_AreaShadowTextureArray);
 
                     // Texture dimensions
                     int texWidth = m_AreaShadowTextureArray.rt.width;

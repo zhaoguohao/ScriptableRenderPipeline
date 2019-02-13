@@ -48,7 +48,7 @@ void RayGenHalfRes()
     uint3 LaunchDim = DispatchRaysDimensions();
 
     // Compute the pixel coordinate (which matches the half res of the effect)
-    uint2 halfResCoord = uint2(LaunchIndex.x, LaunchDim.y - LaunchIndex.y - 1);
+    uint2 halfResCoord = uint2(LaunchIndex.x, LaunchIndex.y);
 
     // Get the scramblingValue of this pixel
     uint2 scramblingValue = ScramblingValue(halfResCoord.x, halfResCoord.y);
@@ -79,7 +79,7 @@ void RayGenHalfRes()
     float2 fullResolution = 0.5f/LaunchDim.xy;
 
     // Convert this to a world space position
-    PositionInputs posInput = GetPositionInput(sourceCoord, fullResolution, depthValue, _InvViewProjMatrix, _ViewMatrix, 0);
+    PositionInputs posInput = GetPositionInput(sourceCoord + 0.5f, fullResolution, depthValue, _InvViewProjMatrix, _ViewMatrix, 0);
     float distanceToCamera = length(posInput.positionWS);
     float3 positionWS = GetAbsolutePositionWS(posInput.positionWS);
 
@@ -192,7 +192,7 @@ void RayGenIntegration()
         return;
 
     // Convert this to a world space position
-    PositionInputs posInput = GetPositionInput(currentCoord, 1.0f/LaunchDim.xy, depthValue, _InvViewProjMatrix, _ViewMatrix, 0);
+    PositionInputs posInput = GetPositionInput(currentCoord + 0.5f, 1.0f/LaunchDim.xy, depthValue, _InvViewProjMatrix, _ViewMatrix, 0);
     float distanceToCamera = length(posInput.positionWS);
 
     // Should we compute the reflection for this pixel?

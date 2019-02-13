@@ -162,6 +162,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Rearrange FetchDepth functions to prepare for stereo-instancing
 - Remove unused _ComputeEyeIndex
 - Updated HDRenderPipelineAsset inspector
+- The default value roughness value for the clearcoat has been changed from 0.03 to 0.01
 
 ## [5.2.0-preview] - 2018-11-27
 

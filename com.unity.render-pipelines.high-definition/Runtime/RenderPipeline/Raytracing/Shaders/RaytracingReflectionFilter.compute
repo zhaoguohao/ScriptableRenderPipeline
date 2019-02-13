@@ -73,7 +73,7 @@ void RaytracingReflectionFilter(uint2 groupThreadId : SV_GroupThreadID, uint2 gr
             depth[localIndex] = LOAD_TEXTURE2D(_DepthTexture, fullResCoord).x;
 
             // Compute the world space position
-            PositionInputs posInput = GetPositionInput_Stereo(fullResCoord, _ScreenSize.zw, depth[localIndex], UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
+            PositionInputs posInput = GetPositionInput_Stereo(fullResCoord + 0.5f, _ScreenSize.zw, depth[localIndex], UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
             float3 positionWS = GetAbsolutePositionWS(posInput.positionWS);
 
             // Compute the view in world space

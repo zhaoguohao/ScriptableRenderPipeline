@@ -632,6 +632,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 "#pragma multi_compile _ DIRLIGHTMAP_COMBINED",
                 "#pragma multi_compile _ DYNAMICLIGHTMAP_ON",
                 "#define SHADOW_LOW",
+                "#define SHADERPASS SHADERPASS_RAYTRACING",
             },
             Includes = new List<string>()
             {
@@ -678,6 +679,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TemplateName = "HDLitRaytracingPass.template",
             MaterialName = "Lit",
             ShaderPassName = "SHADERPASS_RAYTRACING_VISIBILITY",
+            ExtraDefines = new List<string>()
+            {
+                "#define SHADERPASS SHADERPASS_RAYTRACING",
+            },
             Includes = new List<string>()
             {
                 "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderpassRaytracingVisibility.hlsl\"",
