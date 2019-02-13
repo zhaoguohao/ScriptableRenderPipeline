@@ -1585,9 +1585,9 @@ DirectLighting EvaluateBSDF_Rect(   LightLoopContext lightLoopContext,
 #if SHADEROPTIONS_RAYTRACING == 1 && (SHADERPASS == SHADERPASS_DEFERRED_LIGHTING)
     if(_RaytracedAreaShadow == 1 && lightData.shadowIndex != -1)
     {
-        float4 areaShadow = LOAD_TEXTURE2D_ARRAY(_AreaShadowTexture, posInput.positionSS, lightData.shadowIndex);
-        lighting.diffuse *= areaShadow.xyz;
-        lighting.specular *= areaShadow.xyz;
+        float areaShadow = LOAD_TEXTURE2D_ARRAY(_AreaShadowTexture, posInput.positionSS, lightData.shadowIndex).x;
+        lighting.diffuse *= areaShadow;
+        lighting.specular *= areaShadow;
     }
 #endif
 

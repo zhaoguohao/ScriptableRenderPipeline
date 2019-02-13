@@ -54,7 +54,7 @@ CBUFFER_START(UnityPerCameraRare)
     float4x4 unity_WorldToCamera;
     float4x4 unity_CameraToWorld;
 #endif
-    #ifdef SHADEROPTIONS_RAYTRACING
+    #if SHADEROPTIONS_RAYTRACING == 1
     // Uniform variables that defines if we shall be using the shadow area texture or not
     int _RaytracedAreaShadow;
     #endif

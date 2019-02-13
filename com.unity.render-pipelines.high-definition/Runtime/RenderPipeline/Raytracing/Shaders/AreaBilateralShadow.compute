@@ -21,7 +21,7 @@ float               _GaussianSigma;
 
 // Output texture data
 int                             _RaytracingShadowSlot;
-RWTexture2DArray<float4>        _AreaShadowTextureRW;
+RWTexture2DArray<float>         _AreaShadowTextureRW;
 
 float square(float value)
 {
@@ -85,5 +85,5 @@ void AreaBilateralShadow(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId :
 
     // Return the right color
     float luminanceValue = clamp(denoisedSN / denoisedUN, 0.0, 1.0);
-    _AreaShadowTextureRW[uint3(currentPixelCoordinate, _RaytracingShadowSlot)] = float4(luminanceValue, luminanceValue, luminanceValue, 1.0f);
+    _AreaShadowTextureRW[uint3(currentPixelCoordinate, _RaytracingShadowSlot)] = luminanceValue;
 }
