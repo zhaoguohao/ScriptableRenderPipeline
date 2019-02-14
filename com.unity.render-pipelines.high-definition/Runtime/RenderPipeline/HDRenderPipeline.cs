@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine.Experimental.GlobalIllumination;
+using UnityEngine;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -1827,7 +1828,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if UNITY_EDITOR
                 // Render gizmos that should be affected by post processes
                 if (showGizmos)
+                {
+                    Gizmos.exposure = m_PostProcessSystem.GetExposureTexture(hdCamera).rt;
                     RenderGizmos(cmd, camera, renderContext, GizmoSubset.PreImageEffects);
+                }
 #endif
 
                 // Render All forward error
