@@ -21,14 +21,14 @@ struct HDShadowData
     float3 pos;
     float4 proj;
     float2 atlasOffset;
-    float edgeTolerance;
+    real edgeTolerance;
     int flags;
-    float4 zBufferParam;
+    real4 zBufferParam;
     float4 shadowMapSize;
     float4 viewBias;
     float3 normalBias;
     float _padding;
-    float4 shadowFilterParams0;
+    real4 shadowFilterParams0;
     float4x4 shadowToWorld;
 };
 
@@ -37,8 +37,8 @@ struct HDShadowData
 struct HDDirectionalShadowData
 {
     float4 sphereCascades[4];
-    float4 cascadeDirection;
-    float cascadeBorders[4];
+    real4 cascadeDirection;
+    real cascadeBorders[4];
 };
 
 //
@@ -68,7 +68,7 @@ float2 GetAtlasOffset(HDShadowData value)
 {
     return value.atlasOffset;
 }
-float GetEdgeTolerance(HDShadowData value)
+real GetEdgeTolerance(HDShadowData value)
 {
     return value.edgeTolerance;
 }
@@ -76,7 +76,7 @@ int GetFlags(HDShadowData value)
 {
     return value.flags;
 }
-float4 GetZBufferParam(HDShadowData value)
+real4 GetZBufferParam(HDShadowData value)
 {
     return value.zBufferParam;
 }
@@ -96,7 +96,7 @@ float Get_padding(HDShadowData value)
 {
     return value._padding;
 }
-float4 GetShadowFilterParams0(HDShadowData value)
+real4 GetShadowFilterParams0(HDShadowData value)
 {
     return value.shadowFilterParams0;
 }
@@ -111,11 +111,11 @@ float4 GetSphereCascades(HDDirectionalShadowData value, int index)
 {
     return value.sphereCascades[index];
 }
-float4 GetCascadeDirection(HDDirectionalShadowData value)
+real4 GetCascadeDirection(HDDirectionalShadowData value)
 {
     return value.cascadeDirection;
 }
-float GetCascadeBorders(HDDirectionalShadowData value, int index)
+real GetCascadeBorders(HDDirectionalShadowData value, int index)
 {
     return value.cascadeBorders[index];
 }

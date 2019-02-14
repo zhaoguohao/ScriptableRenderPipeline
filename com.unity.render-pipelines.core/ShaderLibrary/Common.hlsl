@@ -64,7 +64,7 @@
 // If a function require to have both a half and a float version, then both need to be explicitly define
 #ifndef real
 
-#ifdef SHADER_API_MOBILE
+#if defined(SHADER_API_MOBILE) || defined(SHADER_API_SWITCH) 
 #define real half
 #define real2 half2
 #define real3 half3

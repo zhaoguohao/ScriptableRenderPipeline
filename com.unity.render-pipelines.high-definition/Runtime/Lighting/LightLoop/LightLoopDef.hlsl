@@ -10,8 +10,8 @@ struct LightLoopContext
 
     HDShadowContext shadowContext;
     
-    float contactShadow; // Currently we support only one contact shadow per view
-    float shadowValue; // Stores the value of the cascade shadow map
+    real contactShadow; // Currently we support only one contact shadow per view
+    real shadowValue; // Stores the value of the cascade shadow map
 };
 
 //-----------------------------------------------------------------------------
