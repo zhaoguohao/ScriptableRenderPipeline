@@ -2454,30 +2454,79 @@ void ModifyBakedDiffuseLighting(float3 V, PositionInputs posInput, SurfaceData s
 // light transport functions
 //-----------------------------------------------------------------------------
 
+// Try to infer a metallic value from a specularColor parameterization,
+// in the context of adding reflectance from f0 for metals for the meta pass:
+// There's a limit to inferring a valid value. In particular, the diffuseColor
+// close to 0.0 is a hard guess, especially if f0 is close to dielectricF0.
+// The algorithm tries to avoid returning extremes in those cases.
+//
+// Assumes surfaceData.dielectricIor is valid, and not overriden, ie we're not using a diffusionProfile
+// with transmission or SSS which fix metallic to 0 and sets bsdfData.fresnel0 to IorToFresnel0(diffusionProfile.IOR)
+//
 float GetInferredMetallic(float dielectricF0, float3 inDiffuseColor, float3 inFresnel0)
 {
     float fresnel0 = Max3(inFresnel0.r, inFresnel0.g, inFresnel0.b);
     float diffuseColor = Max3(inDiffuseColor.r, inDiffuseColor.g, inDiffuseColor.b);
     float metallic = 0.0;
 
-    if (dielectricF0 <= 0.0)
+    if (dielectricF0 <= 0.0001)
     {
+        // The baseColor + metallic parameterization gives (note that this is used to build
+        // a possible conversion, but the given fresnel0, diffuseColor and dielectricF0 might not 
+        // be possible with a baseColor + metallic parameterization):
+        //
+        //  (A) fresnel0 = metallic * basecolor  +  (1.0 - metallic) * dielectricF0;
+        //  (B) diffuseColor = baseColor * (1.0 - metallic);
+        //
+        // if dielectricF0 = 0, we have:
+        //
+        //  (1) fresnel0 = metallic * basecolor;
+        //  (2) diffuseColor = (1.0 - metallic) * baseColor;
+        //
+        // if metallic == 0, fresnel0 must be == 0 and we can just output it (ie metallic = fresnel0 = 0.0);
+        // else
+        // metallic != 0 and
+        // if baseColor != 0 (otherwise, if either is 0, fresnel0 == 0, and even if metallic was set to anything else than 0,
+        //                   with dielectricF0 == 0, this doesn't make sense as a metal, so we will still infer metallic = 0
+        //                   and again could output directly fresnel0 as our metallic),
+        //
+        // thus fresnel0 != 0 and we substitute safely 1 in 2:
+        //
+        //  fresnel0 / metallic = basecolor;
+        //  diffuseColor = (1.0 - metallic) * fresnel0 / metallic;
+        //
+        //  metallic = 1/(diffuseColor/fresnel0 + 1);
+        //  metallic = fresnel0/(diffuseColor + fresnel0);
+        //
+        // So we will use that formula when dielectricF0 == 0 since it outputs plausible values: 
+        //
+        //   -When fresnel0 is 0, it will always output a desired (for the reasons discussed above) value of metallic = 0.
+        //   -When input values are possible for (A) and (B), the formula is correct (for when dielectricF0 == 0 of course).
+        //   -When input values are not possible with base/metal, it will output a sensible value.
+
         metallic = ((fresnel0 + diffuseColor) > 0.0) ? fresnel0 / (fresnel0 + diffuseColor) : 0.0;
     }
     else
     {
-        float sqrtTerm = sqrt(Sq(fresnel0 + diffuseColor) - 4*diffuseColor*dielectricF0);
-        float rootA = -( sqrtTerm - 2*dielectricF0 + fresnel0 + diffuseColor) / (2*dielectricF0);
-        float rootB = -(-sqrtTerm - 2*dielectricF0 + fresnel0 + diffuseColor) / (2*dielectricF0);
+        float2 roots;
+        // We will try to find positive roots, but again, the input parameters might not be possible
+        // to replicate in a baseColor / metallic parameterization, so we must be careful to precondition
+        // our values. Even when conditioned, the inputs might have no positive solutions.
+        // Also, to mitigate extremes for the diffuseColor close to 0 case, we will average our
+        // positive roots.
+        diffuseColor = max(diffuseColor, 0.0001);
+        dielectricF0 = min(dielectricF0, Sq(fresnel0 + diffuseColor) / 4*diffuseColor);
 
-        // There's some special cases where we could have 2 valid roots, they are ambiguous anyway
-        // (eg fresnel0 == dielectricF0), so we choose arbitrarily.
-        float rootmin = min(rootA, rootB);
-        if (rootmin < 0.0)
-        {
-            //Also we reject invalid roots:
-            metallic = max(rootA, rootB);
-        }
+        float sqrtTerm = sqrt(Sq(fresnel0 + diffuseColor) - 4*diffuseColor*dielectricF0);
+        roots.x = -( sqrtTerm - 2*dielectricF0 + fresnel0 + diffuseColor) / (2*dielectricF0);
+        roots.y = -(-sqrtTerm - 2*dielectricF0 + fresnel0 + diffuseColor) / (2*dielectricF0);
+
+        float2 rootsWeights = float2(roots >= 0);
+        //float rootsTotalWeight = max(1.0, dot(rootsWeights, float2(1.0, 1.0)));
+        float rootsTotalWeight = 1.0 + float(all(roots >= 0));
+        float average = dot(roots, rootsWeights) / rootsTotalWeight;
+
+        metallic = average;
     }
 
     return metallic;
@@ -2525,7 +2574,11 @@ LightTransportData GetLightTransportData(SurfaceData surfaceData, BuiltinData bu
     float3 f0forCalculatingFGD;
     float3 diffuseEnergy = float3(1.0, 1.0, 1.0);
 
-    if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR))
+    if (HasFlag(surfaceData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SUBSURFACE_SCATTERING | MATERIALFEATUREFLAGS_STACK_LIT_TRANSMISSION))
+    {
+        metallic = 0.0;
+    }
+    else if (HasFlag(bsdfData.materialFeatures, MATERIALFEATUREFLAGS_STACK_LIT_SPECULAR_COLOR))
     {
         metallic = GetInferredMetallic(IorToFresnel0(surfaceData.dielectricIor), bsdfData.diffuseColor, bsdfData.fresnel0);
     }
