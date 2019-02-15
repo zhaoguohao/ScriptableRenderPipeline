@@ -69,7 +69,7 @@ namespace UnityEditor.VFX
 
         public string fileName {
             get {
-                if( ! string.IsNullOrWhiteSpace(title))
+                if( ! string.IsNullOrEmpty(title))
                     return title;
                 int i = this.index;
                 if (i < 0)
