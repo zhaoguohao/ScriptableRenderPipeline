@@ -46,7 +46,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     };
 
     // These structures share between C# and hlsl need to be align on float4, so we pad them.
-    [GenerateHLSL(PackingRules.Exact, false)]
+    [GenerateHLSL(PackingRules.Exact, needAccessors = false, containsPackedFields = true)]
     public struct DirectionalLightData
     {
         // Packing order depends on chronological access to avoid cache misses
@@ -74,15 +74,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float   shadowDimmer;
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask (TODO: use a bitfield)
+        [PackingAttribute("minRoughness", FieldPacking.Real)]
         public float   minRoughness;            // Hack
 
+        [PackingAttribute("shadowMaskSelector", FieldPacking.Real)]
         public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
         public float   diffuseDimmer;
         public float   specularDimmer;
     };
 
-    [GenerateHLSL(PackingRules.Exact, false)]
+    [GenerateHLSL(PackingRules.Exact, needAccessors = false, containsPackedFields = true)]
     public struct LightData
     {
         // Packing order depends on chronological access to avoid cache misses
@@ -92,13 +94,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public float   lightDimmer;
         public float   volumetricLightDimmer;   // Replaces 'lightDimer'
+        [PackingAttribute("angleScale", FieldPacking.Real)]
         public float   angleScale;              // Spot light
+        [PackingAttribute("angleOffset", FieldPacking.Real)]
         public float   angleOffset;             // Spot light
 
         public Vector3 forward;
         public GPULightType lightType;          // TODO: move this up?
 
         public Vector3 right;                   // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeWidth)
+        [PackingAttribute("range", FieldPacking.Real)]
         public float   range;
 
         public Vector3 up;                      // If spot: rescaled by cot(outerHalfAngle); if projector: rescaled by (2 / shapeHeight)
@@ -115,10 +120,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public float   shadowDimmer;
         public float   volumetricShadowDimmer;  // Replaces 'shadowDimmer'
         public int     nonLightMappedOnly;      // Used with ShadowMask feature (TODO: use a bitfield)
+        [PackingAttribute("minRoughness", FieldPacking.Real)]
         public float   minRoughness;            // This is use to give a small "area" to punctual light, as if we have a light with a radius.
 
+        [PackingAttribute("shadowMaskSelector", FieldPacking.Real)]
         public Vector4 shadowMaskSelector;      // Used with ShadowMask feature
 
+        [PackingAttribute("size", FieldPacking.Real)]
         public Vector2 size;                    // Used by area (X = length or width, Y = height) and punctual lights (X = radius)
         public float   diffuseDimmer;
         public float   specularDimmer;
@@ -146,7 +154,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     // It allow to have more coherence for the dynamic if in shader code.
     // Users can also chose to not have any projection, in this case we use the property minProjectionDistance to minimize code change. minProjectionDistance is set to huge number
     // that simulate effect of no shape projection
-    [GenerateHLSL(PackingRules.Exact, false)]
+    [GenerateHLSL(PackingRules.Exact, needAccessors = false, containsPackedFields = true)]
     public struct EnvLightData
     {
         // Packing order depends on chronological access to avoid cache misses
@@ -160,6 +168,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // Sphere: extents.x = sphere radius
         public Vector3 proxyExtents;
         // User can chose if they use This is use in case we want to force infinite projection distance (i.e no projection);
+        [PackingAttribute("minProjectionDistance", FieldPacking.Real)]
         public float minProjectionDistance;
 
         public Vector3 proxyPositionRWS;
@@ -181,7 +190,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3 blendNormalDistancePositive;
         public Vector3 blendNormalDistanceNegative;
 
+        [PackingAttribute("boxSideFadePositive", FieldPacking.Real)]
         public Vector3 boxSideFadePositive;
+        [PackingAttribute("boxSideFadeNegative", FieldPacking.Real)]
         public Vector3 boxSideFadeNegative;
         public float weight;
         public float multiplier;

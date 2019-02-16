@@ -5,6 +5,19 @@
 #ifndef HDSHADOWMANAGER_CS_HLSL
 #define HDSHADOWMANAGER_CS_HLSL
 //
+// UnityEngine.Experimental.Rendering.HDPipeline.HDShadowData:  static fields
+//
+#define DEBUGVIEW_HDSHADOWDATA_EDGE_TOLERANCE (1)
+#define DEBUGVIEW_HDSHADOWDATA_Z_BUFFER_PARAM (2)
+#define DEBUGVIEW_HDSHADOWDATA_SHADOW_FILTER_PARAMS0 (3)
+
+//
+// UnityEngine.Experimental.Rendering.HDPipeline.HDDirectionalShadowData:  static fields
+//
+#define DEBUGVIEW_HDDIRECTIONALSHADOWDATA_CASCADE_DIRECTION (1)
+#define DEBUGVIEW_HDDIRECTIONALSHADOWDATA_CASCADE_BORDERS (2)
+
+//
 // UnityEngine.Experimental.Rendering.HDPipeline.HDShadowFlag:  static fields
 //
 #define HDSHADOWFLAG_SAMPLE_BIAS_SCALE (1)

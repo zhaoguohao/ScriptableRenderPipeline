@@ -11,10 +11,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // and are independent from the BSDF parametrization.
         // Note: These parameters can be store in GBuffer or not depends on storage available
         //-----------------------------------------------------------------------------
-        [GenerateHLSL(PackingRules.Exact, false, false, true, 100)]
+        [GenerateHLSL(PackingRules.Exact, false, false, true, 100, false, true)]
         public struct BuiltinData
         {
             [SurfaceDataAttributes("Opacity")]
+            [PackingAttribute("Opacity", FieldPacking.Real)]
             public float opacity;
 
             // These are lighting data.
@@ -22,32 +23,42 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // those lighting information are fill
             // at the same time than material information.
             [SurfaceDataAttributes("Bake Diffuse Lighting", false, true)]
+            [PackingAttribute("Bake Diffuse Lighting", FieldPacking.Real)]
             public Vector3 bakeDiffuseLighting; // This is the result of sampling lightmap/lightprobe/proxyvolume
             [SurfaceDataAttributes("Back Bake Diffuse Lighting", false, true)]
+            [PackingAttribute("Back Bake Diffuse Lighting", FieldPacking.Real)]
             public Vector3 backBakeDiffuseLighting; // This is the result of sampling lightmap/lightprobe/proxyvolume from the back for transmission
 
             // Use for float instead of vector4 to ease the debug (no performance impact)
             // Note: We have no way to remove these value automatically based on either SHADEROPTIONS_BAKED_SHADOW_MASK_ENABLE or s_BakedShadowMaskEnable here. Unless we make two structure... For now always keep this value
             [SurfaceDataAttributes("Shadow Mask 0")]
+            [PackingAttribute("Shadow Mask 0", FieldPacking.Real)]
             public float shadowMask0;
             [SurfaceDataAttributes("Shadow Mask 1")]
+            [PackingAttribute("Shadow Mask 1", FieldPacking.Real)]
             public float shadowMask1;
             [SurfaceDataAttributes("Shadow Mask 2")]
+            [PackingAttribute("Shadow Mask 2", FieldPacking.Real)]
             public float shadowMask2;
             [SurfaceDataAttributes("Shadow Mask 3")]
+            [PackingAttribute("Shadow Mask 3", FieldPacking.Real)]
             public float shadowMask3;
 
             [SurfaceDataAttributes("Emissive Color", false, false)]
+            [PackingAttribute("Emissive Color", FieldPacking.Real)]
             public Vector3 emissiveColor;
 
             // These is required for motion blur and temporalAA
             [SurfaceDataAttributes("Velocity")]
+            [PackingAttribute("Velocity", FieldPacking.Real)]
             public Vector2 velocity;
 
             // Distortion
             [SurfaceDataAttributes("Distortion")]
+            [PackingAttribute("Distortion", FieldPacking.Real)]
             public Vector2 distortion;
             [SurfaceDataAttributes("Distortion Blur")]
+            [PackingAttribute("Distortion Blur", FieldPacking.Real)]
             public float distortionBlur;           // Define the color buffer mipmap level to use
 
             // Misc
@@ -62,11 +73,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // LightTransportData
         // This struct is use to store information for Enlighten/Progressive light mapper. both at runtime or off line.
         //-----------------------------------------------------------------------------
-        [GenerateHLSL(PackingRules.Exact, false)]
+        [GenerateHLSL(PackingRules.Exact, false, false, false, 1, false, true)]
         public struct LightTransportData
         {
             [SurfaceDataAttributes("", false, true)]
+            [PackingAttribute("Diffuse Color", FieldPacking.Real)]
             public Vector3 diffuseColor;
+            [PackingAttribute("Emissive Color", FieldPacking.Real)]
             public Vector3 emissiveColor; // HDR value
         };
 

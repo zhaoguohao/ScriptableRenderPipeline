@@ -14,7 +14,9 @@ namespace UnityEngine.Experimental.Rendering
         NoPacking = 0,
         R11G11B10,
         PackedFloat,
-        PackedUint
+        PackedUint,
+        Half,
+        Real
     }
 
     [AttributeUsage(AttributeTargets.Struct | AttributeTargets.Class | AttributeTargets.Enum)]

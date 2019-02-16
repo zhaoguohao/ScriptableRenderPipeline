@@ -21,6 +21,12 @@
 #define DEBUGVIEW_BUILTIN_BUILTINDATA_RENDERING_LAYERS (111)
 #define DEBUGVIEW_BUILTIN_BUILTINDATA_DEPTH_OFFSET (112)
 
+//
+// UnityEngine.Experimental.Rendering.HDPipeline.Builtin+LightTransportData:  static fields
+//
+#define DEBUGVIEW_BUILTIN_LIGHTTRANSPORTDATA_DIFFUSE_COLOR (1)
+#define DEBUGVIEW_BUILTIN_LIGHTTRANSPORTDATA_EMISSIVE_COLOR (2)
+
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.Builtin+BuiltinData
 // PackingRules = Exact
 struct BuiltinData
