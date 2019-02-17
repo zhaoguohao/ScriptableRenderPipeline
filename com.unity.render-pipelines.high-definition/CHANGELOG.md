@@ -4,7 +4,70 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [5.4.0-preview] - 2019-XX-XX
+## [5.5.0-preview] - 2019-02-18
+
+### Added
+
+- Added help box listing feature supported in a given HDRenderPipelineAsset alongs with the drawbacks implied.
+- Added support for post-processing anti-aliasing in the Scene View (FXAA and TAA). These can be set in Preferences.
+- Added emissive property for decal material (non-shader graph)
+- Added cascade visualizer, supporting disabled handles when not overriding.
+- Added support of motion vector for transparent object (as replace)
+- Added emissive property for shader graph decals
+
+### Fixed
+- Fixed a few UI bugs with the color grading curves.
+- Fixed "Post Processing" in the scene view not toggling post-processing effects.
+- Fixed post processing with stereo double-wide
+- Fixed issue with Metal: Use sign bit to find the cache type instead of lowest bit.
+- Fixed invalid state when creating a planar reflection for the first time
+- Fixed FrameSettings's LitShaderMode not restrained by supported LitShaderMode regression.
+
+### Changed
+- Removed unsupported Clear Depth checkbox in Camera inspector	
+- The default value roughness value for the clearcoat has been changed from 0.03 to 0.01
+- Update default value of based color for master node
+- Update Fabric Charlie Sheen lighting model - Remove Fresnel component that wasn't part of initial model + Remap smoothness to [0.0 - 0.6] range for more artist friendly parameter
+- Updated the toggle for advanced mode in inspectors.
+
+## [5.4.0-preview] - 2019-02-11
+
+### Added
+- Added support for "After Post-Process" render pass for unlit shader
+- Added support for textured rectangular area lights
+- Added stereo instancing macros to MSAA shaders
+- Added fade factor for decal projectors.
+- Added stereo instancing macros to most shaders used in VR
+- Added multi edition support for HDRenderPipelineAsset
+
+### Fixed
+- Fixed Decals when rendering multiple camera in a single frame
+- Fixed cascade shadow count in shader
+- Fixed issue with Stacklit shader with Haze effect
+- Fixed an issue with the max sample count for the TAA
+- Fixed post-process guard band for XR
+- Fixed exposure of emissive of Unlit
+- Fixed depth only and motion vector pass for Unlit not working correctly with MSAA
+- Fixed an issue with stencil buffer copy causing unnecessary compute dispatches for lighting
+- Fixed multi edition issue in FrameSettings
+- Fixed issue with SRP batcher and DebugDisplay variant of lit shader
+- Fixed issue with debug material mode not doing alpha test
+- Fixed "Attempting to draw with missing UAV bindings" errors on Vulkan
+- Fixed pre-exposure incorrectly apply to preview
+- Fixed issue with duplicate 3D texture in 3D texture altas of volumetric
+- Fixed Camera rendering order (base on the depth parameter)
+- Fixed bake only object with flag `ReflectionProbeStaticFlag` when baking a `ReflectionProbe`
+- Fixed "Attempting to draw with missing UAV bindings" errors on Vulkan.
+
+### Changed
+- Temporal Antialiasing optimization for Xbox One X
+- Parameter depthSlice on SetRenderTarget functions now defaults to -1 to bind the entire resource
+- Rename SampleCameraDepth() functions to LoadCameraDepth() and SampleCameraDepth(), same for SampleCameraColor() functions
+- Improved Motion Blur quality. 
+- Update stereo frame settings values for single-pass instancing and double-wide
+- Rearrange FetchDepth functions to prepare for stereo-instancing
+- Remove unused _ComputeEyeIndex
+- Updated HDRenderPipelineAsset inspector
 
 ## [5.3.1-preview] - 2019-01-28
 
@@ -52,7 +115,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added a Lighting and BackLighting slots in Lit, StackLit, Fabric and Hair master nodes
 - Added xrInstancing flag support to RTHandle
 - Added support for cullmask for decal projectors
-
 
 ### Fixed
 - Fixed logic to disable FPTL with stereo rendering
