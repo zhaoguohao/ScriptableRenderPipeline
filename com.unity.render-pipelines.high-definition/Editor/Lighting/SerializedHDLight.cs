@@ -30,7 +30,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public SerializedProperty volumetricDimmer;
             public SerializedProperty lightUnit;
             public SerializedProperty displayAreaLightEmissiveMesh;
-            public SerializedProperty lightLayers;
+            public SerializedProperty renderingLayerMask;
             public SerializedProperty shadowNearPlane;
             public SerializedProperty shadowSoftness;
             public SerializedProperty blockerSampleCount;
@@ -135,7 +135,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     showFeatures = o.Find(x => x.featuresFoldout),
                     showAdditionalSettings = o.Find(x => x.showAdditionalSettings),
                     useVolumetric = o.Find(x => x.useVolumetric),
-                    lightLayers = settings.renderingLayerMask
+                    renderingLayerMask = settings.renderingLayerMask
                 };
 
             // TODO: Review this once AdditionalShadowData is refactored
