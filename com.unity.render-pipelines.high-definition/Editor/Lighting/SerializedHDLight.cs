@@ -104,7 +104,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     volumetricDimmer = o.Find(x => x.volumetricDimmer),
                     lightUnit = o.Find(x => x.lightUnit),
                     displayAreaLightEmissiveMesh = o.Find(x => x.displayAreaLightEmissiveMesh),
-                    lightLayers = o.Find(x => x.lightLayers),
                     fadeDistance = o.Find(x => x.fadeDistance),
                     affectDiffuse = o.Find(x => x.affectDiffuse),
                     affectSpecular = o.Find(x => x.affectSpecular),
@@ -135,7 +134,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     useOldInspector = o.Find(x => x.useOldInspector),
                     showFeatures = o.Find(x => x.featuresFoldout),
                     showAdditionalSettings = o.Find(x => x.showAdditionalSettings),
-                    useVolumetric = o.Find(x => x.useVolumetric)
+                    useVolumetric = o.Find(x => x.useVolumetric),
+                    lightLayers = settings.renderingLayerMask
                 };
 
             // TODO: Review this once AdditionalShadowData is refactored
