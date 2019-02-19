@@ -104,7 +104,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             CED.space,
             CED.Group(
                 Drawer_Antialiasing,
-                Drawer_Dithering
+                Drawer_Dithering,
+                Drawer_StopNaNs
                 ),
             CED.space,
             CED.Group(
@@ -374,7 +375,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             EditorGUILayout.PropertyField(p.clearColorMode, clearModeContent);
             //if(p.clearColorMode.enumValueIndex == (int)HDAdditionalCameraData.ClearColorMode.BackgroundColor) or no sky in scene
             EditorGUILayout.PropertyField(p.backgroundColorHDR, backgroundColorContent);
-            EditorGUILayout.PropertyField(p.clearDepth, clearDepthContent);
+
+            if(p.clearDepth.boolValue == false)
+                p.clearDepth.boolValue = true;
         }
 
         static void Drawer_Antialiasing(SerializedHDCamera p, Editor owner)
@@ -385,6 +388,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         static void Drawer_Dithering(SerializedHDCamera p, Editor owner)
         {
             EditorGUILayout.PropertyField(p.dithering, ditheringContent);
+        }
+
+        static void Drawer_StopNaNs(SerializedHDCamera p, Editor owner)
+        {
+            EditorGUILayout.PropertyField(p.stopNaNs, stopNaNsContent);
         }
 
         static void Drawer_FieldRenderingPath(SerializedHDCamera p, Editor owner)
