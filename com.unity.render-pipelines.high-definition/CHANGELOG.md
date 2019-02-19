@@ -6,8 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [6.2.0-preview] - 2019-XX-XX
 
-### Added
+### Changed
+- When a lit material has a clear coat mask that is not null, we now use the clear coat roughness to compute the screen space reflection.
 
+### Added
 - Added help box listing feature supported in a given HDRenderPipelineAsset alongs with the drawbacks implied.
 - Added cascade visualizer, supporting disabled handles when not overriding.
 
