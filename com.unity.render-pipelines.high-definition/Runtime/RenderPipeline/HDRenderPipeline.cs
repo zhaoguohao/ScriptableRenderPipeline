@@ -2839,7 +2839,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int h = hdCamera.actualHeight;
 
                 // Evaluate the clear coat mask texture based on the lit shader mode
-                RenderTargetIdentifier clearCoatMask = hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred ? m_GbufferManager.GetBuffer(2) : Texture2D.blackTexture;
+                RenderTargetIdentifier clearCoatMask = hdCamera.frameSettings.litShaderMode == LitShaderMode.Deferred ? m_GbufferManager.GetBuffer(2).nameID : Texture2D.blackTexture;
 
                 using (new ProfilingSample(cmd, "SSR - Tracing", CustomSamplerId.SsrTracing.GetSampler()))
                 {
