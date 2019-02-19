@@ -7,7 +7,7 @@ using UnityEngine.Experimental.VFX;
 
 namespace UnityEditor.VFX
 {
-    [VFXInfo]
+    [VFXInfo(variantProvider = typeof(VFXPlanarPrimitiveVariantProvider))]
     class VFXPlanarPrimitiveOutput : VFXAbstractParticleOutput
     {
         [VFXSetting(VFXSettingAttribute.VisibleFlags.InInspector), SerializeField]
