@@ -67,8 +67,7 @@ namespace UnityEngine.Rendering.LWRP
 
         public LightweightRenderPipeline(LightweightRenderPipelineAsset asset)
         {
-            asset.m_RendererSetup = new ForwardRendererSetup();
-            renderer = new ScriptableRenderer(asset);
+            renderer = new ScriptableRenderer();
 
             SetSupportedRenderingFeatures();
 
@@ -109,7 +108,7 @@ namespace UnityEngine.Rendering.LWRP
 
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
-            BeginFrameRendering(cameras);
+            BeginFrameRendering(renderContext, cameras);
 
             GraphicsSettings.lightsUseLinearIntensity = (QualitySettings.activeColorSpace == ColorSpace.Linear);
             SetupPerFrameShaderConstants();
@@ -117,16 +116,20 @@ namespace UnityEngine.Rendering.LWRP
             SortCameras(cameras);
             foreach (Camera camera in cameras)
             {
-                BeginCameraRendering(camera);
+                BeginCameraRendering(renderContext, camera);
 
                 foreach (var beforeCamera in camera.GetComponents<IBeforeCameraRender>())
                     beforeCamera.ExecuteBeforeCameraRender(this, renderContext, camera);
 
-                RenderSingleCamera(this, renderContext, camera, camera.GetComponent<IRendererSetup>());
+                RenderSingleCamera(this, renderContext, camera);
+
+                EndCameraRendering(renderContext, camera);
             }
+
+            EndFrameRendering(renderContext, cameras);
         }
 
-        public static void RenderSingleCamera(LightweightRenderPipeline pipelineInstance, ScriptableRenderContext context, Camera camera, IRendererSetup setup = null)
+        public static void RenderSingleCamera(LightweightRenderPipeline pipelineInstance, ScriptableRenderContext context, Camera camera)
         {
             if (pipelineInstance == null)
             {
@@ -142,14 +145,16 @@ namespace UnityEngine.Rendering.LWRP
             {
                 ScriptableRenderer renderer = pipelineInstance.renderer;
                 var settings = asset;
-                InitializeCameraData(settings, camera, out var cameraData);
+                LWRPAdditionalCameraData additionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
+                InitializeCameraData(settings, camera, additionalCameraData, out var cameraData);
                 SetupPerCameraShaderConstants(cameraData);
 
-                if (asset.additionalLightsRenderingMode == LightRenderingMode.Disabled ||
-                    asset.maxAdditionalLightsCount == 0)
-                {
-                    cullingParameters.cullingOptions |= CullingOptions.DisablePerObjectCulling;
-                }
+                // TODO: PerObjectCulling also affect reflection probes. Enabling it for now.
+                // if (asset.additionalLightsRenderingMode == LightRenderingMode.Disabled ||
+                //     asset.maxAdditionalLightsCount == 0)
+                // {
+                //     cullingParameters.cullingOptions |= CullingOptions.DisablePerObjectCulling;
+                // }
 
                 cullingParameters.shadowDistance = Mathf.Min(cameraData.maxShadowDistance, camera.farClipPlane);
 
@@ -170,7 +175,7 @@ namespace UnityEngine.Rendering.LWRP
 
                 renderer.Clear();
 
-                var rendererSetup = setup ?? settings.rendererSetup;
+                IRendererSetup rendererSetup = (additionalCameraData != null) ? additionalCameraData.rendererSetup : settings.rendererSetup;
                 rendererSetup.Setup(renderer, ref renderingData);
                 renderer.Execute(context, ref renderingData);
             }
@@ -199,7 +204,7 @@ namespace UnityEngine.Rendering.LWRP
 #endif
         }
 
-        static void InitializeCameraData(LightweightRenderPipelineAsset settings, Camera camera, out CameraData cameraData)
+        static void InitializeCameraData(LightweightRenderPipelineAsset settings, Camera camera, LWRPAdditionalCameraData additionalCameraData, out CameraData cameraData)
         {
             const float kRenderScaleThreshold = 0.05f;
             cameraData.camera = camera;
@@ -247,8 +252,7 @@ namespace UnityEngine.Rendering.LWRP
 
             bool anyShadowsEnabled = settings.supportsMainLightShadows || settings.supportsAdditionalLightShadows;
             cameraData.maxShadowDistance = (anyShadowsEnabled) ? settings.shadowDistance : 0.0f;
-
-            LWRPAdditionalCameraData additionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
+            
             if (additionalCameraData != null)
             {
                 cameraData.maxShadowDistance = (additionalCameraData.renderShadows) ? cameraData.maxShadowDistance : 0.0f;
