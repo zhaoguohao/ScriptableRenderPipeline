@@ -24,7 +24,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         void OnOverlayGUI(Object target, SceneView sceneView)
         {
-            CameraEditorUtils.DrawCameraSceneViewOverlay(target, sceneView, InitializePreviewCamera);
+            // CameraEditorUtils.DrawCameraSceneViewOverlay(target, sceneView, InitializePreviewCamera);
         }
 
         Camera InitializePreviewCamera(Camera c, Vector2 previewSize)
