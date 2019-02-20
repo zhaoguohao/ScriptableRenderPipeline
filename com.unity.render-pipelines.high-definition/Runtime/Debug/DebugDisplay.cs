@@ -137,9 +137,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         
         Action IDebugData.GetReset() => () => m_Data = new DebugData();
         
-        public int GetDebugMaterialIndex()
+        public float[] GetDebugMaterialIndexes()
         {
-            return data.materialDebugSettings.GetDebugMaterialIndex();
+            return data.materialDebugSettings.GetDebugMaterialIndexes();
         }
 
         public DebugLightingMode GetDebugLightingMode()
@@ -217,7 +217,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (value != 0)
                 DisableNonMaterialDebugSettings();
-            data.materialDebugSettings.SetDebugViewMaterial(value);
+            data.materialDebugSettings.SetDebugViewMaterial(value == 0 ? new int[0] : new int[1] { value });
         }
 
         public void SetDebugViewEngine(int value)
@@ -336,7 +336,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             var list = new List<DebugUI.Widget>();
 
-            list.Add( new DebugUI.EnumField { displayName = "Material", getter = () => data.materialDebugSettings.debugViewMaterial, setter = value => SetDebugViewMaterial(value), enumNames = MaterialDebugSettings.debugViewMaterialStrings, enumValues = MaterialDebugSettings.debugViewMaterialValues, getIndex = () => data.materialEnumIndex, setIndex = value => data.materialEnumIndex = value });
+            list.Add( new DebugUI.EnumField { displayName = "Material", getter = () => data.materialDebugSettings.debugViewMaterial.Length == 0 ? 0 : data.materialDebugSettings.debugViewMaterial[0], setter = value => SetDebugViewMaterial(value), enumNames = MaterialDebugSettings.debugViewMaterialStrings, enumValues = MaterialDebugSettings.debugViewMaterialValues, getIndex = () => data.materialEnumIndex, setIndex = value => data.materialEnumIndex = value });
             list.Add( new DebugUI.EnumField { displayName = "Engine", getter = () => data.materialDebugSettings.debugViewEngine, setter = value => SetDebugViewEngine(value), enumNames = MaterialDebugSettings.debugViewEngineStrings, enumValues = MaterialDebugSettings.debugViewEngineValues, getIndex = () => data.engineEnumIndex, setIndex = value => data.engineEnumIndex = value });
             list.Add( new DebugUI.EnumField { displayName = "Attributes", getter = () => (int)data.materialDebugSettings.debugViewVarying, setter = value => SetDebugViewVarying((DebugViewVarying)value), autoEnum = typeof(DebugViewVarying), getIndex = () => data.attributesEnumIndex, setIndex = value => data.attributesEnumIndex = value });
             list.Add( new DebugUI.EnumField { displayName = "Properties", getter = () => (int)data.materialDebugSettings.debugViewProperties, setter = value => SetDebugViewProperties((DebugViewProperties)value), autoEnum = typeof(DebugViewProperties), getIndex = () => data.propertiesEnumIndex, setIndex = value => data.propertiesEnumIndex = value });

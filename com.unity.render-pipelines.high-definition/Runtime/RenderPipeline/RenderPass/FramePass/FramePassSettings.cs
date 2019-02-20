@@ -161,7 +161,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         internal void FillDebugData(DebugDisplaySettings.DebugData data)
         {
-            data.materialDebugSettings.debugViewMaterial
+            data.materialDebugSettings.debugViewMaterial = materialProperty == MaterialProperty.All ? new int[0] : s_MaterialPropertyMap[materialProperty];
 
         }
     }
