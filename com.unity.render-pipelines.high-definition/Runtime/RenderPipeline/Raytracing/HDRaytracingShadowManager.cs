@@ -185,6 +185,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Inject all the parameters for the compute
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, _SNBuffer, m_SNBuffer);
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, _UNBuffer, m_UNBuffer);
+                    cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, _UBuffer, m_UBuffer);
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._DepthTexture, m_SharedRTManager.GetDepthStencilBuffer());
                     cmd.SetComputeTextureParam(bilateralFilter, m_KernelFilter, HDShaderIDs._NormalBufferTexture, m_SharedRTManager.GetNormalBuffer());
                     cmd.SetComputeIntParam(bilateralFilter, _DenoiseRadius, rtEnvironement.shadowFilterRadius);
@@ -196,7 +197,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // Texture dimensions
                     int texWidth = m_AreaShadowTextureArray.rt.width;
-                    int texHeight = m_AreaShadowTextureArray.rt.width;
+                    int texHeight = m_AreaShadowTextureArray.rt.height;
 
                     // Evaluate the dispatch parameters
                     int areaTileSize = 8;

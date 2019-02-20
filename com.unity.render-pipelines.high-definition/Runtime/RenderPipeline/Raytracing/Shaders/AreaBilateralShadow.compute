@@ -1,3 +1,8 @@
+/*
+** Adapted from "Combining Analytic Direct Illumination and Stochastic", by Heitz et al.
+** https://eheitzresearch.wordpress.com/705-2/
+*/
+
 #pragma kernel AreaBilateralShadow
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
@@ -8,82 +13,161 @@
 // Tile size of this compute
 #define AREA_BILLATERAL_TILE_SIZE 8
 
+// FIXME: Inputs could be scalars instead of colors
+
 // Input integration textures
 RWTexture2D<float4>     _SNTextureUAV;
 RWTexture2D<float4>     _UNTextureUAV;
 
 // ScreenSpace buffers
-Texture2D<float>						_DepthTexture;
+Texture2D<float4>       _UTextureUAV;
+Texture2D<float>        _DepthTexture;
 
 // Filter parameters
-int                 _DenoiseRadius;
-float               _GaussianSigma;
+int                     _DenoiseRadius;
+float                   _GaussianSigma;
 
 // Output texture data
-int                             _RaytracingShadowSlot;
-RWTexture2DArray<float>         _AreaShadowTextureRW;
+int                     _RaytracingShadowSlot;
+RWTexture2DArray<float> _AreaShadowTextureRW;
 
-float square(float value)
+// Couple helper functions
+float sqr(float value)
 {
 	return value * value;
 }
-
-float3 ReadNormalValue(uint2 positionSS)
+float gaussian(int i, int j, float sigma2)
 {
-    NormalData normalData;
-    float4 normalBuffer  = _NormalBufferTexture[positionSS];
-    DecodeFromNormalBuffer(normalBuffer, positionSS, normalData);
-    return normalData.normalWS;
+    const float radius2 = sqr(i) + sqr(j);
+    return exp(-radius2 / sigma2);
 }
 
-float ReadDepthValue(uint2 positionSS)
+// Bilateral filter parameters
+static const float NORMAL_WEIGHT   = 1.0f;
+static const float PLANE_WEIGHT    = 1.0f;
+static const float DEPTH_WEIGHT    = 1.0f;
+static const float ANALYTIC_WEIGHT = 1.0f;
+static const float EPSILON         = 0.001f;
+
+struct TapKey
 {
-    float hitDeviceDepth = LOAD_TEXTURE2D(_DepthTexture, positionSS).r;
-    return LinearEyeDepth(hitDeviceDepth, _ZBufferParams);
+    float  z;
+    float3 position;
+    float3 normal;
+    float  analytic;
+};
+
+TapKey GetTapKey(uint2 coordSS)
+{
+    TapKey key;
+    PositionInputs posInput;
+
+    if ((DEPTH_WEIGHT > 0.0f) || (PLANE_WEIGHT > 0.0f))
+    {
+        posInput.deviceDepth = LOAD_TEXTURE2D(_DepthTexture, coordSS).r;
+        key.z = Linear01Depth(posInput.deviceDepth, _ZBufferParams);
+    }
+
+    if (PLANE_WEIGHT > 0.0f)
+    {
+        posInput = GetPositionInput_Stereo(coordSS, _ScreenSize.zw, posInput.deviceDepth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
+        key.position = posInput.positionWS;
+    }
+
+    if ((NORMAL_WEIGHT > 0.0f) || (PLANE_WEIGHT > 0.0f))
+    {
+        NormalData normalData;
+        const float4 normalBuffer = _NormalBufferTexture[coordSS];
+        DecodeFromNormalBuffer(normalBuffer, coordSS, normalData);
+        key.normal = normalData.normalWS;
+    }
+
+    if (ANALYTIC_WEIGHT > 0.0f)
+    {
+        key.analytic = Luminance(_UTextureUAV[coordSS].xyz);
+    }
+
+    return key;
+}
+
+float ComputeBilateralWeight(TapKey center, TapKey tap)
+{
+    float depthWeight    = 1.0f;
+    float normalWeight   = 1.0f;
+    float planeWeight    = 1.0f;
+    float analyticWeight = 1.0f;
+
+    if (DEPTH_WEIGHT > 0.0f)
+    {
+        depthWeight = max(0.0f, 1.0f - abs(tap.z - center.z) * DEPTH_WEIGHT);
+    }
+
+    if (NORMAL_WEIGHT > 0.0f)
+    {
+        const float normalCloseness = sqr(sqr(dot(tap.normal, center.normal)));
+        const float normalError = (1.0f - normalCloseness);
+        normalWeight = max((1.0f - normalError * NORMAL_WEIGHT), 0.0f);
+    }
+
+
+    if (PLANE_WEIGHT > 0.0f)
+    {
+        // Change in position in camera space
+        const float3 dq = center.position - tap.position;
+
+        // How far away is this point from the original sample
+        // in camera space? (Max value is unbounded)
+        const float distance2 = dot(dq, dq);
+
+        // How far off the expected plane (on the perpendicular) is this point? Max value is unbounded.
+        const float planeError = max(abs(dot(dq, tap.normal)), abs(dot(dq, center.normal)));
+
+        planeWeight = (distance2 < EPSILON) ? 1.0f :
+            pow(max(0.0f, 1.0f - 2.0f * PLANE_WEIGHT * planeError / sqrt(distance2)), 2.0f);
+    }
+
+    if (ANALYTIC_WEIGHT > 0.0f)
+    {
+        const float aDiff = abs(tap.analytic - center.analytic) * 10.0f;
+        analyticWeight = max(0.0f, 1.0f - (aDiff * ANALYTIC_WEIGHT));
+    }                           
+
+    return depthWeight * normalWeight * planeWeight * analyticWeight;
 }
 
 [numthreads(AREA_BILLATERAL_TILE_SIZE, AREA_BILLATERAL_TILE_SIZE, 1)]
 void AreaBilateralShadow(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
 {
-	// Fetch the current pixel coordinate
-	uint2 currentPixelCoordinate = groupId * AREA_BILLATERAL_TILE_SIZE + groupThreadId;
-    currentPixelCoordinate.x = currentPixelCoordinate.x + (unity_StereoEyeIndex * _ScreenSize.x);
+    // Fetch the current pixel coordinate
+    uint2 centerCoord = groupId * AREA_BILLATERAL_TILE_SIZE + groupThreadId;
+    centerCoord.x = centerCoord.x + (unity_StereoEyeIndex * _ScreenSize.x);
 
-    // Read the central pixel values
-    float depthValue  = ReadDepthValue(currentPixelCoordinate);
-	float3 normalValue  = ReadNormalValue(currentPixelCoordinate);
+    float S = 0.0f;
+    float U = 0.0f;
+    float wSum = 0.0f;
 
-    float denoisedSN = 0.0f;
-    float denoisedUN = 0.0f;
-    int totalWeight = 0;
+    const float sigma2  = sqr(_DenoiseRadius); // FIXME: do we want a scale factor here?
+    const TapKey center = GetTapKey(centerCoord);
 
-    for(int i = -_DenoiseRadius; i < _DenoiseRadius; ++i)
+    // FIXME: Separate horizontal and vertical in 2 passes
+    for (int i = -_DenoiseRadius; i < _DenoiseRadius; ++i)
     {
-    	for(int j = -_DenoiseRadius; j < _DenoiseRadius; ++j)
-    	{
-            // Compute the pixel coordinate candidate position
-    		uint2 pixelpos = uint2(currentPixelCoordinate.x + i, currentPixelCoordinate.y + j);
-/*
-            // Sample values for the current pixel
-    		float sampleDepth = ReadDepthValue(pixelpos);
-            float3 sampleNormal = ReadNormalValue(pixelpos);
+        for (int j = -_DenoiseRadius; j < _DenoiseRadius; ++j)
+        {
+            uint2 tapCoord = uint2(centerCoord.x + i, centerCoord.y + j);
 
+            // Compute the weight (skip computation for the center)
+            const float w = (i || j) ?
+                gaussian(i, j, sigma2) * ComputeBilateralWeight(center, GetTapKey(tapCoord)) : 1.0f;
 
-            // Evaluate the validity of the pixel
-            bool sampleValid  = abs(sampleDepth - depthValue) < 0.1f && dot(normalValue, sampleNormal) > 0.99;
-
-            if(true)
-            */
-            {
-                float actualRadius = sqrt(float(i * i + j * j));
-                float gaussian = true ? exp(-square(actualRadius / _GaussianSigma)) : 0.0f;
-                denoisedSN += Luminance(_SNTextureUAV[pixelpos].xyz) * gaussian;
-                denoisedUN += Luminance(_UNTextureUAV[pixelpos].xyz) * gaussian;
-            }
-    	}
+            S += Luminance(_SNTextureUAV[tapCoord].xyz) * w;
+            U += Luminance(_UNTextureUAV[tapCoord].xyz) * w;
+            wSum += w;
+        }
     }
 
-    // Return the right color
-    float luminanceValue = clamp(denoisedSN / denoisedUN, 0.0, 1.0);
-    _AreaShadowTextureRW[uint3(currentPixelCoordinate, _RaytracingShadowSlot)] = luminanceValue;
+    // For the final ratio, we want the 0/0 case to produce a value of 1
+    const float filteredRatio = (wSum > EPSILON && U / wSum > EPSILON) ? clamp(S / U, 0.0f, 1.0f) : 1.0f;
+
+    _AreaShadowTextureRW[uint3(centerCoord, _RaytracingShadowSlot)] = filteredRatio;
 }
