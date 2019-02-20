@@ -70,6 +70,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Shader gradientSkyPS;
             public ComputeShader ambientProbeConvolutionCS;
             public ComputeShader opticalDepthTablePrecomputationCS;
+            public ComputeShader groundIrradianceTablePrecomputationCS;
 
             // Material
             public Shader preIntegratedFGD_GGXDisneyDiffusePS;
@@ -252,6 +253,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 gradientSkyPS = Load<Shader>(HDRenderPipelinePath + "Sky/GradientSky/GradientSky.shader"),
                 ambientProbeConvolutionCS = Load<ComputeShader>(HDRenderPipelinePath + "Sky/AmbientProbeConvolution.compute"),
                 opticalDepthTablePrecomputationCS = Load<ComputeShader>(HDRenderPipelinePath + "Sky/PbrSky/OpticalDepthTablePrecomputation.compute"),
+                groundIrradianceTablePrecomputationCS = Load<ComputeShader>(HDRenderPipelinePath + "Sky/PbrSky/GroundIrradianceTablePrecomputation.compute"),
 
                 // Skybox/Cubemap is a builtin shader, must use Shader.Find to access it. It is fine because we are in the editor
                 skyboxCubemapPS = Shader.Find("Skybox/Cubemap"),
