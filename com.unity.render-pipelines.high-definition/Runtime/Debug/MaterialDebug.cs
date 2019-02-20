@@ -152,47 +152,54 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Type bsdfDataType;
         };
 
+        internal static List<MaterialItem> GetAllMaterialDatas()
+        {
+            List<RenderPipelineMaterial> materialList = HDUtils.GetRenderPipelineMaterialList();
+
+            // TODO: Share this code to retrieve deferred material with HDRenderPipeline
+            // Find first material that is a deferredMaterial
+            Type bsdfDataDeferredType = null;
+            foreach (RenderPipelineMaterial material in materialList)
+            {
+                if (material.IsDefferedMaterial())
+                {
+                    bsdfDataDeferredType = material.GetType().GetNestedType("BSDFData");
+                }
+            }
+
+            // TODO: Handle the case of no Gbuffer material
+            Debug.Assert(bsdfDataDeferredType != null);
+
+            List<MaterialItem> materialItems = new List<MaterialItem>();
+
+            int numSurfaceDataFields = 0;
+            int numBSDFDataFields = 0;
+            foreach (RenderPipelineMaterial material in materialList)
+            {
+                MaterialItem item = new MaterialItem();
+
+                item.className = material.GetType().Name + "/";
+
+                item.surfaceDataType = material.GetType().GetNestedType("SurfaceData");
+                numSurfaceDataFields += item.surfaceDataType.GetFields().Length;
+
+                item.bsdfDataType = material.GetType().GetNestedType("BSDFData");
+                numBSDFDataFields += item.bsdfDataType.GetFields().Length;
+
+                materialItems.Add(item);
+            }
+
+            return materialItems;
+        }
+
         void BuildDebugRepresentation()
         {
             if (!isDebugViewMaterialInit)
             {
-                List<RenderPipelineMaterial> materialList = HDUtils.GetRenderPipelineMaterialList();
-
-                // TODO: Share this code to retrieve deferred material with HDRenderPipeline
-                // Find first material that is a deferredMaterial
-                Type bsdfDataDeferredType = null;
-                foreach (RenderPipelineMaterial material in materialList)
-                {
-                    if (material.IsDefferedMaterial())
-                    {
-                        bsdfDataDeferredType = material.GetType().GetNestedType("BSDFData");
-                    }
-                }
-
-                // TODO: Handle the case of no Gbuffer material
-                Debug.Assert(bsdfDataDeferredType != null);
-
-                List<MaterialItem> materialItems = new List<MaterialItem>();
-
-                int numSurfaceDataFields = 0;
-                int numBSDFDataFields = 0;
-                foreach (RenderPipelineMaterial material in materialList)
-                {
-                    MaterialItem item = new MaterialItem();
-
-                    item.className = material.GetType().Name + "/";
-
-                    item.surfaceDataType = material.GetType().GetNestedType("SurfaceData");
-                    numSurfaceDataFields += item.surfaceDataType.GetFields().Length;
-
-                    item.bsdfDataType = material.GetType().GetNestedType("BSDFData");
-                    numBSDFDataFields += item.bsdfDataType.GetFields().Length;
-
-                    materialItems.Add(item);
-                }
+                List<MaterialItem> materialItems = GetAllMaterialDatas();
 
                 // Init list
-                List<GUIContent> debugViewMaterialStringsList = new List<GUIContent>();
+                List < GUIContent> debugViewMaterialStringsList = new List<GUIContent>();
                 List<int> debugViewMaterialValuesList = new List<int>();
                 List<GUIContent> debugViewEngineStringsList = new List<GUIContent>();
                 List<int> debugViewEngineValuesList = new List<int>();
@@ -271,17 +278,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Color materialValidateTrueMetalColor = new Color(1.0f, 1.0f, 0.0f);
         public bool  materialValidateTrueMetal = false;
 
-        public int debugViewMaterial { get { return m_DebugViewMaterial; } }
+        public int[] debugViewMaterial { get { return m_DebugViewMaterial; } }
         public int debugViewEngine { get { return m_DebugViewEngine; } }
         public DebugViewVarying debugViewVarying { get { return m_DebugViewVarying; } }
         public DebugViewProperties debugViewProperties { get { return m_DebugViewProperties; } }
         public int debugViewGBuffer { get { return m_DebugViewGBuffer; } }
 
-        int                             m_DebugViewMaterial = 0; // No enum there because everything is generated from materials.
-        int                             m_DebugViewEngine = 0;  // No enum there because everything is generated from BSDFData
+        int[]                m_DebugViewMaterial = new int[1] { 0 }; // No enum there because everything is generated from materials.
+        int                  m_DebugViewEngine = 0;  // No enum there because everything is generated from BSDFData
         DebugViewVarying     m_DebugViewVarying = DebugViewVarying.None;
         DebugViewProperties  m_DebugViewProperties = DebugViewProperties.None;
-        int                             m_DebugViewGBuffer = 0; // Can't use GBuffer enum here because the values are actually split between this enum and values from Lit.BSDFData
+        int                  m_DebugViewGBuffer = 0; // Can't use GBuffer enum here because the values are actually split between this enum and values from Lit.BSDFData
 
         public int GetDebugMaterialIndex()
         {
@@ -293,18 +300,18 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void DisableMaterialDebug()
         {
-            m_DebugViewMaterial = 0;
+            m_DebugViewMaterial = new int[1] { 0 };
             m_DebugViewEngine = 0;
             m_DebugViewVarying = DebugViewVarying.None;
             m_DebugViewProperties = DebugViewProperties.None;
             m_DebugViewGBuffer = 0;
         }
 
-        public void SetDebugViewMaterial(int value)
+        public void SetDebugViewMaterial(int[] values)
         {
-            if (value != 0)
+            if (values.Length != 1  || values[0] != 0)
                 DisableMaterialDebug();
-            m_DebugViewMaterial = value;
+            m_DebugViewMaterial = values;
         }
 
         public void SetDebugViewEngine(int value)
@@ -342,7 +349,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool IsDebugDisplayEnabled()
         {
-            return (m_DebugViewEngine != 0 || m_DebugViewMaterial != 0 || m_DebugViewVarying != DebugViewVarying.None || m_DebugViewProperties != DebugViewProperties.None || m_DebugViewGBuffer != 0);
+            return (m_DebugViewEngine != 0 || m_DebugViewMaterial.Length != 1 || m_DebugViewMaterial[0] != 0 || m_DebugViewVarying != DebugViewVarying.None || m_DebugViewProperties != DebugViewProperties.None || m_DebugViewGBuffer != 0);
         }
     }
 }
