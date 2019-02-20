@@ -12,10 +12,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Albedo,
         Normal,
         Smoothness,
+        /// <summary>There is no equivalent for AxF shader. It will be rendered black.</summary>
         AmbientOcclusion,
+        /// <summary>There is no equivalent for AxF, Fabric and Hair shaders. They will be rendered black.</summary>
         Metal,
         Specular,
-        Alpha,
+        Alpha, //[TODO]
 
         //[Todo: see for particular properties like aniso...]
     }
@@ -162,7 +164,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal void FillDebugData(DebugDisplaySettings.DebugData data)
         {
             data.materialDebugSettings.debugViewMaterial = materialProperty == MaterialProperty.All ? new int[0] : s_MaterialPropertyMap[materialProperty];
-
+            //[TODO: Add lighting settings too]
         }
     }
 

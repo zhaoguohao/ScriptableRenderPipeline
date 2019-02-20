@@ -24,6 +24,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("MaterialFeatures")]
             public uint materialFeatures;
 
+            [FramePassMaterialMapping(MaterialProperty.AmbientOcclusion)]
             [SurfaceDataAttributes("Ambient Occlusion")]
             public float ambientOcclusion;
 
@@ -33,12 +34,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes("Specular Occlusion")]
             public float specularOcclusion;
 
+            [FramePassMaterialMapping(MaterialProperty.Normal)]
             [SurfaceDataAttributes(new string[] {"Normal", "Normal View Space"}, true)]
             public Vector3 normalWS;
 
             [SurfaceDataAttributes(new string[] { "Geometric Normal", "Geometric Normal View Space" }, true)]
             public Vector3 geomNormalWS;
 
+            [FramePassMaterialMapping(MaterialProperty.Smoothness)]
             [SurfaceDataAttributes("Smoothness")]
             public float perceptualSmoothness;
 
@@ -62,6 +65,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float secondaryPerceptualSmoothness;
 
             // Specular Color
+            [FramePassMaterialMapping(MaterialProperty.Specular)]
             [SurfaceDataAttributes("Specular Tint", false, true)]
             public Vector3 specularTint;
 

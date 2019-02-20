@@ -52,21 +52,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             // Bottom interface (2 lobes BSDF)
             // Standard parametrization
+            [FramePassMaterialMapping(MaterialProperty.Albedo)]
             [SurfaceDataAttributes("Base Color", false, true)]
             public Vector3 baseColor;
 
+            [FramePassMaterialMapping(MaterialProperty.AmbientOcclusion)]
             [SurfaceDataAttributes("Ambient Occlusion")]
             public float ambientOcclusion;
 
+            [FramePassMaterialMapping(MaterialProperty.Metal)]
             [SurfaceDataAttributes("Metallic")]
             public float metallic;
 
             [SurfaceDataAttributes("Dielectric IOR")]
             public float dielectricIor;
 
+            [FramePassMaterialMapping(MaterialProperty.Specular)]
             [SurfaceDataAttributes("Specular Color", false, true)]
             public Vector3 specularColor;
 
+            [FramePassMaterialMapping(MaterialProperty.Normal)]
             [SurfaceDataAttributes(new string[] {"Normal", "Normal View Space"}, true)]
             public Vector3 normalWS;
 
@@ -79,6 +84,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             [SurfaceDataAttributes(new string[] {"Bent Normal", "Bent Normal View Space"}, true)]
             public Vector3 bentNormalWS;
 
+            [FramePassMaterialMapping(MaterialProperty.Smoothness)]
             [SurfaceDataAttributes("Smoothness A")]
             public float perceptualSmoothnessA;
 
