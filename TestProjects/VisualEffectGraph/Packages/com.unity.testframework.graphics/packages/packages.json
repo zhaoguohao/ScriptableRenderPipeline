@@ -1,0 +1,23 @@
+{
+  "com.unity.testframework.graphics-5.6.0.tgz": {
+    "name": "com.unity.testframework.graphics",
+    "displayName": "Graphics Tests Framework",
+    "version": "5.6.0",
+    "unity": "2019.1",
+    "unityRelease": "0b4",
+    "description": "Provides test framework helpers for writing tests for graphics code, such as image comparison assertions and automatic management of reference images.",
+    "keywords": [
+      "qa",
+      "test",
+      "testing",
+      "tests",
+      "graphics"
+    ],
+    "dependencies": {},
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/Unity-Technologies/ScriptableRenderPipeline.git",
+      "revision": "aab23f9d1ac3a71c40c97c471c339ae827fd1378"
+    }
+  }
+}
