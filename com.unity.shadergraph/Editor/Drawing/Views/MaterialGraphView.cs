@@ -292,7 +292,6 @@ namespace UnityEditor.ShaderGraph.Drawing
         DropdownMenuAction.Status ConvertToSubgraphStatus(DropdownMenuAction action)
         {
             if (onConvertToSubgraphClick == null) return DropdownMenuAction.Status.Hidden;
-            if (graph.isSubGraph) return DropdownMenuAction.Status.Hidden;
             return selection.OfType<IShaderNodeView>().Any(v => v.node != null) ? DropdownMenuAction.Status.Normal : DropdownMenuAction.Status.Hidden;
         }
 
@@ -366,7 +365,7 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         static bool ValidateObjectForDrop(Object obj)
         {
-            return EditorUtility.IsPersistent(obj) && (obj is Texture2D || obj is Cubemap || obj is MaterialSubGraphAsset || obj is Texture2DArray || obj is Texture3D);
+            return EditorUtility.IsPersistent(obj) && (obj is Texture2D || obj is Cubemap || obj is SubGraphAsset || obj is Texture2DArray || obj is Texture3D);
         }
 
         static void OnDragUpdatedEvent(DragUpdatedEvent e)
@@ -509,7 +508,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     inputslot.cubemap = cubemap;
             }
 
-            var subGraphAsset = obj as MaterialSubGraphAsset;
+            var subGraphAsset = obj as SubGraphAsset;
             if (subGraphAsset != null)
             {
                 graph.owner.RegisterCompleteObjectUndo("Drag Sub-Graph");

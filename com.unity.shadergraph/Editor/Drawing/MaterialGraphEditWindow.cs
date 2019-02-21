@@ -205,10 +205,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 bool VCSEnabled = (VersionControl.Provider.enabled && VersionControl.Provider.isActive);
                 CheckoutIfValid(path, VCSEnabled);
 
-                if (m_GraphObject.graph.isSubGraph)
-                    UpdateAbstractSubgraphOnDisk(path);
-                else
-                    UpdateShaderGraphOnDisk(path);
+                UpdateShaderGraphOnDisk(path);
 
                 graphObject.isDirty = false;
                 var windows = Resources.FindObjectsOfTypeAll<MaterialGraphEditWindow>();
@@ -408,7 +405,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             File.WriteAllText(path, EditorJsonUtility.ToJson(subGraph));
             AssetDatabase.ImportAsset(path);
 
-            var loadedSubGraph = AssetDatabase.LoadAssetAtPath(path, typeof(MaterialSubGraphAsset)) as MaterialSubGraphAsset;
+            var loadedSubGraph = AssetDatabase.LoadAssetAtPath(path, typeof(SubGraphAsset)) as SubGraphAsset;
             if (loadedSubGraph == null)
                 return;
 
@@ -436,25 +433,9 @@ namespace UnityEditor.ShaderGraph.Drawing
             graphObject.graph.ValidateGraph();
         }
 
-        void UpdateAbstractSubgraphOnDisk(string path)
-        {
-            File.WriteAllText(path, EditorJsonUtility.ToJson(graphObject.graph, true));
-            AssetDatabase.ImportAsset(path);
-        }
-
         void UpdateShaderGraphOnDisk(string path)
         {
-            UpdateShaderGraphOnDisk(path, graphObject.graph);
-        }
-
-        static void UpdateShaderGraphOnDisk(string path, GraphData graph)
-        {
-            var shaderImporter = AssetImporter.GetAtPath(path) as ShaderGraphImporter;
-            if (shaderImporter == null)
-                return;
-
-            File.WriteAllText(path, EditorJsonUtility.ToJson(graph, true));
-            shaderImporter.SaveAndReimport();
+            File.WriteAllText(path, EditorJsonUtility.ToJson(graphObject.graph, true));
             AssetDatabase.ImportAsset(path);
         }
 

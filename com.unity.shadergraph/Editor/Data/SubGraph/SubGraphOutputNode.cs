@@ -66,26 +66,7 @@ namespace UnityEditor.ShaderGraph
             get { return PreviewMode.Preview3D; }
         }
 
-        public ShaderStageCapability effectiveShaderStage
-        {
-            get
-            {
-                List<MaterialSlot> slots = new List<MaterialSlot>();
-                GetInputSlots(slots);
-
-                foreach(MaterialSlot slot in slots)
-                {
-                    ShaderStageCapability stage = NodeUtils.GetEffectiveShaderStageCapability(slot, true);
-
-                    if(stage != ShaderStageCapability.All)
-                        return stage;
-                }
-
-                return ShaderStageCapability.All;
-            }
-        }
-
-        private void ValidateShaderStage()
+        void ValidateShaderStage()
         {
             List<MaterialSlot> slots = new List<MaterialSlot>();
             GetInputSlots(slots);
@@ -93,7 +74,16 @@ namespace UnityEditor.ShaderGraph
             foreach(MaterialSlot slot in slots)
                 slot.stageCapability = ShaderStageCapability.All;
 
-            var effectiveStage = effectiveShaderStage;
+            var effectiveStage = ShaderStageCapability.All;
+            foreach (var slot in slots)
+            {
+                var stage = NodeUtils.GetEffectiveShaderStageCapability(slot, true);
+                if (stage != ShaderStageCapability.All)
+                {
+                    effectiveStage = stage;
+                    break;
+                }
+            }
 
             foreach(MaterialSlot slot in slots)
                 slot.stageCapability = effectiveStage;
@@ -120,20 +110,6 @@ namespace UnityEditor.ShaderGraph
                 return;
 
             RemoveSlot(index);
-        }
-
-        public void RemapOutputs(ShaderGenerator visitor, GenerationMode generationMode)
-        {
-            foreach (var slot in graphOutputs)
-                visitor.AddShaderChunk(string.Format("{0} = {1};", slot.shaderOutputName, GetSlotValue(slot.id, generationMode)), true);
-        }
-
-        public IEnumerable<MaterialSlot> graphOutputs
-        {
-            get
-            {
-                return NodeExtensions.GetInputSlots<MaterialSlot>(this).OrderBy(x => x.id);
-            }
         }
     }
 }

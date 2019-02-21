@@ -579,19 +579,9 @@ namespace UnityEditor.ShaderGraph
         public void CollectShaderProperties(PropertyCollector collector, GenerationMode generationMode)
         {
             if (!isSubGraph || generationMode == GenerationMode.Preview)
-        {
-            foreach (var prop in properties)
-                collector.AddShaderProperty(prop);
-        }
-
-            if (isSubGraph)
             {
-                List<AbstractMaterialNode> activeNodes = new List<AbstractMaterialNode>();
-                NodeUtils.DepthFirstCollectNodesFromNode(activeNodes, outputNode);
-                foreach (var node in activeNodes)
-                {
-                    node.CollectShaderProperties(collector, generationMode);
-                }
+                foreach (var prop in properties)
+                    collector.AddShaderProperty(prop);
             }
         }
 
