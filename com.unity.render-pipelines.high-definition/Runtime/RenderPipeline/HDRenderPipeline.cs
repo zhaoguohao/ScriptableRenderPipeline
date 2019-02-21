@@ -149,13 +149,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [Flags]
         public enum StencilBitMask
         {
-            Clear                           = 0,    // 0x0 
+            Clear                           = 0,    // 0x0
             LightingMask                    = 3,    // 0x7  - 2 bit - Lifetime: GBuffer/Forward - SSSSS
             // Free slot 4
             Decals                          = 8,    // 0x8  - 1 bit - Lifetime: DBuffer - Patch normal buffer
-            DecalsForwardOutputNormalBuffer = 16,   // 0x10 - 1 bit - Lifetime: DBuffer - Patch normal buffer         
+            DecalsForwardOutputNormalBuffer = 16,   // 0x10 - 1 bit - Lifetime: DBuffer - Patch normal buffer
             DoesntReceiveSSR                = 32,   // 0x20 - 1 bit - Lifetime: DethPrepass - SSR
-            // Free slot 64           
+            // Free slot 64
             ObjectVelocity                  = 128,  // 0x80 - 1 bit - Lifetime: OBjec velocity pass - Camera velocity
             All                             = 255   // 0xFF - 8 bit
         }
@@ -370,6 +370,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_LightLoop.InitRaytracing(m_RayTracingManager);
             m_AmbientOcclusionSystem.InitRaytracing(m_RayTracingManager, m_SharedRTManager);
 #endif
+
+            CameraCaptureBridge.enabled = true;
         }
 
         void UpgradeResourcesIfNeeded()
@@ -730,6 +732,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 }
 #endif
             }
+
+            CameraCaptureBridge.enabled = false;
         }
 
 
@@ -1071,7 +1075,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if (!visibleInIndices.Contains(visibleInIndex))
                             visibleInIndices.Add(visibleInIndex);
                     }
-                    
+
                     UnityEngine.Rendering.RenderPipeline.EndCameraRendering(renderContext, camera);
                 }
 
@@ -1488,7 +1492,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             RenderDBuffer(hdCamera, cmd, renderContext, cullingResults);
             // We can call DBufferNormalPatch after RenderDBuffer as it only affect forward material and isn't affected by RenderGBuffer
             // This reduce lifteime of stencil bit
-            DBufferNormalPatch(hdCamera, cmd, renderContext, cullingResults);       
+            DBufferNormalPatch(hdCamera, cmd, renderContext, cullingResults);
 
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
 
@@ -1843,6 +1847,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 renderContext.StereoEndRender(camera);
             }
+
+            //hdCamera.ExecuteCaptureActions(m_IntermediateAfterPostProcessBuffer, cmd);
+            hdCamera.ExecuteCaptureActions(target.id, cmd);
 
             // Due to our RT handle system we don't write into the backbuffer depth buffer (as our depth buffer can be bigger than the one provided)
             // So we need to do a copy of the corresponding part of RT depth buffer in the target depth buffer in various situation:
@@ -2901,7 +2908,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._SsrLightingTextureRW, m_SsrLightingTexture);
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._ColorPyramidTexture,  previousColorPyramid);
                     cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._SsrClearCoatMaskTexture, clearCoatMask);
-                    
+
                     cmd.DispatchCompute(cs, kernel, HDUtils.DivRoundUp(w, 8), HDUtils.DivRoundUp(h, 8), 1);
                 }
 

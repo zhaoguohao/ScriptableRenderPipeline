@@ -51,6 +51,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Vector4[] worldSpaceCameraPosStereoEyeOffset;
         Vector4[] prevWorldSpaceCameraPosStereo;
 
+        IEnumerator<Action<RenderTargetIdentifier, CommandBuffer>> captureActions;
+
         // Non oblique projection matrix (RHS)
         public Matrix4x4 nonObliqueProjMatrix
         {
@@ -451,7 +453,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (ShaderConfig.s_CameraRelativeRendering != 0)
             {
                 prevWorldSpaceCameraPos = worldSpaceCameraPos - prevWorldSpaceCameraPos;
-                // This fixes issue with cameraDisplacement stacking in prevViewProjMatrix when same camera renders multiple times each logical frame 
+                // This fixes issue with cameraDisplacement stacking in prevViewProjMatrix when same camera renders multiple times each logical frame
                 // causing glitchy motion blur when editor paused.
                 if (m_LastFrameActive != Time.frameCount)
                 {
@@ -587,6 +589,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
             UpdateVolumeParameters();
+
+            captureActions = CameraCaptureBridge.GetCaptureActions(camera);
         }
 
         void UpdateVolumeParameters()
@@ -947,6 +951,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         void ReleaseHistoryBuffer()
         {
             m_HistoryRTSystem.ReleaseAll();
+        }
+
+        public void ExecuteCaptureActions(RenderTargetIdentifier id, CommandBuffer cmd)
+        {
+            if (captureActions == null)
+                return;
+
+            for (captureActions.Reset(); captureActions.MoveNext();)
+                captureActions.Current(id, cmd);
         }
     }
 }
