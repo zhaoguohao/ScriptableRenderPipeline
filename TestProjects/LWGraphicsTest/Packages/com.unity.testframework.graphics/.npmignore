@@ -8,3 +8,8 @@ Documentation/ApiDocs/**
 QAReport.md
 QAReport.md.meta
 .gitlab-ci.yml
+
+upm-ci~/**
+.Editor/**
+.yamato/**
+*.zip*
