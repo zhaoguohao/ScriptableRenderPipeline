@@ -29,6 +29,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public float ambientOcclusion;
 
             // Standard
+            [FramePassMaterialMapping(MaterialProperty.Albedo)]
             [SurfaceDataAttributes("Diffuse", false, true)]
             public Vector3 diffuseColor;
             [SurfaceDataAttributes("Specular Occlusion")]

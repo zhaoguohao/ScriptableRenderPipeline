@@ -58,8 +58,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// </summary>
         /// <param name="mat"></param>
         /// <returns></returns>
-        public ref FramePassSettings SetFullscreenOutput(MaterialProperty mat)
+        public ref FramePassSettings SetFullscreenOutput(MaterialProperty materialProperty)
         {
+            this.materialProperty = materialProperty;
             return ref *ThisPtr;
         }
 
@@ -68,8 +69,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         /// </summary>
         /// <param name="mat"></param>
         /// <returns></returns>
-        public ref FramePassSettings SetFullscreenOutput(LightingProperty mat)
+        public ref FramePassSettings SetFullscreenOutput(LightingProperty lightingProperty)
         {
+            this.lightingProperty = lightingProperty;
             return ref *ThisPtr;
         }
 
@@ -111,9 +113,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int materialStartIndex = generateHLSLAttribute.paramDefinesStart;
 
                 if (!generateHLSLAttribute.needParamDebug)
-                {
-                    return;
-                }
+                    continue;
 
                 var fields = materialItem.surfaceDataType.GetFields();
 
@@ -123,8 +123,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
                     {
                         var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
-                        materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex++);
+                        materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex);
                     }
+                    if (((SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false)).Length > 0)
+                        localIndex++;
                 }
 
                 if (materialItem.bsdfDataType == null)
@@ -135,11 +137,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 materialStartIndex = generateHLSLAttribute.paramDefinesStart;
 
                 if (!generateHLSLAttribute.needParamDebug)
-                {
-                    return;
-                }
+                    continue;
 
-                fields = materialItem.surfaceDataType.GetFields();
+                fields = materialItem.bsdfDataType.GetFields();
 
                 localIndex = 0;
                 foreach (var field in fields)
@@ -149,6 +149,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
                         materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex++);
                     }
+                    if (((SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false)).Length > 0)
+                        localIndex++;
                 }
             }
 
@@ -159,7 +161,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             s_MaterialPropertyMapInitialized = true;
         }
-
+        
+        public void TEST(DebugDisplaySettings.DebugData data) => FillDebugData(data);
 
         internal void FillDebugData(DebugDisplaySettings.DebugData data)
         {

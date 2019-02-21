@@ -114,31 +114,34 @@ void Frag(PackedVaryingsToPS packedInput,
 
     // Same code in ShaderPassForwardUnlit.shader
     bool viewMaterial = false;
-    for (int index = 1; index <= int(_DebugViewMaterialArray[0]); index++)
+    int bufferSize = int(_DebugViewMaterialArray[0]);
+    if (bufferSize != 0)
     {
-        int indexMaterialProperty = int(_DebugViewMaterialArray[index]);
-        if (indexMaterialProperty != 0)
+        bool needLinearToSRGB = false;
+        float3 result = float3(1.0, 0.0, 1.0);
+
+        for (int index = 1; index <= bufferSize; index++)
         {
-            viewMaterial = true;
+            int indexMaterialProperty = int(_DebugViewMaterialArray[index]);
+            if (indexMaterialProperty != 0)
+            {
+                viewMaterial = true;
 
-            float3 result = float3(1.0, 0.0, 1.0);
-
-            bool needLinearToSRGB = false;
-
-            GetPropertiesDataDebug(indexMaterialProperty, result, needLinearToSRGB);
-            GetVaryingsDataDebug(indexMaterialProperty, input, result, needLinearToSRGB);
-            GetBuiltinDataDebug(indexMaterialProperty, builtinData, result, needLinearToSRGB);
-            GetSurfaceDataDebug(indexMaterialProperty, surfaceData, result, needLinearToSRGB);
-            GetBSDFDataDebug(indexMaterialProperty, bsdfData, result, needLinearToSRGB);
-
-            // TEMP!
-            // For now, the final blit in the backbuffer performs an sRGB write
-            // So in the meantime we apply the inverse transform to linear data to compensate.
-            if (!needLinearToSRGB)
-                result = SRGBToLinear(max(0, result));
-
-            outColor = float4(result, 1.0);
+                GetPropertiesDataDebug(indexMaterialProperty, result, needLinearToSRGB);
+                GetVaryingsDataDebug(indexMaterialProperty, input, result, needLinearToSRGB);
+                GetBuiltinDataDebug(indexMaterialProperty, builtinData, result, needLinearToSRGB);
+                GetSurfaceDataDebug(indexMaterialProperty, surfaceData, result, needLinearToSRGB);
+                GetBSDFDataDebug(indexMaterialProperty, bsdfData, result, needLinearToSRGB);
+            }
         }
+
+        // TEMP!
+        // For now, the final blit in the backbuffer performs an sRGB write
+        // So in the meantime we apply the inverse transform to linear data to compensate.
+        if (!needLinearToSRGB)
+            result = SRGBToLinear(max(0, result));
+
+        outColor = float4(result, 1.0);
     }
 
     if (!viewMaterial)
