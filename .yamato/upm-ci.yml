@@ -27,9 +27,7 @@ projects:
   triggers:
     branches:
       only:
-        - "/.*/"  
-      except:
-        - master
+        - yamato-test
   artifacts:
     logs.zip:
       paths:
