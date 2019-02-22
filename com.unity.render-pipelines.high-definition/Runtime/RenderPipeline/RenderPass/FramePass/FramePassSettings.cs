@@ -8,70 +8,77 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
     public enum MaterialProperty
     {
-        All,
+        None,
         Albedo,
         Normal,
         Smoothness,
-        /// <summary>There is no equivalent for AxF shader. It will be rendered black.</summary>
+        /// <summary>There is no equivalent for AxF shader.</summary>
         AmbientOcclusion,
-        /// <summary>There is no equivalent for AxF, Fabric and Hair shaders. They will be rendered black.</summary>
+        /// <summary>There is no equivalent for AxF, Fabric and Hair shaders.</summary>
         Metal,
         Specular,
-        Alpha, //[TODO]
+        Alpha,
 
         //[Todo: see for particular properties like aniso...]
     }
 
+    [Flags]
     public enum LightingProperty
     {
-        All,
-        DiffuseOnly,
-        DiffuseOnlyDirectional,
-        DiffuseOnlyIndirectional,
-        SpecularOnly,
-        SpecularOnlyDirectional,
-        SpecularOnlyIndirectional,
-        // ...
+        DiffuseOnlyDirectional = 1 << 0,
+        DiffuseOnlyIndirect = 1 << 1,
+        SpecularOnlyDirectional = 1 << 2,
+        SpecularOnlyIndirect = 1 << 3
+    }
+    
+    public enum DebugFullScreen
+    {
+        None,
+        Depth,
+        ScreanSpaceAmbientOcclusion,
+        MotionVectors
     }
 
     public unsafe struct FramePassSettings
     {
         public static FramePassSettings @default = new FramePassSettings
         {
-            materialProperty = MaterialProperty.All,
-            lightingProperty = LightingProperty.All
+            materialProperty = MaterialProperty.None,
+            lightingProperty = LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect,
+            debugFullScreen = DebugFullScreen.None
         };
 
         MaterialProperty materialProperty;
         LightingProperty lightingProperty;
-        
+        DebugFullScreen debugFullScreen;
+
         public FramePassSettings(FramePassSettings other)
         {
             InitMaterialPropertyMapIfNeeded();
 
             materialProperty = other.materialProperty;
             lightingProperty = other.lightingProperty;
+            debugFullScreen = other.debugFullScreen;
         }
 
-        /// <summary>
-        /// State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.
-        /// </summary>
-        /// <param name="mat"></param>
-        /// <returns></returns>
+        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
         public ref FramePassSettings SetFullscreenOutput(MaterialProperty materialProperty)
         {
             this.materialProperty = materialProperty;
             return ref *ThisPtr;
         }
 
-        /// <summary>
-        /// State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.
-        /// </summary>
-        /// <param name="mat"></param>
-        /// <returns></returns>
+        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
         public ref FramePassSettings SetFullscreenOutput(LightingProperty lightingProperty)
         {
             this.lightingProperty = lightingProperty;
+            return ref *ThisPtr;
+        }
+
+        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
+        public ref FramePassSettings SetFullscreenOutput(DebugFullScreen debugFullScreen)
+        {
+            this.debugFullScreen = debugFullScreen;
             return ref *ThisPtr;
         }
 
@@ -184,36 +191,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             s_MaterialPropertyMapInitialized = true;
         }
 
-        // to development only
+        // to development only [TODO: remove this]
         public void TEST(DebugDisplaySettings.DebugData data) => FillDebugData(data);
 
         // Usage example:
         // (new FramePassSettings(FramePassSettings.@default)).SetFullscreenOutput(prop).FillDebugData((RenderPipelineManager.currentPipeline as HDRenderPipeline).debugDisplaySettings.data);
         internal void FillDebugData(DebugDisplaySettings.DebugData data)
         {
-            data.materialDebugSettings.debugViewMaterial = materialProperty == MaterialProperty.All ? new int[0] : s_MaterialPropertyMap[materialProperty];
+            data.materialDebugSettings.debugViewMaterial = materialProperty == MaterialProperty.None ? new int[0] : s_MaterialPropertyMap[materialProperty];
 
-            switch(lightingProperty)
+            if (lightingProperty == (LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect))
+                data.lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
+            else if (lightingProperty == (LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect))
+                data.lightingDebugSettings.debugLightingMode = DebugLightingMode.DiffuseLighting;
+            else if (lightingProperty == (LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect))
+                data.lightingDebugSettings.debugLightingMode = DebugLightingMode.SpecularLighting;
+            else
+                throw new NotImplementedException();
+
+            switch (debugFullScreen)
             {
-                case LightingProperty.DiffuseOnly:
-                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.DiffuseLighting;
+                case DebugFullScreen.None:
+                    data.fullScreenDebugMode = FullScreenDebugMode.None;
                     break;
-                case LightingProperty.DiffuseOnlyDirectional:
-                    throw new NotImplementedException();
-                case LightingProperty.DiffuseOnlyIndirectional:
-                    throw new NotImplementedException();
-                case LightingProperty.SpecularOnly:
-                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.SpecularLighting;
+                case DebugFullScreen.Depth:
+                    data.fullScreenDebugMode = FullScreenDebugMode.DepthPyramid;
                     break;
-                case LightingProperty.SpecularOnlyDirectional:
-                    throw new NotImplementedException();
-                case LightingProperty.SpecularOnlyIndirectional:
-                    throw new NotImplementedException();
-                case LightingProperty.All:
-                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
+                case DebugFullScreen.ScreanSpaceAmbientOcclusion:
+                    data.fullScreenDebugMode = FullScreenDebugMode.SSAO;
+                    break;
+                case DebugFullScreen.MotionVectors:
+                    data.fullScreenDebugMode = FullScreenDebugMode.MotionVectors;
                     break;
                 default:
-                    throw new ArgumentException("Unknown LightingProperty");
+                    throw new ArgumentException("Unknown DebugFullScreen");
             }
         }
     }
