@@ -31,7 +31,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             Tags { "LightMode" = "LightweightForward" }
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree7Vert
             #pragma fragment SpeedTree7Frag
@@ -68,7 +67,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
@@ -93,7 +91,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             Tags{"LightMode" = "ShadowCaster"}
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
@@ -122,7 +119,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
@@ -132,138 +128,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7"
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
             
-            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-
-            #include "SpeedTree7Input.hlsl"
-            #include "SpeedTree7Passes.hlsl"
-
-            ENDHLSL
-        }
-    }
-
-    SubShader
-    {
-        Tags
-        {
-            "Queue" = "Geometry"
-            "IgnoreProjector" = "True"
-            "RenderType" = "Opaque"
-            "DisableBatching" = "LODFading"
-            "RenderPipeline" = "LightweightPipeline"
-        }
-        LOD 400
-        Cull [_Cull]
-
-        Pass
-        {
-            Name "ForwardLit"
-            Tags { "LightMode" = "LightweightForward" }
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree7Vert
-            #pragma fragment SpeedTree7Frag
-
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile _ _SHADOWS_SOFT
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-            #pragma multi_compile_fog
-
-            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
-            #pragma shader_feature_local EFFECT_BUMP
-            #pragma shader_feature_local EFFECT_HUE_VARIATION
-
-            #define ENABLE_WIND
-            #define VERTEX_COLOR
-
-            #include "SpeedTree7Input.hlsl"
-            #include "SpeedTree7Passes.hlsl"
-
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "SceneSelectionPass"
-            Tags{"LightMode" = "SceneSelectionPass"}
-
-            ColorMask 0
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree7VertDepth
-            #pragma fragment SpeedTree7FragDepth
-
-            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-            #define SCENESELECTIONPASS
-
-            #include "SpeedTree7Input.hlsl"
-            #include "SpeedTree7Passes.hlsl"
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags{"LightMode" = "ShadowCaster"}
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree7VertDepth
-            #pragma fragment SpeedTree7FragDepth
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-
-            #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-            #define SHADOW_CASTER
-
-            #include "SpeedTree7Input.hlsl"
-            #include "SpeedTree7Passes.hlsl"
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "DepthOnly"
-            Tags{"LightMode" = "DepthOnly"}
-
-            ColorMask 0
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree7VertDepth
-            #pragma fragment SpeedTree7FragDepth
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-
             #pragma shader_feature_local GEOM_TYPE_BRANCH GEOM_TYPE_BRANCH_DETAIL GEOM_TYPE_FROND GEOM_TYPE_LEAF GEOM_TYPE_MESH
 
             #define ENABLE_WIND

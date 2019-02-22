@@ -28,7 +28,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             Tags { "LightMode" = "LightweightForward" }
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree7Vert
             #pragma fragment SpeedTree7Frag
@@ -39,7 +38,9 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
+#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
+#endif
             #pragma multi_compile_fog
 
             #pragma shader_feature_local EFFECT_BUMP
@@ -59,14 +60,14 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             Tags{"LightMode" = "ShadowCaster"}
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
+#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-
+#endif
             #define ENABLE_WIND
             #define DEPTH_ONLY
             #define SHADOW_CASTER
@@ -85,14 +86,14 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree7VertDepth
             #pragma fragment SpeedTree7FragDepth
 
             #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
+#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-            
+#endif
             #define ENABLE_WIND
             #define DEPTH_ONLY
 
@@ -102,104 +103,4 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree7 Billboard"
             ENDHLSL
         }
     }
-
-    SubShader
-    {
-        Tags
-        {
-            "Queue" = "AlphaTest"
-            "IgnoreProjector" = "True"
-            "RenderType" = "TransparentCutout"
-            "DisableBatching" = "LODFading"
-            "RenderPipeline" = "LightweightPipeline"
-        }
-        LOD 400
-
-        Pass
-        {
-            Name "ForwardLit"
-            Tags { "LightMode" = "LightweightForward" }
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree7Vert
-            #pragma fragment SpeedTree7Frag
-
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile _ _SHADOWS_SOFT
-            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
-            #pragma multi_compile_fog
-
-            #pragma shader_feature_local EFFECT_BUMP
-            #pragma shader_feature_local EFFECT_HUE_VARIATION
-
-            #define ENABLE_WIND
-
-            #include "SpeedTree7BillboardInput.hlsl"
-            #include "SpeedTree7BillboardPasses.hlsl"
-
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags{"LightMode" = "ShadowCaster"}
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree7VertDepth
-            #pragma fragment SpeedTree7FragDepth
-
-            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-            #define SHADOW_CASTER
-
-            #include "SpeedTree7BillboardInput.hlsl"
-            #include "SpeedTree7BillboardPasses.hlsl"
-
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "DepthOnly"
-            Tags{"LightMode" = "DepthOnly"}
-
-            ColorMask 0
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree7VertDepth
-            #pragma fragment SpeedTree7FragDepth
-
-            #pragma multi_compile __ BILLBOARD_FACE_CAMERA_POS
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-
-            #include "SpeedTree7BillboardInput.hlsl"
-            #include "SpeedTree7BillboardPasses.hlsl"
-
-            ENDHLSL
-        }
-    }
-
 }

@@ -46,7 +46,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             Tags { "LightMode" = "LightweightForward" }
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree8Vert
             #pragma fragment SpeedTree8Frag
@@ -57,7 +56,9 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
+#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
+#endif
             #pragma multi_compile_fog
 
             #pragma multi_compile_instancing
@@ -87,14 +88,14 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
+#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-
+#endif
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
@@ -117,14 +118,14 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             Tags{"LightMode" = "ShadowCaster"}
 
             HLSLPROGRAM
-            #pragma target 3.5
             
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
+#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-            
+#endif
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
@@ -149,14 +150,14 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             ColorMask 0
 
             HLSLPROGRAM
-            #pragma target 3.5
 
             #pragma vertex SpeedTree8VertDepth
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
+#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-
+#endif
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
@@ -166,148 +167,6 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #define ENABLE_WIND
             #define DEPTH_ONLY
             
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
-
-            ENDHLSL
-        }
-    }
-
-    SubShader
-    {
-        Tags
-        {
-            "Queue"="AlphaTest"
-            "IgnoreProjector"="True"
-            "RenderType"="TransparentCutout"
-            "DisableBatching"="LODFading"
-            "RenderPipeline" = "LightweightPipeline"
-        }
-        LOD 400
-        Cull [_TwoSided]
-
-        Pass
-        {
-            Name "ForwardLit"
-            Tags { "LightMode" = "LightweightForward" }
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree8Vert
-            #pragma fragment SpeedTree8Frag
-
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS
-            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
-            #pragma multi_compile _ _SHADOWS_SOFT
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-            #pragma multi_compile_fog
-
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
-            #pragma shader_feature_local EFFECT_HUE_VARIATION
-            #pragma shader_feature_local EFFECT_SUBSURFACE
-            #pragma shader_feature_local EFFECT_BUMP
-            #pragma shader_feature_local EFFECT_EXTRA_TEX
-
-            #define ENABLE_WIND
-            #define EFFECT_BACKSIDE_NORMALS
-
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
-
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "SceneSelectionPass"
-            Tags{"LightMode" = "SceneSelectionPass"}
-
-            ColorMask 0
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-            #define SCENESELECTIONPASS
-
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
-
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "ShadowCaster"
-            Tags{"LightMode" = "ShadowCaster"}
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-            #define SHADOW_CASTER
-
-            #include "SpeedTree8Input.hlsl"
-            #include "SpeedTree8Passes.hlsl"
-            ENDHLSL
-        }
-
-        Pass
-        {
-            Name "DepthOnly"
-            Tags{"LightMode" = "DepthOnly"}
-
-            ZWrite On
-            ColorMask 0
-
-            HLSLPROGRAM
-            #pragma target 2.0
-            // Required to compile gles 2.0 with standard srp library
-            #pragma prefer_hlslcc gles
-            #pragma exclude_renderers d3d11_9x
-
-            #pragma vertex SpeedTree8VertDepth
-            #pragma fragment SpeedTree8FragDepth
-
-            #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-
-            #pragma shader_feature_local _WINDQUALITY_NONE _WINDQUALITY_FASTEST _WINDQUALITY_FAST _WINDQUALITY_BETTER _WINDQUALITY_BEST _WINDQUALITY_PALM
-            #pragma shader_feature_local EFFECT_BILLBOARD
-
-            #define ENABLE_WIND
-            #define DEPTH_ONLY
-
             #include "SpeedTree8Input.hlsl"
             #include "SpeedTree8Passes.hlsl"
 
