@@ -80,7 +80,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return GraphicsFormat.R8G8B8A8_UNorm;
         }
 
-        public static GraphicsFormat GetVelocityBufferFormat()
+        public static GraphicsFormat GetMotionVectorFormat()
         {
             return GraphicsFormat.R16G16_SFloat; // TODO: We should use 16bit normalized instead, better precision // RGInt
         }
