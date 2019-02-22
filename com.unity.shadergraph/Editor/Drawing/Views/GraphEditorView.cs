@@ -169,7 +169,10 @@ namespace UnityEditor.ShaderGraph.Drawing
                 m_GraphView.elementsRemovedFromGroup = OnElementsRemovedFromGroup;
                 content.Add(m_GraphView);
 
-                m_BlackboardProvider = new BlackboardProvider(graph);
+                if(graph.isSubGraph)
+                    m_BlackboardProvider = new BlackboardProviderSubgraph(graph);
+                else
+                    m_BlackboardProvider = new BlackboardProvider(graph);
                 m_GraphView.Add(m_BlackboardProvider.blackboard);
 
                 // Initialize toggle settings if it doesnt exist.

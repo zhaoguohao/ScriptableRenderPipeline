@@ -359,6 +359,13 @@ namespace UnityEditor.ShaderGraph.Drawing
                 var field = selectable as BlackboardField;
                 if (field != null && field.userData != null)
                 {
+                    if(graph.isSubGraph)
+                    {
+                        var subgraphInput = (MaterialSlot)field.userData;
+                        graph.RemoveSubgraphInput(subgraphInput.id);
+                        continue;
+                    }
+
                     var property = (AbstractShaderProperty)field.userData;
                     graph.RemoveShaderProperty(property.guid);
                 }

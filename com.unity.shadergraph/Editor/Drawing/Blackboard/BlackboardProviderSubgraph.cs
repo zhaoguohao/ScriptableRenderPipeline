@@ -8,16 +8,14 @@ using UnityEngine.UIElements;
 
 namespace UnityEditor.ShaderGraph.Drawing
 {
-    class BlackboardProvider
+    class BlackboardProviderSubgraph : BlackboardProvider
     {
         readonly GraphData m_Graph;
-        public static readonly Texture2D exposedIcon = Resources.Load<Texture2D>("GraphView/Nodes/BlackboardFieldExposed");
-        readonly Dictionary<Guid, BlackboardRow> m_PropertyRows;
         readonly Dictionary<int, BlackboardRow> m_SubgraphInputRows;
         readonly BlackboardSection m_Section;
         //WindowDraggable m_WindowDraggable;
         //ResizeBorderFrame m_ResizeBorderFrame;
-        public virtual Blackboard blackboard { get; set; }
+        public override Blackboard blackboard { get; set; }
         Label m_PathLabel;
         TextField m_PathLabelTextField;
         bool m_EditPathCancelled = false;
@@ -35,11 +33,11 @@ namespace UnityEditor.ShaderGraph.Drawing
         //    set { m_ResizeBorderFrame.OnResizeFinished = value; }
         //}
 
-        Dictionary<AbstractShaderProperty, bool> m_ExpandedProperties = new Dictionary<AbstractShaderProperty, bool>();
+        Dictionary<MaterialSlot, bool> m_ExpandedSubgraphInputs = new Dictionary<MaterialSlot, bool>();
 
-        public Dictionary<AbstractShaderProperty, bool> expandedProperties
+        public Dictionary<MaterialSlot, bool> expandedSubgraphInputs
         {
-            get { return m_ExpandedProperties; }
+            get { return m_ExpandedSubgraphInputs; }
         }
 
         public string assetName
@@ -51,14 +49,11 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        public BlackboardProvider()
-        {
-        }
-
-        public BlackboardProvider(GraphData graph)
+        public BlackboardProviderSubgraph(GraphData graph)
         {
             m_Graph = graph;
-            m_PropertyRows = new Dictionary<Guid, BlackboardRow>();
+
+            m_SubgraphInputRows = new Dictionary<int, BlackboardRow>();
             
             blackboard = new Blackboard()
             {
@@ -85,8 +80,8 @@ namespace UnityEditor.ShaderGraph.Drawing
 
             m_Section = new BlackboardSection { headerVisible = false };
 
-            foreach (var property in graph.properties)
-                AddProperty(property);
+            foreach (var subgraphInput in graph.subgraphInputs)
+                AddSubgraphInput(subgraphInput);
             
             blackboard.Add(m_Section);
         }
@@ -192,118 +187,110 @@ namespace UnityEditor.ShaderGraph.Drawing
 
         void MoveItemRequested(Blackboard blackboard, int newIndex, VisualElement visualElement)
         {
-            var property = visualElement.userData as AbstractShaderProperty;
-            if (property == null)
+            var subgraphInput = visualElement.userData as MaterialSlot;
+
+            if (subgraphInput == null)
                 return;
-            m_Graph.owner.RegisterCompleteObjectUndo("Move Property");
-            m_Graph.MoveShaderProperty(property, newIndex);
+
+            m_Graph.owner.RegisterCompleteObjectUndo("Move Subgraph Input");
+            m_Graph.MoveSubgraphInput(subgraphInput, newIndex);
         }
 
         void AddItemRequested(Blackboard blackboard)
         {
             var gm = new GenericMenu();
-            gm.AddItem(new GUIContent("Vector1"), false, () => AddProperty(new Vector1ShaderProperty(), true));
-            gm.AddItem(new GUIContent("Vector2"), false, () => AddProperty(new Vector2ShaderProperty(), true));
-            gm.AddItem(new GUIContent("Vector3"), false, () => AddProperty(new Vector3ShaderProperty(), true));
-            gm.AddItem(new GUIContent("Vector4"), false, () => AddProperty(new Vector4ShaderProperty(), true));
-            gm.AddItem(new GUIContent("Color"), false, () => AddProperty(new ColorShaderProperty(), true));
-            gm.AddItem(new GUIContent("Texture2D"), false, () => AddProperty(new TextureShaderProperty(), true));
-            gm.AddItem(new GUIContent("Texture2D Array"), false, () => AddProperty(new Texture2DArrayShaderProperty(), true));
-            gm.AddItem(new GUIContent("Texture3D"), false, () => AddProperty(new Texture3DShaderProperty(), true));
-            gm.AddItem(new GUIContent("Cubemap"), false, () => AddProperty(new CubemapShaderProperty(), true));
-            gm.AddItem(new GUIContent("Boolean"), false, () => AddProperty(new BooleanShaderProperty(), true));
+            gm.AddItem(new GUIContent("Vector1"), false, () => AddSubgraphInput(new Vector1MaterialSlot(), true));
             gm.ShowAsContext();
         }
 
         void EditTextRequested(Blackboard blackboard, VisualElement visualElement, string newText)
         {   
-            var field = (BlackboardField)visualElement;           
-            var property = (AbstractShaderProperty)field.userData;
-            if (!string.IsNullOrEmpty(newText) && newText != property.displayName)
+            var field = (BlackboardField)visualElement;
+            var subgraphInput = (MaterialSlot)field.userData;
+            if (!string.IsNullOrEmpty(newText) && newText != subgraphInput.RawDisplayName())
             {
-                m_Graph.owner.RegisterCompleteObjectUndo("Edit Property Name");
-                newText = m_Graph.SanitizePropertyName(newText, property.guid);
-                property.displayName = newText;
+                m_Graph.owner.RegisterCompleteObjectUndo("Edit Subgraph Input Name");
+                newText = m_Graph.SanitizeSubgraphInputName(newText, subgraphInput.id);
+                subgraphInput.displayName = newText;
                 field.text = newText;
                 DirtyNodes();
             }
         }
 
-        public virtual void HandleGraphChanges()
+        public override void HandleGraphChanges()
         {
-            foreach (var propertyGuid in m_Graph.removedProperties)
+            foreach (var subgraphInputId in m_Graph.removedSubgraphInputs)
             {
                 BlackboardRow row;
-                if (m_PropertyRows.TryGetValue(propertyGuid, out row))
+                if (m_SubgraphInputRows.TryGetValue(subgraphInputId, out row))
                 {
                     row.RemoveFromHierarchy();
-                    m_PropertyRows.Remove(propertyGuid);
+                    m_SubgraphInputRows.Remove(subgraphInputId);
                 }
             }
 
-            foreach (var property in m_Graph.addedProperties)
-                AddProperty(property, index: m_Graph.GetShaderPropertyIndex(property));
+            foreach (var subgraphInput in m_Graph.addedSubgraphInputs)
+                AddSubgraphInput(subgraphInput, index: m_Graph.GetSubgraphInputIndex(subgraphInput));
 
-            foreach (var propertyDict in expandedProperties)
+            foreach (var subgraphInputDict in expandedSubgraphInputs)
             {
-                SessionState.SetBool(propertyDict.Key.guid.ToString(), propertyDict.Value);
+                SessionState.SetBool(subgraphInputDict.Key.id.ToString(), subgraphInputDict.Value);
             }
 
-            if (m_Graph.movedProperties.Any())
+            if (m_Graph.movedSubgraphInputs.Any())
             {
-                foreach (var row in m_PropertyRows.Values)
+                foreach (var row in m_SubgraphInputRows.Values)
                     row.RemoveFromHierarchy();
 
-                foreach (var property in m_Graph.properties)
-                    m_Section.Add(m_PropertyRows[property.guid]);
+                foreach (var subgraphInput in m_Graph.subgraphInputs)
+                    m_Section.Add(m_SubgraphInputRows[subgraphInput.id]);
             }
-            m_ExpandedProperties.Clear();
+            m_ExpandedSubgraphInputs.Clear();
         }
 
-        void AddProperty(AbstractShaderProperty property, bool create = false, int index = -1)
+        void AddSubgraphInput(MaterialSlot subgraphInput, bool create = false, int index = -1)
         {
-            if (m_PropertyRows.ContainsKey(property.guid))
+            if (m_SubgraphInputRows.ContainsKey(subgraphInput.id))
                 return;
 
             if (create)
-                property.displayName = m_Graph.SanitizePropertyName(property.displayName);
+                subgraphInput.displayName = m_Graph.SanitizePropertyName(subgraphInput.RawDisplayName());
 
-            var icon = property.generatePropertyBlock ? exposedIcon : null;
-            var field = new BlackboardField(icon, property.displayName, property.propertyType.ToString()) { userData = property };
+            var field = new BlackboardField(null, subgraphInput.RawDisplayName(), subgraphInput.concreteValueType.ToString()) { userData = subgraphInput };
 
-            var propertyView = new BlackboardFieldPropertyView(field, m_Graph, property);
+            var propertyView = new BlackboardFieldSubgraphInputView(field, m_Graph, subgraphInput);
             var row = new BlackboardRow(field, propertyView);
             var pill = row.Q<Pill>();
-            pill.RegisterCallback<MouseEnterEvent>(evt => OnMouseHover(evt, property));
-            pill.RegisterCallback<MouseLeaveEvent>(evt => OnMouseHover(evt, property));
+            pill.RegisterCallback<MouseEnterEvent>(evt => OnMouseHoverSubgraph(evt, subgraphInput));
+            pill.RegisterCallback<MouseLeaveEvent>(evt => OnMouseHoverSubgraph(evt, subgraphInput));
             pill.RegisterCallback<DragUpdatedEvent>(OnDragUpdatedEvent);
 
             var expandButton = row.Q<Button>("expandButton");
-            expandButton.RegisterCallback<MouseDownEvent>(evt => OnExpanded(evt, property), TrickleDown.TrickleDown);
+            expandButton.RegisterCallback<MouseDownEvent>(evt => OnExpandedSubgraph(evt, subgraphInput), TrickleDown.TrickleDown);
 
-            row.userData = property;
+            row.userData = subgraphInput;
             if (index < 0)
-                index = m_PropertyRows.Count;
-            if (index == m_PropertyRows.Count)
+                index = m_SubgraphInputRows.Count;
+            if (index == m_SubgraphInputRows.Count)
                 m_Section.Add(row);
             else
                 m_Section.Insert(index, row);
-            m_PropertyRows[property.guid] = row;
+            m_SubgraphInputRows[subgraphInput.id] = row;
 
-            m_PropertyRows[property.guid].expanded = SessionState.GetBool(property.guid.ToString(), true);
+            m_SubgraphInputRows[subgraphInput.id].expanded = SessionState.GetBool(subgraphInput.id.ToString(), true);
 
             if (create)
             {
                 row.expanded = true;
-                m_Graph.owner.RegisterCompleteObjectUndo("Create Property");
-                m_Graph.AddShaderProperty(property);
+                m_Graph.owner.RegisterCompleteObjectUndo("Create Subgraph Input");
+                m_Graph.AddSubgraphInput(subgraphInput);
                 field.OpenTextEditor();
             }
         }
 
-        void OnExpanded(MouseDownEvent evt, AbstractShaderProperty property)
+        void OnExpandedSubgraph(MouseDownEvent evt, MaterialSlot subgraphInput)
         {
-            m_ExpandedProperties[property] = !m_PropertyRows[property.guid].expanded;
+            m_ExpandedSubgraphInputs[subgraphInput] = !m_SubgraphInputRows[subgraphInput.id].expanded;
         }
 
         void DirtyNodes()
@@ -315,12 +302,12 @@ namespace UnityEditor.ShaderGraph.Drawing
             }
         }
 
-        public BlackboardRow GetBlackboardRow(Guid guid)
+        public BlackboardRow GetBlackboardRowSubgraph(int id)
         {
-            return m_PropertyRows[guid];
+            return m_SubgraphInputRows[id];
         }
 
-        void OnMouseHover(EventBase evt, AbstractShaderProperty property)
+        void OnMouseHoverSubgraph(EventBase evt, MaterialSlot subgraphInput)
         {
             var graphView = blackboard.GetFirstAncestorOfType<MaterialGraphView>();
             if (evt.eventTypeId == MouseEnterEvent.TypeId())
@@ -329,7 +316,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 {
                     if (node.node is PropertyNode propertyNode)
                     {
-                        if (propertyNode.propertyGuid == property.guid)
+                        if (propertyNode.subgraphInputId == subgraphInput.id)
                         {
                             m_SelectedNodes.Add(node);
                             node.AddToClassList("hovered");

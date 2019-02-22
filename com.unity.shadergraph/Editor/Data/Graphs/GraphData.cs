@@ -54,6 +54,41 @@ namespace UnityEditor.ShaderGraph
             get { return m_MovedProperties; }
         }
 
+        [NonSerialized]
+        List<MaterialSlot> m_SubgraphInputs = new List<MaterialSlot>();
+
+        public IEnumerable<MaterialSlot> subgraphInputs
+        {
+            get { return m_SubgraphInputs; }
+        }
+
+        [SerializeField]
+        List<SerializationHelper.JSONSerializedElement> m_SerializedSubgraphInputs = new List<SerializationHelper.JSONSerializedElement>();
+
+        [NonSerialized]
+        List<MaterialSlot> m_AddedSubgraphInputs = new List<MaterialSlot>();
+
+        public IEnumerable<MaterialSlot> addedSubgraphInputs
+        {
+            get { return m_AddedSubgraphInputs; }
+        }
+
+        [NonSerialized]
+        List<int> m_RemovedSubgraphInputs = new List<int>();
+
+        public IEnumerable<int> removedSubgraphInputs
+        {
+            get { return m_RemovedSubgraphInputs; }
+        }
+
+        [NonSerialized]
+        List<MaterialSlot> m_MovedSubgraphInputs = new List<MaterialSlot>();
+
+        public IEnumerable<MaterialSlot> movedSubgraphInputs
+        {
+            get { return m_MovedSubgraphInputs; }
+        }
+
         [SerializeField]
         SerializableGuid m_GUID = new SerializableGuid();
 
@@ -607,10 +642,29 @@ namespace UnityEditor.ShaderGraph
             m_AddedProperties.Add(property);
         }
 
+        public void AddSubgraphInput(MaterialSlot subgraphInput)
+        {
+            if (subgraphInput == null)
+                return;
+
+            if (m_SubgraphInputs.Contains(subgraphInput))
+                return;
+
+            m_SubgraphInputs.Add(subgraphInput);
+            m_AddedSubgraphInputs.Add(subgraphInput);
+        }
+
         public string SanitizePropertyName(string displayName, Guid guid = default(Guid))
         {
             displayName = displayName.Trim();
             return GraphUtil.SanitizeName(m_Properties.Where(p => p.guid != guid).Select(p => p.displayName), "{0} ({1})", displayName);
+        }
+
+        public string SanitizeSubgraphInputName(string displayName, int id = 0)
+        {
+            displayName = displayName.Trim();
+            displayName = Regex.Replace(displayName, @"(?:[^A-Za-z_0-9])|(?:\s)", "_");
+            return GraphUtil.SanitizeName(m_SubgraphInputs.Where(p => p.id != id).Select(p => p.RawDisplayName()), "{0}_{1}", displayName);
         }
 
         public string SanitizePropertyReferenceName(string referenceName, Guid guid = default(Guid))
@@ -639,6 +693,17 @@ namespace UnityEditor.ShaderGraph
             ValidateGraph();
         }
 
+        public void RemoveSubgraphInput(int id)
+        {
+            var propertyNodes = GetNodes<PropertyNode>().Where(x => x.subgraphInputId == id).ToList();
+            foreach (var propNode in propertyNodes)
+                ReplacePropertyNodeWithConcreteNodeNoValidate(propNode);
+
+            RemoveSubgraphInputNoValidate(id);
+
+            ValidateGraph();
+        }
+
         public void MoveShaderProperty(AbstractShaderProperty property, int newIndex)
         {
             if (newIndex > m_Properties.Count || newIndex < 0)
@@ -660,9 +725,35 @@ namespace UnityEditor.ShaderGraph
                 m_MovedProperties.Add(property);
         }
 
+        public void MoveSubgraphInput(MaterialSlot subgraphInput, int newIndex)
+        {
+            if (newIndex > m_SubgraphInputs.Count || newIndex < 0)
+                throw new ArgumentException("New index is not within Subgraph Input list.");
+            var currentIndex = m_SubgraphInputs.IndexOf(subgraphInput);
+            if (currentIndex == -1)
+                throw new ArgumentException("Subgraph Input is not in graph.");
+            if (newIndex == currentIndex)
+                return;
+            m_SubgraphInputs.RemoveAt(currentIndex);
+            if (newIndex > currentIndex)
+                newIndex--;
+            var isLast = newIndex == m_SubgraphInputs.Count;
+            if (isLast)
+                m_SubgraphInputs.Add(subgraphInput);
+            else
+                m_SubgraphInputs.Insert(newIndex, subgraphInput);
+            if (!m_MovedSubgraphInputs.Contains(subgraphInput))
+                m_MovedSubgraphInputs.Add(subgraphInput);
+        }
+
         public int GetShaderPropertyIndex(AbstractShaderProperty property)
         {
             return m_Properties.IndexOf(property);
+        }
+
+        public int GetSubgraphInputIndex(MaterialSlot subgraphInput)
+        {
+            return m_SubgraphInputs.IndexOf(subgraphInput);
         }
 
         void RemoveShaderPropertyNoValidate(Guid guid)
@@ -672,6 +763,16 @@ namespace UnityEditor.ShaderGraph
                 m_RemovedProperties.Add(guid);
                 m_AddedProperties.RemoveAll(x => x.guid == guid);
                 m_MovedProperties.RemoveAll(x => x.guid == guid);
+            }
+        }
+
+        void RemoveSubgraphInputNoValidate(int id)
+        {
+            if (m_SubgraphInputs.RemoveAll(x => x.id == id) > 0)
+            {
+                m_RemovedSubgraphInputs.Add(id);
+                m_AddedSubgraphInputs.RemoveAll(x => x.id == id);
+                m_MovedSubgraphInputs.RemoveAll(x => x.id == id);
             }
         }
 
@@ -711,6 +812,10 @@ namespace UnityEditor.ShaderGraph
         public void ValidateGraph()
         {
             var propertyNodes = GetNodes<PropertyNode>().Where(n => !m_Properties.Any(p => p.guid == n.propertyGuid)).ToArray();
+            foreach (var pNode in propertyNodes)
+                ReplacePropertyNodeWithConcreteNodeNoValidate(pNode);
+
+            propertyNodes = GetNodes<PropertyNode>().Where(n => !m_SubgraphInputs.Any(p => p.id == n.subgraphInputId)).ToArray();
             foreach (var pNode in propertyNodes)
                 ReplacePropertyNodeWithConcreteNodeNoValidate(pNode);
 
@@ -767,18 +872,37 @@ namespace UnityEditor.ShaderGraph
             if (other == null)
                 throw new ArgumentException("Can only replace with another AbstractMaterialGraph", "other");
 
-            using (var removedPropertiesPooledObject = ListPool<Guid>.GetDisposable())
+            if(isSubGraph)
             {
-                var removedPropertyGuids = removedPropertiesPooledObject.value;
-                foreach (var property in m_Properties)
-                    removedPropertyGuids.Add(property.guid);
-                foreach (var propertyGuid in removedPropertyGuids)
-                    RemoveShaderPropertyNoValidate(propertyGuid);
+                using (var removedSubgraphInputsPooledObject = ListPool<int>.GetDisposable())
+                {
+                    var removedSubgraphInputIds = removedSubgraphInputsPooledObject.value;
+                    foreach (var property in m_SubgraphInputs)
+                        removedSubgraphInputIds.Add(property.id);
+                    foreach (var subgraphInputId in removedSubgraphInputIds)
+                        RemoveSubgraphInputNoValidate(subgraphInputId);
+                }
+                foreach (var otherSubgraphInput in other.subgraphInputs)
+                {
+                    if (!subgraphInputs.Any(p => p.id == otherSubgraphInput.id))
+                        AddSubgraphInput(otherSubgraphInput);
+                }
             }
-            foreach (var otherProperty in other.properties)
+            else
             {
-                if (!properties.Any(p => p.guid == otherProperty.guid))
-                    AddShaderProperty(otherProperty);
+                using (var removedPropertiesPooledObject = ListPool<Guid>.GetDisposable())
+                {
+                    var removedPropertyGuids = removedPropertiesPooledObject.value;
+                    foreach (var property in m_Properties)
+                        removedPropertyGuids.Add(property.guid);
+                    foreach (var propertyGuid in removedPropertyGuids)
+                        RemoveShaderPropertyNoValidate(propertyGuid);
+                }
+                foreach (var otherProperty in other.properties)
+                {
+                    if (!properties.Any(p => p.guid == otherProperty.guid))
+                        AddShaderProperty(otherProperty);
+                }
             }
 
             other.ValidateGraph();
@@ -923,12 +1047,14 @@ namespace UnityEditor.ShaderGraph
             m_SerializableNodes = SerializationHelper.Serialize(GetNodes<AbstractMaterialNode>());
             m_SerializableEdges = SerializationHelper.Serialize<IEdge>(m_Edges);
             m_SerializedProperties = SerializationHelper.Serialize<AbstractShaderProperty>(m_Properties);
+            m_SerializedSubgraphInputs = SerializationHelper.Serialize<MaterialSlot>(m_SubgraphInputs);
         }
 
         public void OnAfterDeserialize()
         {
             // have to deserialize 'globals' before nodes
             m_Properties = SerializationHelper.Deserialize<AbstractShaderProperty>(m_SerializedProperties, GraphUtil.GetLegacyTypeRemapping());
+            m_SubgraphInputs = SerializationHelper.Deserialize<MaterialSlot>(m_SerializedSubgraphInputs, GraphUtil.GetLegacyTypeRemapping());
 
             var nodes = SerializationHelper.Deserialize<AbstractMaterialNode>(m_SerializableNodes, GraphUtil.GetLegacyTypeRemapping());
             m_Nodes = new List<AbstractMaterialNode>(nodes.Count);

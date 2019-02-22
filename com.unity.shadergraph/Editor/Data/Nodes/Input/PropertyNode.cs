@@ -11,6 +11,9 @@ namespace UnityEditor.ShaderGraph
         private Guid m_PropertyGuid;
 
         [SerializeField]
+        private int m_SubgraphInputId;
+
+        [SerializeField]
         private string m_PropertyGuidSerialized;
 
         public const int OutputSlotId = 0;
@@ -29,6 +32,12 @@ namespace UnityEditor.ShaderGraph
         private void UpdateNode()
         {
             var graph = owner as GraphData;
+            if(graph.isSubGraph)
+            {
+                Debug.Log("Write UpdateNode for Property Node!");
+                return;
+            }
+
             var property = graph.properties.FirstOrDefault(x => x.guid == propertyGuid);
             if (property == null)
                 return;
@@ -88,6 +97,12 @@ namespace UnityEditor.ShaderGraph
         public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
         {
             var graph = owner as GraphData;
+            if(graph.isSubGraph)
+            {
+                Debug.Log("Write NodeCode for Property Node!");
+                return;
+            }
+
             var property = graph.properties.FirstOrDefault(x => x.guid == propertyGuid);
             if (property == null)
                 return;
@@ -162,9 +177,35 @@ namespace UnityEditor.ShaderGraph
             }
         }
 
+        public int subgraphInputId
+        {
+            get { return m_SubgraphInputId; }
+            set
+            {
+                if (m_SubgraphInputId == value)
+                    return;
+
+                var graph = owner as GraphData;
+                var subgraphInput = graph.subgraphInputs.FirstOrDefault(x => x.id == value);
+                if (subgraphInput == null)
+                    return;
+                m_SubgraphInputId = value;
+
+                UpdateNode();
+
+                Dirty(ModificationScope.Topological);
+            }
+        }
+
         public override string GetVariableNameForSlot(int slotId)
         {
             var graph = owner as GraphData;
+            if(graph.isSubGraph)
+            {
+                var subgraphInput = graph.subgraphInputs.FirstOrDefault(x => x.id == subgraphInputId);
+                return subgraphInput.shaderOutputName;
+            }
+
             var property = graph.properties.FirstOrDefault(x => x.guid == propertyGuid);
 
             if (!(property is TextureShaderProperty) &&
@@ -179,6 +220,12 @@ namespace UnityEditor.ShaderGraph
         protected override bool CalculateNodeHasError(ref string errorMessage)
         {
             var graph = owner as GraphData;
+            if(graph.isSubGraph)
+            {
+                if (!graph.subgraphInputs.Any(x => x.id == subgraphInputId))
+                    return true;
+                return false;
+            }
 
             if (!propertyGuid.Equals(Guid.Empty) && !graph.properties.Any(x => x.guid == propertyGuid))
                 return true;
@@ -189,12 +236,20 @@ namespace UnityEditor.ShaderGraph
         public override void OnBeforeSerialize()
         {
             base.OnBeforeSerialize();
+            var graph = owner as GraphData;
+            if(graph.isSubGraph)
+                return;
+
             m_PropertyGuidSerialized = m_PropertyGuid.ToString();
         }
 
         public override void OnAfterDeserialize()
         {
             base.OnAfterDeserialize();
+            var graph = owner as GraphData;
+            if(graph.isSubGraph)
+                return;
+
             if (!string.IsNullOrEmpty(m_PropertyGuidSerialized))
                 m_PropertyGuid = new Guid(m_PropertyGuidSerialized);
         }
