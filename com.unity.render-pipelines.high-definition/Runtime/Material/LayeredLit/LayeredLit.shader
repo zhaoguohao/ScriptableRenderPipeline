@@ -266,8 +266,8 @@ Shader "HDRP/LayeredLit"
         [HideInInspector] _StencilRefDepth("_StencilRefDepth", Int) = 0 // Nothing
         [HideInInspector] _StencilWriteMaskDepth("_StencilWriteMaskDepth", Int) = 32 // DoesntReceiveSSR
         // Motion vector pass
-        [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilMask.ObjectsVelocity
-        [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilMask.ObjectsVelocity
+        [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
+        [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilBitMask.ObjectMotionVectors
 
         // Blending state
         [HideInInspector] _SurfaceType("__surfacetype", Float) = 0.0

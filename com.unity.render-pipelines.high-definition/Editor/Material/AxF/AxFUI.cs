@@ -529,16 +529,16 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // so we have a guarantee than when we write object velocity no other object will be draw on top (and so would have require to overwrite velocity).
             // Final combination is:
             // Prepass: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer
-            // Motion vectors: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer, ObjectVelocity
-            // GBuffer: LightingMask, DecalsForwardOutputNormalBuffer, ObjectVelocity
+            // Motion vectors: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer, ObjectMotionVectors
+            // GBuffer: LightingMask, DecalsForwardOutputNormalBuffer, ObjectMotionVectors
             // Forward: LightingMask
 
             int stencilRef = (int)StencilLightingUsage.RegularLighting;
             int stencilWriteMask = (int)HDRenderPipeline.StencilBitMask.LightingMask;
             int stencilRefDepth = 0;
             int stencilWriteMaskDepth = 0;
-            int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
-            int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
+            int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
+            int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
 
             if (!ssrEnabled)
             {

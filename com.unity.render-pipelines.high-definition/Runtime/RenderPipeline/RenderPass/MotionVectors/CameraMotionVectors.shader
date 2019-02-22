@@ -75,7 +75,7 @@ Shader "Hidden/HDRP/CameraMotionVectors"
             Stencil
             {
                 ReadMask 128
-                Ref  128 // StencilBitMask.ObjectVelocity
+                Ref  128 // StencilBitMask.ObjectMotionVectors
                 Comp NotEqual
                 Pass Keep
             }

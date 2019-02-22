@@ -509,8 +509,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             int stencilWriteMaskDepth = 0;
             int stencilRefGBuffer = (int)StencilLightingUsage.RegularLighting;
             int stencilWriteMaskGBuffer = (int)HDRenderPipeline.StencilBitMask.LightingMask;
-            int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
-            int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectVelocity;
+            int stencilRefMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
+            int stencilWriteMaskMV = (int)HDRenderPipeline.StencilBitMask.ObjectMotionVectors;
 
             if (material.HasProperty(kMaterialID) && (int)material.GetFloat(kMaterialID) == (int)MaterialId.LitSSS)
             {

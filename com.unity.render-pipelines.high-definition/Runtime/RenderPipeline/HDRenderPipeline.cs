@@ -158,7 +158,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DecalsForwardOutputNormalBuffer = 16,   // 0x10 - 1 bit - Lifetime: DBuffer - Patch normal buffer       
             DoesntReceiveSSR                = 32,   // 0x20 - 1 bit - Lifetime: DethPrepass - SSR
             // Free slot 64           
-            ObjectVelocity                  = 128,  // 0x80 - 1 bit - Lifetime: OBjec velocity pass - Camera velocity
+            ObjectMotionVectors             = 128,  // 0x80 - 1 bit - Lifetime: Object motion vector pass - Camera motion vector
             All                             = 255   // 0xFF - 8 bit
         }
 
