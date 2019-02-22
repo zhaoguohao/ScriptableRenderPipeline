@@ -304,7 +304,7 @@ half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
     #endif
 
     float2 uv = input.interpolated.uv;
-    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex)) * _Color;
+    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex)) * _Color;
 
     half alpha = diffuse.a * input.interpolated.color.a;
     AlphaDiscard(alpha - 0.3333, 0.0);
@@ -332,7 +332,7 @@ half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
 
     // normal
     #ifdef EFFECT_BUMP
-        half3 normalTs = SampleNormal(uv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
+        half3 normalTs = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
     #else
         half3 normalTs = half3(0, 0, 1);
     #endif
@@ -387,7 +387,7 @@ half4 SpeedTree8FragDepth(SpeedTreeVertexDepthOutput input) : SV_Target
     #endif
 
     float2 uv = input.uv;
-    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex)) * _Color;
+    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex)) * _Color;
 
     half alpha = diffuse.a * input.color.a;
     AlphaDiscard(alpha - 0.3333, 0.0);

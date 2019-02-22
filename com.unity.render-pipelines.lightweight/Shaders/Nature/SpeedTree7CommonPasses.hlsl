@@ -95,7 +95,7 @@ half4 SpeedTree7Frag(SpeedTreeVertexOutput input) : SV_Target
     #endif
 
     half2 uv = input.uvHueVariation.xy;
-    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex));
+    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex));
     diffuse.a *= _Color.a;
 
     #ifdef SPEEDTREE_ALPHATEST
@@ -121,9 +121,9 @@ half4 SpeedTree7Frag(SpeedTreeVertexOutput input) : SV_Target
     #endif
 
     #ifdef EFFECT_BUMP
-        half3 normalTs = SampleNormal(uv, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
+        half3 normalTs = SampleNormal(uv, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
         #ifdef GEOM_TYPE_BRANCH_DETAIL
-            half3 detailNormal = SampleNormal(input.detail.xy, TEXTURE2D_PARAM(_BumpMap, sampler_BumpMap));
+            half3 detailNormal = SampleNormal(input.detail.xy, TEXTURE2D_ARGS(_BumpMap, sampler_BumpMap));
             normalTs = lerp(normalTs, detailNormal, input.detail.z < 2.0f ? saturate(input.detail.z) : detailColor.a);
         #endif
     #else
@@ -154,7 +154,7 @@ half4 SpeedTree7FragDepth(SpeedTreeVertexDepthOutput input) : SV_Target
     #endif
 
     half2 uv = input.uvHueVariation.xy;
-    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_PARAM(_MainTex, sampler_MainTex));
+    half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex));
     diffuse.a *= _Color.a;
 
     #ifdef SPEEDTREE_ALPHATEST
