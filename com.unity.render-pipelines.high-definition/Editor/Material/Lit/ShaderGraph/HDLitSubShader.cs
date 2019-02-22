@@ -272,7 +272,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             ExtraDefines = HDSubShaderUtilities.s_ExtraDefinesDepthOrMotion,
             Includes = new List<string>()
             {
-                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassVelocity.hlsl\"",
+                "#include \"Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassMotionVectors.hlsl\"",
             },
             RequiredFields = new List<string>()
             {
