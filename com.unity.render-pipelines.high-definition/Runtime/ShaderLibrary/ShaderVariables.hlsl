@@ -301,7 +301,7 @@ CBUFFER_END
 CBUFFER_START(UnityPerPassStereo)
 float4x4 _ViewMatrixStereo[2];
 float4x4 _ProjMatrixStereo[2];
-float4x4 _ViewProjMatrixStereo[2];
+float4x4 _ViewProjMatrixStereo[3];
 float4x4 _InvViewMatrixStereo[2];
 float4x4 _InvProjMatrixStereo[2];
 float4x4 _InvViewProjMatrixStereo[2];
