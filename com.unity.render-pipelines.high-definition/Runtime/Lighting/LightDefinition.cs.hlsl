@@ -22,22 +22,6 @@
 #define GPUIMAGEBASEDLIGHTINGTYPE_REFRACTION (1)
 
 //
-// UnityEngine.Experimental.Rendering.HDPipeline.DirectionalLightData:  static fields
-//
-#define DEBUGVIEW_DIRECTIONALLIGHTDATA_MIN_ROUGHNESS (1)
-#define DEBUGVIEW_DIRECTIONALLIGHTDATA_SHADOW_MASK_SELECTOR (2)
-
-//
-// UnityEngine.Experimental.Rendering.HDPipeline.LightData:  static fields
-//
-#define DEBUGVIEW_LIGHTDATA_ANGLE_SCALE (1)
-#define DEBUGVIEW_LIGHTDATA_ANGLE_OFFSET (2)
-#define DEBUGVIEW_LIGHTDATA_RANGE (3)
-#define DEBUGVIEW_LIGHTDATA_MIN_ROUGHNESS (4)
-#define DEBUGVIEW_LIGHTDATA_SHADOW_MASK_SELECTOR (5)
-#define DEBUGVIEW_LIGHTDATA_SIZE (6)
-
-//
 // UnityEngine.Experimental.Rendering.HDPipeline.EnvShapeType:  static fields
 //
 #define ENVSHAPETYPE_NONE (0)
@@ -49,13 +33,6 @@
 // UnityEngine.Experimental.Rendering.HDPipeline.EnvConstants:  static fields
 //
 #define ENVCONSTANTS_SPEC_CUBE_LOD_STEP (6)
-
-//
-// UnityEngine.Experimental.Rendering.HDPipeline.EnvLightData:  static fields
-//
-#define DEBUGVIEW_ENVLIGHTDATA_MIN_PROJECTION_DISTANCE (1)
-#define DEBUGVIEW_ENVLIGHTDATA_BOX_SIDE_FADE_POSITIVE (2)
-#define DEBUGVIEW_ENVLIGHTDATA_BOX_SIDE_FADE_NEGATIVE (3)
 
 //
 // UnityEngine.Experimental.Rendering.HDPipeline.EnvCacheType:  static fields

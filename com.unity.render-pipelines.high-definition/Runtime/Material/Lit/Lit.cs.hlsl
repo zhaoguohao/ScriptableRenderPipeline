@@ -69,10 +69,9 @@
 #define DEBUGVIEW_LIT_BSDFDATA_COAT_ROUGHNESS (1071)
 #define DEBUGVIEW_LIT_BSDFDATA_GEOMETRIC_NORMAL (1072)
 #define DEBUGVIEW_LIT_BSDFDATA_GEOMETRIC_NORMAL_VIEW_SPACE (1073)
-#define DEBUGVIEW_LIT_BSDFDATA_GEOM_NORMAL_WS (1074)
-#define DEBUGVIEW_LIT_BSDFDATA_IOR (1075)
-#define DEBUGVIEW_LIT_BSDFDATA_ABSORPTION_COEFFICIENT (1076)
-#define DEBUGVIEW_LIT_BSDFDATA_TRANSMITTANCE_MASK (1077)
+#define DEBUGVIEW_LIT_BSDFDATA_IOR (1074)
+#define DEBUGVIEW_LIT_BSDFDATA_ABSORPTION_COEFFICIENT (1075)
+#define DEBUGVIEW_LIT_BSDFDATA_TRANSMITTANCE_MASK (1076)
 
 // Generated from UnityEngine.Experimental.Rendering.HDPipeline.Lit+SurfaceData
 // PackingRules = Exact
@@ -158,9 +157,6 @@ void GetGeneratedSurfaceDataDebug(uint paramId, SurfaceData surfacedata, inout f
         case DEBUGVIEW_LIT_SURFACEDATA_SMOOTHNESS:
             result = surfacedata.perceptualSmoothness.xxx;
             break;
-        case DEBUGVIEW_LIT_SURFACEDATA_PERCEPTUAL_SMOOTHNESS:
-            result = surfacedata.perceptualSmoothness.xxx;
-            break;
         case DEBUGVIEW_LIT_SURFACEDATA_AMBIENT_OCCLUSION:
             result = surfacedata.ambientOcclusion.xxx;
             break;
@@ -192,9 +188,6 @@ void GetGeneratedSurfaceDataDebug(uint paramId, SurfaceData surfacedata, inout f
         case DEBUGVIEW_LIT_SURFACEDATA_IRIDESCENCE_LAYER_THICKNESS:
             result = surfacedata.iridescenceThickness.xxx;
             break;
-        case DEBUGVIEW_LIT_SURFACEDATA_IRIDESCENCE_THICKNESS:
-            result = surfacedata.iridescenceThickness.xxx;
-            break;
         case DEBUGVIEW_LIT_SURFACEDATA_IRIDESCENCE_MASK:
             result = surfacedata.iridescenceMask.xxx;
             break;
@@ -207,16 +200,10 @@ void GetGeneratedSurfaceDataDebug(uint paramId, SurfaceData surfacedata, inout f
         case DEBUGVIEW_LIT_SURFACEDATA_INDEX_OF_REFRACTION:
             result = surfacedata.ior.xxx;
             break;
-        case DEBUGVIEW_LIT_SURFACEDATA_IOR:
-            result = surfacedata.ior.xxx;
-            break;
         case DEBUGVIEW_LIT_SURFACEDATA_TRANSMITTANCE_COLOR:
             result = surfacedata.transmittanceColor;
             break;
         case DEBUGVIEW_LIT_SURFACEDATA_TRANSMITTANCE_ABSORPTION_DISTANCE:
-            result = surfacedata.atDistance.xxx;
-            break;
-        case DEBUGVIEW_LIT_SURFACEDATA_AT_DISTANCE:
             result = surfacedata.atDistance.xxx;
             break;
         case DEBUGVIEW_LIT_SURFACEDATA_TRANSMITTANCE_MASK:
@@ -304,9 +291,6 @@ void GetGeneratedBSDFDataDebug(uint paramId, BSDFData bsdfdata, inout float3 res
             break;
         case DEBUGVIEW_LIT_BSDFDATA_GEOMETRIC_NORMAL_VIEW_SPACE:
             result = bsdfdata.geomNormalWS * 0.5 + 0.5;
-            break;
-        case DEBUGVIEW_LIT_BSDFDATA_GEOM_NORMAL_WS:
-            result = bsdfdata.geomNormalWS;
             break;
         case DEBUGVIEW_LIT_BSDFDATA_IOR:
             result = bsdfdata.ior.xxx;

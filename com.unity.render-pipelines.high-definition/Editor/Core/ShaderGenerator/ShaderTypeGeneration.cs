@@ -941,21 +941,6 @@ namespace UnityEditor.Experimental.Rendering
                         }
                         funcBody += sourceName + "." + packedInfo.fieldName + " = " + newParamName + ";";
                         break;
-                    case FieldPacking.Real:
-                        if (packedInfo.fieldType == typeof(float))
-                        {
-                            funcSignature += "real " + newParamName + ", inout " + type.Name + " " + sourceName + ")";
-                        }
-                        else if (packedInfo.fieldType == typeof(Vector3))
-                        {
-                            funcSignature += "real3 " + newParamName + ", inout " + type.Name + " " + sourceName + ")";
-                        }
-                        else if (packedInfo.fieldType == typeof(Vector4))
-                        {
-                            funcSignature += "real4 " + newParamName + ", inout " + type.Name + " " + sourceName + ")";
-                        }
-                        funcBody += sourceName + "." + packedInfo.fieldName + " = " + newParamName + ";";
-                        break;
                     default:
                         funcSignature = "\n\n ERROR_Packing_field_not_specified\n ";
                         break;
@@ -1003,7 +988,6 @@ namespace UnityEditor.Experimental.Rendering
             m_ShaderFields = new List<ShaderFieldInfo>();
             m_DebugFields = new List<DebugFieldInfo>();
             m_PackedFieldsInfos = new List<PackedFieldInfo>();
-            m_PackedFieldsInfosWithPrecisionOnly = 0;
 
 
             if (type.IsEnum)
@@ -1063,7 +1047,7 @@ namespace UnityEditor.Experimental.Rendering
                     continue;
                 }
 
-                if (attr.needParamDebug)
+                if (attr.needParamDebug && !attr.containsPackedFields)
                 {
                     List<string> displayNames = new List<string>();
                     displayNames.Add(field.Name);
@@ -1087,7 +1071,7 @@ namespace UnityEditor.Experimental.Rendering
                         sRGBDisplay = propertyAttr[0].sRGBDisplay;
                     }
 
-//                    if (!attr.containsPackedFields)
+                    if (!attr.containsPackedFields)
                     {
                         string className = type.FullName.Substring(type.FullName.LastIndexOf((".")) + 1); // ClassName include nested class
                         className = className.Replace('+', '_'); // FullName is Class+NestedClass replace by Class_NestedClass
@@ -1104,8 +1088,6 @@ namespace UnityEditor.Experimental.Rendering
                     }
                 }
 
-                bool containsPackedFieldHalf = false;
-                bool containsPackedFieldReal = false;
                 if (attr.containsPackedFields)
                 {
                     // Define only once, it is safe to assume that colors and directions are not packed with something else
@@ -1122,10 +1104,6 @@ namespace UnityEditor.Experimental.Rendering
                         className = className.Replace('+', '_'); // FullName is Class+NestedClass replace by Class_NestedClass
                         foreach (PackingAttribute packAttr in packingAttributes)
                         {
-                            bool isPrecisionFloat = packAttr.packingScheme == FieldPacking.Half || packAttr.packingScheme == FieldPacking.Real;
-                            if (isPrecisionFloat)
-                                ++m_PackedFieldsInfosWithPrecisionOnly;
-
                             List<string> displayNames = new List<string>();
 
                             displayNames.AddRange(packAttr.displayNames);
@@ -1134,9 +1112,7 @@ namespace UnityEditor.Experimental.Rendering
                                 string fieldName = it.Replace(' ', '_');
                                 string name = InsertUnderscore(fieldName);
                                 string defineName = ("DEBUGVIEW_" + className + "_" + name).ToUpper();
-                                bool isDuplicateDebugField = m_Statics.ContainsKey(defineName);
-                                if (!isDuplicateDebugField)
-                                    m_Statics[defineName] = Convert.ToString(attr.paramDefinesStart + debugCounter++);
+                                m_Statics[defineName] = Convert.ToString(attr.paramDefinesStart + debugCounter++);
 
                                 Type typeForDebug = typeof(uint);
                                 if (packAttr.packingScheme == FieldPacking.PackedFloat)
@@ -1151,19 +1127,8 @@ namespace UnityEditor.Experimental.Rendering
                                 {
                                     typeForDebug = fieldType;
                                 }
-                                else if (packAttr.packingScheme == FieldPacking.Half)
-                                {
-                                    typeForDebug = fieldType;
-                                    containsPackedFieldHalf = true;
-                                }
-                                else if (packAttr.packingScheme == FieldPacking.Real)
-                                {
-                                    typeForDebug = fieldType;
-                                    containsPackedFieldReal = true;
-                                }
 
-                                if (!isDuplicateDebugField)
-                                    m_DebugFields.Add(new DebugFieldInfo(defineName, field.Name, typeForDebug, isDirection, sRGBDisplay, packAttr.displayNames[0]));
+                                m_DebugFields.Add(new DebugFieldInfo(defineName, field.Name, typeForDebug, isDirection, sRGBDisplay, packAttr.displayNames[0]));
                             }
 
                             m_PackedFieldsInfos.Add(new PackedFieldInfo(packAttr, fieldType, field.Name));
@@ -1171,13 +1136,15 @@ namespace UnityEditor.Experimental.Rendering
                     }
                 }
 
-                PrimitiveType floatPrecision;
-                if (containsPackedFieldHalf)
-                    floatPrecision = PrimitiveType.Half;
-                else if (containsPackedFieldReal)
-                    floatPrecision = PrimitiveType.Real;
-                else
-                    floatPrecision = PrimitiveType.Float;
+                PrimitiveType floatPrecision = PrimitiveType.Float;
+                if (Attribute.IsDefined(field, typeof(SurfaceDataAttributes)))
+                {
+                    var propertyAttr = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
+                    if (propertyAttr[0].precision == FieldPrecision.Half)
+                        floatPrecision = PrimitiveType.Half;
+                    else if (propertyAttr[0].precision == FieldPrecision.Real)
+                        floatPrecision = PrimitiveType.Real;
+                }
                 
                 if (fieldType.IsPrimitive)
                 {
@@ -1236,8 +1203,7 @@ namespace UnityEditor.Experimental.Rendering
 
         public bool hasPackedInfo
         {
-            // Thhere are no packed field if all the fields only use "half" or "real" types.
-            get { return m_PackedFieldsInfos.Count > 0 && m_PackedFieldsInfosWithPrecisionOnly != m_PackedFieldsInfos.Count; }
+            get { return m_PackedFieldsInfos.Count > 0; }
         }
 
         public bool hasStatics
@@ -1266,6 +1232,5 @@ namespace UnityEditor.Experimental.Rendering
 
         // Fields from PackingAttribute
         List<PackedFieldInfo> m_PackedFieldsInfos;
-        int m_PackedFieldsInfosWithPrecisionOnly;
     }
 }
