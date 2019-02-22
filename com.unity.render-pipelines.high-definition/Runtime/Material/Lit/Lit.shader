@@ -307,7 +307,7 @@ Shader "HDRP/Lit"
     #endif
 
     #if defined(_TRANSPARENT_WRITES_VELOCITY) && defined(_SURFACE_TYPE_TRANSPARENT)
-    #define _WRITE_TRANSPARENT_VELOCITY
+    #define _WRITE_TRANSPARENT_MOTION_VECTOR
     #endif
     //-------------------------------------------------------------------------------------
     // Include
