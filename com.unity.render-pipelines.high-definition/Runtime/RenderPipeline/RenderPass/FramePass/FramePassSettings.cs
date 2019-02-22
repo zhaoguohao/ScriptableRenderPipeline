@@ -125,8 +125,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
                         materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex);
                     }
-                    if (((SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false)).Length > 0)
-                        localIndex++;
+                    var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
+                    if (surfaceAttributes.Length > 0)
+                        localIndex += surfaceAttributes[0].displayNames.Length;
                 }
 
                 if (materialItem.bsdfDataType == null)
@@ -149,8 +150,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
                         materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex++);
                     }
-                    if (((SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false)).Length > 0)
-                        localIndex++;
+                    var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
+                    if (surfaceAttributes.Length > 0)
+                        localIndex += surfaceAttributes[0].displayNames.Length;
                 }
             }
 
@@ -161,9 +163,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             s_MaterialPropertyMapInitialized = true;
         }
-        
+
+        // to development only
         public void TEST(DebugDisplaySettings.DebugData data) => FillDebugData(data);
 
+        // Usage example:
+        // (new FramePassSettings(FramePassSettings.@default)).SetFullscreenOutput(prop).FillDebugData((RenderPipelineManager.currentPipeline as HDRenderPipeline).debugDisplaySettings.data);
         internal void FillDebugData(DebugDisplaySettings.DebugData data)
         {
             data.materialDebugSettings.debugViewMaterial = materialProperty == MaterialProperty.All ? new int[0] : s_MaterialPropertyMap[materialProperty];
