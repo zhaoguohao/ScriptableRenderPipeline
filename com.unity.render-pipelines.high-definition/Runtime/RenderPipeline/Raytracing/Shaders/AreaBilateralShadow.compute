@@ -3,44 +3,31 @@
 ** https://eheitzresearch.wordpress.com/705-2/
 */
 
-#pragma kernel AreaBilateralShadow
+#pragma kernel AreaShadowEstimateNoise
+#pragma kernel AreaShadowDenoise
 
 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-#include "Packages/com.unity.render-pipelines.high-definition\Runtime\ShaderLibrary\ShaderVariables.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/NormalBuffer.hlsl"
-#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
 
 // Tile size of this compute
 #define AREA_BILLATERAL_TILE_SIZE 8
 
 // FIXME: Inputs could be scalars instead of colors
 
-// Input integration textures
-RWTexture2D<float4>     _SNTextureUAV;
-RWTexture2D<float4>     _UNTextureUAV;
+// Input/intermediate integration texture (containing Sn, Un, U, 1)
+RWTexture2D<float4>     _DenoiseTextureUAV;
 
 // ScreenSpace buffers
-Texture2D<float4>       _UTextureUAV;
 Texture2D<float>        _DepthTexture;
 
 // Filter parameters
+int                     _DenoisePass;
 int                     _DenoiseRadius;
-float                   _GaussianSigma;
 
 // Output texture data
 int                     _RaytracingShadowSlot;
 RWTexture2DArray<float> _AreaShadowTextureRW;
-
-// Couple helper functions
-float sqr(float value)
-{
-	return value * value;
-}
-float gaussian(int i, int j, float sigma2)
-{
-    const float radius2 = sqr(i) + sqr(j);
-    return exp(-radius2 / sigma2);
-}
 
 // Bilateral filter parameters
 static const float NORMAL_WEIGHT   = 1.0f;
@@ -49,7 +36,82 @@ static const float DEPTH_WEIGHT    = 1.0f;
 static const float ANALYTIC_WEIGHT = 1.0f;
 static const float EPSILON         = 0.001f;
 
-struct TapKey
+// Couple helper functions
+float sqr(float value)
+{
+    return value * value;
+}
+float gaussian(float radius, float sigma)
+{
+    return exp(-sqr(radius / sigma));
+}
+
+/****************************** Noise Estimation Kernel ******************************/
+
+// Sample the signal used for the noise estimation at coordSS
+float TapRatio(uint2 coordSS)
+{
+    const float Sn = _DenoiseTextureUAV[coordSS].x;
+    const float Un = _DenoiseTextureUAV[coordSS].y;
+
+    return (Un > EPSILON) ? (Sn / Un) : 1.0f;
+}
+
+// Estimate desired radius from the second derivative of the signal
+float EstimateNoise(uint2 coordSS, float2 axis)
+{
+    // Radius is supposed to be always >= 1
+    const int NOISE_ESTIMATION_RADIUS = min(_DenoiseRadius, 10);
+    float v2 = TapRatio(coordSS - NOISE_ESTIMATION_RADIUS * axis);
+    float v1 = TapRatio(coordSS - (NOISE_ESTIMATION_RADIUS - 1) * axis);
+
+    float d2mag = 0.0;
+    uint n = 0;
+
+    // The first two points are accounted for above
+    for (int r = -(NOISE_ESTIMATION_RADIUS - 2); r <= NOISE_ESTIMATION_RADIUS; ++r, ++n)
+    {
+        float v0 = TapRatio(coordSS + r * axis);
+
+        // Second derivative
+        const float d2 = v2 - 2.0f * v1 + v0;
+
+        d2mag += abs(d2);
+
+        // Shift weights in the window
+        v2 = v1; v1 = v0;
+    }
+
+    return clamp(d2mag / n, 0.0f, 1.0f);
+}
+
+// Estimate noise to drive denoising kernel radius
+[numthreads(AREA_BILLATERAL_TILE_SIZE, AREA_BILLATERAL_TILE_SIZE, 1)]
+void AreaShadowEstimateNoise(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
+{
+    // Fetch the current pixel coordinate
+    uint2 centerCoord = groupId * AREA_BILLATERAL_TILE_SIZE + groupThreadId;
+    centerCoord.x = centerCoord.x + (unity_StereoEyeIndex * _ScreenSize.x);
+
+    // Cheap "random" angular offset, good enough to break pattern
+    float angle = centerCoord.x + centerCoord.y * 1999;
+
+    float maxNoise = 0.0f;
+    float2 axis;
+
+    static const int N = 4;
+    for (float t = 0; t < N; ++t, angle += PI/N)
+    {
+        sincos(angle, axis.y, axis.x);
+        maxNoise = max(EstimateNoise(centerCoord, axis), maxNoise);
+    }
+
+    _DenoiseTextureUAV[centerCoord] = float4(_DenoiseTextureUAV[centerCoord].xyz, maxNoise);
+}
+
+/********************************* Denoising Kernel *********************************/
+
+struct BilateralData
 {
     float  z;
     float3 position;
@@ -57,9 +119,9 @@ struct TapKey
     float  analytic;
 };
 
-TapKey GetTapKey(uint2 coordSS)
+BilateralData TapBilateralData(uint2 coordSS)
 {
-    TapKey key;
+    BilateralData key;
     PositionInputs posInput;
 
     if ((DEPTH_WEIGHT > 0.0f) || (PLANE_WEIGHT > 0.0f))
@@ -70,7 +132,8 @@ TapKey GetTapKey(uint2 coordSS)
 
     if (PLANE_WEIGHT > 0.0f)
     {
-        posInput = GetPositionInput_Stereo(coordSS, _ScreenSize.zw, posInput.deviceDepth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
+        posInput = GetPositionInput_Stereo(coordSS, _ScreenSize.zw, posInput.deviceDepth,
+                                           UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
         key.position = posInput.positionWS;
     }
 
@@ -84,13 +147,13 @@ TapKey GetTapKey(uint2 coordSS)
 
     if (ANALYTIC_WEIGHT > 0.0f)
     {
-        key.analytic = Luminance(_UTextureUAV[coordSS].xyz);
+        key.analytic = _DenoiseTextureUAV[coordSS].z;
     }
 
     return key;
 }
 
-float ComputeBilateralWeight(TapKey center, TapKey tap)
+float ComputeBilateralWeight(BilateralData center, BilateralData tap)
 {
     float depthWeight    = 1.0f;
     float normalWeight   = 1.0f;
@@ -108,7 +171,6 @@ float ComputeBilateralWeight(TapKey center, TapKey tap)
         const float normalError = (1.0f - normalCloseness);
         normalWeight = max((1.0f - normalError * NORMAL_WEIGHT), 0.0f);
     }
-
 
     if (PLANE_WEIGHT > 0.0f)
     {
@@ -130,44 +192,63 @@ float ComputeBilateralWeight(TapKey center, TapKey tap)
     {
         const float aDiff = abs(tap.analytic - center.analytic) * 10.0f;
         analyticWeight = max(0.0f, 1.0f - (aDiff * ANALYTIC_WEIGHT));
-    }                           
+    }
 
     return depthWeight * normalWeight * planeWeight * analyticWeight;
 }
 
+// Simple box filter to smooth out the noise estimate
+float FilterNoiseEstimate(uint2 coordSS)
+{
+    float result = 0.0f;
+
+    static const int R = 1;
+    for (int j = -R; j <= R; ++j)
+    {
+        for (int i = -R; i <= R; ++i)
+        {
+            result += _DenoiseTextureUAV[coordSS + int2(i, j)].w;
+        }
+    }
+
+    return result / sqr(2 * R + 1);
+}
+
+// Separated bilateral filter (two passes, each with 2*Radius taps)
 [numthreads(AREA_BILLATERAL_TILE_SIZE, AREA_BILLATERAL_TILE_SIZE, 1)]
-void AreaBilateralShadow(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
+void AreaShadowDenoise(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
 {
     // Fetch the current pixel coordinate
     uint2 centerCoord = groupId * AREA_BILLATERAL_TILE_SIZE + groupThreadId;
     centerCoord.x = centerCoord.x + (unity_StereoEyeIndex * _ScreenSize.x);
 
-    float S = 0.0f;
-    float U = 0.0f;
+    float2 SU = 0.0f;
     float wSum = 0.0f;
 
-    const float sigma2  = sqr(_DenoiseRadius); // FIXME: do we want a scale factor here?
-    const TapKey center = GetTapKey(centerCoord);
+    const uint2 passIncr = _DenoisePass ? uint2(1, 0) : uint2(0, 1);
+    const float noiseEstimate = _DenoisePass ? _DenoiseTextureUAV[centerCoord].w : FilterNoiseEstimate(centerCoord);
+    const int denoiseRadius = ceil(noiseEstimate * _DenoiseRadius);
+    const BilateralData center  = TapBilateralData(centerCoord);
 
-    // FIXME: Separate horizontal and vertical in 2 passes
-    for (int i = -_DenoiseRadius; i < _DenoiseRadius; ++i)
+    uint2 tapCoord = centerCoord - denoiseRadius * passIncr;
+    for (int r = -denoiseRadius; r <= denoiseRadius; ++r, tapCoord += passIncr)
     {
-        for (int j = -_DenoiseRadius; j < _DenoiseRadius; ++j)
-        {
-            uint2 tapCoord = uint2(centerCoord.x + i, centerCoord.y + j);
+        // Compute the weight (skip computation for the center)
+        const float w = r ? gaussian(r, denoiseRadius) * ComputeBilateralWeight(center, TapBilateralData(tapCoord)) : 1.0f;
 
-            // Compute the weight (skip computation for the center)
-            const float w = (i || j) ?
-                gaussian(i, j, sigma2) * ComputeBilateralWeight(center, GetTapKey(tapCoord)) : 1.0f;
-
-            S += Luminance(_SNTextureUAV[tapCoord].xyz) * w;
-            U += Luminance(_UNTextureUAV[tapCoord].xyz) * w;
-            wSum += w;
-        }
+        SU += _DenoiseTextureUAV[tapCoord].xy * w;
+        wSum += w;
     }
 
-    // For the final ratio, we want the 0/0 case to produce a value of 1
-    const float filteredRatio = (wSum > EPSILON && U / wSum > EPSILON) ? clamp(S / U, 0.0f, 1.0f) : 1.0f;
-
-    _AreaShadowTextureRW[uint3(centerCoord, _RaytracingShadowSlot)] = filteredRatio;
+    if (!_DenoisePass) // First pass
+    {
+        // Store the intermediate result
+        _DenoiseTextureUAV[centerCoord] = float4(SU / wSum, _DenoiseTextureUAV[centerCoord].z, noiseEstimate);
+    }
+    else // Second (and final) pass
+    {
+        // For the final ratio, we want the 0/0 case to produce a value of 1
+        _AreaShadowTextureRW[uint3(centerCoord, _RaytracingShadowSlot)] =
+            (wSum > EPSILON && SU.y / wSum > EPSILON) ? clamp(SU.x / SU.y, 0.0f, 1.0f) : 1.0f;
+    }
 }
