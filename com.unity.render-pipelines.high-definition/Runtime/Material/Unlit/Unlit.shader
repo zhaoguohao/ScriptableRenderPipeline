@@ -224,7 +224,7 @@ Shader "HDRP/Unlit"
             #pragma multi_compile _ WRITE_MSAA_DEPTH
             // Note we don't need to define WRITE_NORMAL_BUFFER
 
-            #define SHADERPASS SHADERPASS_VELOCITY
+            #define SHADERPASS SHADERPASS_MOTION_VECTORS
 
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"

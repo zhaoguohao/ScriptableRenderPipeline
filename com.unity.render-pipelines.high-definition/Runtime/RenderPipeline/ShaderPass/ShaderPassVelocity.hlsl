@@ -1,4 +1,4 @@
-#if SHADERPASS != SHADERPASS_VELOCITY
+#if SHADERPASS != SHADERPASS_MOTION_VECTORS
 #error SHADERPASS_is_not_correctly_define
 #endif
 

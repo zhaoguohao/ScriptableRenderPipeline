@@ -149,7 +149,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             LightMode = "MotionVectors",
             TemplateName = "HDUnlitPass.template",
             MaterialName = "Unlit",
-            ShaderPassName = "SHADERPASS_VELOCITY",
+            ShaderPassName = "SHADERPASS_MOTION_VECTORS",
 
             // Caution: When using MSAA we have motion vector, normal and depth buffer bind.
             // Mean unlit object need to not write in it (or write 0) - Disable color mask for this RT
