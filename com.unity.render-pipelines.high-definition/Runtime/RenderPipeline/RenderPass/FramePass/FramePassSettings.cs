@@ -192,7 +192,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal void FillDebugData(DebugDisplaySettings.DebugData data)
         {
             data.materialDebugSettings.debugViewMaterial = materialProperty == MaterialProperty.All ? new int[0] : s_MaterialPropertyMap[materialProperty];
-            //[TODO: Add lighting settings too]
+
+            switch(lightingProperty)
+            {
+                case LightingProperty.DiffuseOnly:
+                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.DiffuseLighting;
+                    break;
+                case LightingProperty.DiffuseOnlyDirectional:
+                    throw new NotImplementedException();
+                case LightingProperty.DiffuseOnlyIndirectional:
+                    throw new NotImplementedException();
+                case LightingProperty.SpecularOnly:
+                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.SpecularLighting;
+                    break;
+                case LightingProperty.SpecularOnlyDirectional:
+                    throw new NotImplementedException();
+                case LightingProperty.SpecularOnlyIndirectional:
+                    throw new NotImplementedException();
+                case LightingProperty.All:
+                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
+                    break;
+                default:
+                    throw new ArgumentException("Unknown LightingProperty");
+            }
         }
     }
 
