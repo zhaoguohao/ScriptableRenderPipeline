@@ -231,7 +231,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             viewMatrixStereo = new Matrix4x4[2];
             projMatrixStereo = new Matrix4x4[2];
 
-            viewProjStereo = new Matrix4x4[2];
+            viewProjStereo = new Matrix4x4[3];
             invViewStereo = new Matrix4x4[2];
             invProjStereo = new Matrix4x4[2];
             invViewProjStereo = new Matrix4x4[2];
@@ -755,6 +755,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     viewProjStereo[eyeIndex] = GetViewProjMatrixStereo(eyeIndex);
                     invViewProjStereo[eyeIndex] = viewProjStereo[eyeIndex].inverse;
                 }
+
+                viewProjStereo[2] = viewProjMatrix;
             }
             else
             {

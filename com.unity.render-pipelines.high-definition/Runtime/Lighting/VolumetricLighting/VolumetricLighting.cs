@@ -527,7 +527,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     // Frustum cull on the CPU for now. TODO: do it on the GPU.
                     // TODO: account for custom near and far planes of the V-Buffer's frustum.
                     // It's typically much shorter (along the Z axis) than the camera's frustum.
-                    if (GeometryUtils.Overlap(obb, hdCamera.frustum, 6, 8))
+                    //if (GeometryUtils.Overlap(obb, hdCamera.frustum, 6, 8))
                     {
                         // TODO: cache these?
                         var data = volume.parameters.ConvertToEngineData();
@@ -562,6 +562,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 int  numVisibleVolumes = m_VisibleVolumeBounds.Count;
                 bool tiledLighting     = hdCamera.frameSettings.IsEnabled(FrameSettingsField.BigTilePrepass);
                 bool highQuality       = preset == VolumetricLightingPreset.High;
+
+                // XRTODO: handle big tile for combined view?
+                if (hdCamera.camera.stereoEnabled)
+                    tiledLighting = false;
 
                 int kernel = (tiledLighting ? 1 : 0) | (highQuality ? 2 : 0);
 
@@ -682,6 +686,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                                           hdCamera.frameSettings.IsEnabled(FrameSettingsField.ReprojectionForVolumetrics);
                 bool enableAnisotropy   = fog.anisotropy != 0;
                 bool highQuality        = preset == VolumetricLightingPreset.High;
+
+                // XRTODO: handle big tile for combined view?
+                // XRTODO: handle reprojection
+                if (hdCamera.camera.stereoEnabled)
+                {
+                    tiledLighting = false;
+                    enableReprojection = false;
+                }
 
                 int kernel = (tiledLighting ? 1 : 0) | (enableReprojection ? 2 : 0) | (enableAnisotropy ? 4 : 0) | (highQuality ? 8 : 0);
 

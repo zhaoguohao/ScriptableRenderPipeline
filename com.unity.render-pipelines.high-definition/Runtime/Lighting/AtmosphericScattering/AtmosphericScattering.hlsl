@@ -64,9 +64,20 @@ float4 EvaluateAtmosphericScattering(PositionInputs posInput, float3 V)
         }
         case FOGTYPE_VOLUMETRIC:
         {
+#if defined(USING_STEREO_MATRICES)
+            float2 positionNDC = ComputeNormalizedDeviceCoordinates(posInput.positionWS, _ViewProjMatrixStereo[2]);
+#endif
             float4 value = SampleVBuffer(TEXTURE3D_ARGS(_VBufferLighting, s_linear_clamp_sampler),
+#if defined(USING_STEREO_MATRICES)
+                                         /*posInput.positionWS,
+                                         _WorldSpaceCameraPos - _WorldSpaceCameraPosEyeOffset,
+                                         _ViewProjMatrixStereo[2],*/
+                                         positionNDC,
+                                         fragDist,
+#else
                                          posInput.positionNDC,
                                          fragDist,
+#endif
                                          _VBufferResolution,
                                          _VBufferUvScaleAndLimit.xy,
                                          _VBufferUvScaleAndLimit.zw,
