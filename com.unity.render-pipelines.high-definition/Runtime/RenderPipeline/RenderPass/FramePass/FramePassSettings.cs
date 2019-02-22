@@ -104,20 +104,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 { MaterialProperty.Alpha, new List<int>() },
             };
 
+            // builtins parameters
+            Type builtin = typeof(Builtin.BuiltinData);
+            var attributes = builtin.GetCustomAttributes(true);
+            var generateHLSLAttribute = attributes[0] as GenerateHLSL;
+            int materialStartIndex = generateHLSLAttribute.paramDefinesStart;
+
+            int localIndex = 0;
+            foreach (var field in typeof(Builtin.BuiltinData).GetFields())
+            {
+                if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
+                {
+                    var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
+                    materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex);
+                }
+                var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
+                if (surfaceAttributes.Length > 0)
+                    localIndex += surfaceAttributes[0].displayNames.Length;
+            }
+
+            // specific shader parameters
             List<MaterialItem> materialItems = GetAllMaterialDatas();
 
             foreach (MaterialItem materialItem in materialItems)
             {
-                var attributes = materialItem.surfaceDataType.GetCustomAttributes(true);
-                var generateHLSLAttribute = attributes[0] as GenerateHLSL;
-                int materialStartIndex = generateHLSLAttribute.paramDefinesStart;
+                attributes = materialItem.surfaceDataType.GetCustomAttributes(true);
+                generateHLSLAttribute = attributes[0] as GenerateHLSL;
+                materialStartIndex = generateHLSLAttribute.paramDefinesStart;
 
                 if (!generateHLSLAttribute.needParamDebug)
                     continue;
 
                 var fields = materialItem.surfaceDataType.GetFields();
 
-                int localIndex = 0;
+                localIndex = 0;
                 foreach (var field in fields)
                 {
                     if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
@@ -184,3 +204,4 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             => this.property = property;
     }
 }
+
