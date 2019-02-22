@@ -21,12 +21,12 @@
 // common Encode/Decode functions
 //-----------------------------------------------------------------------------
 
-// Guideline for velocity buffer.
-// The object velocity buffer is potentially fill in several pass.
+// Guideline for motion vectors buffer.
+// The object motion vectors buffer is potentially fill in several pass.
 // - In gbuffer pass with extra RT (Not supported currently)
 // - In forward prepass pass
-// - In dedicated velocity pass
-// So same velocity buffer is use for all scenario, so if deferred define a velocity buffer, the same is reuse for forward case.
+// - In dedicated motion vectors pass
+// So same motion vectors buffer is use for all scenario, so if deferred define a motion vectors buffer, the same is reuse for forward case.
 // THis is similar to NormalBuffer
 
 // TODO: CAUTION: current DecodeVelocity is not used in motion vector / TAA pass as it come from Postprocess stack

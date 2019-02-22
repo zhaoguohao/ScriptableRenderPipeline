@@ -76,7 +76,7 @@ void Frag(  PackedVaryingsToPS packedInput
     inputPass.previousPositionCS.w += builtinData.depthOffset;
 #endif
 
-    // TODO: How to allow overriden velocity vector from GetSurfaceAndBuiltinData ?
+    // TODO: How to allow overriden motion vector from GetSurfaceAndBuiltinData ?
     float2 velocity = CalculateVelocity(inputPass.positionCS, inputPass.previousPositionCS);
 
     // Convert from Clip space (-1..1) to NDC 0..1 space.

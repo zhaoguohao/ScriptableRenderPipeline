@@ -41,8 +41,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Vector3 emissiveColor;
 
             // These is required for motion blur and temporalAA
-            [SurfaceDataAttributes("Velocity")]
-            public Vector2 velocity;
+            [SurfaceDataAttributes("MotionVector")]
+            public Vector2 motionVector;
 
             // Distortion
             [SurfaceDataAttributes("Distortion")]
