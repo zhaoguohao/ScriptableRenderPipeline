@@ -10,7 +10,7 @@
 
 
 // We use polar coordinates. This has the advantage of storing the length separately and we'll need the length several times.
-float2 EncodeVelocity(float2 velocity)
+float2 EncodeMotionVector(float2 velocity)
 {
     float velLength = length(velocity);
     if (velLength < 0.0001)
@@ -68,7 +68,7 @@ void VelPreppingCS(uint3 dispatchThreadId : SV_DispatchThreadID)
     bool forceNoMotion = PixelSetAsNoMotionVectors(velocityBufferSample);
 
     float2 velocity;
-    DecodeVelocity(velocityBufferSample, velocity);
+    DecodeMotionVector(velocityBufferSample, velocity);
     float depth = LoadCameraDepth(dispatchThreadId.xy);
 
     if ( !forceNoMotion
@@ -81,7 +81,7 @@ void VelPreppingCS(uint3 dispatchThreadId : SV_DispatchThreadID)
         PositionInputs posInput = GetPositionInput_Stereo(dispatchThreadId.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, unity_StereoEyeIndex);
 
         float2 finalVelocity = ComputeVelocity(posInput, velocity);
-        velAndDepth.xy = EncodeVelocity(finalVelocity);
+        velAndDepth.xy = EncodeMotionVector(finalVelocity);
         velAndDepth.z = posInput.linearDepth;
     }
     else

@@ -159,7 +159,7 @@ float4 ProcessSample(uint sampleNumber, float2 dir, float invSampleCount, float2
 
     float velDiffWeight = 1;
 #if DOT_WEIGHTING
-    float2 sampleVel = DecodeVelocityFromPacked(sampleVelDepth.xy);
+    float2 sampleVel = DecodeMotionVectorFromPacked(sampleVelDepth.xy);
     velDiffWeight = (centralVelocityLen > 0 && outVelLength > 0.3) ? saturate(abs(dot(sampleVel, currDir) / dot(currDir, currDir)) * DOT_MULTIPLIER) : 1;
 #endif
     float  sampleWeight = SampleWeight(centralDepth, outDepth, offsetLength, centralVelocityLen, outVelLength, pixelToSampleScale, SOFT_Z_EXTENT, velDiffWeight);
@@ -188,7 +188,7 @@ void MotionBlurCS(uint3 dispatchThreadId : SV_DispatchThreadID)
     float3 tileMaxNeighbourhood = SAMPLE_TEXTURE2D_X_LOD(_TileMaxNeighbourhood, s_point_clamp_sampler, tileUV, 0.0).xyz;
 
     // Get velocity in pixels extents.
-    float2 maxVel = DecodeVelocityFromPacked(tileMaxNeighbourhood.xy);
+    float2 maxVel = DecodeMotionVectorFromPacked(tileMaxNeighbourhood.xy);
     float maxVelLength = VelocityLengthInPixelsFromEncoded(tileMaxNeighbourhood.xy);
     float minVelLengthInPixels =  tileMaxNeighbourhood.z * _ScreenMagnitude;
 
@@ -266,7 +266,7 @@ void MotionBlurCS(uint3 dispatchThreadId : SV_DispatchThreadID)
             float3 velocityAndDepth = SAMPLE_TEXTURE2D_X_LOD(_VelocityAndDepth, s_point_clamp_sampler, ClampAndScaleUVForPoint(centerSampleUV), 0).xyz;
 
             float pixelToSampleScale = _SampleCount * 0.5 * maxVelLength;
-            float2 centralTapVelocity = DecodeVelocityFromPacked(velocityAndDepth.xy);
+            float2 centralTapVelocity = DecodeMotionVectorFromPacked(velocityAndDepth.xy);
             float  centralVelocityLen = VelocityLengthInPixelsFromEncoded(velocityAndDepth.xy);
 #if GUERTIN2014_DOUBLE_DIR
             float2 centralDir = centralVelocityLen < 0.5f ? dir : centralTapVelocity * 0.5;

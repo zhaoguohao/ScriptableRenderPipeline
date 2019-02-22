@@ -63,7 +63,7 @@ float VelocityLengthInPixelsFromEncoded(float2 velocity)
     return  velocity.x * _ScreenMagnitude;
 }
 
-float2 DecodeVelocityFromPacked(float2 velocity)
+float2 DecodeMotionVectorFromPacked(float2 velocity)
 {
     float theta = velocity.y * (2.0 * PI) - PI;
     return  (float2(sin(theta), cos(theta)) * velocity.x).yx;

@@ -117,7 +117,7 @@ Shader "Hidden/HDRP/DebugFullScreen"
             float2 SampleMotionVectors(float2 coords)
             {
                 float2 velocityNDC;
-                DecodeVelocity(SAMPLE_TEXTURE2D_X(_DebugFullScreenTexture, s_point_clamp_sampler, coords), velocityNDC);
+                DecodeMotionVector(SAMPLE_TEXTURE2D_X(_DebugFullScreenTexture, s_point_clamp_sampler, coords), velocityNDC);
 
                 return velocityNDC;
             }

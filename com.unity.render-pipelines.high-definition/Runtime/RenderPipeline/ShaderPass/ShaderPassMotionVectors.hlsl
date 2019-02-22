@@ -82,7 +82,7 @@ void Frag(  PackedVaryingsToPS packedInput
     // Convert from Clip space (-1..1) to NDC 0..1 space.
     // Note it doesn't mean we don't have negative value, we store negative or positive offset in NDC space.
     // Note: ((positionCS * 0.5 + 0.5) - (previousPositionCS * 0.5 + 0.5)) = (velocity * 0.5)
-    EncodeVelocity(velocity * 0.5, outVelocity);
+    EncodeMotionVector(velocity * 0.5, outVelocity);
 
     // Note: unity_MotionVectorsParams.y is 0 is forceNoMotion is enabled
     bool forceNoMotion = unity_MotionVectorsParams.y == 0.0;

@@ -29,12 +29,12 @@
 // So same motion vectors buffer is use for all scenario, so if deferred define a motion vectors buffer, the same is reuse for forward case.
 // THis is similar to NormalBuffer
 
-// TODO: CAUTION: current DecodeVelocity is not used in motion vector / TAA pass as it come from Postprocess stack
+// TODO: CAUTION: current DecodeMotionVector is not used in motion vector / TAA pass as it come from Postprocess stack
 // This will be fix when postprocess will be integrated into HD, but it mean that we must not change the
-// EncodeVelocity / DecodeVelocity code for now, i.e it must do nothing like it is doing currently.
+// EncodeMotionVector / DecodeMotionVector code for now, i.e it must do nothing like it is doing currently.
 // Note2: Motion blur code of posptrocess stack do * 2 - 1 to uncompress velocity which is not expected, TAA is correct.
 // Design note: We assume that velocity/distortion fit into a single buffer (i.e not spread on several buffer)
-void EncodeVelocity(float2 velocity, out float4 outBuffer)
+void EncodeMotionVector(float2 velocity, out float4 outBuffer)
 {
     // RT - 16:16 float
     outBuffer = float4(velocity.xy, 0.0, 0.0);
@@ -45,7 +45,7 @@ bool PixelSetAsNoMotionVectors(float4 inBuffer)
 	return inBuffer.x > 1.0f;
 }
 
-void DecodeVelocity(float4 inBuffer, out float2 velocity)
+void DecodeMotionVector(float4 inBuffer, out float2 velocity)
 {
 	velocity = PixelSetAsNoMotionVectors(inBuffer) ? 0.0f : inBuffer.xy;
 }

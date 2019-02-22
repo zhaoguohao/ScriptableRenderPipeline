@@ -183,7 +183,7 @@ void Frag(PackedVaryingsToPS packedInput,
         else
         {
             float2 velocity = CalculateMotionVector(inputPass.positionCS, inputPass.previousPositionCS);
-            EncodeVelocity(velocity * 0.5, outVelocity);
+            EncodeMotionVector(velocity * 0.5, outVelocity);
             outVelocity.zw = 1.0;
         }
 #endif
