@@ -5,6 +5,11 @@ using System.Linq;
 
 namespace UnityEngine.Rendering.LWRP
 {
+    internal class RenderPassDescription
+    {
+
+    }
+
     /// <summary>
     ///  Class <c>ScriptableRenderer</c> implements a rendering strategy. It describes how culling and lighting works and
     /// the effects supported.
@@ -20,9 +25,17 @@ namespace UnityEngine.Rendering.LWRP
     /// </summary>
     public abstract class ScriptableRenderer
     {
+        const int k_DepthStencilBufferBits = 32;
+
         protected List<ScriptableRenderPass> m_ActiveRenderPassQueue = new List<ScriptableRenderPass>(32);
         protected List<ScriptableRendererFeature> m_RendererFeatures = new List<ScriptableRendererFeature>(10);
         protected List<ScriptableRenderPass> m_AdditionalRenderPasses = new List<ScriptableRenderPass>(10);
+        protected AttachmentDescriptor colorAttachmentDescriptor { get; set; }
+        protected AttachmentDescriptor colorAttachmentDescriptorHDR { get; set; }
+        protected AttachmentDescriptor depthAttachmentDescriptor { get; set; }
+        protected RenderTargetHandle colorHandle { get; set; }
+        protected RenderTargetHandle depthHandle { get; set; }
+
         int m_ExecuteRenderPassIndex;
 
         const string k_ClearRenderStateTag = "Clear Render State";
@@ -33,12 +46,22 @@ namespace UnityEngine.Rendering.LWRP
         {
             m_RendererFeatures.AddRange(data.rendererFeatures.Where(x => x != null));
             m_ExecuteRenderPassIndex = 0;
+
+            // TODO: when preserve framebuffer alpha is enabled we can't use RGB111110Float format.
+            bool useRGB111110 = Application.isMobilePlatform &&
+                                SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float);
+            RenderTextureFormat hdrFormat = (useRGB111110) ? RenderTextureFormat.RGB111110Float : RenderTextureFormat.DefaultHDR;
+
+            colorAttachmentDescriptor = new AttachmentDescriptor(RenderTextureFormat.Default);
+            colorAttachmentDescriptorHDR = new AttachmentDescriptor(hdrFormat);
+            depthAttachmentDescriptor = new AttachmentDescriptor(RenderTextureFormat.Depth);
         }
 
         /// <summary>
         /// Override this method to implement the list of <c>ScriptableRenderPass</c> this renderer should execute on a frame.
         /// This method is called every frame by the LWRP.
         /// </summary>
+        /// <par
         /// <param name="renderingData">Current render state information.</param>
         public abstract void Setup(ref RenderingData renderingData);
 
@@ -73,6 +96,8 @@ namespace UnityEngine.Rendering.LWRP
             Camera camera = renderingData.cameraData.camera;
             ClearRenderState(context);
 
+            m_ActiveRenderPassQueue.Sort();
+
             // Before Render Block
             // In this block inputs passes should execute. e.g, shadowmaps
             ExecuteBlock(RenderPassEvent.BeforeRenderingOpaques, context, ref renderingData, true);
@@ -87,13 +112,38 @@ namespace UnityEngine.Rendering.LWRP
             /// * Setup global time properties (_Time, _SinTime, _CosTime)
             bool stereoEnabled = renderingData.cameraData.isStereoEnabled;
             context.SetupCameraProperties(camera, stereoEnabled);
+
+            RenderTextureDescriptor cameraTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
+            var cmd = CommandBufferPool.Get("Create Camera Target");
+            if (colorHandle != RenderTargetHandle.CameraTarget || depthHandle != RenderTargetHandle.CameraTarget)
+            {
+                if (colorHandle != RenderTargetHandle.CameraTarget)
+                {
+                    bool useDepthRenderBuffer = depthHandle == RenderTargetHandle.CameraTarget;
+                    var colorDescriptor = cameraTargetDescriptor;
+                    colorDescriptor.depthBufferBits = (useDepthRenderBuffer) ? k_DepthStencilBufferBits : 0;
+                    cmd.GetTemporaryRT(colorHandle.id, colorDescriptor, FilterMode.Bilinear);
+                }
+
+                if (depthHandle != RenderTargetHandle.CameraTarget)
+                {
+                    var depthDescriptor = cameraTargetDescriptor;
+                    depthDescriptor.colorFormat = RenderTextureFormat.Depth;
+                    depthDescriptor.depthBufferBits = k_DepthStencilBufferBits;
+                    depthDescriptor.bindMS = cameraTargetDescriptor.msaaSamples > 1 && !SystemInfo.supportsMultisampleAutoResolve && (SystemInfo.supportsMultisampledTextures != 0);
+                    cmd.GetTemporaryRT(depthHandle.id, depthDescriptor, FilterMode.Point);
+                }
+            }
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+
             SetupLights(context, ref renderingData);
 
             if (stereoEnabled)
                 BeginXRRendering(context, camera);
             
             // In this block the bulk of render passes execute.
-            ExecuteBlock(RenderPassEvent.AfterRenderingTransparentPasses, context, ref renderingData);
+            ExecuteBlock(RenderPassEvent.AfterRendering, context, ref renderingData);
 
             DrawGizmos(context, camera, GizmoSubset.PreImageEffects);
 
@@ -228,6 +278,10 @@ namespace UnityEngine.Rendering.LWRP
                 context.Submit();
         }
 
+        void ExecuteRenderPass(ScriptableRenderPass pass)
+        {
+        }
+
         void BeginXRRendering(ScriptableRenderContext context, Camera camera)
         {
             context.StartMultiEye(camera);
@@ -256,6 +310,8 @@ namespace UnityEngine.Rendering.LWRP
         {
             CommandBuffer cmd = CommandBufferPool.Get(k_ReleaseResourcesTag);
 
+            cmd.ReleaseTemporaryRT(colorHandle.id);
+            cmd.ReleaseTemporaryRT(depthHandle.id);
             for (int i = 0; i < m_ActiveRenderPassQueue.Count; ++i)
                 m_ActiveRenderPassQueue[i].FrameCleanup(cmd);
 

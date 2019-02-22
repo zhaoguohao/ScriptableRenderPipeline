@@ -27,10 +27,24 @@ namespace UnityEngine.Rendering.LWRP
     public abstract class ScriptableRenderPass : IComparable<ScriptableRenderPass>
     {
         public RenderPassEvent renderPassEvent { get; set; }
+        public int targetWidth { get; }
+        public int targetHeight { get; }
+        public int targetMsaa { get; }
+        public AttachmentDescriptor targetColorAttachment { get; }
+        public AttachmentDescriptor targetDepthAttachment { get; }
+
+        int m_TargetWidth = -1;
+        int m_TargetHeight = -1;
+        int m_TargetMsaa = 1;
+        AttachmentDescriptor m_TargetColorAttachment;
+        AttachmentDescriptor m_TargetDepthAttachment;
 
         public ScriptableRenderPass()
         {
             renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
+            m_TargetWidth = -1;
+            m_TargetHeight = -1;
+            m_TargetMsaa = -1;
         }
 
         List<ShaderTagId> m_ShaderTagIDs = new List<ShaderTagId>();
@@ -101,6 +115,16 @@ namespace UnityEngine.Rendering.LWRP
 
                 return m_PostProcessRenderContext;
             }
+        }
+
+        public void ConfigureTarget(int width, int height, int msaaSamples,
+            AttachmentDescriptor colorAttachment, AttachmentDescriptor depthAttachment)
+        {
+            m_TargetWidth = width;
+            m_TargetHeight = height;
+            m_TargetMsaa = msaaSamples;
+            m_TargetColorAttachment = colorAttachment;
+            m_TargetDepthAttachment = depthAttachment;
         }
 
         /// <summary>

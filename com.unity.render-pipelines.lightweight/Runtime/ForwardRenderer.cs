@@ -6,7 +6,6 @@ namespace UnityEngine.Rendering.LWRP
         private MainLightShadowCasterPass m_MainLightShadowCasterPass;
         private AdditionalLightsShadowCasterPass m_AdditionalLightsShadowCasterPass;
         private ScreenSpaceShadowResolvePass m_ScreenSpaceShadowResolvePass;
-        private CreateLightweightRenderTexturesPass m_CreateLightweightRenderTexturesPass;
         private RenderOpaqueForwardPass m_RenderOpaqueForwardPass;
         private PostProcessPass m_OpaquePostProcessPass;
         private DrawSkyboxPass m_DrawSkyboxPass;
@@ -37,7 +36,6 @@ namespace UnityEngine.Rendering.LWRP
             Material samplingMaterial = CoreUtils.CreateEngineMaterial(data.samplingShader);
             Material screenspaceShadowsMaterial = CoreUtils.CreateEngineMaterial(data.screenSpaceShadowShader);
 
-            m_CreateLightweightRenderTexturesPass = new CreateLightweightRenderTexturesPass(RenderPassEvent.BeforeRendering);
             m_MainLightShadowCasterPass = new MainLightShadowCasterPass(RenderPassEvent.BeforeRendering);
             m_AdditionalLightsShadowCasterPass = new AdditionalLightsShadowCasterPass(RenderPassEvent.BeforeRendering);
             m_DepthPrepass = new DepthOnlyPass(RenderPassEvent.BeforeRenderingOpaques, RenderQueueRange.opaque);
@@ -48,7 +46,7 @@ namespace UnityEngine.Rendering.LWRP
             m_CopyDepthPass = new CopyDepthPass(RenderPassEvent.AfterRenderingSkybox, copyDepthMaterial);
             m_CopyColorPass = new CopyColorPass(RenderPassEvent.AfterRenderingSkybox, samplingMaterial, downsamplingMethod);
             m_RenderTransparentForwardPass = new RenderTransparentForwardPass(RenderPassEvent.AfterRenderingSkybox, RenderQueueRange.transparent, data.transparentLayerMask);
-            m_PostProcessPass = new PostProcessPass(RenderPassEvent.AfterRenderingSkybox);
+            m_PostProcessPass = new PostProcessPass(RenderPassEvent.AfterRendering);
             m_CapturePass = new CapturePass(RenderPassEvent.AfterRendering + 9);
             m_FinalBlitPass = new FinalBlitPass(RenderPassEvent.AfterRendering + 9, blitMaterial);
 
@@ -97,16 +95,6 @@ namespace UnityEngine.Rendering.LWRP
             if (m_MainLightShadowCasterPass.ShouldExecute(ref renderingData))
                 EnqueuePass(m_AdditionalLightsShadowCasterPass);
 
-            if (createColorTexture || createDepthTexture)
-            {
-                int msaaSamples = renderingData.cameraData.cameraTargetDescriptor.msaaSamples;
-                m_CreateLightweightRenderTexturesPass.Setup(cameraTargetDescriptor, colorHandle, depthHandle, msaaSamples);
-                EnqueuePass(m_CreateLightweightRenderTexturesPass);
-            }
-
-            bool beforeRenderOpaquesPasses = EnqueueAdditionalRenderPasses(RenderPassEvent.BeforeRenderingOpaques, ref customRenderPassIndex,
-                ref renderingData);
-
             if (requiresDepthPrepass)
             {
                 m_DepthPrepass.Setup(cameraTargetDescriptor, m_DepthTexture);
@@ -118,6 +106,9 @@ namespace UnityEngine.Rendering.LWRP
                 m_ScreenSpaceShadowResolvePass.Setup(cameraTargetDescriptor);
                 EnqueuePass(m_ScreenSpaceShadowResolvePass);
             }
+
+            bool beforeRenderOpaquesPasses = EnqueueAdditionalRenderPasses(RenderPassEvent.BeforeRenderingOpaques, ref customRenderPassIndex,
+                ref renderingData);
 
             // If a before all render pass executed we expect it to clear the color render target
             if (beforeRenderOpaquesPasses)
@@ -163,7 +154,6 @@ namespace UnityEngine.Rendering.LWRP
 
             EnqueueAdditionalRenderPasses(RenderPassEvent.AfterRenderingTransparentPasses, ref customRenderPassIndex,
                 ref renderingData);
-
 
             bool afterRenderExists = renderingData.cameraData.captureActions != null ||
                                      AfterRenderExists(customRenderPassIndex);
