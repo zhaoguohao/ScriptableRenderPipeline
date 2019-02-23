@@ -56,9 +56,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile _ _SHADOWS_SOFT
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-#endif
             #pragma multi_compile_fog
 
             #pragma multi_compile_instancing
@@ -93,9 +91,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-#endif
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
@@ -123,9 +119,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-#endif
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 
@@ -155,9 +149,7 @@ Shader "Lightweight Render Pipeline/Nature/SpeedTree8"
             #pragma fragment SpeedTree8FragDepth
 
             #pragma multi_compile_vertex LOD_FADE_PERCENTAGE
-#if !defined(SHADER_QUALITY_LOW)
             #pragma multi_compile __ LOD_FADE_CROSSFADE
-#endif
             #pragma multi_compile_instancing
             #pragma instancing_options assumeuniformscaling maxcount:50
 

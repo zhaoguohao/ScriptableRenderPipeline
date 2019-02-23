@@ -297,11 +297,13 @@ half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input.interpolated);
 
+#if !defined(SHADER_QUALITY_LOW)
     #ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
         #ifdef EFFECT_BILLBOARD
             LODDitheringTransition(input.interpolated.clipPos.xyz, unity_LODFade.x);
         #endif
     #endif
+#endif
 
     float2 uv = input.interpolated.uv;
     half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex)) * _Color;
@@ -380,11 +382,13 @@ half4 SpeedTree8FragDepth(SpeedTreeVertexDepthOutput input) : SV_Target
 {
     UNITY_SETUP_INSTANCE_ID(input);
 
+#if !defined(SHADER_QUALITY_LOW)
     #ifdef LOD_FADE_CROSSFADE // enable dithering LOD transition if user select CrossFade transition in LOD group
         #ifdef EFFECT_BILLBOARD
             LODDitheringTransition(input.clipPos.xyz, unity_LODFade.x);
         #endif
     #endif
+#endif
 
     float2 uv = input.uv;
     half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex)) * _Color;
