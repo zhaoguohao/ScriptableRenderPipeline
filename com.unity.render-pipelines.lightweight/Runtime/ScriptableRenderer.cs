@@ -5,11 +5,6 @@ using System.Linq;
 
 namespace UnityEngine.Rendering.LWRP
 {
-    internal class RenderPassDescription
-    {
-
-    }
-
     /// <summary>
     ///  Class <c>ScriptableRenderer</c> implements a rendering strategy. It describes how culling and lighting works and
     /// the effects supported.
@@ -30,12 +25,13 @@ namespace UnityEngine.Rendering.LWRP
         protected List<ScriptableRenderPass> m_ActiveRenderPassQueue = new List<ScriptableRenderPass>(32);
         protected List<ScriptableRendererFeature> m_RendererFeatures = new List<ScriptableRendererFeature>(10);
         protected List<ScriptableRenderPass> m_AdditionalRenderPasses = new List<ScriptableRenderPass>(10);
-        protected AttachmentDescriptor colorAttachmentDescriptor { get; set; }
-        protected AttachmentDescriptor colorAttachmentDescriptorHDR { get; set; }
-        protected AttachmentDescriptor depthAttachmentDescriptor { get; set; }
-        protected RenderTargetHandle colorHandle { get; set; }
-        protected RenderTargetHandle depthHandle { get; set; }
+        protected RenderTargetHandle cameraColorHandle { get; set; }
+        protected RenderTargetHandle cameraDepthHandle { get; set; }
 
+        RenderTargetIdentifier m_ActiveColorTargetId = BuiltinRenderTextureType.CameraTarget;
+        RenderTargetIdentifier m_ActiveDepthTargetId = BuiltinRenderTextureType.CameraTarget;
+
+        Dictionary<int, RenderTargetIdentifier> m_TemporaryRenderTextures = new Dictionary<int, RenderTargetIdentifier>();
         int m_ExecuteRenderPassIndex;
 
         const string k_ClearRenderStateTag = "Clear Render State";
@@ -46,15 +42,6 @@ namespace UnityEngine.Rendering.LWRP
         {
             m_RendererFeatures.AddRange(data.rendererFeatures.Where(x => x != null));
             m_ExecuteRenderPassIndex = 0;
-
-            // TODO: when preserve framebuffer alpha is enabled we can't use RGB111110Float format.
-            bool useRGB111110 = Application.isMobilePlatform &&
-                                SystemInfo.SupportsRenderTextureFormat(RenderTextureFormat.RGB111110Float);
-            RenderTextureFormat hdrFormat = (useRGB111110) ? RenderTextureFormat.RGB111110Float : RenderTextureFormat.DefaultHDR;
-
-            colorAttachmentDescriptor = new AttachmentDescriptor(RenderTextureFormat.Default);
-            colorAttachmentDescriptorHDR = new AttachmentDescriptor(hdrFormat);
-            depthAttachmentDescriptor = new AttachmentDescriptor(RenderTextureFormat.Depth);
         }
 
         /// <summary>
@@ -115,23 +102,23 @@ namespace UnityEngine.Rendering.LWRP
 
             RenderTextureDescriptor cameraTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
             var cmd = CommandBufferPool.Get("Create Camera Target");
-            if (colorHandle != RenderTargetHandle.CameraTarget || depthHandle != RenderTargetHandle.CameraTarget)
+            if (cameraColorHandle != RenderTargetHandle.CameraTarget || cameraDepthHandle != RenderTargetHandle.CameraTarget)
             {
-                if (colorHandle != RenderTargetHandle.CameraTarget)
+                if (cameraColorHandle != RenderTargetHandle.CameraTarget)
                 {
-                    bool useDepthRenderBuffer = depthHandle == RenderTargetHandle.CameraTarget;
+                    bool useDepthRenderBuffer = cameraDepthHandle == RenderTargetHandle.CameraTarget;
                     var colorDescriptor = cameraTargetDescriptor;
                     colorDescriptor.depthBufferBits = (useDepthRenderBuffer) ? k_DepthStencilBufferBits : 0;
-                    cmd.GetTemporaryRT(colorHandle.id, colorDescriptor, FilterMode.Bilinear);
+                    GetOrCreateRenderTargetIdentifier(cmd, cameraColorHandle.id, colorDescriptor, FilterMode.Bilinear);
                 }
 
-                if (depthHandle != RenderTargetHandle.CameraTarget)
+                if (cameraDepthHandle != RenderTargetHandle.CameraTarget)
                 {
                     var depthDescriptor = cameraTargetDescriptor;
                     depthDescriptor.colorFormat = RenderTextureFormat.Depth;
                     depthDescriptor.depthBufferBits = k_DepthStencilBufferBits;
                     depthDescriptor.bindMS = cameraTargetDescriptor.msaaSamples > 1 && !SystemInfo.supportsMultisampleAutoResolve && (SystemInfo.supportsMultisampledTextures != 0);
-                    cmd.GetTemporaryRT(depthHandle.id, depthDescriptor, FilterMode.Point);
+                    GetOrCreateRenderTargetIdentifier(cmd, cameraDepthHandle.id, depthDescriptor, FilterMode.Point);
                 }
             }
             context.ExecuteCommandBuffer(cmd);
@@ -155,6 +142,7 @@ namespace UnityEngine.Rendering.LWRP
 
             DrawGizmos(context, camera, GizmoSubset.PostImageEffects);
 
+            ReleaseTemporaryRenderTextures(context);
             DisposePasses(context);
         }
 
@@ -165,7 +153,10 @@ namespace UnityEngine.Rendering.LWRP
         {
             m_ActiveRenderPassQueue.Clear();
             m_AdditionalRenderPasses.Clear();
+            m_TemporaryRenderTextures.Clear();
             m_ExecuteRenderPassIndex = 0;
+            m_ActiveColorTargetId = BuiltinRenderTextureType.CameraTarget;
+            m_ActiveDepthTargetId = BuiltinRenderTextureType.CameraTarget;
         }
 
         /// <summary>
@@ -272,14 +263,42 @@ namespace UnityEngine.Rendering.LWRP
         {
             while (m_ExecuteRenderPassIndex < m_ActiveRenderPassQueue.Count &&
                    m_ActiveRenderPassQueue[m_ExecuteRenderPassIndex].renderPassEvent < maxEventIndex)
-                m_ActiveRenderPassQueue[m_ExecuteRenderPassIndex++].Execute(context, ref renderingData);
+            {
+                var renderPass = m_ActiveRenderPassQueue[m_ExecuteRenderPassIndex++];
+                ExecuteRenderPass(context, renderPass, ref renderingData);
+            }
 
             if (submit)
                 context.Submit();
         }
 
-        void ExecuteRenderPass(ScriptableRenderPass pass)
+        void ExecuteRenderPass(ScriptableRenderContext context, ScriptableRenderPass pass, ref RenderingData renderingData)
         {
+            if (pass.m_ColorAttachmentId != m_ActiveColorTargetId || pass.m_DepthAttachmentId != m_ActiveDepthTargetId)
+            {
+                bool renderToCameraTarget = (pass.m_ColorAttachmentId == -1);
+
+                Color clearColor = CoreUtils.ConvertSRGBToActiveColorSpace(renderingData.cameraData.camera.backgroundColor);
+                CommandBuffer cmd = CommandBufferPool.Get("Setup Render Targets");
+
+                if (!renderToCameraTarget)
+                {
+                    var colorIdentifier = GetOrCreateRenderTargetIdentifier(cmd, pass.m_ColorAttachmentId, pass.m_ColorAttachmentDescriptor, pass.m_ColorFilterMode);
+                    var depthIdentifier = GetOrCreateRenderTargetIdentifier(cmd, pass.m_DepthAttachmentId, pass.m_DepthAttachmentDescriptor, pass.m_DepthFilterMode);
+                    SetRenderTarget(cmd, colorIdentifier, RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
+                        depthIdentifier, RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
+                        ClearFlag.None, clearColor, pass.m_ColorAttachmentDescriptor.dimension);
+                }
+                else
+                {
+                    SetRenderTarget(cmd, cameraColorHandle.Identifier(), RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
+                        cameraDepthHandle.Identifier(), RenderBufferLoadAction.Load, RenderBufferStoreAction.Store,
+                        ClearFlag.None, clearColor, renderingData.cameraData.cameraTargetDescriptor.dimension);
+                }
+                context.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
+            }
+            pass.Execute(context, ref renderingData);
         }
 
         void BeginXRRendering(ScriptableRenderContext context, Camera camera)
@@ -306,12 +325,78 @@ namespace UnityEngine.Rendering.LWRP
 #endif
         }
 
+        RenderTargetIdentifier GetOrCreateRenderTargetIdentifier(CommandBuffer cmd, int rtId, RenderTextureDescriptor descriptor, FilterMode filterMode)
+        {
+            if (rtId == -1)
+                return BuiltinRenderTextureType.CameraTarget;
+
+            if (!m_TemporaryRenderTextures.ContainsKey(rtId))
+            {
+                RenderTargetIdentifier rtIdentifier = new RenderTargetIdentifier(rtId);
+                cmd.GetTemporaryRT(rtId, descriptor, filterMode);
+                m_TemporaryRenderTextures.Add(rtId, rtIdentifier);
+                return rtIdentifier;
+            }
+
+            return m_TemporaryRenderTextures[rtId];
+        }
+        
+        void ReleaseTemporaryRenderTextures(ScriptableRenderContext context)
+        {
+            CommandBuffer cmd = CommandBufferPool.Get(k_ReleaseResourcesTag);
+            foreach (var texture in m_TemporaryRenderTextures)
+                cmd.ReleaseTemporaryRT(texture.Key);
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+            m_TemporaryRenderTextures.Clear();
+        }
+
+        void SetRenderTarget(
+            CommandBuffer cmd,
+            RenderTargetIdentifier colorAttachment,
+            RenderBufferLoadAction colorLoadAction,
+            RenderBufferStoreAction colorStoreAction,
+            ClearFlag clearFlags,
+            Color clearColor,
+            TextureDimension dimension)
+        {
+            if (dimension == TextureDimension.Tex2DArray)
+                CoreUtils.SetRenderTarget(cmd, colorAttachment, clearFlags, clearColor, 0, CubemapFace.Unknown, -1);
+            else
+                CoreUtils.SetRenderTarget(cmd, colorAttachment, colorLoadAction, colorStoreAction, clearFlags, clearColor);
+        }
+
+        void SetRenderTarget(
+            CommandBuffer cmd,
+            RenderTargetIdentifier colorAttachment,
+            RenderBufferLoadAction colorLoadAction,
+            RenderBufferStoreAction colorStoreAction,
+            RenderTargetIdentifier depthAttachment,
+            RenderBufferLoadAction depthLoadAction,
+            RenderBufferStoreAction depthStoreAction,
+            ClearFlag clearFlags,
+            Color clearColor,
+            TextureDimension dimension)
+        {
+            if (depthAttachment == BuiltinRenderTextureType.CameraTarget)
+            {
+                SetRenderTarget(cmd, colorAttachment, colorLoadAction, colorStoreAction, clearFlags, clearColor,
+                    dimension);
+            }
+            else
+            {
+                if (dimension == TextureDimension.Tex2DArray)
+                    CoreUtils.SetRenderTarget(cmd, colorAttachment, depthAttachment,
+                        clearFlags, clearColor, 0, CubemapFace.Unknown, -1);
+                else
+                    CoreUtils.SetRenderTarget(cmd, colorAttachment, colorLoadAction, colorStoreAction,
+                        depthAttachment, depthLoadAction, depthStoreAction, clearFlags, clearColor);
+            }
+        }
+
         void DisposePasses(ScriptableRenderContext context)
         {
             CommandBuffer cmd = CommandBufferPool.Get(k_ReleaseResourcesTag);
-
-            cmd.ReleaseTemporaryRT(colorHandle.id);
-            cmd.ReleaseTemporaryRT(depthHandle.id);
             for (int i = 0; i < m_ActiveRenderPassQueue.Count; ++i)
                 m_ActiveRenderPassQueue[i].FrameCleanup(cmd);
 

@@ -21,13 +21,14 @@ namespace UnityEngine.Rendering.LWRP
         }
 
         const int k_MaxCascades = 4;
-        const int k_ShadowmapBufferBits = 16;
+        const int k_ShadowmapBufferBits = 32;
         int m_ShadowmapWidth;
         int m_ShadowmapHeight;
         int m_ShadowCasterCascadesCount;
 
         RenderTargetHandle m_MainLightShadowmap;
         RenderTexture m_MainLightShadowmapTexture;
+        RenderTextureDescriptor m_ShadowmapDescriptor;
 
         Matrix4x4[] m_MainLightShadowMatrices;
         ShadowSliceData[] m_CascadeSlices;
@@ -58,6 +59,7 @@ namespace UnityEngine.Rendering.LWRP
             MainLightShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_MainLightShadowmapSize");
 
             m_MainLightShadowmap.Init("_MainLightShadowmapTexture");
+            m_ShadowmapDescriptor = new RenderTextureDescriptor(1024, 1024, ShadowUtils.shadowmapFormat, k_ShadowmapBufferBits);
         }
 
         public override bool ShouldExecute(ref RenderingData renderingData)
@@ -103,6 +105,10 @@ namespace UnityEngine.Rendering.LWRP
                     return false;
             }
 
+            m_ShadowmapDescriptor.width = m_ShadowmapWidth;
+            m_ShadowmapDescriptor.height = m_ShadowmapHeight;
+            ConfigureTarget(m_ShadowmapWidth, m_ShadowmapHeight, 1);
+            BindColorSurface(m_MainLightShadowmap.id, m_ShadowmapDescriptor, ShadowUtils.shadowmapSamplingMode);
             return true;
         }
 
@@ -152,11 +158,6 @@ namespace UnityEngine.Rendering.LWRP
             {
                 var settings = new ShadowDrawingSettings(cullResults, shadowLightIndex);
 
-                m_MainLightShadowmapTexture = ShadowUtils.GetTemporaryShadowTexture(m_ShadowmapWidth,
-                    m_ShadowmapHeight, k_ShadowmapBufferBits);
-                SetRenderTarget(cmd, m_MainLightShadowmapTexture, RenderBufferLoadAction.DontCare,
-                    RenderBufferStoreAction.Store, ClearFlag.Depth, Color.black, TextureDimension.Tex2D);
-
                 for (int cascadeIndex = 0; cascadeIndex < m_ShadowCasterCascadesCount; ++cascadeIndex)
                 {
                     var splitData = settings.splitData;
@@ -168,7 +169,7 @@ namespace UnityEngine.Rendering.LWRP
                         ref settings, m_CascadeSlices[cascadeIndex].projectionMatrix, m_CascadeSlices[cascadeIndex].viewMatrix);
                 }
 
-                    SetupMainLightShadowReceiverConstants(cmd, ref shadowData, shadowLight);
+                SetupMainLightShadowReceiverConstants(cmd, ref shadowData, shadowLight);
             }
 
             CoreUtils.SetKeyword(cmd, ShaderKeywordStrings.MainLightShadows, true);
@@ -198,7 +199,6 @@ namespace UnityEngine.Rendering.LWRP
             float invShadowAtlasHeight = 1.0f / m_ShadowmapHeight;
             float invHalfShadowAtlasWidth = 0.5f * invShadowAtlasWidth;
             float invHalfShadowAtlasHeight = 0.5f * invShadowAtlasHeight;
-            cmd.SetGlobalTexture(m_MainLightShadowmap.id, m_MainLightShadowmapTexture);
             cmd.SetGlobalMatrixArray(MainLightShadowConstantBuffer._WorldToShadow, m_MainLightShadowMatrices);
             cmd.SetGlobalVector(MainLightShadowConstantBuffer._ShadowData, new Vector4(light.shadowStrength, 0.0f, 0.0f, 0.0f));
             cmd.SetGlobalVector(MainLightShadowConstantBuffer._CascadeShadowSplitSpheres0, m_CascadeSplitDistances[0]);

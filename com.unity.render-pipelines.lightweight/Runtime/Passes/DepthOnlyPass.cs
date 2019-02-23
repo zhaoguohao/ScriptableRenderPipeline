@@ -22,7 +22,7 @@ namespace UnityEngine.Rendering.LWRP
         /// Create the DepthOnlyPass
         /// </summary>
         public DepthOnlyPass(RenderPassEvent evt, RenderQueueRange renderQueueRange)
-        {
+        { 
             RegisterShaderPassName("DepthOnly");
             m_FilteringSettings = new FilteringSettings(renderQueueRange);
             renderPassEvent = evt;
@@ -31,18 +31,15 @@ namespace UnityEngine.Rendering.LWRP
         /// <summary>
         /// Configure the pass
         /// </summary>
-        public void Setup(
-            RenderTextureDescriptor baseDescriptor,
-            RenderTargetHandle depthAttachmentHandle)
+        public void Setup(ref RenderingData renderingData, RenderTargetHandle depthAttachmentHandle)
         {
-            this.depthAttachmentHandle = depthAttachmentHandle;
-            baseDescriptor.colorFormat = RenderTextureFormat.Depth;
-            baseDescriptor.depthBufferBits = kDepthBufferBits;
+            var descriptor = renderingData.cameraData.cameraTargetDescriptor;
+            descriptor.colorFormat = RenderTextureFormat.Depth;
+            descriptor.depthBufferBits = kDepthBufferBits;
+            descriptor.msaaSamples = 1;
 
-            // Depth-Only pass don't use MSAA
-            baseDescriptor.msaaSamples = 1;
-
-            descriptor = baseDescriptor;
+            ConfigureTarget(descriptor.width, descriptor.height, 1);
+            BindColorSurface(depthAttachmentHandle.id, descriptor, FilterMode.Point);
         }
 
         public override bool ShouldExecute(ref RenderingData renderingData)
@@ -61,16 +58,6 @@ namespace UnityEngine.Rendering.LWRP
             CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);
             using (new ProfilingSample(cmd, m_ProfilerTag))
             {
-                cmd.GetTemporaryRT(depthAttachmentHandle.id, descriptor, FilterMode.Point);
-                SetRenderTarget(
-                    cmd,
-                    depthAttachmentHandle.Identifier(),
-                    RenderBufferLoadAction.DontCare,
-                    RenderBufferStoreAction.Store,
-                    ClearFlag.Depth,
-                    Color.black,
-                    descriptor.dimension);
-
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -83,19 +70,6 @@ namespace UnityEngine.Rendering.LWRP
             }
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
-        }
-
-        /// <inheritdoc/>
-        public override void FrameCleanup(CommandBuffer cmd)
-        {
-            if (cmd == null)
-                throw new ArgumentNullException("cmd");
-
-            if (depthAttachmentHandle != RenderTargetHandle.CameraTarget)
-            {
-                cmd.ReleaseTemporaryRT(depthAttachmentHandle.id);
-                depthAttachmentHandle = RenderTargetHandle.CameraTarget;
-            }
         }
 
         bool CanCopyDepth(ref CameraData cameraData)

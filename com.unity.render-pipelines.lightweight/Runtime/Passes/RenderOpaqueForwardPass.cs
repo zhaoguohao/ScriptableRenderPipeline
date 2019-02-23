@@ -55,21 +55,21 @@ namespace UnityEngine.Rendering.LWRP
             CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);
             using (new ProfilingSample(cmd, m_ProfilerTag))
             {
-                // When ClearFlag.None that means this is not the first render pass to write to camera target.
-                // In that case we set loadOp for both color and depth as RenderBufferLoadAction.Load
-                RenderBufferLoadAction loadOp = clearFlag != ClearFlag.None ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load;
-                RenderBufferStoreAction storeOp = RenderBufferStoreAction.Store;
+                //// When ClearFlag.None that means this is not the first render pass to write to camera target.
+                //// In that case we set loadOp for both color and depth as RenderBufferLoadAction.Load
+                //RenderBufferLoadAction loadOp = clearFlag != ClearFlag.None ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load;
+                //RenderBufferStoreAction storeOp = RenderBufferStoreAction.Store;
 
-                SetRenderTarget(cmd, colorAttachmentHandle.Identifier(), loadOp, storeOp,
-                    depthAttachmentHandle.Identifier(), loadOp, storeOp, clearFlag, clearColor, descriptor.dimension);
+                //SetRenderTarget(cmd, colorAttachmentHandle.Identifier(), loadOp, storeOp,
+                //    depthAttachmentHandle.Identifier(), loadOp, storeOp, clearFlag, clearColor, descriptor.dimension);
 
-                // TODO: We need a proper way to handle multiple camera/ camera stack. Issue is: multiple cameras can share a same RT
-                // (e.g, split screen games). However devs have to be dilligent with it and know when to clear/preserve color.
-                // For now we make it consistent by resolving viewport with a RT until we can have a proper camera management system
-                //if (colorAttachmentHandle == -1 && !cameraData.isDefaultViewport)
-                //    cmd.SetViewport(camera.pixelRect);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
+                //// TODO: We need a proper way to handle multiple camera/ camera stack. Issue is: multiple cameras can share a same RT
+                //// (e.g, split screen games). However devs have to be dilligent with it and know when to clear/preserve color.
+                //// For now we make it consistent by resolving viewport with a RT until we can have a proper camera management system
+                ////if (colorAttachmentHandle == -1 && !cameraData.isDefaultViewport)
+                ////    cmd.SetViewport(camera.pixelRect);
+                //context.ExecuteCommandBuffer(cmd);
+                //cmd.Clear();
 
                 Camera camera = renderingData.cameraData.camera;
                 var sortFlags = renderingData.cameraData.defaultOpaqueSortFlags;

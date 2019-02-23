@@ -17,9 +17,10 @@ namespace UnityEngine.Rendering.LWRP
             public static int _AdditionalShadowmapSize;
         }
 
-        const int k_ShadowmapBufferBits = 16;
+        const int k_ShadowmapBufferBits = 32;
         private RenderTargetHandle m_AdditionalLightsShadowmap;
         RenderTexture m_AdditionalLightsShadowmapTexture;
+        RenderTextureDescriptor m_RenderTextureDescriptor;
 
         Matrix4x4[] m_AdditionalLightShadowMatrices;
         ShadowSliceData[] m_AdditionalLightSlices;
@@ -45,6 +46,7 @@ namespace UnityEngine.Rendering.LWRP
             AdditionalShadowsConstantBuffer._AdditionalShadowOffset3 = Shader.PropertyToID("_AdditionalShadowOffset3");
             AdditionalShadowsConstantBuffer._AdditionalShadowmapSize = Shader.PropertyToID("_AdditionalShadowmapSize");
             m_AdditionalLightsShadowmap.Init("_AdditionalLightsShadowmapTexture");
+            m_RenderTextureDescriptor = new RenderTextureDescriptor(1024, 1024, ShadowUtils.shadowmapFormat, k_ShadowmapBufferBits);
         }
 
         public override bool ShouldExecute(ref RenderingData renderingData)
@@ -113,14 +115,22 @@ namespace UnityEngine.Rendering.LWRP
                 }
             }
 
+            if (anyShadows)
+            {
+                int shadowmapWidth = renderingData.shadowData.additionalLightsShadowmapWidth;
+                int shadowmapHeight = renderingData.shadowData.additionalLightsShadowmapHeight;
+
+                ConfigureTarget(shadowmapWidth, shadowmapHeight, 1);
+                BindColorSurface(m_AdditionalLightsShadowmap.id, m_RenderTextureDescriptor, ShadowUtils.shadowmapSamplingMode);
+            }
+
             return anyShadows;
         }
 
         /// <inheritdoc/>
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (renderingData.shadowData.supportsAdditionalLightShadows)
-                RenderAdditionalShadowmapAtlas(ref context, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
+            RenderAdditionalShadowmapAtlas(ref context, ref renderingData.cullResults, ref renderingData.lightData, ref renderingData.shadowData);
         }
 
         public override void FrameCleanup(CommandBuffer cmd)
@@ -160,11 +170,6 @@ namespace UnityEngine.Rendering.LWRP
             {
                 int shadowmapWidth = shadowData.additionalLightsShadowmapWidth;
                 int shadowmapHeight = shadowData.additionalLightsShadowmapHeight;
-
-                m_AdditionalLightsShadowmapTexture = ShadowUtils.GetTemporaryShadowTexture(shadowmapWidth, shadowmapHeight, k_ShadowmapBufferBits);
-
-                SetRenderTarget(cmd, m_AdditionalLightsShadowmapTexture, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store,
-                    ClearFlag.Depth, Color.black, TextureDimension.Tex2D);
 
                 for (int i = 0; i < m_AdditionalShadowCastingLightIndices.Count; ++i)
                 {
@@ -210,7 +215,6 @@ namespace UnityEngine.Rendering.LWRP
             float invHalfShadowAtlasWidth = 0.5f * invShadowAtlasWidth;
             float invHalfShadowAtlasHeight = 0.5f * invShadowAtlasHeight;
 
-            cmd.SetGlobalTexture(m_AdditionalLightsShadowmap.id, m_AdditionalLightsShadowmapTexture);
             cmd.SetGlobalMatrixArray(AdditionalShadowsConstantBuffer._AdditionalLightsWorldToShadow, m_AdditionalLightShadowMatrices);
             cmd.SetGlobalFloatArray(AdditionalShadowsConstantBuffer._AdditionalShadowStrength, m_AdditionalLightsShadowStrength);
             cmd.SetGlobalVector(AdditionalShadowsConstantBuffer._AdditionalShadowOffset0, new Vector4(-invHalfShadowAtlasWidth, -invHalfShadowAtlasHeight, 0.0f, 0.0f));

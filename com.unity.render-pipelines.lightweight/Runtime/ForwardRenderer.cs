@@ -79,13 +79,13 @@ namespace UnityEngine.Rendering.LWRP
             // later by effect requiring it.
             bool createDepthTexture = renderingData.cameraData.requiresDepthTexture && !requiresDepthPrepass;
 
-            RenderTargetHandle colorHandle = (createColorTexture) ? m_ColorAttachment : RenderTargetHandle.CameraTarget;
-            RenderTargetHandle depthHandle = (createDepthTexture) ? m_DepthAttachment : RenderTargetHandle.CameraTarget;
+            cameraColorHandle = (createColorTexture) ? m_ColorAttachment : RenderTargetHandle.CameraTarget;
+            cameraDepthHandle = (createDepthTexture) ? m_DepthAttachment : RenderTargetHandle.CameraTarget;
 
             int customRenderPassIndex = 0;
             for (int i = 0; i < m_RendererFeatures.Count; ++i)
             {
-                m_RendererFeatures[i].AddRenderPasses(m_AdditionalRenderPasses, cameraTargetDescriptor, colorHandle, depthHandle);
+                m_RendererFeatures[i].AddRenderPasses(m_AdditionalRenderPasses, cameraTargetDescriptor, cameraColorHandle, cameraDepthHandle);
             }
             m_AdditionalRenderPasses.Sort();
 
@@ -97,7 +97,7 @@ namespace UnityEngine.Rendering.LWRP
 
             if (requiresDepthPrepass)
             {
-                m_DepthPrepass.Setup(cameraTargetDescriptor, m_DepthTexture);
+                m_DepthPrepass.Setup(ref renderingData, m_DepthTexture);
                 EnqueuePass(m_DepthPrepass);
             }
 
@@ -114,42 +114,35 @@ namespace UnityEngine.Rendering.LWRP
             if (beforeRenderOpaquesPasses)
                 clearFlag = ClearFlag.None;
 
-            m_RenderOpaqueForwardPass.Setup(cameraTargetDescriptor, colorHandle, depthHandle, clearFlag, camera.backgroundColor);
+            m_RenderOpaqueForwardPass.Setup(cameraTargetDescriptor, cameraColorHandle, cameraDepthHandle, clearFlag, camera.backgroundColor);
             EnqueuePass(m_RenderOpaqueForwardPass);
 
-            bool afterOpaques = EnqueueAdditionalRenderPasses(RenderPassEvent.AfterRenderingOpaques, ref customRenderPassIndex,
-                ref renderingData);
+            EnqueueAdditionalRenderPasses(RenderPassEvent.AfterRenderingOpaques, ref customRenderPassIndex, ref renderingData);
 
             if (m_OpaquePostProcessPass.ShouldExecute(ref renderingData))
-                m_OpaquePostProcessPass.Setup(cameraTargetDescriptor, colorHandle, colorHandle);
+                m_OpaquePostProcessPass.Setup(cameraTargetDescriptor, cameraColorHandle, cameraColorHandle);
 
             if (m_DrawSkyboxPass.ShouldExecute(ref renderingData))
             {
-                // We can't combine skybox and render opaques passes if there's a custom render pass in between
-                // them. Ideally we need a render graph here that each render pass declares inputs and output
-                // attachments and their Load/Store action so we figure out properly if we can combine passes
-                // and move to interleaved rendering with RenderPass API.
-                m_DrawSkyboxPass.Setup(cameraTargetDescriptor, colorHandle, depthHandle, !afterOpaques);
                 EnqueuePass(m_DrawSkyboxPass);
             }
 
             // If a depth texture was created we necessarily need to copy it, otherwise we could have render it to a renderbuffer
             if (createDepthTexture)
             {
-                m_CopyDepthPass.Setup(depthHandle, m_DepthTexture);
+                m_CopyDepthPass.Setup(cameraDepthHandle, m_DepthTexture);
                 EnqueuePass(m_CopyDepthPass);
             }
 
             if (m_CopyColorPass.ShouldExecute(ref renderingData))
             {
-                m_CopyColorPass.Setup(colorHandle, m_OpaqueColor);
+                m_CopyColorPass.Setup(cameraColorHandle, m_OpaqueColor);
                 EnqueuePass(m_CopyColorPass);
             }
 
             EnqueueAdditionalRenderPasses(RenderPassEvent.AfterRenderingSkybox, ref customRenderPassIndex,
                 ref renderingData);
 
-            m_RenderTransparentForwardPass.Setup(cameraTargetDescriptor, colorHandle, depthHandle);
             EnqueuePass(m_RenderTransparentForwardPass);
 
             EnqueueAdditionalRenderPasses(RenderPassEvent.AfterRenderingTransparentPasses, ref customRenderPassIndex,
@@ -165,7 +158,7 @@ namespace UnityEngine.Rendering.LWRP
                 // perform post with src / dest the same
                 if (m_PostProcessPass.ShouldExecute(ref renderingData))
                 {
-                    m_PostProcessPass.Setup(cameraTargetDescriptor, colorHandle, colorHandle);
+                    m_PostProcessPass.Setup(cameraTargetDescriptor, cameraColorHandle, cameraColorHandle);
                     EnqueuePass(m_PostProcessPass);
                 }
 
@@ -173,15 +166,15 @@ namespace UnityEngine.Rendering.LWRP
                     ref renderingData);
 
                 //now blit into the final target
-                if (colorHandle != RenderTargetHandle.CameraTarget)
+                if (cameraColorHandle != RenderTargetHandle.CameraTarget)
                 {
                     if (m_CapturePass.ShouldExecute(ref renderingData))
                     {
-                        m_CapturePass.Setup(colorHandle);
+                        m_CapturePass.Setup(cameraColorHandle);
                         EnqueuePass(m_CapturePass);
                     }
 
-                    m_FinalBlitPass.Setup(cameraTargetDescriptor, colorHandle);
+                    m_FinalBlitPass.Setup(cameraTargetDescriptor, cameraColorHandle);
                     EnqueuePass(m_FinalBlitPass);
                 }
             }
@@ -189,12 +182,12 @@ namespace UnityEngine.Rendering.LWRP
             {
                 if (m_PostProcessPass.ShouldExecute(ref renderingData))
                 {
-                    m_PostProcessPass.Setup(cameraTargetDescriptor, colorHandle, RenderTargetHandle.CameraTarget);
+                    m_PostProcessPass.Setup(cameraTargetDescriptor, cameraColorHandle, RenderTargetHandle.CameraTarget);
                     EnqueuePass(m_PostProcessPass);
                 }
-                else if (colorHandle != RenderTargetHandle.CameraTarget)
+                else if (cameraColorHandle != RenderTargetHandle.CameraTarget)
                 {
-                    m_FinalBlitPass.Setup(cameraTargetDescriptor, colorHandle);
+                    m_FinalBlitPass.Setup(cameraTargetDescriptor, cameraColorHandle);
                     EnqueuePass(m_FinalBlitPass);
                 }
             }

@@ -26,25 +26,50 @@ namespace UnityEngine.Rendering.LWRP
     /// </summary>
     public abstract class ScriptableRenderPass : IComparable<ScriptableRenderPass>
     {
-        public RenderPassEvent renderPassEvent { get; set; }
-        public int targetWidth { get; }
-        public int targetHeight { get; }
-        public int targetMsaa { get; }
-        public AttachmentDescriptor targetColorAttachment { get; }
-        public AttachmentDescriptor targetDepthAttachment { get; }
+        // TODO: Add support to 4 MRT here.
+        struct ScriptableRenderPassDescriptor
+        {
+            public ScriptableRenderPassDescriptor(int width, int height, int msaaSamples)
+            {
+                this.width = width;
+                this.height = height;
+                this.msaaSamples = msaaSamples;
+            }
 
-        int m_TargetWidth = -1;
-        int m_TargetHeight = -1;
-        int m_TargetMsaa = 1;
-        AttachmentDescriptor m_TargetColorAttachment;
-        AttachmentDescriptor m_TargetDepthAttachment;
+            public int width;
+            public int height;
+            public int msaaSamples;
+        }
+
+        internal int m_ColorAttachmentId = -1;
+        internal int m_DepthAttachmentId = -1;
+        internal RenderTextureDescriptor m_ColorAttachmentDescriptor;
+        internal RenderTextureDescriptor m_DepthAttachmentDescriptor;
+        internal FilterMode m_ColorFilterMode = FilterMode.Bilinear;
+        internal FilterMode m_DepthFilterMode = FilterMode.Bilinear;
+        ScriptableRenderPassDescriptor m_Descriptor;
+
+        public RenderPassEvent renderPassEvent { get; set; }
+
+        public int targetWidth
+        {
+            get => m_Descriptor.width;
+        }
+
+        public int targetHeight
+        {
+            get => m_Descriptor.height;
+        }
+
+        public int targetMsaa
+        {
+            get => m_Descriptor.msaaSamples;
+        }
 
         public ScriptableRenderPass()
         {
             renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
-            m_TargetWidth = -1;
-            m_TargetHeight = -1;
-            m_TargetMsaa = -1;
+            m_Descriptor = new ScriptableRenderPassDescriptor(-1, -1, -1);
         }
 
         List<ShaderTagId> m_ShaderTagIDs = new List<ShaderTagId>();
@@ -117,14 +142,23 @@ namespace UnityEngine.Rendering.LWRP
             }
         }
 
-        public void ConfigureTarget(int width, int height, int msaaSamples,
-            AttachmentDescriptor colorAttachment, AttachmentDescriptor depthAttachment)
+        public void ConfigureTarget(int width, int height, int msaaSamples)
         {
-            m_TargetWidth = width;
-            m_TargetHeight = height;
-            m_TargetMsaa = msaaSamples;
-            m_TargetColorAttachment = colorAttachment;
-            m_TargetDepthAttachment = depthAttachment;
+            m_Descriptor = new ScriptableRenderPassDescriptor(width, height, msaaSamples);
+        }
+
+        public void BindColorSurface(int rtId, RenderTextureDescriptor rtDescriptor, FilterMode filterMode)
+        {
+            m_ColorAttachmentId = rtId;
+            m_ColorAttachmentDescriptor = rtDescriptor;
+            m_ColorFilterMode = filterMode;
+        }
+
+        public void BindDepthSurface(int rtId, RenderTextureDescriptor rtDescriptor, FilterMode filterMode)
+        {
+            m_DepthAttachmentId = rtId;
+            m_DepthAttachmentDescriptor = rtDescriptor;
+            m_DepthFilterMode = filterMode;
         }
 
         /// <summary>
@@ -213,7 +247,23 @@ namespace UnityEngine.Rendering.LWRP
             return settings;
         }
 
-        protected static void SetRenderTarget(
+        [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
+        internal void RenderObjectsWithError(ScriptableRenderContext context, ref CullingResults cullResults, Camera camera, FilteringSettings filterSettings, SortingCriteria sortFlags)
+        {
+            SortingSettings sortingSettings = new SortingSettings(camera) { criteria = sortFlags };
+            DrawingSettings errorSettings = new DrawingSettings(m_LegacyShaderPassNames[0], sortingSettings)
+            {
+                perObjectData = PerObjectData.None,
+                overrideMaterial = errorMaterial,
+                overrideMaterialPassIndex = 0
+            };
+            for (int i = 1; i < m_LegacyShaderPassNames.Count; ++i)
+                errorSettings.SetShaderPassName(i, m_LegacyShaderPassNames[i]);
+
+            context.DrawRenderers(cullResults, ref errorSettings, ref filterSettings);
+        }
+
+        public void SetRenderTarget(
             CommandBuffer cmd,
             RenderTargetIdentifier colorAttachment,
             RenderBufferLoadAction colorLoadAction,
@@ -228,7 +278,7 @@ namespace UnityEngine.Rendering.LWRP
                 CoreUtils.SetRenderTarget(cmd, colorAttachment, colorLoadAction, colorStoreAction, clearFlags, clearColor);
         }
 
-        protected static void SetRenderTarget(
+        public void SetRenderTarget(
             CommandBuffer cmd,
             RenderTargetIdentifier colorAttachment,
             RenderBufferLoadAction colorLoadAction,
@@ -254,22 +304,6 @@ namespace UnityEngine.Rendering.LWRP
                     CoreUtils.SetRenderTarget(cmd, colorAttachment, colorLoadAction, colorStoreAction,
                         depthAttachment, depthLoadAction, depthStoreAction, clearFlags, clearColor);
             }
-        }
-
-        [Conditional("DEVELOPMENT_BUILD"), Conditional("UNITY_EDITOR")]
-        internal void RenderObjectsWithError(ScriptableRenderContext context, ref CullingResults cullResults, Camera camera, FilteringSettings filterSettings, SortingCriteria sortFlags)
-        {
-            SortingSettings sortingSettings = new SortingSettings(camera) { criteria = sortFlags };
-            DrawingSettings errorSettings = new DrawingSettings(m_LegacyShaderPassNames[0], sortingSettings)
-            {
-                perObjectData = PerObjectData.None,
-                overrideMaterial = errorMaterial,
-                overrideMaterialPassIndex = 0
-            };
-            for (int i = 1; i < m_LegacyShaderPassNames.Count; ++i)
-                errorSettings.SetShaderPassName(i, m_LegacyShaderPassNames[i]);
-
-            context.DrawRenderers(cullResults, ref errorSettings, ref filterSettings);
         }
     }
 }
