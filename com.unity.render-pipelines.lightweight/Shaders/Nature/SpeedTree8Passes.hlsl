@@ -45,7 +45,7 @@ struct SpeedTreeVertexOutput
 
 struct SpeedTreeVertexDepthOutput
 {
-    float2 uv                       : TEXCOORD0;
+    half2 uv                        : TEXCOORD0;
     half4 color                     : TEXCOORD1;
     float4 clipPos                  : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -305,7 +305,7 @@ half4 SpeedTree8Frag(SpeedTreeFragmentInput input) : SV_Target
     #endif
 #endif
 
-    float2 uv = input.interpolated.uv;
+    half2 uv = input.interpolated.uv;
     half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex)) * _Color;
 
     half alpha = diffuse.a * input.interpolated.color.a;
@@ -390,7 +390,7 @@ half4 SpeedTree8FragDepth(SpeedTreeVertexDepthOutput input) : SV_Target
     #endif
 #endif
 
-    float2 uv = input.uv;
+    half2 uv = input.uv;
     half4 diffuse = SampleAlbedoAlpha(uv, TEXTURE2D_ARGS(_MainTex, sampler_MainTex)) * _Color;
 
     half alpha = diffuse.a * input.color.a;
