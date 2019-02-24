@@ -2,7 +2,7 @@
 #define UNITY_VX_SHADOWMAPS_COMMON_INCLUDED
 
 
-StructuredBuffer<uint> _VxShadowMapBuffer;
+StructuredBuffer<uint> _VxShadowsBuffer;
 
 
 uint emulateCLZ(uint x)
@@ -10,6 +10,7 @@ uint emulateCLZ(uint x)
     // emulate it similar to count leading zero.
     // count leading 1bit.
 
+    uint n = 32;
     uint y;
 
     y = x >> 16; if (y != 0) { n = n - 16; x = y; }
@@ -18,14 +19,14 @@ uint emulateCLZ(uint x)
     y = x >>  2; if (y != 0) { n = n -  2; x = y; }
     y = x >>  1; if (y != 0) return n - 2;
 
-    return x;
+    return n - x;
 }
 
 
 // todo : calculate uint2 and more?
 uint CalculateRescale(uint srcPosbit, uint dstPosbit)
 {
-    return emulateCLZ(srcPosbit ^ dstPosbit);
+    return 32 - emulateCLZ(srcPosbit ^ dstPosbit);
 }
 
 
@@ -46,7 +47,7 @@ uint4 TraverseVxShadowMapPosQ(uint maxScale, uint3 posQ)
         uint cellbit   = 0x00000003 << cellShift;
 
         // calculate bit
-        uint header = _VxShadowMapBuffer[nodeIndex];
+        uint header = _VxShadowsBuffer[nodeIndex];
         uint childmask = header >> 16;
         uint shadowbit = (childmask & cellbit) >> cellShift;
 
@@ -63,7 +64,7 @@ uint4 TraverseVxShadowMapPosQ(uint maxScale, uint3 posQ)
         uint childIndex = countbits(childrenbit & mask);
 
         // go down to the next node
-        nodeIndex = _VxShadowMapBuffer[nodeIndex + 1 + childIndex];
+        nodeIndex = _VxShadowsBuffer[nodeIndex + 1 + childIndex];
     }
 
     return uint4(nodeIndex, lit, shadowed, intersected);
@@ -83,10 +84,10 @@ uint2 TraverseVxShadowMapLeaf(uint posQ_z, uint4 innerResult)
     if (intersected)
     {
         int childIndex = posQ_z % 8;
-        int leafIndex = _VxShadowMapBuffer[nodeIndex + childIndex];
+        int leafIndex = _VxShadowsBuffer[nodeIndex + childIndex];
 
-        bitmask0 = _VxShadowMapBuffer[leafIndex];
-        bitmask1 = _VxShadowMapBuffer[leafIndex + 1];
+        bitmask0 = _VxShadowsBuffer[leafIndex];
+        bitmask1 = _VxShadowsBuffer[leafIndex + 1];
     }
 
     return uint2(bitmask0, bitmask1);

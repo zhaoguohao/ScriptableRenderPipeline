@@ -233,6 +233,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _PunctualLightPosition = Shader.PropertyToID("_PunctualLightPosition");
         public static readonly int _MicroShadowingOpacity = Shader.PropertyToID("_MicroShadowOpacity");
 
+        //seongdae;vxsm
+        public static readonly int _VxShadowsBuffer = Shader.PropertyToID("_VxShadowsBuffer");
+        //seongdae;vxsm
+
         public static readonly int _StencilMask = Shader.PropertyToID("_StencilMask");
         public static readonly int _StencilRef = Shader.PropertyToID("_StencilRef");
         public static readonly int _StencilCmp = Shader.PropertyToID("_StencilCmp");

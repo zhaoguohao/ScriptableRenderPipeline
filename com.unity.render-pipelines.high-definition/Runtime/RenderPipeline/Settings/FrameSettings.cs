@@ -60,26 +60,28 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Shadow = 20,
         [FrameSettingsField(1, autoName: ContactShadows)]
         ContactShadows = 21,
+        [FrameSettingsField(1, autoName: VxShadows)] //seongdae;vxsm
+        VxShadows = 22, //seongdae;vxsm
         [FrameSettingsField(1, autoName: ShadowMask)]
-        ShadowMask = 22,
+        ShadowMask = 23, //seongdae;vxsm
         [FrameSettingsField(1, autoName: SSR)]
-        SSR = 23,
+        SSR = 24, //seongdae;vxsm
         [FrameSettingsField(1, autoName: SSAO)]
-        SSAO = 24,
+        SSAO = 25, //seongdae;vxsm
         [FrameSettingsField(1, autoName: SubsurfaceScattering)]
-        SubsurfaceScattering = 25,
+        SubsurfaceScattering = 26, //seongdae;vxsm
         [FrameSettingsField(1, autoName: Transmission)]
-        Transmission = 26,
+        Transmission = 27, //seongdae;vxsm
         [FrameSettingsField(1, autoName: AtmosphericScattering)]
-        AtmosphericScattering = 27,
+        AtmosphericScattering = 28, //seongdae;vxsm
         [FrameSettingsField(1, autoName: Volumetrics, positiveDependencies: new[] { AtmosphericScattering })]
-        Volumetrics = 28,
+        Volumetrics = 29, //seongdae;vxsm
         [FrameSettingsField(1, autoName: ReprojectionForVolumetrics, positiveDependencies: new[] { AtmosphericScattering })]
-        ReprojectionForVolumetrics = 29,
+        ReprojectionForVolumetrics = 30, //seongdae;vxsm
         [FrameSettingsField(1, autoName: LightLayers)]
-        LightLayers = 30,
+        LightLayers = 31, //seongdae;vxsm
         [FrameSettingsField(1, autoName: ExposureControl, customOrderInGroup: 32)]
-        ExposureControl = 32,
+        ExposureControl = 33, //seongdae;vxsm
 
         //async settings from 40 to 59
         [FrameSettingsField(2, autoName: AsyncCompute)]

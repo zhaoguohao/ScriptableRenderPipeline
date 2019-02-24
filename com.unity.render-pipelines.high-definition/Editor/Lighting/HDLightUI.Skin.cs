@@ -16,6 +16,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent shadowHeader = new GUIContent("Shadows");
             public readonly GUIContent shadowMapSubHeader = new GUIContent("Shadow Map");
             public readonly GUIContent contactShadowsSubHeader = new GUIContent("Contact Shadows");
+            public readonly GUIContent vxShadowSubHeader = new GUIContent("Vx Shadows"); //seongdae;vxsm
             public readonly GUIContent bakedShadowsSubHeader = new GUIContent("Baked Shadows");
             public readonly GUIContent veryHighShadowQualitySubHeader = new GUIContent("Very High Quality Settings");
             public readonly GUIContent highShadowQualitySubHeader = new GUIContent("High Quality Settings");
@@ -84,6 +85,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             public readonly GUIContent shadowFadeDistance = new GUIContent("Fade Distance", "Sets the distance at which Shadows fade before HDRP culls them completely. This minimizes popping.");
             public readonly GUIContent shadowDimmer = new GUIContent("Dimmer", "Dims the shadows this Light casts.");
             public readonly GUIContent contactShadows = new GUIContent("Enable", "Enable support for Contact Shadows on this Light. This is better for lights with a lot of visible shadows.");
+            public readonly GUIContent vxShadows = new GUIContent("Enable (Experimental)", "Renders scene with voxelized shadow maps."); //seongdae;vxsm
 
             // Bias control
             public readonly GUIContent viewBiasMin = new GUIContent("View Bias");
