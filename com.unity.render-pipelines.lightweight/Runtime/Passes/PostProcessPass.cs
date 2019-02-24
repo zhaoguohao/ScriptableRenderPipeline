@@ -1,6 +1,3 @@
-using System;
-using UnityEngine.Rendering.PostProcessing;
-
 namespace UnityEngine.Rendering.LWRP
 {
     /// <summary>
@@ -16,15 +13,11 @@ namespace UnityEngine.Rendering.LWRP
         RenderTargetHandle m_Destination;
         RenderTextureDescriptor m_Descriptor;
 
-        RenderTargetHandle m_TemporaryColorTexture;
         bool m_IsOpaquePostProcessing;
-        string m_ProfilerTag = "Render PostProcess Effects";
 
         public PostProcessPass(RenderPassEvent evt, bool renderOpaques = false)
         {
             m_IsOpaquePostProcessing = renderOpaques;
-            m_TemporaryColorTexture.Init("_TemporaryColorTexture");
-
             renderPassEvent = evt;
         }
 
@@ -57,39 +50,8 @@ namespace UnityEngine.Rendering.LWRP
             bool isLastRenderPass = (m_Destination == RenderTargetHandle.CameraTarget) && !cameraData.isStereoEnabled;
             bool flip = isLastRenderPass && cameraData.camera.targetTexture == null;
 
-            CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);
-
-            var layer = renderingData.cameraData.postProcessLayer;
-            int effectsCount;
-            if (m_IsOpaquePostProcessing)
-            {
-                effectsCount = layer.sortedBundles[PostProcessEvent.BeforeTransparent].Count;
-            }
-            else
-            {
-                effectsCount = layer.sortedBundles[PostProcessEvent.BeforeStack].Count +
-                               layer.sortedBundles[PostProcessEvent.AfterStack].Count;
-            }
-
-            // If there's only one effect in the stack and soure is same as dest we
-            // create an intermediate blit rendertarget to handle it.
-            // Otherwise, PostProcessing system will create the intermediate blit targets itself.
-            if (effectsCount == 1 && m_Source.id == m_Destination.id)
-            {
-                cmd.GetTemporaryRT(m_TemporaryColorTexture.id, m_Descriptor, FilterMode.Point);
-                RenderPostProcess(cmd, ref renderingData.cameraData, m_Descriptor.colorFormat, m_Source.Identifier(),
-                    m_TemporaryColorTexture.Identifier(), m_IsOpaquePostProcessing, flip);
-                cmd.Blit(m_TemporaryColorTexture.Identifier(), m_Source.Identifier());
-                cmd.ReleaseTemporaryRT(m_TemporaryColorTexture.id);
-            }
-            else
-            {
-                RenderPostProcess(cmd, ref renderingData.cameraData, m_Descriptor.colorFormat, m_Source.Identifier(),
-                    m_Destination.Identifier(), m_IsOpaquePostProcessing, flip);
-            }
-
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
+            RenderPostProcess(ref cameraData, m_Descriptor.colorFormat,
+                m_Source.Identifier(), m_Destination.Identifier(), m_IsOpaquePostProcessing, flip);
         }
     }
 }

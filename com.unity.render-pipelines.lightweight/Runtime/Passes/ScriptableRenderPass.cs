@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine.Rendering.PostProcessing;
 
 namespace UnityEngine.Rendering.LWRP
@@ -26,50 +27,42 @@ namespace UnityEngine.Rendering.LWRP
     /// </summary>
     public abstract class ScriptableRenderPass : IComparable<ScriptableRenderPass>
     {
-        // TODO: Add support to 4 MRT here.
-        struct ScriptableRenderPassDescriptor
-        {
-            public ScriptableRenderPassDescriptor(int width, int height, int msaaSamples)
-            {
-                this.width = width;
-                this.height = height;
-                this.msaaSamples = msaaSamples;
-            }
-
-            public int width;
-            public int height;
-            public int msaaSamples;
-        }
-
+        internal ScriptableRenderContext m_Context;
         internal int m_ColorAttachmentId = -1;
         internal int m_DepthAttachmentId = -1;
-        internal RenderTextureDescriptor m_ColorAttachmentDescriptor;
-        internal RenderTextureDescriptor m_DepthAttachmentDescriptor;
-        internal FilterMode m_ColorFilterMode = FilterMode.Bilinear;
-        internal FilterMode m_DepthFilterMode = FilterMode.Bilinear;
-        ScriptableRenderPassDescriptor m_Descriptor;
+
+        NativeArray<AttachmentDescriptor> m_Attachments;
+        protected RenderTargetIdentifier m_BlitSource;
+        List<int> m_TemporaryRenderTextures = new List<int>();
+        public bool useCameraTarget = true;
+        int m_DepthAttachmentIndex = -1;
 
         public RenderPassEvent renderPassEvent { get; set; }
 
-        public int targetWidth
+        public int targetWidth { get; set; }
+        public int targetHeight { get; set; }
+        public int targetMsaa { get; set; }
+        public NativeArray<AttachmentDescriptor> attachments
         {
-            get => m_Descriptor.width;
+            get => m_Attachments;
         }
 
-        public int targetHeight
+        public int depthAttachmentIndex
         {
-            get => m_Descriptor.height;
+            get => m_DepthAttachmentIndex;
         }
 
-        public int targetMsaa
-        {
-            get => m_Descriptor.msaaSamples;
-        }
 
         public ScriptableRenderPass()
         {
             renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
-            m_Descriptor = new ScriptableRenderPassDescriptor(-1, -1, -1);
+            useCameraTarget = true;
+            m_DepthAttachmentIndex = -1;
+            m_BlitSource = BuiltinRenderTextureType.CameraTarget;
+            m_TemporaryRenderTextures.Clear();
+            targetWidth = -1;
+            targetHeight = -1;
+            targetMsaa = -1;
         }
 
         List<ShaderTagId> m_ShaderTagIDs = new List<ShaderTagId>();
@@ -142,23 +135,48 @@ namespace UnityEngine.Rendering.LWRP
             }
         }
 
-        public void ConfigureTarget(int width, int height, int msaaSamples)
+        public RenderTargetIdentifier CreateTemporaryRT(int rtId, RenderTextureDescriptor descriptor, FilterMode filterMode)
         {
-            m_Descriptor = new ScriptableRenderPassDescriptor(width, height, msaaSamples);
+            CommandBuffer cmd = CommandBufferPool.Get("Create Temporary RT");
+            cmd.GetTemporaryRT(rtId, descriptor, filterMode);
+            m_Context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+            m_TemporaryRenderTextures.Add(rtId);
+            return new RenderTargetIdentifier(rtId);
         }
 
-        public void BindColorSurface(int rtId, RenderTextureDescriptor rtDescriptor, FilterMode filterMode)
+        public void ConfigureRenderTarget(int width, int height, int msaaSamples,
+            AttachmentDescriptor colorAttachment, AttachmentDescriptor depthAttachment)
         {
-            m_ColorAttachmentId = rtId;
-            m_ColorAttachmentDescriptor = rtDescriptor;
-            m_ColorFilterMode = filterMode;
+            useCameraTarget = false;
+            targetWidth = width;
+            targetHeight = height;
+            targetMsaa = msaaSamples;
+            m_Attachments = new NativeArray<AttachmentDescriptor>(2, Allocator.Persistent);
+            m_Attachments[0] = colorAttachment;
+            m_Attachments[1] = depthAttachment;
+            m_DepthAttachmentIndex = m_Attachments.Length - 1;
         }
 
-        public void BindDepthSurface(int rtId, RenderTextureDescriptor rtDescriptor, FilterMode filterMode)
+        public void ConfigureRenderTarget(int width, int height, int msaaSamples,
+            AttachmentDescriptor attachment, bool isDepthAttachment = false)
         {
-            m_DepthAttachmentId = rtId;
-            m_DepthAttachmentDescriptor = rtDescriptor;
-            m_DepthFilterMode = filterMode;
+            useCameraTarget = false;
+            targetWidth = width;
+            targetHeight = height;
+            targetMsaa = msaaSamples;
+            m_Attachments = new NativeArray<AttachmentDescriptor>(1, Allocator.Persistent);
+            m_Attachments[0] = attachment;
+            m_DepthAttachmentIndex = (isDepthAttachment) ? 0 : -1;
+        }
+
+        public void ConfigureRendetTargetForBlit(RenderTargetIdentifier source, RenderTargetIdentifier destination)
+        {
+            useCameraTarget = false;
+            AttachmentDescriptor destinationAttachment = new AttachmentDescriptor(RenderTextureFormat.ARGB32);
+            destinationAttachment.ConfigureTarget(destination, false, true);
+            m_Attachments = new NativeArray<AttachmentDescriptor>(1, Allocator.Persistent);
+            m_BlitSource = source;
         }
 
         /// <summary>
@@ -166,7 +184,14 @@ namespace UnityEngine.Rendering.LWRP
         /// </summary>
         /// <param name="cmd">Use this CommandBuffer to cleanup any generated data</param>
         public virtual void FrameCleanup(CommandBuffer cmd)
-        {}
+        {
+            if (!useCameraTarget)
+                m_Attachments.Dispose();
+
+            for (int i = 0; i < m_TemporaryRenderTextures.Count; ++i)
+                cmd.ReleaseTemporaryRT(m_TemporaryRenderTextures[i]);
+            m_TemporaryRenderTextures.Clear();
+        }
 
         /// <summary>
         /// Implement this to conditionally enqueue the pass depending on rendering state for the current frame.
@@ -200,15 +225,27 @@ namespace UnityEngine.Rendering.LWRP
         /// <summary>
         /// Renders PostProcessing.
         /// </summary>
-        /// <param name="cmd">A command buffer to execute post processing commands.</param>
         /// <param name="cameraData">Camera rendering data.</param>
         /// <param name="colorFormat">Color format of the source render target id.</param>
         /// <param name="source">Source render target id.</param>
         /// <param name="dest">Destination render target id.</param>
         /// <param name="opaqueOnly">Should only execute after opaque post processing effects.</param>
         /// <param name="flip">Should flip the image vertically.</param>
-        protected void RenderPostProcess(CommandBuffer cmd, ref CameraData cameraData, RenderTextureFormat colorFormat, RenderTargetIdentifier source, RenderTargetIdentifier dest, bool opaqueOnly, bool flip)
+        protected void RenderPostProcess(ref CameraData cameraData, RenderTextureFormat colorFormat, RenderTargetIdentifier source, RenderTargetIdentifier dest, bool opaqueOnly, bool flip)
         {
+            PostProcessLayer layer = cameraData.postProcessLayer;
+            int effectsCount;
+            if (opaqueOnly)
+            {
+                effectsCount = layer.sortedBundles[PostProcessEvent.BeforeTransparent].Count;
+            }
+            else
+            {
+                effectsCount = layer.sortedBundles[PostProcessEvent.BeforeStack].Count +
+                               layer.sortedBundles[PostProcessEvent.AfterStack].Count;
+            }
+
+            CommandBuffer cmd = CommandBufferPool.Get("Render Post Process");
             Camera camera = cameraData.camera;
             postProcessRenderContext.Reset();
             postProcessRenderContext.camera = camera;
@@ -218,10 +255,30 @@ namespace UnityEngine.Rendering.LWRP
             postProcessRenderContext.command = cmd;
             postProcessRenderContext.flip = flip;
 
-            if (opaqueOnly)
-                cameraData.postProcessLayer.RenderOpaqueOnly(postProcessRenderContext);
+            // If there's only one effect in the stack and soure is same as dest we
+            // create an intermediate blit rendertarget to handle it.
+            // Otherwise, PostProcessing system will create the intermediate blit targets itself.
+            if (effectsCount == 1 && source == dest)
+            {
+                var tempRtId = new RenderTargetIdentifier(BuiltinShaderPropertyId.temporaryTexture);
+                postProcessRenderContext.destination = tempRtId;
+                cmd.GetTemporaryRT(BuiltinShaderPropertyId.temporaryTexture, cameraData.cameraTargetDescriptor, FilterMode.Point);
+                if (opaqueOnly)
+                    cameraData.postProcessLayer.RenderOpaqueOnly(postProcessRenderContext);
+                else
+                    cameraData.postProcessLayer.Render(postProcessRenderContext);
+                cmd.Blit(tempRtId, dest);
+            }
             else
-                cameraData.postProcessLayer.Render(postProcessRenderContext);
+            {
+                if (opaqueOnly)
+                    cameraData.postProcessLayer.RenderOpaqueOnly(postProcessRenderContext);
+                else
+                    cameraData.postProcessLayer.Render(postProcessRenderContext);
+            }
+
+            m_Context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
         }
 
         /// <summary>

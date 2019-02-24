@@ -1,5 +1,3 @@
-using System;
-
 namespace UnityEngine.Rendering.LWRP
 {
     public struct ShadowSliceData
@@ -23,17 +21,13 @@ namespace UnityEngine.Rendering.LWRP
 
     public static class ShadowUtils
     {
+        const int k_ShadowmapBufferBits = 32;
         private static readonly RenderTextureFormat m_ShadowmapFormat;
         private static readonly bool m_ForceShadowPointSampling;
 
         public static RenderTextureFormat shadowmapFormat
         {
             get => m_ShadowmapFormat;
-        }
-
-        public static FilterMode shadowmapSamplingMode
-        {
-            get => (m_ForceShadowPointSampling) ? FilterMode.Point : FilterMode.Bilinear;
         }
 
         static ShadowUtils()
@@ -175,9 +169,9 @@ namespace UnityEngine.Rendering.LWRP
             cmd.SetGlobalVector("_LightDirection", new Vector4(lightDirection.x, lightDirection.y, lightDirection.z, 0.0f));
         }
 
-        public static RenderTexture GetTemporaryShadowTexture(int shadowmapTextureId, int width, int height, int bits)
+        public static RenderTexture GetTemporaryShadowRT(int shadowmapTextureId, int width, int height)
         {
-            var shadowTexture = RenderTexture.GetTemporary(width, height, bits, m_ShadowmapFormat);
+            var shadowTexture = RenderTexture.GetTemporary(width, height, k_ShadowmapBufferBits, m_ShadowmapFormat);
             Shader.SetGlobalTexture(shadowmapTextureId, shadowTexture);
             shadowTexture.filterMode = m_ForceShadowPointSampling ? FilterMode.Point : FilterMode.Bilinear;
             shadowTexture.wrapMode = TextureWrapMode.Clamp;

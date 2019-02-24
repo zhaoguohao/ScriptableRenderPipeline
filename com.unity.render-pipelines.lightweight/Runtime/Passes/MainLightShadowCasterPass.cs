@@ -21,14 +21,13 @@ namespace UnityEngine.Rendering.LWRP
         }
 
         const int k_MaxCascades = 4;
-        const int k_ShadowmapBufferBits = 32;
         int m_ShadowmapWidth;
         int m_ShadowmapHeight;
         int m_ShadowCasterCascadesCount;
 
         RenderTargetHandle m_MainLightShadowmap;
         RenderTexture m_MainLightShadowmapTexture;
-        RenderTextureDescriptor m_ShadowmapDescriptor;
+        AttachmentDescriptor m_ShadowmapAttachment;
 
         Matrix4x4[] m_MainLightShadowMatrices;
         ShadowSliceData[] m_CascadeSlices;
@@ -59,7 +58,8 @@ namespace UnityEngine.Rendering.LWRP
             MainLightShadowConstantBuffer._ShadowmapSize = Shader.PropertyToID("_MainLightShadowmapSize");
 
             m_MainLightShadowmap.Init("_MainLightShadowmapTexture");
-            m_ShadowmapDescriptor = new RenderTextureDescriptor(1024, 1024, ShadowUtils.shadowmapFormat, k_ShadowmapBufferBits);
+            m_ShadowmapAttachment = new AttachmentDescriptor(ShadowUtils.shadowmapFormat);
+            m_ShadowmapAttachment.ConfigureClear(Color.black, 1.0f, 0);
         }
 
         public override bool ShouldExecute(ref RenderingData renderingData)
@@ -105,10 +105,15 @@ namespace UnityEngine.Rendering.LWRP
                     return false;
             }
 
-            m_ShadowmapDescriptor.width = m_ShadowmapWidth;
-            m_ShadowmapDescriptor.height = m_ShadowmapHeight;
-            ConfigureTarget(m_ShadowmapWidth, m_ShadowmapHeight, 1);
-            BindColorSurface(m_MainLightShadowmap.id, m_ShadowmapDescriptor, ShadowUtils.shadowmapSamplingMode);
+
+            m_MainLightShadowmapTexture = ShadowUtils.GetTemporaryShadowRT(m_MainLightShadowmap.id,
+                m_ShadowmapWidth, m_ShadowmapHeight);
+            Shader.SetGlobalTexture(m_MainLightShadowmap.id, m_MainLightShadowmapTexture);
+
+            m_ShadowmapAttachment.ConfigureTarget(new RenderTargetIdentifier(m_MainLightShadowmap.id),
+                false, true);
+            ConfigureRenderTarget(m_ShadowmapWidth, m_ShadowmapHeight, 1, m_ShadowmapAttachment);
+
             return true;
         }
 
@@ -123,7 +128,9 @@ namespace UnityEngine.Rendering.LWRP
         {
             if (cmd == null)
                 throw new ArgumentNullException("cmd");
-
+            
+            base.FrameCleanup(cmd);
+            
             if (m_MainLightShadowmapTexture)
             {
                 RenderTexture.ReleaseTemporary(m_MainLightShadowmapTexture);

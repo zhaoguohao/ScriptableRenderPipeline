@@ -1,5 +1,3 @@
-using System;
-
 namespace UnityEngine.Rendering.LWRP
 {
     /// <summary>
@@ -12,8 +10,7 @@ namespace UnityEngine.Rendering.LWRP
     {
         int kDepthBufferBits = 32;
 
-        private RenderTargetHandle depthAttachmentHandle { get; set; }
-        internal RenderTextureDescriptor descriptor { get; private set; }
+        AttachmentDescriptor m_DepthAttachment;
 
         FilteringSettings m_FilteringSettings;
         string m_ProfilerTag = "Depth Prepass";
@@ -26,6 +23,8 @@ namespace UnityEngine.Rendering.LWRP
             RegisterShaderPassName("DepthOnly");
             m_FilteringSettings = new FilteringSettings(renderQueueRange);
             renderPassEvent = evt;
+            m_DepthAttachment = new AttachmentDescriptor(RenderTextureFormat.Depth);
+            m_DepthAttachment.ConfigureClear(Color.black, 1.0f, 0);
         }
 
         /// <summary>
@@ -38,8 +37,10 @@ namespace UnityEngine.Rendering.LWRP
             descriptor.depthBufferBits = kDepthBufferBits;
             descriptor.msaaSamples = 1;
 
-            ConfigureTarget(descriptor.width, descriptor.height, 1);
-            BindColorSurface(depthAttachmentHandle.id, descriptor, FilterMode.Point);
+            var rt = CreateTemporaryRT(depthAttachmentHandle.id, descriptor, FilterMode.Point);
+            m_DepthAttachment.ConfigureTarget(rt, false, true);
+            ConfigureRenderTarget(descriptor.width, descriptor.height, descriptor.msaaSamples,
+                m_DepthAttachment, true);
         }
 
         public override bool ShouldExecute(ref RenderingData renderingData)

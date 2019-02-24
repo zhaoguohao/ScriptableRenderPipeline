@@ -9,11 +9,8 @@ namespace UnityEngine.Rendering.LWRP
     /// </summary>
     internal class RenderOpaqueForwardPass : ScriptableRenderPass
     {
-        RenderTargetHandle colorAttachmentHandle { get; set; }
-        RenderTargetHandle depthAttachmentHandle { get; set; }
-        RenderTextureDescriptor descriptor { get; set; }
-        ClearFlag clearFlag { get; set; }
-        Color clearColor { get; set; }
+        AttachmentDescriptor m_ColorAtttachment;
+        AttachmentDescriptor m_DepthAttachment;
 
         FilteringSettings m_FilteringSettings;
         string m_ProfilerTag = "Render Opaques";
@@ -24,6 +21,8 @@ namespace UnityEngine.Rendering.LWRP
             RegisterShaderPassName("SRPDefaultUnlit");
             renderPassEvent = evt;
             m_FilteringSettings = new FilteringSettings(renderQueueRange, layerMask);
+            m_ColorAtttachment = new AttachmentDescriptor(RenderTextureFormat.ARGB32);
+            m_DepthAttachment = new AttachmentDescriptor(RenderTextureFormat.Depth);
         }
 
         /// <summary>
@@ -42,11 +41,13 @@ namespace UnityEngine.Rendering.LWRP
             ClearFlag clearFlag,
             Color clearColor)
         {
-            this.colorAttachmentHandle = colorAttachmentHandle;
-            this.depthAttachmentHandle = depthAttachmentHandle;
-            this.clearColor = CoreUtils.ConvertSRGBToActiveColorSpace(clearColor);
-            this.clearFlag = clearFlag;
-            descriptor = baseDescriptor;
+            m_ColorAtttachment.format = baseDescriptor.colorFormat;
+            m_ColorAtttachment.ConfigureClear(CoreUtils.ConvertSRGBToActiveColorSpace(clearColor));
+            m_DepthAttachment.ConfigureClear(Color.black);
+            m_ColorAtttachment.ConfigureTarget(colorAttachmentHandle.Identifier(), clearFlag == ClearFlag.None, true);
+            m_DepthAttachment.ConfigureTarget(depthAttachmentHandle.Identifier(), clearFlag == ClearFlag.None, true);
+            ConfigureRenderTarget(baseDescriptor.width, baseDescriptor.height, baseDescriptor.msaaSamples, m_ColorAtttachment,
+                m_DepthAttachment);
         }
 
         /// <inheritdoc/>
@@ -55,21 +56,8 @@ namespace UnityEngine.Rendering.LWRP
             CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);
             using (new ProfilingSample(cmd, m_ProfilerTag))
             {
-                //// When ClearFlag.None that means this is not the first render pass to write to camera target.
-                //// In that case we set loadOp for both color and depth as RenderBufferLoadAction.Load
-                //RenderBufferLoadAction loadOp = clearFlag != ClearFlag.None ? RenderBufferLoadAction.DontCare : RenderBufferLoadAction.Load;
-                //RenderBufferStoreAction storeOp = RenderBufferStoreAction.Store;
-
-                //SetRenderTarget(cmd, colorAttachmentHandle.Identifier(), loadOp, storeOp,
-                //    depthAttachmentHandle.Identifier(), loadOp, storeOp, clearFlag, clearColor, descriptor.dimension);
-
-                //// TODO: We need a proper way to handle multiple camera/ camera stack. Issue is: multiple cameras can share a same RT
-                //// (e.g, split screen games). However devs have to be dilligent with it and know when to clear/preserve color.
-                //// For now we make it consistent by resolving viewport with a RT until we can have a proper camera management system
-                ////if (colorAttachmentHandle == -1 && !cameraData.isDefaultViewport)
-                ////    cmd.SetViewport(camera.pixelRect);
-                //context.ExecuteCommandBuffer(cmd);
-                //cmd.Clear();
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
 
                 Camera camera = renderingData.cameraData.camera;
                 var sortFlags = renderingData.cameraData.defaultOpaqueSortFlags;
