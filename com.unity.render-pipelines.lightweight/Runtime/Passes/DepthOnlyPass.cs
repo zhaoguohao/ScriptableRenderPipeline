@@ -38,7 +38,7 @@ namespace UnityEngine.Rendering.LWRP
             descriptor.msaaSamples = 1;
 
             var rt = CreateTemporaryRT(depthAttachmentHandle.id, descriptor, FilterMode.Point);
-            m_DepthAttachment.ConfigureTarget(rt, false, true);
+            m_DepthAttachment.ConfigureTarget(depthAttachmentHandle.Identifier(), false, true);
             ConfigureRenderTarget(descriptor.width, descriptor.height, descriptor.msaaSamples,
                 m_DepthAttachment, true);
         }
