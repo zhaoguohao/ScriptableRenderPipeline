@@ -93,7 +93,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             m_Resources = hdAsset.renderPipelineResources;
             m_FinalPassMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.finalPassPS);
-            m_GuardBandClearMaterial = CoreUtils.CreateEngineMaterial(Resources.GetBuiltinResource<Shader>("Internal-Clear.shader"));
+            m_GuardBandClearMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.guardBandClearPS);
 
             // Some compute shaders fail on specific hardware or vendors so we'll have to use a
             // safer but slower code path for them
