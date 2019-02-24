@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 - Fixed diffusion profile upgrade breaking package when upgrading to a new version
 - Fixed decals cropped by gizmo not updating correctly if prefab
+- Fixed dynamic resolution for XR
 
 ## [6.4.0-preview] - 2019-02-21
 
