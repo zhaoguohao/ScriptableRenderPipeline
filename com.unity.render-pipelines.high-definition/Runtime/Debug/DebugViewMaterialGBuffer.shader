@@ -93,7 +93,7 @@ Shader "Hidden/HDRP/DebugViewMaterialGBuffer"
                 }
 #endif
 
-                GetBSDFDataDebug(_DebugViewMaterial, bsdfData, result, needLinearToSRGB);
+                GetBSDFDataDebug(bufferIndex, bsdfData, result, needLinearToSRGB);
 
                 // f we haven't touch result, we don't blend it. This allow to have the GBuffer debug pass working with the regular forward debug pass.
                 // The forward debug pass will write its value and then the deferred will overwrite only touched texels.

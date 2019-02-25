@@ -278,52 +278,66 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Color materialValidateTrueMetalColor = new Color(1.0f, 1.0f, 0.0f);
         public bool  materialValidateTrueMetal = false;
 
-        public int[] debugViewMaterial { get => m_DebugViewMaterial; internal set => m_DebugViewMaterial = value; }
+        public int[] debugViewMaterial {
+            get => m_DebugViewMaterial;
+            internal set
+            {
+                int unconstrainedSize = value?.Length ?? 0;
+                if (unconstrainedSize > kDebugViewMaterialBufferLength)
+                    Debug.LogError($"DebugViewMaterialBuffer is cannot handle {unconstrainedSize} elements. Only first {kDebugViewMaterialBufferLength} are kept.");
+                int size = Mathf.Min(kDebugViewMaterialBufferLength, unconstrainedSize);
+                m_DebugViewMaterial[0] = size;
+                for (int i = 0; i < size; ++i)
+                {
+                    m_DebugViewMaterial[i + 1] = value[i];
+                }
+            }
+        }
         public int debugViewEngine { get { return m_DebugViewEngine; } }
         public DebugViewVarying debugViewVarying { get { return m_DebugViewVarying; } }
         public DebugViewProperties debugViewProperties { get { return m_DebugViewProperties; } }
         public int debugViewGBuffer { get { return m_DebugViewGBuffer; } }
 
-        int[]                m_DebugViewMaterial = new int[0]; // No enum there because everything is generated from materials.
+        const int kDebugViewMaterialBufferLength = 10;
+
+        //buffer must be in float as there is no SetGlobalIntArray in API
+        static float[] s_DebugViewMaterialOffsetedBuffer = new float[kDebugViewMaterialBufferLength + 1]; //first is used size
+
+        int[]                m_DebugViewMaterial = new int[kDebugViewMaterialBufferLength + 1]; // No enum there because everything is generated from materials.
         int                  m_DebugViewEngine = 0;  // No enum there because everything is generated from BSDFData
         DebugViewVarying     m_DebugViewVarying = DebugViewVarying.None;
         DebugViewProperties  m_DebugViewProperties = DebugViewProperties.None;
         int                  m_DebugViewGBuffer = 0; // Can't use GBuffer enum here because the values are actually split between this enum and values from Lit.BSDFData
-
-        const int kDebugViewMaterialBufferLength = 10;
-        //buffer must be in float as there is no SetGlobalIntArray in API
-        static float[] s_DebugViewMaterialBuffer = new float[kDebugViewMaterialBufferLength + 1]; //first is used size
 
         public float[] GetDebugMaterialIndexes()
         {
             // This value is used in the shader for the actual debug display.
             // There is only one uniform parameter for that so we just add all of them
             // They are all mutually exclusive so return the sum will return the right index.
-            if (m_DebugViewMaterial.Length > kDebugViewMaterialBufferLength)
-                Debug.LogError($"DebugViewMaterialBuffer is cannot handle {m_DebugViewMaterial.Length} elements. Only first {kDebugViewMaterialBufferLength} are kept.");
-            int size = Mathf.Min(kDebugViewMaterialBufferLength, m_DebugViewMaterial.Length);
-            s_DebugViewMaterialBuffer[0] = size;
-            for (int i = 0; i < size; ++i)
+            int size = m_DebugViewMaterial[0];
+            s_DebugViewMaterialOffsetedBuffer[0] = size;
+            for (int i = 1; i <= size; ++i)
             {
-                s_DebugViewMaterialBuffer[i + 1] = m_DebugViewGBuffer + m_DebugViewMaterial[i] + m_DebugViewEngine + (int)m_DebugViewVarying + (int)m_DebugViewProperties;
+                s_DebugViewMaterialOffsetedBuffer[i] = m_DebugViewGBuffer + m_DebugViewMaterial[i] + m_DebugViewEngine + (int)m_DebugViewVarying + (int)m_DebugViewProperties;
             }
-            return s_DebugViewMaterialBuffer;
+            return s_DebugViewMaterialOffsetedBuffer;
         }
 
         public void DisableMaterialDebug()
         {
-            m_DebugViewMaterial = new int[0];
+            m_DebugViewMaterial[0] = 0;
             m_DebugViewEngine = 0;
             m_DebugViewVarying = DebugViewVarying.None;
             m_DebugViewProperties = DebugViewProperties.None;
             m_DebugViewGBuffer = 0;
         }
 
-        public void SetDebugViewMaterial(int[] values)
+        public void SetDebugViewMaterial(int value)
         {
-            if (values.Length != 0)
+            if (value != 0)
                 DisableMaterialDebug();
-            m_DebugViewMaterial = values;
+            m_DebugViewMaterial[0] = 1;
+            m_DebugViewMaterial[1] = value;
         }
 
         public void SetDebugViewEngine(int value)
@@ -361,7 +375,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool IsDebugDisplayEnabled()
         {
-            return (m_DebugViewEngine != 0 || m_DebugViewMaterial.Length != 0 || m_DebugViewVarying != DebugViewVarying.None || m_DebugViewProperties != DebugViewProperties.None || m_DebugViewGBuffer != 0);
+            return (m_DebugViewEngine != 0 || (m_DebugViewMaterial?[0] ?? 0) != 0 || m_DebugViewVarying != DebugViewVarying.None || m_DebugViewProperties != DebugViewProperties.None || m_DebugViewGBuffer != 0);
         }
     }
 }
