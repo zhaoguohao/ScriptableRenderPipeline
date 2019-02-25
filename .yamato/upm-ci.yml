@@ -11,6 +11,11 @@ projects:
   - name: LWGraphicsTest
   - name: HDRP_Tests
   - name: PostProcessing
+  testplatforms:
+  - name: StandaloneWindows64
+  - name: StandaloneOSXIntel64
+  - name: playmode
+  - name: editmode
 ---
 {% for editor in editors %}
 {% for platform in platforms %}
