@@ -53,6 +53,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         };
 
         // Lighting
+        public bool supportVxShadows; //seongdae;vxsm
         public bool supportShadowMask;
         public bool supportSSR;
         public bool supportSSAO;
