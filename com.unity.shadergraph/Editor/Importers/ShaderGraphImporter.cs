@@ -8,7 +8,7 @@ using UnityEditor.Experimental.AssetImporters;
 
 namespace UnityEditor.ShaderGraph
 {
-    [ScriptedImporter(22, Extension, 1)]
+    [ScriptedImporter(23, Extension, 1)]
     class ShaderGraphImporter : ScriptedImporter
     {
         public const string Extension = "shadergraph";
@@ -76,7 +76,7 @@ Shader ""Hidden/GraphErrorShader2""
                 configuredTextures.Where(x => !x.modifiable).Select(x => x.name).ToArray(),
                 configuredTextures.Where(x => !x.modifiable).Select(x => EditorUtility.InstanceIDToObject(x.textureId) as Texture).ToArray());
 
-            Texture2D texture = Resources.Load<Texture2D>("Icons/Shadergraph@64");
+            Texture2D texture = Resources.Load<Texture2D>("Icons/sg_graph_icon@64");
             ctx.AddObjectToAsset("MainAsset", shader, texture);
             ctx.SetMainObject(shader);
 

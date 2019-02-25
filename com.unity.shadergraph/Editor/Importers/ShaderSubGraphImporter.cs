@@ -6,7 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-[ScriptedImporter(3, Extension)]
+[ScriptedImporter(4, Extension)]
 class ShaderSubGraphImporter : ScriptedImporter
 {
     public const string Extension = "shadersubgraph";
@@ -28,7 +28,7 @@ class ShaderSubGraphImporter : ScriptedImporter
         var graphAsset = ScriptableObject.CreateInstance<MaterialSubGraphAsset>();
         graphAsset.subGraph = graph;
 
-        Texture2D texture = Resources.Load<Texture2D>("Icons/Subgraph@64");
+        Texture2D texture = Resources.Load<Texture2D>("Icons/sg_subgraph_icon@64");
         ctx.AddObjectToAsset("MainAsset", graphAsset, texture);
         ctx.SetMainObject(graphAsset);
 
