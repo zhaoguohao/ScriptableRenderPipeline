@@ -4,7 +4,7 @@ using UnityEditor.ShaderGraph;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class CreateStackLitShaderGraph
+    static class CreateStackLitShaderGraph
     {
         [MenuItem("Assets/Create/Shader/HDRP/StackLit Graph", false, 208)]
         public static void CreateMaterialGraph()

@@ -4,7 +4,7 @@ using UnityEditor.ShaderGraph;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class CreateFabricShaderGraph
+    static class CreateFabricShaderGraph
     {
         [MenuItem("Assets/Create/Shader/HDRP/Fabric Graph", false, 208)]
         public static void CreateMaterialGraph()

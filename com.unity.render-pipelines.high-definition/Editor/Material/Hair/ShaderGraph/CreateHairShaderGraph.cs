@@ -4,7 +4,7 @@ using UnityEditor.ShaderGraph;
 
 namespace UnityEditor.Experimental.Rendering.HDPipeline
 {
-    public class CreateHairShaderGraph
+    static class CreateHairShaderGraph
     {
         [MenuItem("Assets/Create/Shader/HDRP/Hair Graph", false, 208)]
         public static void CreateMaterialGraph()
