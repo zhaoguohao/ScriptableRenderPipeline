@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Experimental.VoxelizedShadowMaps;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -415,6 +416,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if ENABLE_RAYTRACING
         HDRaytracingManager                 m_RayTracingManager;
 #endif
+        VxShadowMapsManager                 m_VxShadowMapsManager; //seongdae;vxsm
 
         // Used to shadow shadow maps with use selection enabled in the debug menu
         int m_DebugSelectedLightShadowIndex;
@@ -756,6 +758,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_RayTracingManager = raytracingManager;
         }
 #endif
+
+        //seongdae;vxsm
+        public void InitVxShadows(VxShadowMapsManager vxShadowMapsManager)
+        {
+            m_VxShadowMapsManager = vxShadowMapsManager;
+        }
+        //seongdae;vxsm
 
         public void NewFrame(FrameSettings frameSettings)
         {
@@ -2640,8 +2649,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void SetScreenSpaceShadowsTexture(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, CommandBuffer cmd)
         {
             AdditionalShadowData sunShadowData = m_CurrentSunLight != null ? m_CurrentSunLight.GetComponent<AdditionalShadowData>() : null;
-            bool needsContactShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.contactShadows) || m_DominantLightIndex != -1;
-            bool needsVxShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.vxShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
+
+            bool hasSunLight = m_CurrentSunLight != null && sunShadowData != null; //seongdae;vxsm
+            bool needsContactShadows = (hasSunLight && sunShadowData.contactShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
+            bool needsVxShadows = (hasSunLight && sunShadowData.vxShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
+
             if ((!m_EnableContactShadow || !needsContactShadows) && (!m_EnableVxShadow || !needsVxShadows)) //seongdae;vxsm
             {
                 cmd.SetGlobalTexture(HDShaderIDs._DeferredShadowTexture, Texture2D.blackTexture);
@@ -2706,6 +2718,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         void RenderScreenShadowVxShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, CommandBuffer cmd)
         {
+            DirectionalVxShadowMap dirVxShadowMap = m_VxShadowMapsManager.MainDirVxShadowMap;
+
             int kernel = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? s_deferredVxShadowKernelMSAA : s_deferredVxShadowKernel;
 
             m_ShadowManager.BindResources(cmd);
@@ -2728,9 +2742,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void RenderScreenSpaceShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, int firstMipOffsetY, CommandBuffer cmd)
         {
             AdditionalShadowData sunShadowData = m_CurrentSunLight != null ? m_CurrentSunLight.GetComponent<AdditionalShadowData>() : null;
+
             // if there is no need to compute contact shadows, we just quit
-            bool needsContactShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.contactShadows) || m_DominantLightIndex != -1;
-            bool needsVxShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.vxShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
+            bool hasSunLight = m_CurrentSunLight != null && sunShadowData != null; //seongdae;vxsm
+            bool needsContactShadows = (hasSunLight && sunShadowData.contactShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
+            bool needsVxShadows = (hasSunLight && sunShadowData.vxShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
+
             if ((!m_EnableContactShadow || !needsContactShadows) && (!m_EnableVxShadow || !needsVxShadows)) //seongdae;vxsm
             {
                 return;
