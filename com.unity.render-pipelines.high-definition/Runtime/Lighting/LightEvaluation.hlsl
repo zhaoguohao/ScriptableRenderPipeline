@@ -191,6 +191,8 @@ void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs
     shadow = min(shadow, GetContactShadow(lightLoopContext, light.contactShadowIndex));
 #endif
 
+    shadow = min(shadow, GetVxShadow(lightLoopContext)); //seongdae;vxsm
+
 #ifdef DEBUG_DISPLAY
     if (_DebugShadowMapMode == SHADOWMAPDEBUGMODE_SINGLE_SHADOW && light.shadowIndex == _DebugSingleShadowIndex)
         debugShadowAttenuation = shadow;

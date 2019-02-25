@@ -2,14 +2,24 @@ using System.Collections.Generic;
 
 namespace UnityEngine.Experimental.VoxelizedShadowMaps
 {
+    public enum RenderPipelineType
+    {
+        Lightweight,
+        HighDefinition,
+        Custom,
+    }
+
     public class VxShadowMapsManager
     {
+        private RenderPipelineType           _renderPipelineType   = RenderPipelineType.Custom;
         private List<DirectionalVxShadowMap> _dirVxShadowMapList   = new List<DirectionalVxShadowMap>();
         private List<PointVxShadowMap>       _pointVxShadowMapList = new List<PointVxShadowMap>();
         private List<SpotVxShadowMap>        _spotVxShadowMapList  = new List<SpotVxShadowMap>();
 
-        public VxShadowMapsManager()
+        public VxShadowMapsManager(RenderPipelineType renderPipelineType)
         {
+            _renderPipelineType = renderPipelineType;
+
             var dirVxShadowMaps   = Object.FindObjectsOfType<DirectionalVxShadowMap>();
             var pointVxShadowMaps = Object.FindObjectsOfType<PointVxShadowMap>();
             var spotVxShadowMaps  = Object.FindObjectsOfType<SpotVxShadowMap>();
@@ -29,6 +39,16 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
             _spotVxShadowMapList.Clear();
         }
 
-        public DirectionalVxShadowMap MainDirVxShadowMap { get { return _dirVxShadowMapList[0]; } }
+        public DirectionalVxShadowMap MainDirVxShadowMap
+        {
+            get
+            {
+                // todo : temporally first now
+                if (_dirVxShadowMapList.Count == 0)
+                    return null;
+
+                return _dirVxShadowMapList[0];
+            }
+        }
     }
 }

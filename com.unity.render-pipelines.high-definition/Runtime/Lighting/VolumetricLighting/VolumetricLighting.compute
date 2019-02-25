@@ -183,6 +183,9 @@ VoxelLighting EvaluateVoxelLightingDirectional(LightLoopContext context, uint fe
         context.shadowValue = 1;
     }
 
+    // todo : get shadowing of vxsm
+    context.vxShadowValue = 1; //seongdae;vxsm
+
     for (uint i = 0; i < _DirectionalLightCount; ++i)
     {
         DirectionalLightData light = _DirectionalLightDatas[i];

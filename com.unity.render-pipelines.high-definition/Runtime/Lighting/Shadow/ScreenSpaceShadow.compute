@@ -2,8 +2,6 @@
 #pragma kernel DeferredContactShadow                DEFERRED_CONTACT_SHADOW_GENERIC=DeferredContactShadow
 #pragma kernel DeferredContactShadowMSAA            DEFERRED_CONTACT_SHADOW_GENERIC=DeferredContactShadowMSAA         ENABLE_MSAA
 //seongdae;vxsm
-#pragma kernel DeferredContactAndVxShadow           DEFERRED_CONTACT_AND_VX_SHADOW_GENERIC=DeferredContactAndVxShadow
-#pragma kernel DeferredContactAndVxShadowMSAA       DEFERRED_CONTACT_AND_VX_SHADOW_GENERIC=DeferredContactAndVxShadowMSAA ENABLE_MSAA
 #pragma kernel DeferredVxShadow                     DEFERRED_VX_SHADOW_GENERIC=DeferredVxShadow
 #pragma kernel DeferredVxShadowMSAA                 DEFERRED_VX_SHADOW_GENERIC=DeferredVxShadowMSAA ENABLE_MSAA
 //seongdae;vxsm
@@ -203,28 +201,6 @@ void DEFERRED_CONTACT_SHADOW_GENERIC(uint2 groupThreadId : SV_GroupThreadID, uin
 
 //seongdae;vxsm
 [numthreads(DEFERRED_SHADOW_TILE_SIZE, DEFERRED_SHADOW_TILE_SIZE, 1)]
-void DEFERRED_CONTACT_AND_VX_SHADOW_GENERIC(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
-{
-    uint2 pixelCoord = groupId * DEFERRED_SHADOW_TILE_SIZE + groupThreadId;
-    pixelCoord.x = pixelCoord.x + (unity_StereoEyeIndex * _ScreenSize.x);
-    uint2 tileCoord = groupId;
-
-#ifdef ENABLE_MSAA
-    float depth = LOAD_TEXTURE2D(_CameraDepthValues, pixelCoord.xy).z;
-#else
-    float depth = LoadCameraDepth(pixelCoord.xy);
-#endif
-
-    if (depth == UNITY_RAW_FAR_CLIP_VALUE)
-        return;
-
-    PositionInputs posInput = GetPositionInput_Stereo(pixelCoord.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, tileCoord, unity_StereoEyeIndex);
-    float3 positionWS = posInput.positionWS;
-
-    _DeferredShadowTextureUAV[pixelCoord] = 1.0;
-}
-
-[numthreads(DEFERRED_SHADOW_TILE_SIZE, DEFERRED_SHADOW_TILE_SIZE, 1)]
 void DEFERRED_VX_SHADOW_GENERIC(uint2 groupThreadId : SV_GroupThreadID, uint2 groupId : SV_GroupID)
 {
     uint2 pixelCoord = groupId * DEFERRED_SHADOW_TILE_SIZE + groupThreadId;
@@ -253,19 +229,19 @@ void DEFERRED_VX_SHADOW_GENERIC(uint2 groupThreadId : SV_GroupThreadID, uint2 gr
 
     if (any(posQ >= (_VoxelResolution.xxx - 1)))
     {
-        _DeferredShadowTextureUAV[pixelCoord] = 1.0;
+        _DeferredShadowTextureUAV[pixelCoord] = 0.0;
         return;
     }
 
     uint4 result = TraverseVxShadowMapPosQ(_MaxScale, posQ);
     if (result.w == 0)
     {
-        _DeferredShadowTextureUAV[pixelCoord] = result.y ? 1.0 : 0.0;
+        _DeferredShadowTextureUAV[pixelCoord] = result.y ? 0.0 : 1.0;
         return;
     }
 
     uint2 bitmask2 = TraverseVxShadowMapLeaf(posQ.z, result);
-    float attenuation = PointSampleShadowBitmask(bitmask2, posQ);
+    float attenuation = 1.0 - PointSampleShadowBitmask(bitmask2, posQ);
 #elif 0 // bilinear filter
 #elif 0 // trilinear filter
 #endif

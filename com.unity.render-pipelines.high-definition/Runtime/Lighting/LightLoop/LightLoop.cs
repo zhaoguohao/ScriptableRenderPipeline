@@ -2646,125 +2646,132 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public bool outputSplitLighting;
         }
 
-        public void SetScreenSpaceShadowsTexture(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, CommandBuffer cmd)
+        //seongdae;vxsm
+        public void SetScreenSpaceContactShadowsTexture(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, CommandBuffer cmd)
         {
             AdditionalShadowData sunShadowData = m_CurrentSunLight != null ? m_CurrentSunLight.GetComponent<AdditionalShadowData>() : null;
-
-            bool hasSunLight = m_CurrentSunLight != null && sunShadowData != null; //seongdae;vxsm
-            bool needsContactShadows = (hasSunLight && sunShadowData.contactShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
-            bool needsVxShadows = (hasSunLight && sunShadowData.vxShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
-
-            if ((!m_EnableContactShadow || !needsContactShadows) && (!m_EnableVxShadow || !needsVxShadows)) //seongdae;vxsm
+            bool needsContactShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.contactShadows) || m_DominantLightIndex != -1;
+            if (!m_EnableContactShadow || !needsContactShadows)
             {
-                cmd.SetGlobalTexture(HDShaderIDs._DeferredShadowTexture, Texture2D.blackTexture);
+                cmd.SetGlobalTexture(HDShaderIDs._DeferredContactShadowTexture, Texture2D.blackTexture);
                 return;
             }
-            cmd.SetGlobalTexture(HDShaderIDs._DeferredShadowTexture, deferredShadowRT);
+            cmd.SetGlobalTexture(HDShaderIDs._DeferredContactShadowTexture, deferredShadowRT);
         }
-
-        //seongdae;vxsm
-        void RenderScreenShadowConactAndVxShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, int firstMipOffsetY, CommandBuffer cmd)
+        public void SetScreenSpaceVxShadowsTexture(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, CommandBuffer cmd)
         {
-            // todo : 
-        }
-
-        void RenderScreenSpaceContactShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, int firstMipOffsetY, CommandBuffer cmd)
-        {
-            Vector4         lightDirection = Vector4.zero;
-            Vector4         lightPosition = Vector4.zero;
-            int             kernel;
-
-            // Pick the adequate kenel
-            kernel = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? s_deferredContactShadowKernelMSAA : s_deferredContactShadowKernel;
-
-            // We use the .w component of the direction/position vectors to choose in the shader the
-            // light direction of the contact shadows (direction light direction or (pixel position - light position))
-            if (m_CurrentSunLight != null)
-            {
-                lightDirection = -m_CurrentSunLight.transform.forward;
-                lightDirection.w = 1;
-            }
-            if (m_DominantLightIndex != -1)
-            {
-                lightPosition = m_DominantLightData.positionRWS;
-                lightPosition.w = 1;
-                lightDirection.w = 0;
-            }
-
-            m_ShadowManager.BindResources(cmd);
-
-            float contactShadowRange = Mathf.Clamp(m_ContactShadows.fadeDistance, 0.0f, m_ContactShadows.maxDistance);
-            float contactShadowFadeEnd = m_ContactShadows.maxDistance;
-            float contactShadowOneOverFadeRange = 1.0f / Math.Max(1e-6f, contactShadowRange);
-            Vector4 contactShadowParams = new Vector4(m_ContactShadows.length, m_ContactShadows.distanceScaleFactor, contactShadowFadeEnd, contactShadowOneOverFadeRange);
-            Vector4 contactShadowParams2 = new Vector4(m_ContactShadows.opacity, firstMipOffsetY, 0.0f, 0.0f);
-            cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._ContactShadowParamsParameters, contactShadowParams);
-            cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._ContactShadowParamsParameters2, contactShadowParams2);
-            cmd.SetComputeIntParam(screenSpaceShadowComputeShader, HDShaderIDs._DirectionalContactShadowSampleCount, m_ContactShadows.sampleCount);
-            cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._DirectionalLightDirection, lightDirection);
-            cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._PunctualLightPosition, lightPosition);
-
-            // Inject the texture in the adequate slot
-            cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? HDShaderIDs._CameraDepthValuesTexture : HDShaderIDs._CameraDepthTexture, depthTexture);
-
-            cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._DeferredShadowTextureUAV, deferredShadowRT);
-
-            int deferredShadowTileSize = 16; // Must match DeferreDirectionalShadow.compute
-            int numTilesX = (hdCamera.actualWidth + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
-            int numTilesY = (hdCamera.actualHeight + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
-
-            cmd.DispatchCompute(screenSpaceShadowComputeShader, kernel, numTilesX, numTilesY, 1);
-        }
-
-        void RenderScreenShadowVxShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, CommandBuffer cmd)
-        {
+            AdditionalShadowData sunShadowData = m_CurrentSunLight != null ? m_CurrentSunLight.GetComponent<AdditionalShadowData>() : null;
             DirectionalVxShadowMap dirVxShadowMap = m_VxShadowMapsManager.MainDirVxShadowMap;
 
-            int kernel = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? s_deferredVxShadowKernelMSAA : s_deferredVxShadowKernel;
-
-            m_ShadowManager.BindResources(cmd);
-
-            cmd.SetComputeBufferParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._VxShadowsBuffer, null);
-
-            // Inject the texture in the adequate slot
-            cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? HDShaderIDs._CameraDepthValuesTexture : HDShaderIDs._CameraDepthTexture, depthTexture);
-
-            cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._DeferredShadowTextureUAV, deferredShadowRT);
-
-            int deferredShadowTileSize = 16; // Must match DeferreDirectionalShadow.compute
-            int numTilesX = (hdCamera.actualWidth + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
-            int numTilesY = (hdCamera.actualHeight + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
-
-            cmd.DispatchCompute(screenSpaceShadowComputeShader, kernel, numTilesX, numTilesY, 1);
+            bool hasSunLight = m_CurrentSunLight != null && sunShadowData != null;
+            bool hasSunVxShadow = dirVxShadowMap != null && dirVxShadowMap.IsValid();
+            bool needsVxShadows = (hasSunLight && hasSunVxShadow && sunShadowData.vxShadows) || m_DominantLightIndex != -1;
+            if (!m_EnableVxShadow || !needsVxShadows)
+            {
+                cmd.SetGlobalTexture(HDShaderIDs._DeferredVxShadowTexture, Texture2D.blackTexture);
+                return;
+            }
+            cmd.SetGlobalTexture(HDShaderIDs._DeferredVxShadowTexture, deferredShadowRT);
         }
-        //seongdae;vxsm
 
-        public void RenderScreenSpaceShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, int firstMipOffsetY, CommandBuffer cmd)
+        public void RenderScreenContactSpaceShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, int firstMipOffsetY, CommandBuffer cmd)
         {
             AdditionalShadowData sunShadowData = m_CurrentSunLight != null ? m_CurrentSunLight.GetComponent<AdditionalShadowData>() : null;
-
             // if there is no need to compute contact shadows, we just quit
-            bool hasSunLight = m_CurrentSunLight != null && sunShadowData != null; //seongdae;vxsm
-            bool needsContactShadows = (hasSunLight && sunShadowData.contactShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
-            bool needsVxShadows = (hasSunLight && sunShadowData.vxShadows) || m_DominantLightIndex != -1; //seongdae;vxsm
-
-            if ((!m_EnableContactShadow || !needsContactShadows) && (!m_EnableVxShadow || !needsVxShadows)) //seongdae;vxsm
+            bool needsContactShadows = (m_CurrentSunLight != null && sunShadowData != null && sunShadowData.contactShadows) || m_DominantLightIndex != -1;
+            if (!m_EnableContactShadow || !needsContactShadows)
             {
                 return;
             }
 
-            using (new ProfilingSample(cmd, "Screen Space Shadow", CustomSamplerId.TPScreenSpaceShadows.GetSampler()))
+            using (new ProfilingSample(cmd, "Screen Space Contact Shadow", CustomSamplerId.TPScreenSpaceShadows.GetSampler()))
             {
-                //seongdae;vxsm
-                if (needsContactShadows && needsVxShadows)
-                    RenderScreenShadowConactAndVxShadows(hdCamera, deferredShadowRT, depthTexture, firstMipOffsetY, cmd);
-                else if (needsContactShadows)
-                    RenderScreenSpaceContactShadows(hdCamera, deferredShadowRT, depthTexture, firstMipOffsetY, cmd);
-                else if (needsVxShadows)
-                    RenderScreenShadowVxShadows(hdCamera, deferredShadowRT, depthTexture, cmd);
-                //seongdae;vxsm
+                Vector4         lightDirection = Vector4.zero;
+                Vector4         lightPosition = Vector4.zero;
+                int             kernel;
+
+                // Pick the adequate kenel
+                kernel = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? s_deferredContactShadowKernelMSAA : s_deferredContactShadowKernel;
+
+                // We use the .w component of the direction/position vectors to choose in the shader the
+                // light direction of the contact shadows (direction light direction or (pixel position - light position))
+                if (m_CurrentSunLight != null)
+                {
+                    lightDirection = -m_CurrentSunLight.transform.forward;
+                    lightDirection.w = 1;
+                }
+                if (m_DominantLightIndex != -1)
+                {
+                    lightPosition = m_DominantLightData.positionRWS;
+                    lightPosition.w = 1;
+                    lightDirection.w = 0;
+                }
+
+                m_ShadowManager.BindResources(cmd);
+
+                float contactShadowRange = Mathf.Clamp(m_ContactShadows.fadeDistance, 0.0f, m_ContactShadows.maxDistance);
+                float contactShadowFadeEnd = m_ContactShadows.maxDistance;
+                float contactShadowOneOverFadeRange = 1.0f / Math.Max(1e-6f, contactShadowRange);
+                Vector4 contactShadowParams = new Vector4(m_ContactShadows.length, m_ContactShadows.distanceScaleFactor, contactShadowFadeEnd, contactShadowOneOverFadeRange);
+                Vector4 contactShadowParams2 = new Vector4(m_ContactShadows.opacity, firstMipOffsetY, 0.0f, 0.0f);
+                cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._ContactShadowParamsParameters, contactShadowParams);
+                cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._ContactShadowParamsParameters2, contactShadowParams2);
+                cmd.SetComputeIntParam(screenSpaceShadowComputeShader, HDShaderIDs._DirectionalContactShadowSampleCount, m_ContactShadows.sampleCount);
+                cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._DirectionalLightDirection, lightDirection);
+                cmd.SetComputeVectorParam(screenSpaceShadowComputeShader, HDShaderIDs._PunctualLightPosition, lightPosition);
+
+                // Inject the texture in the adequate slot
+                cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? HDShaderIDs._CameraDepthValuesTexture : HDShaderIDs._CameraDepthTexture, depthTexture);
+
+                cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._DeferredShadowTextureUAV, deferredShadowRT);
+
+                int deferredShadowTileSize = 16; // Must match DeferreDirectionalShadow.compute
+                int numTilesX = (hdCamera.actualWidth  + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+                int numTilesY = (hdCamera.actualHeight + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+
+                cmd.DispatchCompute(screenSpaceShadowComputeShader, kernel, numTilesX, numTilesY, XRGraphics.computePassCount);
             }
         }
+        public void RenderScreenSpaceVxShadows(HDCamera hdCamera, RTHandleSystem.RTHandle deferredShadowRT, RenderTargetIdentifier depthTexture, CommandBuffer cmd)
+        {
+            AdditionalShadowData sunShadowData = m_CurrentSunLight != null ? m_CurrentSunLight.GetComponent<AdditionalShadowData>() : null;
+            DirectionalVxShadowMap dirVxShadowMap = m_VxShadowMapsManager.MainDirVxShadowMap;
+
+            bool hasSunLight = m_CurrentSunLight != null && sunShadowData != null;
+            bool hasSunVxShadow = dirVxShadowMap != null && dirVxShadowMap.IsValid();
+            bool needsVxShadows = (hasSunLight && hasSunVxShadow && sunShadowData.vxShadows) || m_DominantLightIndex != -1;
+            if (!m_EnableVxShadow || !needsVxShadows)
+            {
+                return;
+            }
+
+            using (new ProfilingSample(cmd, "Screen Space Vx Shadow", CustomSamplerId.TPScreenSpaceShadows.GetSampler()))
+            {
+                Matrix4x4 translatedMatrix = Matrix4x4.Translate(hdCamera.worldSpaceCameraPos);
+
+                int kernel = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? s_deferredVxShadowKernelMSAA : s_deferredVxShadowKernel;
+
+                m_ShadowManager.BindResources(cmd);
+
+                cmd.SetComputeBufferParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._VxShadowMapsBuffer, dirVxShadowMap.computeBuffer);
+
+                cmd.SetComputeIntParam(screenSpaceShadowComputeShader, HDShaderIDs._VoxelResolution, dirVxShadowMap.voxelResolutionInt);
+                cmd.SetComputeIntParam(screenSpaceShadowComputeShader, HDShaderIDs._MaxScale, dirVxShadowMap.maxScale);
+                cmd.SetComputeMatrixParam(screenSpaceShadowComputeShader, HDShaderIDs._WorldToShadowMatrix, dirVxShadowMap.worldToShadowMatrix * translatedMatrix);
+
+                // Inject the texture in the adequate slot
+                cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? HDShaderIDs._CameraDepthValuesTexture : HDShaderIDs._CameraDepthTexture, depthTexture);
+
+                cmd.SetComputeTextureParam(screenSpaceShadowComputeShader, kernel, HDShaderIDs._DeferredShadowTextureUAV, deferredShadowRT);
+
+                int deferredShadowTileSize = 16; // Must match DeferreDirectionalShadow.compute
+                int numTilesX = (hdCamera.actualWidth + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+                int numTilesY = (hdCamera.actualHeight + (deferredShadowTileSize - 1)) / deferredShadowTileSize;
+
+                cmd.DispatchCompute(screenSpaceShadowComputeShader, kernel, numTilesX, numTilesY, 1);
+            }
+        }
+        //seongdae;vxsm
 
         public void RenderDeferredLighting(HDCamera hdCamera, CommandBuffer cmd, DebugDisplaySettings debugDisplaySettings,
             RenderTargetIdentifier[] colorBuffers, RenderTargetIdentifier depthStencilBuffer, RenderTargetIdentifier depthTexture,

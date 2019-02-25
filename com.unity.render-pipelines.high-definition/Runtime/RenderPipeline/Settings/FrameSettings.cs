@@ -94,8 +94,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         SSAOAsync = 43,
         [FrameSettingsField(2, autoName: ContactShadowsAsync, positiveDependencies: new[] { AsyncCompute })]
         ContactShadowsAsync = 44,
+        [FrameSettingsField(2, autoName: VxShadowsAsync, positiveDependencies: new[] { AsyncCompute })] //seongdae;vxsm
+        VxShadowsAsync = 44, //seongdae;vxsm
         [FrameSettingsField(2, autoName: VolumeVoxelizationsAsync, positiveDependencies: new[] { AsyncCompute })]
-        VolumeVoxelizationsAsync = 45,
+        VolumeVoxelizationsAsync = 46, //seongdae;vxsm
 
         //from 60 to 119 : space for new scopes
 
@@ -247,7 +249,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         internal bool BuildLightListRunsAsync() => SystemInfo.supportsAsyncCompute && bitDatas[(int)FrameSettingsField.AsyncCompute] && bitDatas[(int)FrameSettingsField.LightListAsync];
         internal bool SSRRunsAsync() => SystemInfo.supportsAsyncCompute && bitDatas[(int)FrameSettingsField.AsyncCompute] && bitDatas[(int)FrameSettingsField.SSRAsync];
         internal bool SSAORunsAsync() => SystemInfo.supportsAsyncCompute && bitDatas[(int)FrameSettingsField.AsyncCompute] && bitDatas[(int)FrameSettingsField.SSAOAsync];
-        internal bool ContactShadowsRunAsync() => SystemInfo.supportsAsyncCompute && bitDatas[(int)FrameSettingsField.AsyncCompute] && bitDatas[(int)FrameSettingsField.ContactShadowsAsync];
+        internal bool ContactShadowsRunAsync() => SystemInfo.supportsAsyncCompute && bitDatas[(int)FrameSettingsField.AsyncCompute] && bitDatas[(int)FrameSettingsField.ContactShadowsAsync]; //seongdae;vxsm
+        internal bool VxShadowsRunAsync() => SystemInfo.supportsAsyncCompute && bitDatas[(int)FrameSettingsField.AsyncCompute] && bitDatas[(int)FrameSettingsField.VxShadowsAsync]; //seongdae;vxsm
         internal bool VolumeVoxelizationRunsAsync() => SystemInfo.supportsAsyncCompute && bitDatas[(int)FrameSettingsField.AsyncCompute] && bitDatas[(int)FrameSettingsField.VolumeVoxelizationsAsync];
 
         /// <summary>Override a frameSettings according to a mask.</summary>

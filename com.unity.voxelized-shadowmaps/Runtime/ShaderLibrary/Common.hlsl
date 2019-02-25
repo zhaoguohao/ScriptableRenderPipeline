@@ -2,7 +2,7 @@
 #define UNITY_VX_SHADOWMAPS_COMMON_INCLUDED
 
 
-StructuredBuffer<uint> _VxShadowsBuffer;
+StructuredBuffer<uint> _VxShadowMapsBuffer;
 
 
 uint emulateCLZ(uint x)
@@ -47,7 +47,7 @@ uint4 TraverseVxShadowMapPosQ(uint maxScale, uint3 posQ)
         uint cellbit   = 0x00000003 << cellShift;
 
         // calculate bit
-        uint header = _VxShadowsBuffer[nodeIndex];
+        uint header = _VxShadowMapsBuffer[nodeIndex];
         uint childmask = header >> 16;
         uint shadowbit = (childmask & cellbit) >> cellShift;
 
@@ -64,7 +64,7 @@ uint4 TraverseVxShadowMapPosQ(uint maxScale, uint3 posQ)
         uint childIndex = countbits(childrenbit & mask);
 
         // go down to the next node
-        nodeIndex = _VxShadowsBuffer[nodeIndex + 1 + childIndex];
+        nodeIndex = _VxShadowMapsBuffer[nodeIndex + 1 + childIndex];
     }
 
     return uint4(nodeIndex, lit, shadowed, intersected);
@@ -84,10 +84,10 @@ uint2 TraverseVxShadowMapLeaf(uint posQ_z, uint4 innerResult)
     if (intersected)
     {
         int childIndex = posQ_z % 8;
-        int leafIndex = _VxShadowsBuffer[nodeIndex + childIndex];
+        int leafIndex = _VxShadowMapsBuffer[nodeIndex + childIndex];
 
-        bitmask0 = _VxShadowsBuffer[leafIndex];
-        bitmask1 = _VxShadowsBuffer[leafIndex + 1];
+        bitmask0 = _VxShadowMapsBuffer[leafIndex];
+        bitmask1 = _VxShadowMapsBuffer[leafIndex + 1];
     }
 
     return uint2(bitmask0, bitmask1);

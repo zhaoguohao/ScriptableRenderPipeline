@@ -223,7 +223,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _LtcDisneyDiffuseMatrix = Shader.PropertyToID("_LtcDisneyDiffuseMatrix");
         public static readonly int _LtcMultiGGXFresnelDisneyDiffuse = Shader.PropertyToID("_LtcMultiGGXFresnelDisneyDiffuse");
 
-        public static readonly int _DeferredShadowTexture = Shader.PropertyToID("_DeferredShadowTexture");
+        public static readonly int _DeferredContactShadowTexture = Shader.PropertyToID("_DeferredContactShadowTexture"); //seongdae;vxsm
+        public static readonly int _DeferredVxShadowTexture = Shader.PropertyToID("_DeferredVxShadowTexture"); //seongdae;vxsm
         public static readonly int _DeferredShadowTextureUAV = Shader.PropertyToID("_DeferredShadowTextureUAV");
         public static readonly int _DirectionalShadowIndex = Shader.PropertyToID("_DirectionalShadowIndex");
         public static readonly int _ContactShadowParamsParameters = Shader.PropertyToID("_ContactShadowParamsParameters");
@@ -234,7 +235,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static readonly int _MicroShadowingOpacity = Shader.PropertyToID("_MicroShadowOpacity");
 
         //seongdae;vxsm
-        public static readonly int _VxShadowsBuffer = Shader.PropertyToID("_VxShadowsBuffer");
+        public static readonly int _VxShadowMapsBuffer = Shader.PropertyToID("_VxShadowMapsBuffer");
+        public static readonly int _VoxelResolution = Shader.PropertyToID("_VoxelResolution");
+        public static readonly int _MaxScale = Shader.PropertyToID("_MaxScale");
+        public static readonly int _WorldToShadowMatrix = Shader.PropertyToID("_WorldToShadowMatrix");
         //seongdae;vxsm
 
         public static readonly int _StencilMask = Shader.PropertyToID("_StencilMask");
