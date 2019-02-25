@@ -65,6 +65,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         SSRAsync = 1 << 28,
         SSAOAsync = 1 << 29,
         ContactShadowsAsync = 1 << 30,
+        //VxShadowsAsync = 1 << 31, //seongdae;vxsm, is it ok, when ignored?
         VolumeVoxelizationsAsync = 1 << 31,
     }
 
@@ -131,6 +132,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool runSSRAsync;
         public bool runSSAOAsync;
         public bool runContactShadowsAsync;
+        public bool runVxShadowsAsync; //seongdae;vxsm
         public bool runVolumeVoxelizationAsync;
         
         public ObsoleteLightLoopSettings lightLoopSettings;
@@ -191,6 +193,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             newFrameSettingsFormat.SetEnabled(FrameSettingsField.SSRAsync, oldFrameSettingsFormat.runSSRAsync);
             newFrameSettingsFormat.SetEnabled(FrameSettingsField.SSAOAsync, oldFrameSettingsFormat.runSSAOAsync);
             newFrameSettingsFormat.SetEnabled(FrameSettingsField.ContactShadowsAsync, oldFrameSettingsFormat.runContactShadowsAsync);
+            newFrameSettingsFormat.SetEnabled(FrameSettingsField.VxShadowsAsync, oldFrameSettingsFormat.runVxShadowsAsync); //seongdae;vxsm
             newFrameSettingsFormat.SetEnabled(FrameSettingsField.VolumeVoxelizationsAsync, oldFrameSettingsFormat.runVolumeVoxelizationAsync);
 
             if (oldFrameSettingsFormat.lightLoopSettings != null)
@@ -305,6 +308,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         case ObsoleteFrameSettingsOverrides.ContactShadowsAsync:
                             newFrameSettingsOverrideMask.mask[(int)FrameSettingsField.ContactShadowsAsync] = true;
                             break;
+                        //seongdae;vxsm
+                        //case ObsoleteFrameSettingsOverrides.VxShadowsAsync:
+                        //    newFrameSettingsOverrideMask.mask[(int)FrameSettingsField.VxShadowsAsync] = true;
+                        //    break;
+                        //seongdae;vxsm
                         case ObsoleteFrameSettingsOverrides.VolumeVoxelizationsAsync:
                             newFrameSettingsOverrideMask.mask[(int)FrameSettingsField.VolumeVoxelizationsAsync] = true;
                             break;

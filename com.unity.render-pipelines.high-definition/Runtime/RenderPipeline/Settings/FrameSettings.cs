@@ -79,7 +79,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [FrameSettingsField(1, autoName: ReprojectionForVolumetrics, positiveDependencies: new[] { AtmosphericScattering })]
         ReprojectionForVolumetrics = 30, //seongdae;vxsm
         [FrameSettingsField(1, autoName: LightLayers)]
-        LightLayers = 31, //seongdae;vxsm
+        LightLayers = 32, //seongdae;vxsm
         [FrameSettingsField(1, autoName: ExposureControl, customOrderInGroup: 32)]
         ExposureControl = 33, //seongdae;vxsm
 
@@ -95,7 +95,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [FrameSettingsField(2, autoName: ContactShadowsAsync, positiveDependencies: new[] { AsyncCompute })]
         ContactShadowsAsync = 44,
         [FrameSettingsField(2, autoName: VxShadowsAsync, positiveDependencies: new[] { AsyncCompute })] //seongdae;vxsm
-        VxShadowsAsync = 44, //seongdae;vxsm
+        VxShadowsAsync = 45, //seongdae;vxsm
         [FrameSettingsField(2, autoName: VolumeVoxelizationsAsync, positiveDependencies: new[] { AsyncCompute })]
         VolumeVoxelizationsAsync = 46, //seongdae;vxsm
 
@@ -167,6 +167,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 (uint)FrameSettingsField.SSRAsync,
                 (uint)FrameSettingsField.SSAOAsync,
                 (uint)FrameSettingsField.ContactShadowsAsync,
+                (uint)FrameSettingsField.VxShadowsAsync, //seongdae;vxsm
                 (uint)FrameSettingsField.VolumeVoxelizationsAsync,
                 (uint)FrameSettingsField.DeferredTile,
                 (uint)FrameSettingsField.ComputeLightEvaluation,
@@ -211,6 +212,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 (uint)FrameSettingsField.SSRAsync,
                 (uint)FrameSettingsField.SSAOAsync,
                 (uint)FrameSettingsField.ContactShadowsAsync,
+                (uint)FrameSettingsField.VxShadowsAsync, //seongdae;vxsm
                 (uint)FrameSettingsField.VolumeVoxelizationsAsync,
                 (uint)FrameSettingsField.DeferredTile,
                 (uint)FrameSettingsField.ComputeLightEvaluation,
@@ -347,6 +349,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.SSRAsync] &= async;
             sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.SSAOAsync] &= async;
             sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.ContactShadowsAsync] &= async;
+            sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.VxShadowsAsync] &= async; //seongdae;vxsm
             sanitazedFrameSettings.bitDatas[(int)FrameSettingsField.VolumeVoxelizationsAsync] &= async;
 
             // Deferred opaque are always using Fptl. Forward opaque can use Fptl or Cluster, transparent use cluster.

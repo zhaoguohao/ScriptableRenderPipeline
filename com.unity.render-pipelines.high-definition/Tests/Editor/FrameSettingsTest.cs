@@ -216,7 +216,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
             SSRAsync = 1 << 28,
             SSAOAsync = 1 << 29,
             ContactShadowsAsync = 1 << 30,
-            VolumeVoxelizationsAsync = 1 << 31,
+            VxShadowsAsync = 1 << 31, //seongdae;vxsm
+            VolumeVoxelizationsAsync = 1 << 32, //seongdae;vxsm
         }
 
         public class LegacyLightLoopSettings
@@ -274,6 +275,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
             public bool runSSRAsync;
             public bool runSSAOAsync;
             public bool runContactShadowsAsync;
+            public bool runVxShadowsAsync; //seongdae;vxsm
             public bool runVolumeVoxelizationAsync;
 
             public LegacyLightLoopSettings lightLoopSettings;
@@ -376,6 +378,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 Assert.AreEqual(legacyFrameSettingsData.runSSRAsync, frameSettingsData.IsEnabled(FrameSettingsField.SSRAsync));
                 Assert.AreEqual(legacyFrameSettingsData.runSSAOAsync, frameSettingsData.IsEnabled(FrameSettingsField.SSAOAsync));
                 Assert.AreEqual(legacyFrameSettingsData.runContactShadowsAsync, frameSettingsData.IsEnabled(FrameSettingsField.ContactShadowsAsync));
+                Assert.AreEqual(legacyFrameSettingsData.runVxShadowsAsync, frameSettingsData.IsEnabled(FrameSettingsField.VxShadowsAsync)); //seongdae;vxsm
                 Assert.AreEqual(legacyFrameSettingsData.runVolumeVoxelizationAsync, frameSettingsData.IsEnabled(FrameSettingsField.VolumeVoxelizationsAsync));
 
                 Assert.AreEqual(legacyFrameSettingsData.lightLoopSettings.enableBigTilePrepass, frameSettingsData.IsEnabled(FrameSettingsField.BigTilePrepass));
@@ -416,6 +419,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline.Tests
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.SSRAsync) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.SSRAsync]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.SSAOAsync) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.SSAOAsync]);
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.ContactShadowsAsync) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.ContactShadowsAsync]);
+                Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.VxShadowsAsync) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.VxShadowsAsync]); //seongdae;vxsm
                 Assert.AreEqual((legacyFrameSettingsData.overrides & LegacyFrameSettingsOverrides.VolumeVoxelizationsAsync) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.VolumeVoxelizationsAsync]);
 
                 Assert.AreEqual((legacyFrameSettingsData.lightLoopSettings.overrides & LegacyLightLoopSettingsOverrides.BigTilePrepass) > 0, frameSettingsMask.mask[(uint)FrameSettingsField.BigTilePrepass]);

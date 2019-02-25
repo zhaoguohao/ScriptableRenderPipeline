@@ -30,8 +30,11 @@ uint CalculateRescale(uint srcPosbit, uint dstPosbit)
 }
 
 
-uint4 TraverseVxShadowMapPosQ(uint maxScale, uint3 posQ)
+uint4 TraverseVxShadowMapPosQ(uint begin, uint3 posQ)
 {
+    uint attribute = begin + 18;
+    uint maxScale = _VxShadowMapsBuffer[1];
+
     uint nodeIndex = 0;
     uint scale = maxScale;
 
@@ -47,7 +50,7 @@ uint4 TraverseVxShadowMapPosQ(uint maxScale, uint3 posQ)
         uint cellbit   = 0x00000003 << cellShift;
 
         // calculate bit
-        uint header = _VxShadowMapsBuffer[nodeIndex];
+        uint header = _VxShadowMapsBuffer[attribute + nodeIndex];
         uint childmask = header >> 16;
         uint shadowbit = (childmask & cellbit) >> cellShift;
 
@@ -64,15 +67,16 @@ uint4 TraverseVxShadowMapPosQ(uint maxScale, uint3 posQ)
         uint childIndex = countbits(childrenbit & mask);
 
         // go down to the next node
-        nodeIndex = _VxShadowMapsBuffer[nodeIndex + 1 + childIndex];
+        nodeIndex = _VxShadowMapsBuffer[attribute + nodeIndex + 1 + childIndex];
     }
 
     return uint4(nodeIndex, lit, shadowed, intersected);
 }
 
 
-uint2 TraverseVxShadowMapLeaf(uint posQ_z, uint4 innerResult)
+uint2 TraverseVxShadowMapLeaf(uint begin, uint posQ_z, uint4 innerResult)
 {
+    uint attribute   = begin + 18;
     uint nodeIndex   = innerResult.x;
 
     bool lit         = innerResult.y;
@@ -84,10 +88,10 @@ uint2 TraverseVxShadowMapLeaf(uint posQ_z, uint4 innerResult)
     if (intersected)
     {
         int childIndex = posQ_z % 8;
-        int leafIndex = _VxShadowMapsBuffer[nodeIndex + childIndex];
+        int leafIndex = _VxShadowMapsBuffer[attribute + nodeIndex + childIndex];
 
-        bitmask0 = _VxShadowMapsBuffer[leafIndex];
-        bitmask1 = _VxShadowMapsBuffer[leafIndex + 1];
+        bitmask0 = _VxShadowMapsBuffer[attribute + leafIndex];
+        bitmask1 = _VxShadowMapsBuffer[attribute + leafIndex + 1];
     }
 
     return uint2(bitmask0, bitmask1);
