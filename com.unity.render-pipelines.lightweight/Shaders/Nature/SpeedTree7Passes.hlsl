@@ -106,12 +106,13 @@ SpeedTreeVertexOutput SpeedTree7Vert(SpeedTreeVertexInput input)
 
     // handle speedtree wind and lod
     InitializeData(input, unity_LODFade.x);
-    output.uvHueVariation.xy = input.texcoord.xy;
-    
+
     #ifdef VERTEX_COLOR
         output.color = _Color;
         output.color.rgb *= input.color.r; // ambient occlusion factor
     #endif
+
+    output.uvHueVariation.xy = input.texcoord.xy;
 
     #ifdef EFFECT_HUE_VARIATION
         half hueVariationAmount = frac(UNITY_MATRIX_M[0].w + UNITY_MATRIX_M[1].w + UNITY_MATRIX_M[2].w);
@@ -122,10 +123,7 @@ SpeedTreeVertexOutput SpeedTree7Vert(SpeedTreeVertexInput input)
     #ifdef GEOM_TYPE_BRANCH_DETAIL
         // The two types are always in different sub-range of the mesh so no interpolation (between detail and blend) problem.
         output.detail.xy = input.texcoord2.xy;
-        if (input.color.a == 0) // Blend
-            output.detail.z = input.texcoord2.z;
-        else // Detail texture
-            output.detail.z = 2.5f; // stay out of Blend's .z range
+        output.detail.z = input.color.a == 0 ? input.texcoord2.z : 2.5; // stay out of Blend's .z range
     #endif
 
     VertexPositionInputs vertexInput = GetVertexPositionInputs(input.vertex.xyz);

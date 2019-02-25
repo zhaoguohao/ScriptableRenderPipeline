@@ -19,32 +19,32 @@ struct SpeedTreeVertexInput
 
 struct SpeedTreeVertexOutput
 {
+    #ifdef VERTEX_COLOR
+        half4 color                 : COLOR;
+    #endif
+
     half3 uvHueVariation            : TEXCOORD0;
 
-    #ifdef VERTEX_COLOR
-        half4 color                 : TEXCOORD1;
-    #endif
-
     #ifdef GEOM_TYPE_BRANCH_DETAIL
-        half3 detail                : TEXCOORD2;
+        half3 detail                : TEXCOORD1;
     #endif
 
-    half4 fogFactorAndVertexLight   : TEXCOORD3;    // x: fogFactor, yzw: vertex light
+    half4 fogFactorAndVertexLight   : TEXCOORD2;    // x: fogFactor, yzw: vertex light
 
     #ifdef EFFECT_BUMP
-        half4 normalWS              : TEXCOORD4;    // xyz: normal, w: viewDir.x
-        half4 tangentWS             : TEXCOORD5;    // xyz: tangent, w: viewDir.y
-        half4 bitangentWS           : TEXCOORD6;    // xyz: bitangent, w: viewDir.z
+        half4 normalWS              : TEXCOORD3;    // xyz: normal, w: viewDir.x
+        half4 tangentWS             : TEXCOORD4;    // xyz: tangent, w: viewDir.y
+        half4 bitangentWS           : TEXCOORD5;    // xyz: bitangent, w: viewDir.z
     #else
-        half3 normalWS              : TEXCOORD4;
-        half3 viewDirWS             : TEXCOORD5;
+        half3 normalWS              : TEXCOORD3;
+        half3 viewDirWS             : TEXCOORD4;
     #endif
 
     #ifdef _MAIN_LIGHT_SHADOWS
-        float4 shadowCoord          : TEXCOORD7;
+        float4 shadowCoord          : TEXCOORD6;
     #endif
 
-    float3 positionWS               : TEXCOORD8;
+    float3 positionWS               : TEXCOORD7;
     float4 clipPos                  : SV_POSITION;
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
