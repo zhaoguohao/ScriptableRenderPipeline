@@ -50,7 +50,33 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Lightmap,
             Instancing,
         }
+
+
+        public enum MaterialSharedProperty
+        {
+            None,
+            Albedo,
+            Normal,
+            Smoothness,
+            /// <summary>There is no equivalent for AxF shader.</summary>
+            AmbientOcclusion,
+            /// <summary>There is no equivalent for AxF, Fabric and Hair shaders.</summary>
+            Metal,
+            Specular,
+            Alpha,
+
+            //[Todo: see for particular properties like aniso...]
+        }
+
+        public class FramePassMaterialMappingAttribute : Attribute
+        {
+            public readonly MaterialSharedProperty property;
+
+            public FramePassMaterialMappingAttribute(MaterialSharedProperty property)
+                => this.property = property;
+        }
     }
+
 
     [Serializable]
     public class MaterialDebugSettings
@@ -70,13 +96,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public static GUIContent[] debugViewMaterialGBufferStrings = null;
         public static int[] debugViewMaterialGBufferValues = null;
 
-        public MaterialDebugSettings()
+        public MaterialSharedProperty debugViewMaterialCommonValue = MaterialSharedProperty.None;
+        static Dictionary<MaterialSharedProperty, int[]> s_MaterialPropertyMap = new Dictionary<MaterialSharedProperty, int[]>();
+
+        static MaterialDebugSettings()
         {
             BuildDebugRepresentation();
         }
 
         // className include the additional "/"
-        void FillWithProperties(Type type, ref List<GUIContent> debugViewMaterialStringsList, ref List<int> debugViewMaterialValuesList, string className)
+        static void FillWithProperties(Type type, ref List<GUIContent> debugViewMaterialStringsList, ref List<int> debugViewMaterialValuesList, string className)
         {
             var attributes = type.GetCustomAttributes(true);
             // Get attribute to get the start number of the value for the enum
@@ -130,7 +159,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void FillWithPropertiesEnum(Type type, ref List<GUIContent> debugViewMaterialStringsList, ref List<int> debugViewMaterialValuesList, string prefix)
+        static void FillWithPropertiesEnum(Type type, ref List<GUIContent> debugViewMaterialStringsList, ref List<int> debugViewMaterialValuesList, string prefix)
         {
             var names = Enum.GetNames(type);
 
@@ -152,7 +181,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Type bsdfDataType;
         };
 
-        internal static List<MaterialItem> GetAllMaterialDatas()
+        static List<MaterialItem> GetAllMaterialDatas()
         {
             List<RenderPipelineMaterial> materialList = HDUtils.GetRenderPipelineMaterialList();
 
@@ -192,7 +221,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return materialItems;
         }
 
-        void BuildDebugRepresentation()
+        static void BuildDebugRepresentation()
         {
             if (!isDebugViewMaterialInit)
             {
@@ -268,10 +297,98 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 debugViewMaterialGBufferStrings = debugViewMaterialGBufferStringsList.ToArray();
                 debugViewMaterialGBufferValues = debugViewMaterialGBufferValuesList.ToArray();
 
+
+                //map parameters
+                Dictionary<MaterialSharedProperty, List<int>> materialPropertyMap = new Dictionary<MaterialSharedProperty, List<int>>()
+                {
+                    { MaterialSharedProperty.Albedo, new List<int>() },
+                    { MaterialSharedProperty.Normal, new List<int>() },
+                    { MaterialSharedProperty.Smoothness, new List<int>() },
+                    { MaterialSharedProperty.AmbientOcclusion, new List<int>() },
+                    { MaterialSharedProperty.Metal, new List<int>() },
+                    { MaterialSharedProperty.Specular, new List<int>() },
+                    { MaterialSharedProperty.Alpha, new List<int>() },
+                };
+
+                // builtins parameters
+                Type builtin = typeof(Builtin.BuiltinData);
+                var attributes = builtin.GetCustomAttributes(true);
+                var generateHLSLAttribute = attributes[0] as GenerateHLSL;
+                int materialStartIndex = generateHLSLAttribute.paramDefinesStart;
+
+                int localIndex = 0;
+                foreach (var field in typeof(Builtin.BuiltinData).GetFields())
+                {
+                    if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
+                    {
+                        var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
+                        materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex);
+                    }
+                    var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
+                    if (surfaceAttributes.Length > 0)
+                        localIndex += surfaceAttributes[0].displayNames.Length;
+                }
+
+                // specific shader parameters
+                foreach (MaterialItem materialItem in materialItems)
+                {
+                    attributes = materialItem.surfaceDataType.GetCustomAttributes(true);
+                    generateHLSLAttribute = attributes[0] as GenerateHLSL;
+                    materialStartIndex = generateHLSLAttribute.paramDefinesStart;
+
+                    if (!generateHLSLAttribute.needParamDebug)
+                        continue;
+
+                    var fields = materialItem.surfaceDataType.GetFields();
+
+                    localIndex = 0;
+                    foreach (var field in fields)
+                    {
+                        if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
+                        {
+                            var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
+                            materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex);
+                        }
+                        var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
+                        if (surfaceAttributes.Length > 0)
+                            localIndex += surfaceAttributes[0].displayNames.Length;
+                    }
+
+                    if (materialItem.bsdfDataType == null)
+                        continue;
+
+                    attributes = materialItem.bsdfDataType.GetCustomAttributes(true);
+                    generateHLSLAttribute = attributes[0] as GenerateHLSL;
+                    materialStartIndex = generateHLSLAttribute.paramDefinesStart;
+
+                    if (!generateHLSLAttribute.needParamDebug)
+                        continue;
+
+                    fields = materialItem.bsdfDataType.GetFields();
+
+                    localIndex = 0;
+                    foreach (var field in fields)
+                    {
+                        if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
+                        {
+                            var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
+                            materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex++);
+                        }
+                        var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
+                        if (surfaceAttributes.Length > 0)
+                            localIndex += surfaceAttributes[0].displayNames.Length;
+                    }
+                }
+
+                foreach (var key in materialPropertyMap.Keys)
+                {
+                    s_MaterialPropertyMap[key] = materialPropertyMap[key].ToArray();
+                }
+
                 isDebugViewMaterialInit = true;
             }
         }
-
+        
         //Validator Settings
         public Color materialValidateLowColor = new Color(1.0f, 0.0f, 0.0f);
         public Color materialValidateHighColor = new Color(0.0f, 0.0f, 1.0f);
@@ -309,6 +426,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         DebugViewProperties  m_DebugViewProperties = DebugViewProperties.None;
         int                  m_DebugViewGBuffer = 0; // Can't use GBuffer enum here because the values are actually split between this enum and values from Lit.BSDFData
 
+        internal int materialEnumIndex;
+
         public float[] GetDebugMaterialIndexes()
         {
             // This value is used in the shader for the actual debug display.
@@ -332,12 +451,26 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DebugViewGBuffer = 0;
         }
 
+        public void SetDebugViewCommonMaterialProperty(MaterialSharedProperty value)
+        {
+            DisableMaterialDebug();
+            materialEnumIndex = 0;
+            debugViewMaterial = value == MaterialSharedProperty.None ? null : s_MaterialPropertyMap[value];
+        }
+
         public void SetDebugViewMaterial(int value)
         {
+            debugViewMaterialCommonValue = MaterialSharedProperty.None;
             if (value != 0)
+            {
                 DisableMaterialDebug();
-            m_DebugViewMaterial[0] = 1;
-            m_DebugViewMaterial[1] = value;
+                m_DebugViewMaterial[0] = 1;
+                m_DebugViewMaterial[1] = value;
+            }
+            else
+            {
+                m_DebugViewMaterial[0] = 0;
+            }
         }
 
         public void SetDebugViewEngine(int value)

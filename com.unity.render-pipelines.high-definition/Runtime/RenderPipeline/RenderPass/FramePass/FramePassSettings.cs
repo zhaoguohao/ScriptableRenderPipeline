@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering.HDPipeline.Attributes;
 using static UnityEngine.Experimental.Rendering.HDPipeline.MaterialDebugSettings;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -27,12 +28,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         public static FramePassSettings @default = new FramePassSettings
         {
-            materialProperty = MaterialProperty.None,
+            materialProperty = MaterialSharedProperty.None,
             lightingProperty = LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect,
             debugFullScreen = DebugFullScreen.None
         };
 
-        MaterialProperty materialProperty;
+        MaterialSharedProperty materialProperty;
         LightingProperty lightingProperty;
         DebugFullScreen debugFullScreen;
 
@@ -44,7 +45,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
 
         /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
-        public ref FramePassSettings SetFullscreenOutput(MaterialProperty materialProperty)
+        public ref FramePassSettings SetFullscreenOutput(MaterialSharedProperty materialProperty)
         {
             this.materialProperty = materialProperty;
             return ref *ThisPtr;
@@ -80,7 +81,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         // (new FramePassSettings(FramePassSettings.@default)).SetFullscreenOutput(prop).FillDebugData((RenderPipelineManager.currentPipeline as HDRenderPipeline).debugDisplaySettings.data);
         internal void FillDebugData(DebugDisplaySettings.DebugData data)
         {
-            DebugDisplaySettings.SetCommonMaterial(data, materialProperty);
+            data.materialDebugSettings.SetDebugViewCommonMaterialProperty(materialProperty);
 
             if (lightingProperty == (LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect))
                 data.lightingDebugSettings.debugLightingMode = DebugLightingMode.None;

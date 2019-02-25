@@ -39,22 +39,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         MaxMaterialFullScreenDebug
     }
 
-    public enum MaterialProperty
-    {
-        None,
-        Albedo,
-        Normal,
-        Smoothness,
-        /// <summary>There is no equivalent for AxF shader.</summary>
-        AmbientOcclusion,
-        /// <summary>There is no equivalent for AxF, Fabric and Hair shaders.</summary>
-        Metal,
-        Specular,
-        Alpha,
-
-        //[Todo: see for particular properties like aniso...]
-    }
-
     public class DebugDisplaySettings : IDebugData
     {
         static string k_PanelDisplayStats = "Display Stats";
@@ -83,9 +67,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         static int[] s_CameraNamesValues = null;
 
         static bool needsRefreshingCameraFreezeList = true;
-        
-        static bool s_MaterialPropertyMapInitialized = false;
-        static Dictionary<MaterialProperty, int[]> s_MaterialPropertyMap = new Dictionary<MaterialProperty, int[]>();
         
         public class DebugData
         {
@@ -117,7 +98,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public int lightingFulscreenDebugModeEnumIndex;
             public int tileClusterDebugEnumIndex;
             public int mipMapsEnumIndex;
-            public int materialEnumIndex;
             public int engineEnumIndex;
             public int attributesEnumIndex;
             public int propertiesEnumIndex;
@@ -153,113 +133,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             s_MsaaSamplesDebugValues = (int[])Enum.GetValues(typeof(MSAASamples));
 
             m_Data = new DebugData();
-
-            InitMaterialPropertyMapIfNeeded();
         }
         
         Action IDebugData.GetReset() => () => m_Data = new DebugData();
         
-        static void InitMaterialPropertyMapIfNeeded()
-        {
-            if (s_MaterialPropertyMapInitialized)
-                return;
-
-            Dictionary<MaterialProperty, List<int>> materialPropertyMap = new Dictionary<MaterialProperty, List<int>>()
-            {
-                { MaterialProperty.Albedo, new List<int>() },
-                { MaterialProperty.Normal, new List<int>() },
-                { MaterialProperty.Smoothness, new List<int>() },
-                { MaterialProperty.AmbientOcclusion, new List<int>() },
-                { MaterialProperty.Metal, new List<int>() },
-                { MaterialProperty.Specular, new List<int>() },
-                { MaterialProperty.Alpha, new List<int>() },
-            };
-
-            // builtins parameters
-            Type builtin = typeof(Builtin.BuiltinData);
-            var attributes = builtin.GetCustomAttributes(true);
-            var generateHLSLAttribute = attributes[0] as GenerateHLSL;
-            int materialStartIndex = generateHLSLAttribute.paramDefinesStart;
-
-            int localIndex = 0;
-            foreach (var field in typeof(Builtin.BuiltinData).GetFields())
-            {
-                if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
-                {
-                    var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
-                    materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex);
-                }
-                var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
-                if (surfaceAttributes.Length > 0)
-                    localIndex += surfaceAttributes[0].displayNames.Length;
-            }
-
-            // specific shader parameters
-            List<MaterialItem> materialItems = GetAllMaterialDatas();
-
-            foreach (MaterialItem materialItem in materialItems)
-            {
-                attributes = materialItem.surfaceDataType.GetCustomAttributes(true);
-                generateHLSLAttribute = attributes[0] as GenerateHLSL;
-                materialStartIndex = generateHLSLAttribute.paramDefinesStart;
-
-                if (!generateHLSLAttribute.needParamDebug)
-                    continue;
-
-                var fields = materialItem.surfaceDataType.GetFields();
-
-                localIndex = 0;
-                foreach (var field in fields)
-                {
-                    if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
-                    {
-                        var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
-                        materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex);
-                    }
-                    var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
-                    if (surfaceAttributes.Length > 0)
-                        localIndex += surfaceAttributes[0].displayNames.Length;
-                }
-
-                if (materialItem.bsdfDataType == null)
-                    continue;
-
-                attributes = materialItem.bsdfDataType.GetCustomAttributes(true);
-                generateHLSLAttribute = attributes[0] as GenerateHLSL;
-                materialStartIndex = generateHLSLAttribute.paramDefinesStart;
-
-                if (!generateHLSLAttribute.needParamDebug)
-                    continue;
-
-                fields = materialItem.bsdfDataType.GetFields();
-
-                localIndex = 0;
-                foreach (var field in fields)
-                {
-                    if (Attribute.IsDefined(field, typeof(FramePassMaterialMappingAttribute)))
-                    {
-                        var propertyAttr = (FramePassMaterialMappingAttribute[])field.GetCustomAttributes(typeof(FramePassMaterialMappingAttribute), false);
-                        materialPropertyMap[propertyAttr[0].property].Add(materialStartIndex + localIndex++);
-                    }
-                    var surfaceAttributes = (SurfaceDataAttributes[])field.GetCustomAttributes(typeof(SurfaceDataAttributes), false);
-                    if (surfaceAttributes.Length > 0)
-                        localIndex += surfaceAttributes[0].displayNames.Length;
-                }
-            }
-
-            foreach (var key in materialPropertyMap.Keys)
-            {
-                s_MaterialPropertyMap[key] = materialPropertyMap[key].ToArray();
-            }
-
-            s_MaterialPropertyMapInitialized = true;
-        }
-
-        internal static void SetCommonMaterial(DebugData data, MaterialProperty materialProperty)
-        {
-            data.materialDebugSettings.debugViewMaterial = materialProperty == MaterialProperty.None ? null : s_MaterialPropertyMap[materialProperty];
-        }
-
         public float[] GetDebugMaterialIndexes()
         {
             return data.materialDebugSettings.GetDebugMaterialIndexes();
@@ -334,6 +211,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             data.lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
             data.mipMapDebugSettings.debugMipMapMode = DebugMipMapMode.None;
+        }
+
+        public void SetDebugViewCommonMaterialProperty(MaterialSharedProperty value)
+        {
+            if (value != MaterialSharedProperty.None)
+                DisableNonMaterialDebugSettings();
+            data.materialDebugSettings.SetDebugViewCommonMaterialProperty(value);
         }
 
         public void SetDebugViewMaterial(int value)
@@ -459,7 +343,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             var list = new List<DebugUI.Widget>();
 
-            list.Add( new DebugUI.EnumField { displayName = "Material", getter = () => (data.materialDebugSettings.debugViewMaterial[0]) == 0 ? 0 : data.materialDebugSettings.debugViewMaterial[1], setter = value => SetDebugViewMaterial(value), enumNames = MaterialDebugSettings.debugViewMaterialStrings, enumValues = MaterialDebugSettings.debugViewMaterialValues, getIndex = () => data.materialEnumIndex, setIndex = value => data.materialEnumIndex = value });
+            list.Add( new DebugUI.EnumField { displayName = "Common Material Property", getter = () => (int)data.materialDebugSettings.debugViewMaterialCommonValue, setter = value => SetDebugViewCommonMaterialProperty((MaterialSharedProperty)value), autoEnum = typeof(MaterialSharedProperty), getIndex = () => (int)data.materialDebugSettings.debugViewMaterialCommonValue, setIndex = value => data.materialDebugSettings.debugViewMaterialCommonValue = (MaterialSharedProperty)value});
+
+            list.Add( new DebugUI.EnumField { displayName = "Material", getter = () => (data.materialDebugSettings.debugViewMaterial[0]) == 0 ? 0 : data.materialDebugSettings.debugViewMaterial[1], setter = value => SetDebugViewMaterial(value), enumNames = MaterialDebugSettings.debugViewMaterialStrings, enumValues = MaterialDebugSettings.debugViewMaterialValues, getIndex = () => data.materialDebugSettings.materialEnumIndex, setIndex = value => data.materialDebugSettings.materialEnumIndex = value});
             list.Add( new DebugUI.EnumField { displayName = "Engine", getter = () => data.materialDebugSettings.debugViewEngine, setter = value => SetDebugViewEngine(value), enumNames = MaterialDebugSettings.debugViewEngineStrings, enumValues = MaterialDebugSettings.debugViewEngineValues, getIndex = () => data.engineEnumIndex, setIndex = value => data.engineEnumIndex = value });
             list.Add( new DebugUI.EnumField { displayName = "Attributes", getter = () => (int)data.materialDebugSettings.debugViewVarying, setter = value => SetDebugViewVarying((DebugViewVarying)value), autoEnum = typeof(DebugViewVarying), getIndex = () => data.attributesEnumIndex, setIndex = value => data.attributesEnumIndex = value });
             list.Add( new DebugUI.EnumField { displayName = "Properties", getter = () => (int)data.materialDebugSettings.debugViewProperties, setter = value => SetDebugViewProperties((DebugViewProperties)value), autoEnum = typeof(DebugViewProperties), getIndex = () => data.propertiesEnumIndex, setIndex = value => data.propertiesEnumIndex = value });
@@ -886,15 +772,5 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             DebugManager.instance.UnregisterData(FrameSettingsHistory.GetPersistantDebugDataCopy(camera));
             FrameSettingsHistory.UnRegisterDebug(camera);
         }
-    }
-
-
-
-    public class FramePassMaterialMappingAttribute : Attribute
-    {
-        public readonly MaterialProperty property;
-
-        public FramePassMaterialMappingAttribute(MaterialProperty property)
-            => this.property = property;
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using UnityEngine.Experimental.Rendering.HDPipeline.Attributes;
 using UnityEngine.Rendering;
 
 //-----------------------------------------------------------------------------
@@ -30,29 +31,29 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public uint materialFeatures;
 
             // Standard
-            [FramePassMaterialMapping(MaterialProperty.Albedo)]
+            [FramePassMaterialMapping(MaterialSharedProperty.Albedo)]
             [SurfaceDataAttributes("Base Color", false, true)]
             public Vector3 baseColor;
             [SurfaceDataAttributes("Specular Occlusion")]
             public float specularOcclusion;
 
-            [FramePassMaterialMapping(MaterialProperty.Normal)]
+            [FramePassMaterialMapping(MaterialSharedProperty.Normal)]
             [SurfaceDataAttributes(new string[] { "Normal", "Normal View Space" }, true)]
             public Vector3 normalWS;
 
             [SurfaceDataAttributes(new string[] { "Geometric Normal", "Geometric Normal View Space" }, true)]
             public Vector3 geomNormalWS;
 
-            [FramePassMaterialMapping(MaterialProperty.Smoothness)]
+            [FramePassMaterialMapping(MaterialSharedProperty.Smoothness)]
             [SurfaceDataAttributes("Smoothness")]
             public float perceptualSmoothness;
 
-            [FramePassMaterialMapping(MaterialProperty.AmbientOcclusion)]
+            [FramePassMaterialMapping(MaterialSharedProperty.AmbientOcclusion)]
             [SurfaceDataAttributes("Ambient Occlusion")]
             public float ambientOcclusion;
 
             // Specular Tint
-            [FramePassMaterialMapping(MaterialProperty.Specular)]
+            [FramePassMaterialMapping(MaterialSharedProperty.Specular)]
             [SurfaceDataAttributes("Specular Tint", false, true)]
             public Vector3 specularColor;
 

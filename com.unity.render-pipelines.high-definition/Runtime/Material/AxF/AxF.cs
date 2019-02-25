@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering.HDPipeline.Attributes;
 using UnityEngine.Rendering;
 
 //-----------------------------------------------------------------------------
@@ -17,7 +18,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         [GenerateHLSL(PackingRules.Exact, false, false, true, 1200)]
         public struct SurfaceData
         {
-            [FramePassMaterialMapping(MaterialProperty.Normal)]
+            [FramePassMaterialMapping(MaterialSharedProperty.Normal)]
             [SurfaceDataAttributes(new string[] {"Normal", "Normal View Space"}, true)]
             public Vector3  normalWS;
 
@@ -25,11 +26,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public Vector3  tangentWS;
 
             // SVBRDF Variables
-            [FramePassMaterialMapping(MaterialProperty.Albedo)]
+            [FramePassMaterialMapping(MaterialSharedProperty.Albedo)]
             [SurfaceDataAttributes("Diffuse Color", false, true)]
             public Vector3  diffuseColor;
 
-            [FramePassMaterialMapping(MaterialProperty.Specular)]
+            [FramePassMaterialMapping(MaterialSharedProperty.Specular)]
             [SurfaceDataAttributes("Specular Color", false, true)]
             public Vector3  specularColor;
 
