@@ -142,6 +142,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     materialGraph.messageManager = messageManager;
                     m_ColorSpace = PlayerSettings.colorSpace;
                     m_RenderPipelineAsset = GraphicsSettings.renderPipelineAsset;
+                    graphObject.Validate();
                 }
 
                 if (updatePreviewShaders)
@@ -245,7 +246,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             var metaProperties = graphView.graph.properties.Where(x => propertyNodeGuids.Contains(x.guid));
 
             var copyPasteGraph = new CopyPasteGraph(
-                    graphView.graph.guid,
+                    graphView.graph.assetGuid,
                     graphView.selection.OfType<ShaderGroup>().Select(x => x.userData),
                     graphView.selection.OfType<IShaderNodeView>().Where(x => !(x.node is PropertyNode)).Select(x => x.node as AbstractMaterialNode),
                     graphView.selection.OfType<Edge>().Select(x => x.userData as IEdge),
@@ -492,6 +493,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                 graphObject = CreateInstance<GraphObject>();
                 graphObject.hideFlags = HideFlags.HideAndDontSave;
                 graphObject.graph = JsonUtility.FromJson<GraphData>(textGraph);
+                graphObject.graph.assetGuid = assetGuid;
                 graphObject.graph.isSubGraph = isSubGraph;
                 graphObject.graph.messageManager = messageManager;
                 graphObject.graph.OnEnable();

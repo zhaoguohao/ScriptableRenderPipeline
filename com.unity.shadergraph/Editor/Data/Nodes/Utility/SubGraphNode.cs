@@ -89,6 +89,8 @@ namespace UnityEditor.ShaderGraph
                         break;
                     }
                 }
+
+                name = subGraphAsset.name;
             }
         }
 
@@ -153,10 +155,21 @@ namespace UnityEditor.ShaderGraph
 
         public void GenerateNodeCode(ShaderGenerator visitor, GraphContext graphContext, GenerationMode generationMode)
         {
-            if (subGraphData == null)
+            if (subGraphData == null || hasError)
                 return;
+
+//            if (hasError)
+//            {
+//                foreach (var outSlot in subGraphData.outputs)
+//                {
+//                    visitor.AddShaderChunk(string.Format("{0} {1};\nZERO_INITIALIZE({0}, {1});", NodeUtils.ConvertConcreteSlotValueTypeToString(precision, outSlot.concreteValueType), GetVariableNameForSlot(outSlot.id)));
+//                }
+//
+//                return;
+//            }
             
             var sb = new ShaderStringBuilder();
+            
             var inputVariableName = $"bindings_{subGraphData.hlslName}_{subGraphData.assetGuid}";
             
             GraphUtil.GenerateSurfaceInputTransferCode(sb, subGraphData.requirements, subGraphData.inputStructName, inputVariableName);
@@ -164,7 +177,7 @@ namespace UnityEditor.ShaderGraph
             visitor.AddShaderChunk(sb.ToString());
 
             foreach (var outSlot in subGraphData.outputs)
-                visitor.AddShaderChunk(string.Format("{0} {1};", NodeUtils.ConvertConcreteSlotValueTypeToString(precision, outSlot.concreteValueType), GetVariableNameForSlot(outSlot.id)), true);
+                visitor.AddShaderChunk(string.Format("{0} {1};", NodeUtils.ConvertConcreteSlotValueTypeToString(precision, outSlot.concreteValueType), GetVariableNameForSlot(outSlot.id)));
 
             var arguments = new List<string>();
             foreach (var prop in subGraphData.inputs)
@@ -320,20 +333,36 @@ namespace UnityEditor.ShaderGraph
             GetOutputSlots(slots);
 
             var outputStage = subGraphData.effectiveShaderStage;
-            foreach(MaterialSlot slot in slots)
+            foreach (MaterialSlot slot in slots)
                 slot.stageCapability = outputStage;
         }
 
         public override void ValidateNode()
         {
-            if (subGraphData == null || !subGraphData.isValid)
+            base.ValidateNode();
+            
+            if (subGraphData == null)
             {
+                hasError = true;
+                owner.AddValidationError(tempId, "Sub Graph failed to load");
+            }
+            else if (subGraphData.isRecursive)
+            {
+                hasError = true;
+                owner.AddValidationError(tempId, "Recursive Sub Graphs are not allowed");
+            }
+            else if (!subGraphData.isValid)
+            {
+                hasError = true;
                 owner.AddValidationError(tempId, "Sub Graph failed to import");
+            }
+            else if (owner.isSubGraph && subGraphData.descendents.Contains(owner.assetGuid))
+            {
+                hasError = true;
+                owner.AddValidationError(tempId, "Recursive Sub Graphs are not allowed");
             }
 
             ValidateShaderStage();
-
-            base.ValidateNode();
         }
 
         public override void CollectShaderProperties(PropertyCollector visitor, GenerationMode generationMode)
@@ -364,7 +393,7 @@ namespace UnityEditor.ShaderGraph
 
         public virtual void GenerateNodeFunction(FunctionRegistry registry, GraphContext graphContext, GenerationMode generationMode)
         {
-            if (subGraphData == null)
+            if (subGraphData == null || hasError)
                 return;
 
             var database = SubGraphDatabase.instance;
@@ -457,7 +486,7 @@ namespace UnityEditor.ShaderGraph
             if (subGraphData != null)
             {
                 paths.Add(AssetDatabase.GetAssetPath(subGraphAsset));
-                foreach (var graphGuid in subGraphData.subGraphGuids)
+                foreach (var graphGuid in subGraphData.descendents)
                 {
                     paths.Add(AssetDatabase.GUIDToAssetPath(graphGuid));
                 }

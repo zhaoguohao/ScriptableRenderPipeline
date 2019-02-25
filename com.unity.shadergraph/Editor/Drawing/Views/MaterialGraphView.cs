@@ -311,7 +311,7 @@ namespace UnityEditor.ShaderGraph.Drawing
             var propertyNodeGuids = nodes.OfType<PropertyNode>().Select(x => x.propertyGuid);
             var metaProperties = this.graph.properties.Where(x => propertyNodeGuids.Contains(x.guid));
 
-            var graph = new CopyPasteGraph(this.graph.guid, groups, nodes, edges, properties, metaProperties);
+            var graph = new CopyPasteGraph(this.graph.assetGuid, groups, nodes, edges, properties, metaProperties);
             return JsonUtility.ToJson(graph, true);
         }
 
@@ -576,7 +576,7 @@ namespace UnityEditor.ShaderGraph.Drawing
                     var remappedEdges = remappedEdgesDisposable.value;
                     graphView.graph.PasteGraph(copyGraph, remappedNodes, remappedEdges);
 
-                    if (graphView.graph.guid != copyGraph.sourceGraphGuid)
+                    if (graphView.graph.assetGuid != copyGraph.sourceGraphGuid)
                     {
                         // Compute the mean of the copied nodes.
                         Vector2 centroid = Vector2.zero;

@@ -5,11 +5,12 @@ using System.Linq;
 using System.Text;
 using UnityEditor.Experimental.AssetImporters;
 using UnityEditor.Graphing;
+using UnityEditor.Graphing.Util;
 using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    [ScriptedImporter(2, ".sgsubgraphdb", 1)]
+    [ScriptedImporter(1, ".sgsubgraphdb", 2)]
     class SubGraphDatabaseImporter : ScriptedImporter
     {
         public const string path = "Packages/com.unity.shadergraph/Editor/Importers/_.sgsubgraphdb";
@@ -32,7 +33,7 @@ namespace UnityEditor.ShaderGraph
             var allSubGraphGuids = AssetDatabase.FindAssets($"t:{nameof(SubGraphAsset)}").ToList();
             allSubGraphGuids.Sort();
             var subGraphMap = new Dictionary<string, SubGraphData>();
-            var graphMap = new Dictionary<string, GraphData>();
+            var graphDataMap = new Dictionary<string, GraphData>();
 
             foreach (var subGraphData in database.subGraphs)
             {
@@ -42,7 +43,7 @@ namespace UnityEditor.ShaderGraph
                 }
             }
             
-            var dirtySubGraphAssetGuids = new List<string>();
+            var dirtySubGraphGuids = new List<string>();
 
             foreach (var subGraphGuid in allSubGraphGuids)
             {
@@ -54,83 +55,119 @@ namespace UnityEditor.ShaderGraph
                 
                 if (subGraphAsset.importedAt > subGraphData.processedAt)
                 {
+                    dirtySubGraphGuids.Add(subGraphGuid);
+                    subGraphData.Reset();
                     subGraphData.processedAt = currentTime;
-                    dirtySubGraphAssetGuids.Add(subGraphGuid);
                     var subGraphPath = AssetDatabase.GUIDToAssetPath(subGraphGuid);
                     var textGraph = File.ReadAllText(subGraphPath, Encoding.UTF8);
-                    var graphData = new GraphData { isSubGraph = true };
+                    var graphData = new GraphData { isSubGraph = true, assetGuid = subGraphGuid };
                     JsonUtility.FromJsonOverwrite(textGraph, graphData);
-                    subGraphData.subGraphGuids.Clear();
-                    subGraphData.subGraphGuids.AddRange(graphData.GetNodes<SubGraphNode>().Select(x => x.subGraphGuid));
-                    subGraphData.subGraphGuids.Sort();
+                    subGraphData.children.AddRange(graphData.GetNodes<SubGraphNode>().Select(x => x.subGraphGuid).Distinct());
                     subGraphData.assetGuid = subGraphGuid;
                     subGraphMap[subGraphGuid] = subGraphData;
-                    graphMap[subGraphGuid] = graphData;
+                    graphDataMap[subGraphGuid] = graphData;
+                }
+                else
+                {
+                    subGraphData.ancestors.Clear();
+                    subGraphData.descendents.Clear();
+                    subGraphData.isRecursive = false;
                 }
             }
 
             database.subGraphs = subGraphMap.Values.ToList();
+
+            var permanentMarks = new HashSet<string>();
+            var stack = new Stack<string>(allSubGraphGuids.Count);
+
+            // Detect recursion, and populate `ancestors` and `descendents` per sub graph.
+            foreach (var rootSubGraphData in database.subGraphs)
+            {
+                var rootSubGraphGuid = rootSubGraphData.assetGuid;
+                stack.Push(rootSubGraphGuid);
+                while (stack.Count > 0)
+                {
+                    var subGraphGuid = stack.Pop();
+                    if (!permanentMarks.Add(subGraphGuid))
+                    {
+                        continue;
+                    }
+                    
+                    var subGraphData = subGraphMap[subGraphGuid];
+                    if (subGraphData != rootSubGraphData)
+                    {
+                        subGraphData.ancestors.Add(rootSubGraphGuid);
+                        rootSubGraphData.descendents.Add(subGraphGuid);
+                    }
+                    foreach (var childSubGraphGuid in subGraphData.children)
+                    {
+                        if (childSubGraphGuid == rootSubGraphGuid)
+                        {
+                            rootSubGraphData.isRecursive = true;
+                        }
+                        else
+                        {
+                            stack.Push(childSubGraphGuid);
+                        }
+                    }
+                }
+                permanentMarks.Clear();
+            }
+
+            // Next up we build a list of sub graphs to be processed, which will later be sorted topologically.
+            var sortedSubGraphs = new List<SubGraphData>();
+            foreach (var subGraphGuid in dirtySubGraphGuids)
+            {
+                var subGraphData = subGraphMap[subGraphGuid];
+                if (permanentMarks.Add(subGraphGuid))
+                {
+                    sortedSubGraphs.Add(subGraphData);
+                }
+
+                // Note that we're traversing up the graph via ancestors rather than descendents, because all Sub Graphs using the current sub graph needs to be re-processed.
+                foreach (var ancestorGuid in subGraphData.ancestors)
+                {
+                    if (permanentMarks.Add(ancestorGuid))
+                    {
+                        var ancestorSubGraphData = subGraphMap[ancestorGuid];
+                        sortedSubGraphs.Add(ancestorSubGraphData);
+                    }
+                }
+            }
+            permanentMarks.Clear();
             
-            var dependencyMap = new Dictionary<string, List<SubGraphData>>();
-
-            foreach (var subGraphData in database.subGraphs)
-            {
-                dependencyMap[subGraphData.assetGuid] = new List<SubGraphData>();
-            }
-
-            foreach (var subGraphData in database.subGraphs)
-            {
-                foreach (var dependencyGuid in subGraphData.subGraphGuids)
-                {
-                    dependencyMap[dependencyGuid].Add(subGraphData);
-                }
-            }
-
-            var subGraphDatasToBeProcessed = new List<SubGraphData>();
-            var wavefront = new Stack<SubGraphData>();
-            foreach (var subGraphAssetGuid in dirtySubGraphAssetGuids)
-            {
-                var subGraphData = subGraphMap[subGraphAssetGuid];
-                wavefront.Push(subGraphData);
-            }
-            var subGraphDepths = new Dictionary<string,int>(dirtySubGraphAssetGuids.Count);
-            dirtySubGraphAssetGuids.Clear();
-
-            while (wavefront.Count > 0)
-            {
-                var subGraphData = wavefront.Pop();
-                if (!subGraphDepths.TryGetValue(subGraphData.assetGuid, out var depth))
-                {
-                    depth = 0;
-                    subGraphDatasToBeProcessed.Add(subGraphData);
-                }
-                subGraphDepths[subGraphData.assetGuid] = depth + 1;
-
-                var dependentGraphs = dependencyMap[subGraphData.assetGuid];
-                foreach (var dependentGraph in dependentGraphs)
-                {
-                    wavefront.Push(dependentGraph);
-                }
-            }
+            // Sort topologically. At this stage we can assume there are no loops because all recursive sub graphs have been filtered out.
+            sortedSubGraphs.Sort((s1, s2) => s1.descendents.Contains(s2.assetGuid) ? 1 : s2.descendents.Contains(s1.assetGuid) ? -1 : 0);
             
-            subGraphDatasToBeProcessed.Sort((s1,s2) => subGraphDepths[s1.assetGuid] - subGraphDepths[s2.assetGuid]);
-
+            // Finally process the topologically sorted sub graphs without recursion.
             var registry = new FunctionRegistry(new ShaderStringBuilder(), true);
-
-            var nestedSubGraphGuids = new HashSet<string>();
-            foreach (var subGraphData in subGraphDatasToBeProcessed)
+            var messageManager = new MessageManager();
+            foreach (var subGraphData in sortedSubGraphs)
             {
                 try
                 {
-                    if (!graphMap.TryGetValue(subGraphData.assetGuid, out var graphData))
+                    var subGraphPath = AssetDatabase.GUIDToAssetPath(subGraphData.assetGuid);
+                    if (!graphDataMap.TryGetValue(subGraphData.assetGuid, out var graphData))
                     {
-                        var subGraphPath = AssetDatabase.GUIDToAssetPath(subGraphData.assetGuid);
                         var textGraph = File.ReadAllText(subGraphPath, Encoding.UTF8);
-                        graphData = new GraphData { isSubGraph = true };
+                        graphData = new GraphData { isSubGraph = true, assetGuid = subGraphData.assetGuid };
                         JsonUtility.FromJsonOverwrite(textGraph, graphData);
                     }
-                    ProcessSubGraph(subGraphMap, registry, subGraphData, graphData, nestedSubGraphGuids);
-                    subGraphData.isValid = true;
+
+                    graphData.messageManager = messageManager;
+                    ProcessSubGraph(subGraphMap, registry, subGraphData, graphData);
+                    if (messageManager.nodeMessagesChanged)
+                    {
+                        var subGraphAsset = AssetDatabase.LoadAssetAtPath<SubGraphAsset>(AssetDatabase.GUIDToAssetPath(subGraphData.assetGuid));
+                        foreach (var pair in messageManager.GetNodeMessages())
+                        {
+                            var node = graphData.GetNodeFromTempId(pair.Key);
+                            foreach (var message in pair.Value)
+                            {
+                                Debug.LogError($"Error in {subGraphPath} at node {node.name}: {message.message}", subGraphAsset);                                
+                            }
+                        }
+                    }
                 }
                 catch (Exception e)
                 {
@@ -141,7 +178,7 @@ namespace UnityEditor.ShaderGraph
                 finally
                 {
                     subGraphData.processedAt = currentTime;
-                    nestedSubGraphGuids.Clear();
+                    messageManager.ClearAll();
                 }
             }
             
@@ -173,13 +210,15 @@ namespace UnityEditor.ShaderGraph
             SubGraphDatabase.instance = null;
         }
 
-        static void ProcessSubGraph(Dictionary<string, SubGraphData> subGraphMap, FunctionRegistry registry, SubGraphData subGraphData, GraphData graph, HashSet<string> nestedSubGraphGuids)
+        static void ProcessSubGraph(Dictionary<string, SubGraphData> subGraphMap, FunctionRegistry registry, SubGraphData subGraphData, GraphData graph)
         {
             registry.names.Clear();
             subGraphData.functionNames.Clear();
             subGraphData.properties.Clear();
+            subGraphData.isValid = true;
             
             graph.OnEnable();
+            graph.messageManager.ClearAll();
             graph.ValidateGraph();
 
             var assetPath = AssetDatabase.GUIDToAssetPath(subGraphData.assetGuid);
@@ -190,53 +229,11 @@ namespace UnityEditor.ShaderGraph
 
             var outputNode = (SubGraphOutputNode)graph.outputNode;
             
-            List<AbstractMaterialNode> nodes = new List<AbstractMaterialNode>();
-            NodeUtils.DepthFirstCollectNodesFromNode(nodes, outputNode);
-
-            foreach (var node in nodes)
-            {
-                if (node.hasError)
-                {
-                    throw new InvalidOperationException("Sub-graph contains node(s) with error.");
-                }
-            }
-
-            foreach (var subGraphGuid in subGraphData.subGraphGuids)
-            {
-                nestedSubGraphGuids.Add(subGraphGuid);
-            }
-            
-            foreach (var node in nodes)
-            {
-                if (node is SubGraphNode subGraphNode)
-                {
-                    var nestedData = subGraphMap[subGraphNode.subGraphGuid];
-                    if (!nestedData.isValid)
-                    {
-                        throw new InvalidOperationException("A nested sub-graph is invalid.");
-                    }
-
-                    foreach (var nestedSubGraphGuid in nestedData.subGraphGuids)
-                    {
-                        if (nestedSubGraphGuids.Add(nestedSubGraphGuid))
-                        {
-                            subGraphData.subGraphGuids.Add(nestedSubGraphGuid);
-                        }
-                    }
-                    
-                    foreach (var functionName in nestedData.functionNames)
-                    {
-                        registry.names.Add(functionName);
-                    }
-                }
-                else if (node is IGeneratesFunction generatesFunction)
-                {
-                    generatesFunction.GenerateNodeFunction(registry, new GraphContext(subGraphData.inputStructName), GenerationMode.ForReals);
-                }
-            }
-            
             subGraphData.outputs.Clear();
             outputNode.GetInputSlots(subGraphData.outputs);
+            
+            List<AbstractMaterialNode> nodes = new List<AbstractMaterialNode>();
+            NodeUtils.DepthFirstCollectNodesFromNode(nodes, outputNode);
 
             subGraphData.effectiveShaderStage = ShaderStageCapability.All;
             foreach (var slot in subGraphData.outputs)
@@ -251,6 +248,33 @@ namespace UnityEditor.ShaderGraph
 
             subGraphData.requirements = ShaderGraphRequirements.FromNodes(nodes, subGraphData.effectiveShaderStage, false);
             subGraphData.inputs = graph.properties.ToList();
+
+            foreach (var node in nodes)
+            {
+                if (node.hasError)
+                {
+                    subGraphData.isValid = false;
+                    registry.ProvideFunction(subGraphData.functionName, sb => { });
+                    return;
+                }
+            }
+            
+            foreach (var node in nodes)
+            {
+                if (node is SubGraphNode subGraphNode)
+                {
+                    var nestedData = subGraphMap[subGraphNode.subGraphGuid];
+                    
+                    foreach (var functionName in nestedData.functionNames)
+                    {
+                        registry.names.Add(functionName);
+                    }
+                }
+                else if (node is IGeneratesFunction generatesFunction)
+                {
+                    generatesFunction.GenerateNodeFunction(registry, new GraphContext(subGraphData.inputStructName), GenerationMode.ForReals);
+                }
+            }
 
             registry.ProvideFunction(subGraphData.functionName, sb =>
             {

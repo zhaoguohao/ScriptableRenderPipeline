@@ -75,23 +75,20 @@ namespace UnityEditor.ShaderGraph.Drawing
                 }
             }
 
-            if (!(m_Graph.isSubGraph))
+            foreach (var guid in AssetDatabase.FindAssets(string.Format("t:{0}", typeof(SubGraphAsset))))
             {
-                foreach (var guid in AssetDatabase.FindAssets(string.Format("t:{0}", typeof(SubGraphAsset))))
-                {
-                    var asset = AssetDatabase.LoadAssetAtPath<SubGraphAsset>(AssetDatabase.GUIDToAssetPath(guid));
-                    var node = new SubGraphNode { subGraphAsset = asset };
+                var asset = AssetDatabase.LoadAssetAtPath<SubGraphAsset>(AssetDatabase.GUIDToAssetPath(guid));
+                var node = new SubGraphNode { subGraphAsset = asset };
 
-                    if (string.IsNullOrEmpty(node.subGraphData.path))
-                    {
-                        AddEntries(node, new string[1] { asset.name }, nodeEntries);
-                    }
-                    else
-                    {
-                        var title = node.subGraphData.path.Split('/').ToList();
-                        title.Add(asset.name);
-                        AddEntries(node, title.ToArray(), nodeEntries);
-                    }
+                if (string.IsNullOrEmpty(node.subGraphData.path))
+                {
+                    AddEntries(node, new string[1] { asset.name }, nodeEntries);
+                }
+                else
+                {
+                    var title = node.subGraphData.path.Split('/').ToList();
+                    title.Add(asset.name);
+                    AddEntries(node, title.ToArray(), nodeEntries);
                 }
             }
 

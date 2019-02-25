@@ -9,6 +9,8 @@ namespace UnityEditor.ShaderGraph
     class SubGraphData : ISerializationCallbackReceiver
     {
         public bool isValid;
+
+        public bool isRecursive;
         
         public long processedAt;
 
@@ -44,9 +46,37 @@ namespace UnityEditor.ShaderGraph
         [SerializeField]
         List<SerializationHelper.JSONSerializedElement> m_SerializedOutputs = new List<SerializationHelper.JSONSerializedElement>();
 
-        public List<string> subGraphGuids = new List<string>();
+        public List<string> children = new List<string>();
+
+        public List<string> descendents = new List<string>();
+
+        public List<string> ancestors = new List<string>();
 
         public ShaderStageCapability effectiveShaderStage;
+
+        public void Reset()
+        {
+            isValid = true;
+            isRecursive = false;
+            processedAt = 0;
+            functionName = null;
+            inputStructName = null;
+            hlslName = null;
+            assetGuid = null;
+            requirements = ShaderGraphRequirements.none;
+            path = null;
+            functionNames.Clear();
+            inputs.Clear();
+            m_SerializedInputs.Clear();
+            properties.Clear();
+            m_SerializedProperties.Clear();
+            outputs.Clear();
+            m_SerializedOutputs.Clear();
+            children.Clear();
+            descendents.Clear();
+            ancestors.Clear();
+            effectiveShaderStage = ShaderStageCapability.All;
+        }
         
         public void OnBeforeSerialize()
         {
