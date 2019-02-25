@@ -1,6 +1,7 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using UnityEditor.AnimatedValues;
+using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.LWRP;
@@ -22,6 +23,7 @@ namespace UnityEditor.Rendering.LWRP
         internal class Styles
         {
             public static GUIContent backgroundType = EditorGUIUtility.TrTextContent("Background Type", "Controls how to initialize the Camera's background.\n\nSkybox initializes camera with Skybox, defaulting to a background color if no skybox is found.\n\nSolid Color initializes background with the background color.\n\nDon't care have undefined values for camera background. Use this only if you are rendering all pixels in the Camera's view.");
+            public static GUIContent cameraType = EditorGUIUtility.TrTextContent("Camera Type", "Controls which type of camera this is.");
             public static GUIContent renderingShadows = EditorGUIUtility.TrTextContent("Render Shadows", "Enable this to make this camera render shadows.");
             public static GUIContent requireDepthTexture = EditorGUIUtility.TrTextContent("Depth Texture", "On makes this camera create a _CameraDepthTexture, which is a copy of the rendered depth values.\nOff makes the camera not create a depth texture.\nUse Pipeline Settings applies settings from the Render Pipeline Asset.");
             public static GUIContent requireOpaqueTexture = EditorGUIUtility.TrTextContent("Opaque Texture", "On makes this camera create a _CameraOpaqueTexture, which is a copy of the rendered view.\nOff makes the camera does not create an opaque texture.\nUse Pipeline Settings applies settings from the Render Pipeline Asset.");
@@ -41,7 +43,7 @@ namespace UnityEditor.Rendering.LWRP
                 new GUIContent("Use Pipeline Settings"),
             };
 
-            public static int[] rendererTypeOptions = Enum.GetValues(typeof(RendererOverrideOption)).Cast<int>().ToArray();
+            public static int[] rendererTypeOptions = Enum.GetValues(typeof(RendererOverrideOption)) as int[];
             public static GUIContent[] cameraBackgroundType =
             {
                 new GUIContent("Skybox"),
@@ -64,7 +66,7 @@ namespace UnityEditor.Rendering.LWRP
                 new GUIContent("On (Forced due to Post Processing)"),
             };
 
-            public static int[] additionalDataOptions = Enum.GetValues(typeof(CameraOverrideOption)).Cast<int>().ToArray();
+            public static int[] additionalDataOptions = Enum.GetValues(typeof(CameraOverrideOption)) as int[];
 
             // Using the pipeline Settings
             public static GUIContent[] displayedCameraOptions =
@@ -73,9 +75,19 @@ namespace UnityEditor.Rendering.LWRP
                 new GUIContent("Use Pipeline Settings"),
             };
             public static int[] cameraOptions = { 0, 1 };
+
+            // Camera Types
+            public static List<GUIContent> m_CameraTypeNames = null;
+            public static readonly string[] cameraTypeNames = Enum.GetNames(typeof(LWRPCameraType));
+            public static int[] additionalDataCameraTypeOptions = Enum.GetValues(typeof(LWRPCameraType)) as int[];
         };
 
+
+        UnityEditorInternal.ReorderableList m_LayerList;
+
         public Camera camera { get { return target as Camera; } }
+
+        static List<Camera> k_Cameras;
 
         // Animation Properties
         public bool isSameClearFlags { get { return !settings.clearFlags.hasMultipleDifferentValues; } }
@@ -96,6 +108,9 @@ namespace UnityEditor.Rendering.LWRP
         SerializedProperty m_AdditionalCameraDataRenderOpaqueProp;
         SerializedProperty m_AdditionalCameraDataRendererProp;
         SerializedProperty m_AdditionalCameraDataRendererDataProp;
+        SerializedProperty m_AdditionalCameraDataCameraTypeProp;
+
+        SerializedProperty m_AdditionalCameraDataCameras;
 
         void SetAnimationTarget(AnimBool anim, bool initialize, bool targetValue)
         {
@@ -117,28 +132,86 @@ namespace UnityEditor.Rendering.LWRP
             SetAnimationTarget(m_ShowTargetEyeAnim, initialize, settings.targetEye.intValue != (int)StereoTargetEyeMask.Both || PlayerSettings.virtualRealitySupported);
         }
 
+        void UpdateCameraTypeIntPopupData()
+        {
+            if (Styles.m_CameraTypeNames == null)
+            {
+                Styles.m_CameraTypeNames = new List<GUIContent>();
+                foreach (string typeName in Styles.cameraTypeNames)
+                {
+                    Styles.m_CameraTypeNames.Add(new GUIContent(typeName));
+                }
+            }
+        }
+
         public new void OnEnable()
         {
             m_LightweightRenderPipeline = GraphicsSettings.renderPipelineAsset as LightweightRenderPipelineAsset;
-
-            m_AdditionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
             settings.OnEnable();
+
+            // Additional Camera Data
+            m_AdditionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
+            if (m_AdditionalCameraData == null)
+            {
+                m_AdditionalCameraData = camera.gameObject.AddComponent<LWRPAdditionalCameraData>();
+            }
+            Camera cam = new Camera();
+            //m_AdditionalCameraData.AddCamera(cam);
             init(m_AdditionalCameraData);
 
+
+
             UpdateAnimationValues(true);
+            UpdateCameraTypeIntPopupData();
+            UpdateCameras();
         }
+
+        void UpdateCameras()
+        {
+            var camType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
+            if (camType == LWRPCameraType.Game)
+            {
+                m_LayerList = new ReorderableList(m_AdditionalCameraDataSO, m_AdditionalCameraDataCameras, true, true, true, true);
+                m_LayerList.drawHeaderCallback = rect => { EditorGUI.LabelField(rect, "Muppets"); };
+                m_LayerList.drawElementCallback = (rect, index, active, focused) =>
+                {
+                    var element = m_LayerList.serializedProperty.GetArrayElementAtIndex(index);
+                    rect.y += 2;
+                    rect.height = EditorGUIUtility.singleLineHeight;
+                    EditorGUI.PropertyField(
+                        rect,
+                        element,
+                        GUIContent.none);
+                };
+
+                m_LayerList.onRemoveCallback = list =>
+                {
+                    m_AdditionalCameraDataCameras.DeleteArrayElementAtIndex(list.index);
+                    ReorderableList.defaultBehaviours.DoRemoveButton(list);
+                    m_AdditionalCameraDataSO.ApplyModifiedProperties();
+                };
+
+                //m_LayerList.onAddCallback += AddCameraToCameraList;
+            }
+        }
+
+//        void AddCameraToCameraList(ReorderableList list)
+//        {
+//            Debug.Log(Selection.activeObject);
+//        }
 
         void init(LWRPAdditionalCameraData additionalCameraData)
         {
-            if(additionalCameraData == null)
-                return;
-
             m_AdditionalCameraDataSO = new SerializedObject(additionalCameraData);
             m_AdditionalCameraDataRenderShadowsProp = m_AdditionalCameraDataSO.FindProperty("m_RenderShadows");
             m_AdditionalCameraDataRenderDepthProp = m_AdditionalCameraDataSO.FindProperty("m_RequiresDepthTextureOption");
             m_AdditionalCameraDataRenderOpaqueProp = m_AdditionalCameraDataSO.FindProperty("m_RequiresOpaqueTextureOption");
             m_AdditionalCameraDataRendererProp = m_AdditionalCameraDataSO.FindProperty("m_RendererOverrideOption");
             m_AdditionalCameraDataRendererDataProp = m_AdditionalCameraDataSO.FindProperty("m_RendererData");
+            m_AdditionalCameraDataCameraTypeProp = m_AdditionalCameraDataSO.FindProperty("m_CameraType");
+
+
+            m_AdditionalCameraDataCameras = m_AdditionalCameraDataSO.FindProperty("m_Cameras");
         }
 
         public void OnDisable()
@@ -150,43 +223,101 @@ namespace UnityEditor.Rendering.LWRP
             m_LightweightRenderPipeline = null;
         }
 
+
         public override void OnInspectorGUI()
         {
+            //k_Cameras = LWRPAdditionalCameraData.getCameras;
+
+
             if (s_Styles == null)
                 s_Styles = new Styles();
 
             settings.Update();
             UpdateAnimationValues(false);
 
-            DrawClearFlags();
-            using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
-                if (group.visible) settings.DrawBackgroundColor();
-
-            settings.DrawCullingMask();
-
+            DrawCameraType();
             EditorGUILayout.Space();
 
-            settings.DrawProjection();
-            settings.DrawClippingPlanes();
-            settings.DrawNormalizedViewPort();
+            var camType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
+            // Offscreen Camera
+            if (camType == LWRPCameraType.Offscreen)
+            {
+                DrawClearFlags();
+                // Will split this and make a small warning that you do not have a sky box material assigned
+                using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
+                    if (group.visible)
+                        settings.DrawBackgroundColor();
 
-            EditorGUILayout.Space();
-            settings.DrawDepth();
-            DrawTargetTexture();
-            settings.DrawOcclusionCulling();
-            DrawHDR();
-            DrawMSAA();
-            settings.DrawDynamicResolution();
-            DrawAdditionalData();
-            settings.DrawVR();
-            settings.DrawMultiDisplay();
+                settings.DrawCullingMask();
 
-            using (var group = new EditorGUILayout.FadeGroupScope(m_ShowTargetEyeAnim.faded))
-                if (group.visible) settings.DrawTargetEye();
+                settings.DrawProjection();
+                settings.DrawClippingPlanes();
 
-            EditorGUILayout.Space();
-            EditorGUILayout.Space();
-            settings.ApplyModifiedProperties();
+                DrawTargetTexture();
+                settings.DrawOcclusionCulling();
+
+                settings.DrawDynamicResolution();
+
+                // Maybe this one needs to be split.
+                //DrawAdditionalData();
+                DrawRendererType();
+                DrawDepthTexture();
+            }
+
+            // Game Camera
+            if (camType == LWRPCameraType.Game)
+            {
+                m_LayerList.DoLayoutList();
+                m_AdditionalCameraDataSO.ApplyModifiedProperties();
+
+                DrawClearFlags();
+                using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
+                    if (group.visible)
+                        settings.DrawBackgroundColor();
+                settings.DrawCullingMask();
+
+                settings.DrawProjection();
+                settings.DrawClippingPlanes();
+
+                settings.DrawNormalizedViewPort();
+                settings.DrawDepth();
+
+                settings.DrawOcclusionCulling();
+                DrawHDR();
+                DrawMSAA();
+
+                settings.DrawDynamicResolution();
+
+                // Maybe this one needs to be split.
+                DrawRendererType();
+                DrawDepthTexture();
+                DrawOpaqueTexture();
+                DrawRenderShadows();
+
+                DrawVRSettings();
+
+                settings.DrawMultiDisplay();
+            }
+
+            // Overlay Camera
+            if (camType == LWRPCameraType.Overlay)
+            {
+                settings.DrawCullingMask();
+
+                settings.DrawProjection();
+                settings.DrawClippingPlanes();
+
+                settings.DrawOcclusionCulling();
+            }
+            // UI Camera
+            if (camType == LWRPCameraType.UI)
+            {
+                settings.DrawCullingMask();
+                settings.DrawProjection();
+                settings.DrawClippingPlanes();
+            }
+
+        settings.ApplyModifiedProperties();
         }
 
         BackgroundType GetBackgroundType(CameraClearFlags clearFlags)
@@ -201,6 +332,20 @@ namespace UnityEditor.Rendering.LWRP
                 // DepthOnly is not supported by design in LWRP. We upgrade it to SolidColor
                 default:
                     return BackgroundType.SolidColor;
+            }
+        }
+
+        void DrawCameraType()
+        {
+            LWRPCameraType selectedCameraType;
+            selectedCameraType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
+
+            EditorGUI.BeginChangeCheck();
+            int selCameraType = EditorGUILayout.IntPopup(Styles.cameraType, (int)selectedCameraType, Styles.m_CameraTypeNames.ToArray(), Styles.additionalDataCameraTypeOptions);
+            if (EditorGUI.EndChangeCheck())
+            {
+                m_AdditionalCameraDataCameraTypeProp.intValue = selCameraType;
+                m_AdditionalCameraDataSO.ApplyModifiedProperties();
             }
         }
 
@@ -273,53 +418,30 @@ namespace UnityEditor.Rendering.LWRP
             }
         }
 
-        void DrawAdditionalData()
+        void DrawRendererType()
         {
-            bool hasChanged = false;
-            bool selectedValueShadows;
-            CameraOverrideOption selectedDepthOption;
-            CameraOverrideOption selectedOpaqueOption;
             RendererOverrideOption selectedRendererOption;
+            m_AdditionalCameraDataSO.Update();
+            selectedRendererOption = (RendererOverrideOption) m_AdditionalCameraDataRendererProp.intValue;
 
-            if (m_AdditionalCameraDataSO == null)
-            {
-                selectedValueShadows = true;
-                selectedDepthOption = CameraOverrideOption.UsePipelineSettings;
-                selectedOpaqueOption = CameraOverrideOption.UsePipelineSettings;
-                selectedRendererOption = RendererOverrideOption.UsePipelineSettings;
-            }
-            else
-            {
-                m_AdditionalCameraDataSO.Update();
-                selectedValueShadows = m_AdditionalCameraData.renderShadows;
-                selectedDepthOption = (CameraOverrideOption)m_AdditionalCameraDataRenderDepthProp.intValue;
-                selectedOpaqueOption =(CameraOverrideOption)m_AdditionalCameraDataRenderOpaqueProp.intValue;
-                selectedRendererOption = (RendererOverrideOption) m_AdditionalCameraDataRendererProp.intValue;
-            }
-
-            // Renderer Type
             Rect controlRectRendererType = EditorGUILayout.GetControlRect(true);
 
-            if (m_AdditionalCameraDataSO != null)
-                EditorGUI.BeginProperty(controlRectRendererType, Styles.rendererType, m_AdditionalCameraDataRendererProp);
+            EditorGUI.BeginProperty(controlRectRendererType, Styles.rendererType, m_AdditionalCameraDataRendererProp);
             EditorGUI.BeginChangeCheck();
             selectedRendererOption = (RendererOverrideOption)EditorGUI.IntPopup(controlRectRendererType, Styles.rendererType, (int)selectedRendererOption, Styles.displayedRendererTypeOverride, Styles.rendererTypeOptions);
             if (EditorGUI.EndChangeCheck())
-                hasChanged = true;
-            if (m_AdditionalCameraDataSO != null)
-                EditorGUI.EndProperty();
-
-            if (selectedRendererOption == RendererOverrideOption.Custom && m_AdditionalCameraDataSO != null)
             {
-                EditorGUI.indentLevel++;
-                EditorGUI.BeginChangeCheck();
-                EditorGUILayout.PropertyField(m_AdditionalCameraDataRendererDataProp, Styles.rendererData);
-                if (EditorGUI.EndChangeCheck())
-                    hasChanged = true;
-                EditorGUI.indentLevel--;
+                m_AdditionalCameraDataRendererProp.intValue = (int)selectedRendererOption;
+                m_AdditionalCameraDataSO.ApplyModifiedProperties();
             }
+            EditorGUI.EndProperty();
+        }
 
-            // Depth Texture
+        void DrawDepthTexture()
+        {
+            CameraOverrideOption selectedDepthOption;
+            m_AdditionalCameraDataSO.Update();
+            selectedDepthOption = (CameraOverrideOption)m_AdditionalCameraDataRenderDepthProp.intValue;
             Rect controlRectDepth = EditorGUILayout.GetControlRect(true);
             // Need to check if post processing is added and active.
             // If it is we will set the int pop to be 1 which is ON and gray it out
@@ -338,63 +460,64 @@ namespace UnityEditor.Rendering.LWRP
             }
             if(defaultDrawOfDepthTextureUI)
             {
-                if(m_AdditionalCameraDataSO != null)
-                    EditorGUI.BeginProperty(controlRectDepth, Styles.requireDepthTexture, m_AdditionalCameraDataRenderDepthProp);
+                EditorGUI.BeginProperty(controlRectDepth, Styles.requireDepthTexture, m_AdditionalCameraDataRenderDepthProp);
                 EditorGUI.BeginChangeCheck();
 
                 selectedDepthOption = (CameraOverrideOption)EditorGUI.IntPopup(controlRectDepth, Styles.requireDepthTexture, (int)selectedDepthOption, Styles.displayedAdditionalDataOptions, Styles.additionalDataOptions);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    hasChanged = true;
+                    m_AdditionalCameraDataRenderDepthProp.intValue = (int)selectedDepthOption;
+                    m_AdditionalCameraDataSO.ApplyModifiedProperties();
                 }
-                if(m_AdditionalCameraDataSO != null)
-                    EditorGUI.EndProperty();
+                EditorGUI.EndProperty();
             }
+        }
 
-            // Opaque Texture
+        void DrawOpaqueTexture()
+        {
+            CameraOverrideOption selectedOpaqueOption;
+            m_AdditionalCameraDataSO.Update();
+            selectedOpaqueOption =(CameraOverrideOption)m_AdditionalCameraDataRenderOpaqueProp.intValue;
+
             Rect controlRectColor = EditorGUILayout.GetControlRect(true);
-            // Starting to check the property if we have the scriptable object
-            if(m_AdditionalCameraDataSO != null)
-                EditorGUI.BeginProperty(controlRectColor, Styles.requireOpaqueTexture, m_AdditionalCameraDataRenderOpaqueProp);
+
+            EditorGUI.BeginProperty(controlRectColor, Styles.requireOpaqueTexture, m_AdditionalCameraDataRenderOpaqueProp);
             EditorGUI.BeginChangeCheck();
             selectedOpaqueOption = (CameraOverrideOption)EditorGUI.IntPopup(controlRectColor, Styles.requireOpaqueTexture, (int)selectedOpaqueOption, Styles.displayedAdditionalDataOptions, Styles.additionalDataOptions);
             if (EditorGUI.EndChangeCheck())
             {
-                hasChanged = true;
+                m_AdditionalCameraDataRenderOpaqueProp.intValue = (int)selectedOpaqueOption;
+                m_AdditionalCameraDataSO.ApplyModifiedProperties();
             }
-            // Ending to check the property if we have the scriptable object
-            if(m_AdditionalCameraDataSO != null)
-                EditorGUI.EndProperty();
+            EditorGUI.EndProperty();
+        }
 
-            // Shadows
+        void DrawRenderShadows()
+        {
+            bool selectedValueShadows;
+            m_AdditionalCameraDataSO.Update();
+            selectedValueShadows = m_AdditionalCameraData.renderShadows;
+
             Rect controlRectShadows = EditorGUILayout.GetControlRect(true);
-            if(m_AdditionalCameraDataSO != null)
-                EditorGUI.BeginProperty(controlRectShadows, Styles.renderingShadows, m_AdditionalCameraDataRenderShadowsProp);
+
+            EditorGUI.BeginProperty(controlRectShadows, Styles.renderingShadows, m_AdditionalCameraDataRenderShadowsProp);
             EditorGUI.BeginChangeCheck();
 
             selectedValueShadows = EditorGUI.Toggle(controlRectShadows, Styles.renderingShadows, selectedValueShadows);
             if (EditorGUI.EndChangeCheck())
             {
-                hasChanged = true;
-            }
-            if(m_AdditionalCameraDataSO != null)
-                EditorGUI.EndProperty();
-
-            if (hasChanged)
-            {
-                if (m_AdditionalCameraDataSO == null)
-                {
-                    m_AdditionalCameraData = camera.gameObject.AddComponent<LWRPAdditionalCameraData>();
-                    init(m_AdditionalCameraData);
-                }
                 m_AdditionalCameraDataRenderShadowsProp.boolValue = selectedValueShadows;
-                m_AdditionalCameraDataRenderDepthProp.intValue = (int)selectedDepthOption;
-                m_AdditionalCameraDataRenderOpaqueProp.intValue = (int)selectedOpaqueOption;
-                m_AdditionalCameraDataRendererProp.intValue = (int)selectedRendererOption;
                 m_AdditionalCameraDataSO.ApplyModifiedProperties();
             }
+            EditorGUI.EndProperty();
+        }
 
-
+        void DrawVRSettings()
+        {
+            settings.DrawVR();
+            using (var group = new EditorGUILayout.FadeGroupScope(m_ShowTargetEyeAnim.faded))
+                if (group.visible)
+                    settings.DrawTargetEye();
         }
     }
 }

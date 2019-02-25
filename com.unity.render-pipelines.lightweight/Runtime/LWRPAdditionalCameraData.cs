@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine.Experimental.Rendering.LWRP;
 using UnityEngine.Serialization;
 
@@ -16,6 +18,15 @@ namespace UnityEngine.Rendering.LWRP
         UsePipelineSettings,
     }
 
+    public enum LWRPCameraType
+    {
+        Offscreen,
+        Game,
+        Overlay,
+        UI,
+    }
+
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Camera))]
     [ImageEffectAllowedInSceneView]
@@ -33,9 +44,19 @@ namespace UnityEngine.Rendering.LWRP
         [SerializeField]
         CameraOverrideOption m_RequiresOpaqueTextureOption = CameraOverrideOption.UsePipelineSettings;
 
-        [SerializeField] RendererOverrideOption m_RendererOverrideOption = RendererOverrideOption.UsePipelineSettings;
-        [SerializeField] IRendererData m_RendererData = null;
+        [SerializeField]
+        RendererOverrideOption m_RendererOverrideOption = RendererOverrideOption.UsePipelineSettings;
+
+        [SerializeField]
+        IRendererData m_RendererData = null;
+
         IRendererSetup m_RendererSetup = null;
+
+        [SerializeField]
+        LWRPCameraType m_CameraType = LWRPCameraType.Game;
+
+        [SerializeField]
+        List<Camera> m_Cameras = new List<Camera>();
 
         // Deprecated:
         [FormerlySerializedAs("requiresDepthTexture"), SerializeField]
@@ -56,14 +77,30 @@ namespace UnityEngine.Rendering.LWRP
 
         public CameraOverrideOption requiresDepthOption
         {
-            get { return m_RequiresDepthTextureOption; }
-            set { m_RequiresDepthTextureOption = value; }
+            get  => m_RequiresDepthTextureOption;
+            set => m_RequiresDepthTextureOption = value;
         }
 
         public CameraOverrideOption requiresColorOption
         {
-            get { return m_RequiresOpaqueTextureOption; }
-            set { m_RequiresOpaqueTextureOption = value; }
+            get => m_RequiresOpaqueTextureOption;
+            set => m_RequiresOpaqueTextureOption = value;
+        }
+
+        public LWRPCameraType cameraType
+        {
+            get => m_CameraType;
+            set => m_CameraType = value;
+        }
+
+//        public static List<Camera> getCameras
+//        {
+//            get => m_Cameras;
+//        }
+
+        public void AddCamera(Camera camera)
+        {
+            m_Cameras.Add(camera);
         }
 
         public bool requiresDepthTexture
@@ -125,6 +162,35 @@ namespace UnityEngine.Rendering.LWRP
                 m_RequiresDepthTextureOption = (m_RequiresDepthTexture) ? CameraOverrideOption.On : CameraOverrideOption.Off;
                 m_RequiresOpaqueTextureOption = (m_RequiresColorTexture) ? CameraOverrideOption.On : CameraOverrideOption.Off;
             }
+        }
+
+        public void OnDrawGizmos()
+        {
+            string gizmoName;
+            Color tint = Color.white;
+            if (m_CameraType == LWRPCameraType.Game)
+            {
+                gizmoName = "Camera_Base";
+            }
+            else if (m_CameraType == LWRPCameraType.Overlay)
+            {
+                gizmoName = "Camera_Overlay";
+            }
+            else if (m_CameraType == LWRPCameraType.Offscreen)
+            {
+                gizmoName = "Camera_Offscreen";
+            }
+            else
+            {
+                gizmoName = "Camera_UI";
+            }
+
+            if (Selection.activeObject == this.gameObject)
+            {
+                tint = new Color(1f,0.5f,0,0.5f);
+                // Get the preferences selection color
+            }
+            Gizmos.DrawIcon(transform.position, gizmoName, true, tint);
         }
     }
 }

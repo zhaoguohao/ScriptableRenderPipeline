@@ -16,6 +16,7 @@ namespace UnityEngine.Rendering.LWRP
         void ExecuteBeforeCameraRender(LightweightRenderPipeline pipelineInstance, ScriptableRenderContext context, Camera camera);
     }
 
+
     public sealed partial class LightweightRenderPipeline : RenderPipeline
     {
         static class PerFrameBuffer
@@ -116,6 +117,7 @@ namespace UnityEngine.Rendering.LWRP
             SortCameras(cameras);
             foreach (Camera camera in cameras)
             {
+
                 BeginCameraRendering(camera);
 
                 foreach (var beforeCamera in camera.GetComponents<IBeforeCameraRender>())
@@ -142,6 +144,16 @@ namespace UnityEngine.Rendering.LWRP
                 ScriptableRenderer renderer = pipelineInstance.renderer;
                 var settings = asset;
                 LWRPAdditionalCameraData additionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
+
+#if UNITY_EDITOR
+                // Checking if the additionalcameradata is null, and if it is we create a new one here and assign it to the additionalcameradata var
+                if (additionalCameraData == null)
+                {
+                    camera.gameObject.AddComponent<LWRPAdditionalCameraData>();
+                    additionalCameraData = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
+                }
+#endif
+
                 InitializeCameraData(settings, camera, additionalCameraData, out var cameraData);
                 SetupPerCameraShaderConstants(cameraData);
 
@@ -248,18 +260,10 @@ namespace UnityEngine.Rendering.LWRP
 
             bool anyShadowsEnabled = settings.supportsMainLightShadows || settings.supportsAdditionalLightShadows;
             cameraData.maxShadowDistance = (anyShadowsEnabled) ? settings.shadowDistance : 0.0f;
-            
-            if (additionalCameraData != null)
-            {
-                cameraData.maxShadowDistance = (additionalCameraData.renderShadows) ? cameraData.maxShadowDistance : 0.0f;
-                cameraData.requiresDepthTexture = additionalCameraData.requiresDepthTexture;
-                cameraData.requiresOpaqueTexture = additionalCameraData.requiresColorTexture;
-            }
-            else
-            {
-                cameraData.requiresDepthTexture = settings.supportsCameraDepthTexture;
-                cameraData.requiresOpaqueTexture = settings.supportsCameraOpaqueTexture;
-            }
+
+            cameraData.maxShadowDistance = (additionalCameraData.renderShadows) ? cameraData.maxShadowDistance : 0.0f;
+            cameraData.requiresDepthTexture = additionalCameraData.requiresDepthTexture;
+            cameraData.requiresOpaqueTexture = additionalCameraData.requiresColorTexture;
 
             cameraData.requiresDepthTexture |= cameraData.isSceneViewCamera || cameraData.postProcessEnabled;
 
