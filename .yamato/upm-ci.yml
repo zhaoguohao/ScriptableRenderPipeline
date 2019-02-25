@@ -5,33 +5,20 @@ platforms:
     type: Unity::VM
     image: package-ci/win10:latest
     flavor: m1.large
-  - name: mac
-    type: Unity::VM::osx
-    image: buildfarm/mac:stable
-    flavor: m1.mac
 projects:
   - name: ShaderGraph
   - name: VisualEffectGraph
   - name: LWGraphicsTest
   - name: HDRP_Tests
   - name: PostProcessing
----
-{% for editor in editors %}
-{% for platform in platforms %}
-{% for project in projects %}
-
-{% if platform.name == 'win' %}
- testplatforms:
+testplatforms:
   - name: StandaloneWindows64
   - name: playmode
   - name: editmode
-{% elsif platform.name == 'mac' %}
- testplatforms:
-  - name: StandaloneOSXIntel64
-  - name: playmode
-  - name: editmode
-{% endif %}
- 
+---
+{% for editor in editors %}
+{% for platform in platforms %}
+{% for project in projects %} 
 {% for testplatform in testplatforms %}
 {{ project.name }}_{{ platform.name }}_{{ editor.version }}_{{ testplatform.name }}:
   name : Test {{ project.name }} on version {{ editor.version }} on {{ platform.name }}_{{ testplatform.name }}
