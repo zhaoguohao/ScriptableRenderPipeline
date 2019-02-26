@@ -528,7 +528,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             stencilWriteMaskGBuffer |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
             stencilWriteMaskMV |= (int)HDRenderPipeline.StencilBitMask.DoesntReceiveSSR | (int)HDRenderPipeline.StencilBitMask.DecalsForwardOutputNormalBuffer;
 
-            // As we tag both during velocity pass and Gbuffer pass we need a separate state and we need to use the write mask
+            // As we tag both during motion vector pass and Gbuffer pass we need a separate state and we need to use the write mask
             material.SetInt(kStencilRef, stencilRef);
             material.SetInt(kStencilWriteMask, stencilWriteMask);
             material.SetInt(kStencilRefDepth, stencilRefDepth);
