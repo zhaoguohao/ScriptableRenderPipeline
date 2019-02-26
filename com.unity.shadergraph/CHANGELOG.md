@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [6.5.0] - 2019-XX-XX
+### Added
+- You can now add Matrix, Sampler State and Gradient properties to the Blackboard.
+
+### Changed
+- Blackboard fields that had no affect on Sub-Graph input ports have been removed from the Blackboard in Sub-Graphs.
 
 ## [6.4.0] - 2019-02-21
 ### Fixed
