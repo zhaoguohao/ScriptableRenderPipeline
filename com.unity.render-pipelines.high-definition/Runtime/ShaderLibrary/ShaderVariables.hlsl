@@ -86,7 +86,7 @@ CBUFFER_START(UnityPerDraw)
     // This contain occlusion factor from 0 to 1 for dynamic objects (no SH here)
     float4 unity_ProbesOcclusion;
 
-    // Velocity
+    // Motion vectors
     float4x4 unity_MatrixPreviousM;
     float4x4 unity_MatrixPreviousMI;
     //X : Use last frame positions (right now skinned meshes are the only objects that use this

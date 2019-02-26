@@ -32,12 +32,11 @@
 // TODO: CAUTION: current DecodeMotionVector is not used in motion vector / TAA pass as it come from Postprocess stack
 // This will be fix when postprocess will be integrated into HD, but it mean that we must not change the
 // EncodeMotionVector / DecodeMotionVector code for now, i.e it must do nothing like it is doing currently.
-// Note2: Motion blur code of posptrocess stack do * 2 - 1 to uncompress velocity which is not expected, TAA is correct.
-// Design note: We assume that velocity/distortion fit into a single buffer (i.e not spread on several buffer)
-void EncodeMotionVector(float2 velocity, out float4 outBuffer)
+// Design note: We assume that motion vector/distortion fit into a single buffer (i.e not spread on several buffer)
+void EncodeMotionVector(float2 motionVector, out float4 outBuffer)
 {
     // RT - 16:16 float
-    outBuffer = float4(velocity.xy, 0.0, 0.0);
+    outBuffer = float4(motionVector.xy, 0.0, 0.0);
 }
 
 bool PixelSetAsNoMotionVectors(float4 inBuffer)
@@ -45,9 +44,9 @@ bool PixelSetAsNoMotionVectors(float4 inBuffer)
 	return inBuffer.x > 1.0f;
 }
 
-void DecodeMotionVector(float4 inBuffer, out float2 velocity)
+void DecodeMotionVector(float4 inBuffer, out float2 motionVector)
 {
-	velocity = PixelSetAsNoMotionVectors(inBuffer) ? 0.0f : inBuffer.xy;
+    motionVector = PixelSetAsNoMotionVectors(inBuffer) ? 0.0f : inBuffer.xy;
 }
 
 void EncodeDistortion(float2 distortion, float distortionBlur, bool isValidSource, out float4 outBuffer)
