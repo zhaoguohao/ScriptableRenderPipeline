@@ -492,11 +492,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             // Stencil usage rules:
             // DoesntReceiveSSR and DecalsForwardOutputNormalBuffer need to be tagged during depth prepass
             // LightingMask need to be tagged during either GBuffer or Forward pass
-            // ObjectVelocity need to be tagged in velocity pass.
-            // As velocity pass can be use as a replacement of depth prepass it also need to have DoesntReceiveSSR and DecalsForwardOutputNormalBuffer
+            // ObjectMotionVectors need to be tagged in velocity pass.
+            // As motion vectors pass can be use as a replacement of depth prepass it also need to have DoesntReceiveSSR and DecalsForwardOutputNormalBuffer
             // As GBuffer pass can have no depth prepass, it also need to have DoesntReceiveSSR and DecalsForwardOutputNormalBuffer
-            // Object velocity is always render after a full depth buffer (if there is no depth prepass for GBuffer all object motion vectors are render after GBuffer)
-            // so we have a guarantee than when we write object velocity no other object will be draw on top (and so would have require to overwrite velocity).
+            // Object motion vectors is always render after a full depth buffer (if there is no depth prepass for GBuffer all object motion vectors are render after GBuffer)
+            // so we have a guarantee than when we write object motion vectors no other object will be draw on top (and so would have require to overwrite motion vectors).
             // Final combination is:
             // Prepass: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer
             // Motion vectors: DoesntReceiveSSR,  DecalsForwardOutputNormalBuffer, ObjectVelocity

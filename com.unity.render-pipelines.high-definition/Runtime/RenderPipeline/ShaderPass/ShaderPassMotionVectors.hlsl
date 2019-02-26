@@ -2,7 +2,7 @@
 #error SHADERPASS_is_not_correctly_define
 #endif
 
-#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/VelocityVertexShaderCommon.hlsl"
+#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/MotionVectorVertexShaderCommon.hlsl"
 
 PackedVaryingsType Vert(AttributesMesh inputMesh,
                         AttributesPass inputPass)
@@ -10,7 +10,7 @@ PackedVaryingsType Vert(AttributesMesh inputMesh,
     VaryingsType varyingsType;
     varyingsType.vmesh = VertMesh(inputMesh);
 
-    return VelocityVS(varyingsType, inputMesh, inputPass);
+    return MotionVectorVS(varyingsType, inputMesh, inputPass);
 }
 
 #ifdef TESSELLATION_ON
@@ -21,7 +21,7 @@ PackedVaryingsToPS VertTesselation(VaryingsToDS input)
 
     output.vmesh = VertMeshTesselation(input.vmesh);
 
-    VelocityPositionZBias(output);
+    MotionVectorPositionZBias(output);
 
     output.vpass.positionCS = input.vpass.positionCS;
     output.vpass.previousPositionCS = input.vpass.previousPositionCS;
