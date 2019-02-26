@@ -1489,9 +1489,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (!shouldRenderMotionVectorAfterGBuffer)
             {
-                // If objects velocity if enabled, this will render the objects with motion vector into the target buffers (in addition to the depth)
+                // If objects motion vectors if enabled, this will render the objects with motion vector into the target buffers (in addition to the depth)
                 // Note: An object with motion vector must not be render in the prepass otherwise we can have motion vector write that should have been rejected
-                RenderObjectsVelocity(cullingResults, hdCamera, renderContext, cmd);
+                RenderObjectsMotionVectors(cullingResults, hdCamera, renderContext, cmd);
             }
 
             // Now that all depths have been rendered, resolve the depth buffer
@@ -1515,11 +1515,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             if (shouldRenderMotionVectorAfterGBuffer)
             {
-                // See the call RenderObjectsVelocity() above and comment
-                RenderObjectsVelocity(cullingResults, hdCamera, renderContext, cmd);
+                // See the call RenderObjectsMotionVectors() above and comment
+                RenderObjectsMotionVectors(cullingResults, hdCamera, renderContext, cmd);
             }
 
-            RenderCameraVelocity(cullingResults, hdCamera, renderContext, cmd);
+            RenderCameraMotionVectors(cullingResults, hdCamera, renderContext, cmd);
 
             StopStereoRendering(cmd, renderContext, camera);
             // Caution: We require sun light here as some skies use the sun light to render, it means that UpdateSkyEnvironment must be called after PrepareLightsForGPU.
@@ -2390,7 +2390,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         XRUtils.DrawOcclusionMesh(cmd, hdCamera.camera, hdCamera.camera.stereoEnabled);
 
                         // Full forward: Output normal buffer for both forward and forwardOnly
-                        // Exclude object that render velocity (if motion vector are enabled)
+                        // Exclude object that render motion vectors (if motion vector are enabled)
                         RenderOpaqueRenderList(cull, hdCamera, renderContext, cmd, m_DepthOnlyAndDepthForwardOnlyPassNames, 0, HDRenderQueue.k_RenderQueue_AllOpaque, excludeMotionVector: excludeMotion);
                     }
                     break;
@@ -2810,12 +2810,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void RenderObjectsVelocity(CullingResults cullResults, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)
+        void RenderObjectsMotionVectors(CullingResults cullResults, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)
         {
             if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.ObjectMotionVectors))
                 return;
 
-            using (new ProfilingSample(cmd, "Objects Velocity", CustomSamplerId.ObjectsVelocity.GetSampler()))
+            using (new ProfilingSample(cmd, "Objects Motion Vectors Rendering", CustomSamplerId.ObjectsMotionVector.GetSampler()))
             {
                 // These flags are still required in SRP or the engine won't compute previous model matrices...
                 // If the flag hasn't been set yet on this camera, motion vectors will skip a frame.
@@ -2826,12 +2826,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-        void RenderCameraVelocity(CullingResults cullResults, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)
+        void RenderCameraMotionVectors(CullingResults cullResults, HDCamera hdCamera, ScriptableRenderContext renderContext, CommandBuffer cmd)
         {
             if (!hdCamera.frameSettings.IsEnabled(FrameSettingsField.MotionVectors))
                 return;
 
-            using (new ProfilingSample(cmd, "Camera Velocity", CustomSamplerId.CameraVelocity.GetSampler()))
+            using (new ProfilingSample(cmd, "Camera Motion Vectors Rendering", CustomSamplerId.CameraMotionVectors.GetSampler()))
             {
                 // These flags are still required in SRP or the engine won't compute previous model matrices...
                 // If the flag hasn't been set yet on this camera, motion vectors will skip a frame.

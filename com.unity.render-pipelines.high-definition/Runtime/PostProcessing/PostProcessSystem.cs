@@ -1335,7 +1335,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             int groupSizeX = 8;
             int groupSizeY = 8;
 
-            using (new ProfilingSample(cmd, "Velocity prepping", CustomSamplerId.MotionBlurVelocityPrep.GetSampler()))
+            using (new ProfilingSample(cmd, "Velocity prepping", CustomSamplerId.MotionBlurMotionVecPrep.GetSampler()))
             {
                 cs = m_Resources.shaders.motionBlurVelocityPrepCS;
                 kernel = cs.FindKernel("MotionVecPreppingCS");
