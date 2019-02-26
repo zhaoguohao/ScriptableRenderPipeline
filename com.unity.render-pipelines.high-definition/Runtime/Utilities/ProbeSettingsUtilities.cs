@@ -57,8 +57,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
                         cameraPosition.position = proxyMatrix.MultiplyPoint(settings.proxySettings.capturePositionProxySpace);
                         cameraPosition.rotation = proxyMatrix.rotation * settings.proxySettings.captureRotationProxySpace;
-
-                        
                         break;
                     }
                 case PositionMode.MirrorReferenceTransformWithProbePlane:
@@ -109,7 +107,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             var worldToCameraRHS = GeometryUtils.CalculateWorldToCameraMatrixRHS(
                 probePosition.referencePosition,
-                probePosition.referenceRotation
+                // The capture always look at the center of the probe influence
+                Quaternion.LookRotation(mirrorPosition - probePosition.referencePosition, Vector3.up)
             );
             var reflectionMatrix = GeometryUtils.CalculateReflectionMatrix(mirrorPosition, mirrorForward);
             cameraPosition.worldToCameraMatrix = worldToCameraRHS * reflectionMatrix;
@@ -140,7 +139,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 mirrorForward
             );
             var sourceProjection = Matrix4x4.Perspective(
+#if PLANAR_WITH_DYNAMIC_FOV
+                // Dynamic FOV tries to adapt the FOV to have maximum usage of the target render texture
+                //     (A lot of pixel can be discarded in the render texture). This way we can have a greater
+                //     resolution for the planar with the same cost.
+                // However, currently, the change of FOV feels weird and it may need some fov
+                //     correction on the shader. So it needs further and proper investigation to make it work reliably
+                //     without impacting performance.
+                settings.influence.ComputeFOVAt(probePosition.referencePosition, mirrorPosition, probePosition.influenceToWorld),
+#else
                 cameraSettings.frustum.fieldOfView,
+#endif
                 cameraSettings.frustum.aspect,
                 cameraSettings.frustum.nearClipPlane,
                 cameraSettings.frustum.farClipPlane
