@@ -1338,8 +1338,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             using (new ProfilingSample(cmd, "Velocity prepping", CustomSamplerId.MotionBlurVelocityPrep.GetSampler()))
             {
                 cs = m_Resources.shaders.motionBlurVelocityPrepCS;
-                kernel = cs.FindKernel("VelPreppingCS");
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VelocityAndDepth, preppedVelocity);
+                kernel = cs.FindKernel("MotionVecPreppingCS");
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._MotionVecAndDepth, preppedVelocity);
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._MotionBlurParams, motionBlurParams0);
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._MotionBlurParams1, motionBlurParams1);
                 cmd.SetComputeMatrixParam(cs, HDShaderIDs._PrevVPMatrixNoTranslation, camera.prevViewProjMatrixNoCameraTrans);
@@ -1358,8 +1358,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // We store R11G11B10 with RG = Max vel and B = Min vel magnitude
                 cs = m_Resources.shaders.motionBlurTileGenCS;
                 kernel = cs.FindKernel("TileGenPass");
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._TileVelMinMax, minMaxTileVel);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VelocityAndDepth, preppedVelocity);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._TileMinMaxMotionVec, minMaxTileVel);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._MotionVecAndDepth, preppedVelocity);
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._MotionBlurParams, motionBlurParams0);
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._MotionBlurParams1, motionBlurParams1);
 
@@ -1382,7 +1382,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cs = m_Resources.shaders.motionBlurTileGenCS;
                 kernel = cs.FindKernel("TileNeighbourhood");
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._TileTargetSize, tileTargetSize);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._TileVelMinMax, minMaxTileVel);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._TileMinMaxMotionVec, minMaxTileVel);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._TileMaxNeighbourhood, maxTileNeigbourhood);
                 if (scattering)
                 {
@@ -1416,7 +1416,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 cs = m_Resources.shaders.motionBlurCS;
                 kernel = cs.FindKernel("MotionBlurCS");
                 cmd.SetComputeVectorParam(cs, HDShaderIDs._TileTargetSize, tileTargetSize);
-                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._VelocityAndDepth, preppedVelocity);
+                cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._MotionVecAndDepth, preppedVelocity);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._OutputTexture, destination);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._TileMaxNeighbourhood, maxTileNeigbourhood);
                 cmd.SetComputeTextureParam(cs, kernel, HDShaderIDs._InputTexture, source);
