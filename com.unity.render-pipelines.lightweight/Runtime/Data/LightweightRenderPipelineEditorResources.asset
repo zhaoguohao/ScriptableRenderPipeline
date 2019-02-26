@@ -23,3 +23,5 @@ MonoBehaviour:
     type: 3}
   m_AutodeskInteractiveMaskedShader: {fileID: 4800000, guid: 80aa867ac363ac043847b06ad71604cd,
     type: 3}
+  m_SpeedTree7Shader: {fileID: 4800000, guid: 8f822a7ef43cfb44f80443f91a29700a, type: 3}
+  m_SpeedTree8Shader: {fileID: 4800000, guid: 9c454175595577749806276e670d22cc, type: 3}
