@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [6.4.0] - 2019-02-21
 ### Fixed
 - Fixed the Transform node, so going from Tangent Space to any other space now works as expected.
-- Removing ports with connected edges no longer produces null reference errors.
+- Null reference errors no longer occur when you remove ports with connected edges.
 
 ## [6.3.0] - 2019-02-18
 ### Fixed
