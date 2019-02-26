@@ -374,7 +374,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         [SerializeField]
         bool m_TransparentWritesVelocity;
 
-        public ToggleData transparentWritesVelocity
+        public ToggleData transparentWritesMotionVec
         {
             get { return new ToggleData(m_TransparentWritesVelocity); }
             set
