@@ -101,7 +101,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             ComputeShader bilateralFilter = m_PipelineAsset.renderPipelineResources.shaders.areaBillateralFilterCS;
             bool invalidState = rtEnvironement == null || !rtEnvironement.raytracedShadows || hdCamera.frameSettings.litShaderMode != LitShaderMode.Deferred
                 || shadowsShader  == null || bilateralFilter == null
-                || m_PipelineResources.textures.owenScrambledTex == null || m_PipelineResources.textures.scramblingTex == null;
+                || m_PipelineResources.textures.owenScrambledTex == null || m_PipelineResources.textures.scramblingTex == null
+                || ((hdCamera.camera.cameraType == CameraType.SceneView) && !rtEnvironement.raytraceSceneCamera);
 
             // If invalid state or ray-tracing acceleration structure, we stop right away
             if (invalidState)
