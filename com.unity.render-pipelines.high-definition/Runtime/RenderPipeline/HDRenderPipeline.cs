@@ -200,7 +200,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RenderTexture                   m_TemporaryTargetForCubemaps;
         Stack<Camera>                   m_ProbeCameraPool = new Stack<Camera>();
 
-        RenderTargetIdentifier[] m_MRTTransparentVelocity;
+        RenderTargetIdentifier[] m_MRTTransparentMotionVec;
         RenderTargetIdentifier[] m_MRTWithSSS;
         string m_ForwardPassProfileName;
 
@@ -363,7 +363,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_DebugDisplaySettings.data.msaaSamples = m_MSAASamples;
 
             m_MRTWithSSS = new RenderTargetIdentifier[2 + m_SSSBufferManager.sssBufferCount];
-            m_MRTTransparentVelocity = new RenderTargetIdentifier[2];
+            m_MRTTransparentMotionVec = new RenderTargetIdentifier[2];
 #if ENABLE_RAYTRACING
             m_RayTracingManager.Init(m_Asset.currentPlatformRenderPipelineSettings, m_Asset.renderPipelineResources, m_BlueNoise, m_LightLoop, m_SharedRTManager);
             m_RaytracingReflections.Init(m_Asset, m_SkyManager, m_RayTracingManager, m_SharedRTManager, m_GbufferManager);
@@ -2744,13 +2744,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                     else
                     {
-                        bool renderVelocitiesForTransparent = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MotionVectors) && hdCamera.frameSettings.IsEnabled(FrameSettingsField.TransparentsWriteVelocity);
-                        cmd.SetGlobalInt(HDShaderIDs._ColorMaskTransparentVel, renderVelocitiesForTransparent ? (int)UnityEngine.Rendering.ColorWriteMask.All : 0);
+                        bool renderMotionVecForTransparent = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MotionVectors) && hdCamera.frameSettings.IsEnabled(FrameSettingsField.TransparentsWriteMotionVector);
+                        cmd.SetGlobalInt(HDShaderIDs._ColorMaskTransparentVel, renderMotionVecForTransparent ? (int)UnityEngine.Rendering.ColorWriteMask.All : 0);
 
-                        m_MRTTransparentVelocity[0] = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? m_CameraColorMSAABuffer : m_CameraColorBuffer;
-                        m_MRTTransparentVelocity[1] = m_SharedRTManager.GetMotionVectorsBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA));
+                        m_MRTTransparentMotionVec[0] = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? m_CameraColorMSAABuffer : m_CameraColorBuffer;
+                        m_MRTTransparentMotionVec[1] = m_SharedRTManager.GetMotionVectorsBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA));
 
-                        HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTTransparentVelocity, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)));
+                        HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTTransparentMotionVec, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)));
                         if ((hdCamera.frameSettings.IsEnabled(FrameSettingsField.Decals)) && (DecalSystem.m_DecalDatasCount > 0)) // enable d-buffer flag value is being interpreted more like enable decals in general now that we have clustered
                                                                                                                                   // decal datas count is 0 if no decals affect transparency
                         {
@@ -2763,7 +2763,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         	transparentRange = HDRenderQueue.k_RenderQueue_AllTransparent;
                     	}
 
-                        if (renderVelocitiesForTransparent)
+                        if (renderMotionVecForTransparent)
                         {
                             m_currentRendererConfigurationBakedLighting |= PerObjectData.MotionVectors;
                         }

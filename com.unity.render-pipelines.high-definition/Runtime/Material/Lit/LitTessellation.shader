@@ -129,7 +129,7 @@ Shader "HDRP/LitTessellation"
         _TransmittanceColor("Transmittance Color", Color) = (1.0, 1.0, 1.0)
         _TransmittanceColorMap("TransmittanceColorMap", 2D) = "white" {}
         _ATDistance("Transmittance Absorption Distance", Float) = 1.0
-        [ToggleUI] _TransparentWritingVelocity("_TransparentWritingVelocity", Float) = 0.0
+        [ToggleUI] _TransparentWritingMotionVec("_TransparentWritingMotionVec", Float) = 0.0
 
         // Stencil state
         // Forward
