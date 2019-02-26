@@ -447,7 +447,22 @@ namespace UnityEngine.Rendering.LWRP
         {
             get { return editorResources.autodeskInteractiveMaskedShader; }
         }
-		
+
+        public override Shader terrainDetailLitShader
+        {
+            get { return editorResources.terrainDetailLitShader; }
+        }
+
+        public override Shader terrainDetailGrassShader
+        {
+            get { return editorResources.terrainDetailGrassShader; }
+        }
+
+        public override Shader terrainDetailGrassBillboardShader
+        {
+            get { return editorResources.terrainDetailGrassBillboardShader; }
+        }
+
         public override Shader defaultSpeedTree7Shader
         {
             get { return editorResources.defaultSpeedTree7Shader; }
