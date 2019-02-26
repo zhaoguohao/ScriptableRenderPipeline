@@ -19,16 +19,15 @@ testplatforms:
 {% for editor in editors %}
 {% for platform in platforms %}
 {% for project in projects %} 
-{% for testplatform in testplatforms %}
-{{ project.name }}_{{ platform.name }}_{{ editor.version }}_{{ testplatform.name }}:
-  name : Test {{ project.name }} on version {{ editor.version }} on {{ platform.name }}_{{ testplatform.name }}
+{{ project.name }}_{{ platform.name }}_{{ editor.version }}:
+  name : Test {{ project.name }} on version {{ editor.version }} on {{ platform.name }}
   agent:
     type: {{ platform.type }}
     image: {{ platform.image }}
     flavor: {{ platform.flavor}}
   commands:
       - npm install upm-ci-utils -g --registry https://api.bintray.com/npm/unity/unity-npm
-      - upm-ci project test -u {{ editor.version }} -testPlatform {{ testplatform.name }} --project-path ./TestProjects/{{ project.name }}/
+      - upm-ci project test -u {{ editor.version }} --project-path ./TestProjects/{{ project.name }}/
   triggers:
     branches:
       only:
@@ -38,7 +37,6 @@ testplatforms:
       paths:
         - "upm-ci~/test-results/**/*"
         
-{% endfor %}
 {% endfor %}
 {% endfor %}
 {% endfor %}
