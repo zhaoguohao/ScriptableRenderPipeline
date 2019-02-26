@@ -101,7 +101,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline.Drawing
                     });
                 });
 
-                ps.Add(new PropertyRow(CreateLabel("Transparent Writes Velocity", indentLevel)), (row) =>
+                ps.Add(new PropertyRow(CreateLabel("Transparent Writes Motion Vector", indentLevel)), (row) =>
                 {
                     row.Add(new Toggle(), (toggle) =>
                     {

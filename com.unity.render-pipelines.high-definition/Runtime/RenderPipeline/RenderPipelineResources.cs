@@ -119,7 +119,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             public ComputeShader depthOfFieldGatherCS;
             public ComputeShader depthOfFieldCombineCS;
             public ComputeShader paniniProjectionCS;
-            public ComputeShader motionBlurVelocityPrepCS;
+            public ComputeShader motionBlurMotionVecPrepCS;
             public ComputeShader motionBlurTileGenCS;
             public ComputeShader motionBlurCS;
             public ComputeShader bloomPrefilterCS;
@@ -309,7 +309,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 depthOfFieldCombineCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/DepthOfFieldCombine.compute"),
                 motionBlurTileGenCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/MotionBlurTilePass.compute"),
                 motionBlurCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/MotionBlur.compute"),
-                motionBlurVelocityPrepCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/MotionBlurVelocityPrep.compute"),
+                motionBlurMotionVecPrepCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/MotionBlurVelocityPrep.compute"),
                 paniniProjectionCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/PaniniProjection.compute"),
                 bloomPrefilterCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/BloomPrefilter.compute"),
                 bloomBlurCS = Load<ComputeShader>(HDRenderPipelinePath + "PostProcessing/Shaders/BloomBlur.compute"),

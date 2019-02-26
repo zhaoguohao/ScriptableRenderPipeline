@@ -30,7 +30,7 @@ float2 ClampMotionVec(float2 motionVec, float maxMotionVec)
     return (len > 0.0) ? min(len, maxMotionVec) * (motionVec * rcp(len)) : 0.0;
 }
 
-// Prep motion vector so that the velocity due to rotation is clamped more lightly
+// Prep motion vectors so that the velocity due to rotation is clamped more lightly
 float2 ComputeMotionVec(PositionInputs posInput, float2 sampledMotionVec)
 {
     float4 worldPos = float4(posInput.positionWS, 1.0);

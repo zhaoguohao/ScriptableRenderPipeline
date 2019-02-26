@@ -68,7 +68,7 @@ void Frag(PackedVaryingsToPS packedInput,
         #else
             out float4 outColor : SV_Target0
         #ifdef _WRITE_TRANSPARENT_MOTION_VECTOR
-          , out float4 outVelocity : SV_Target1
+          , out float4 outMotionVec : SV_Target1
         #endif // _WRITE_TRANSPARENT_MOTION_VECTOR
         #endif // OUTPUT_SPLIT_LIGHTING
         #ifdef _DEPTHOFFSET_ON
@@ -178,13 +178,13 @@ void Frag(PackedVaryingsToPS packedInput,
         bool forceNoMotion = any(unity_MotionVectorsParams.yw == 0.0);
         if (forceNoMotion)
         {
-            outVelocity = float4(2.0, 0.0, 0.0, 0.0);
+            outMotionVec = float4(2.0, 0.0, 0.0, 0.0);
         }
         else
         {
-            float2 velocity = CalculateMotionVector(inputPass.positionCS, inputPass.previousPositionCS);
-            EncodeMotionVector(velocity * 0.5, outVelocity);
-            outVelocity.zw = 1.0;
+            float2 motionVec = CalculateMotionVector(inputPass.positionCS, inputPass.previousPositionCS);
+            EncodeMotionVector(motionVec * 0.5, outMotionVec);
+            outMotionVec.zw = 1.0;
         }
 #endif
     }
