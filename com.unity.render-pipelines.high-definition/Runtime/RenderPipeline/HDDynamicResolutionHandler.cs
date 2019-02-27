@@ -95,9 +95,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void Update(GlobalDynamicResolutionSettings settings, Action OnResolutionChange = null)
         {
-            if (!m_Enabled) return;
-
             ProcessSettings(settings);
+
+            if (!m_Enabled) return;
 
             if (!m_ForcingRes)
             {
