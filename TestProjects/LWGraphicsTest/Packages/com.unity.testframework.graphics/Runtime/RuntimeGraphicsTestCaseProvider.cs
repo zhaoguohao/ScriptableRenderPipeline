@@ -24,7 +24,7 @@ namespace UnityEngine.TestTools.Graphics
                 if (referenceImagesBundle != null)
                     referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
 
-                yield return new GraphicsTestCase(scenePath, referenceImage);
+                yield return new GraphicsTestCase(scenePath, referenceImage, imagePath);
             }
         }
 
@@ -49,7 +49,7 @@ namespace UnityEngine.TestTools.Graphics
             if (referenceImagesBundle != null)
                 referenceImage = referenceImagesBundle.LoadAsset<Texture2D>(imagePath);
 
-            output = new GraphicsTestCase( scenePath, referenceImage );
+            output = new GraphicsTestCase( scenePath, referenceImage, imagePath );
 
             return output;
         }

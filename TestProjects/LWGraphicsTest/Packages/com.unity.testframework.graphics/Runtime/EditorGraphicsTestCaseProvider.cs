@@ -51,7 +51,7 @@ namespace UnityEditor.TestTools.Graphics
                     referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
                 }
 
-                yield return new GraphicsTestCase(scenePath, referenceImage);
+                yield return new GraphicsTestCase(scenePath, referenceImage, m_ReferenceImagePath);
             }
         }
 
@@ -68,7 +68,7 @@ namespace UnityEditor.TestTools.Graphics
             if (allImages.TryGetValue(Path.GetFileNameWithoutExtension(scenePath), out imagePath))
                 referenceImage = AssetDatabase.LoadAssetAtPath<Texture2D>(imagePath);
 
-            output = new GraphicsTestCase(scenePath, referenceImage);
+            output = new GraphicsTestCase(scenePath, referenceImage, m_ReferenceImagePath);
 
             return output;
         }

@@ -8,19 +8,19 @@ namespace UnityEngine.TestTools.Graphics.Tests
         [Test]
         public void AreEqual_WithNullCamera_ThrowsArgumentNullException()
         {
-            Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (Camera)null), Throws.ArgumentNullException);
+            Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (Camera)null, ""), Throws.ArgumentNullException);
         }
 
         [Test]
         public void AreEqual_WithNullCameras_ThrowsArgumentNullException()
         {
-            Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (IEnumerable<Camera>)null), Throws.ArgumentNullException);
+            Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (IEnumerable<Camera>)null, ""), Throws.ArgumentNullException);
         }
 
         [Test]
         public void AreEqual_WithNullActualImage_ThrowsArgumentNullException()
         {
-            Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (Texture2D)null), Throws.ArgumentNullException);
+            Assert.That(() => ImageAssert.AreEqual(new Texture2D(1, 1), (Texture2D)null, ""), Throws.ArgumentNullException);
         }
 
         [Test]
@@ -33,13 +33,13 @@ namespace UnityEngine.TestTools.Graphics.Tests
             testImage.SetPixels32(pixels);
             testImage.Apply(false);
 
-            Assert.That(() => ImageAssert.AreEqual(testImage, testImage), Throws.Nothing);
+            Assert.That(() => ImageAssert.AreEqual(testImage, testImage, ""), Throws.Nothing);
         }
 
         [Test]
         public void AreEqual_WithTotallyDifferentImages_ThrowsAssertionException()
         {
-            Assert.That(() => ImageAssert.AreEqual(Texture2D.whiteTexture, Texture2D.blackTexture), Throws.InstanceOf<AssertionException>());
+            Assert.That(() => ImageAssert.AreEqual(Texture2D.whiteTexture, Texture2D.blackTexture, ""), Throws.InstanceOf<AssertionException>());
         }
 
         [Test]
@@ -53,8 +53,8 @@ namespace UnityEngine.TestTools.Graphics.Tests
             actual.SetPixels32(pixels);
             actual.Apply(false);
 
-            Assert.That(() => ImageAssert.AreEqual(expected, actual), Throws.InstanceOf<AssertionException>());
-            Assert.That(() => ImageAssert.AreEqual(expected, actual, new ImageComparisonSettings { PerPixelCorrectnessThreshold = 0.005f }), Throws.Nothing);
+            Assert.That(() => ImageAssert.AreEqual(expected, actual, ""), Throws.InstanceOf<AssertionException>());
+            Assert.That(() => ImageAssert.AreEqual(expected, actual, "", new ImageComparisonSettings { PerPixelCorrectnessThreshold = 0.005f }), Throws.Nothing);
         }
 
         [Test]
@@ -70,7 +70,7 @@ namespace UnityEngine.TestTools.Graphics.Tests
             actual.SetPixels(new [] { c, c });
             actual.Apply(false);
 
-            Assert.That(() => ImageAssert.AreEqual(expected, actual), Throws.InstanceOf<AssertionException>());
+            Assert.That(() => ImageAssert.AreEqual(expected, actual, ""), Throws.InstanceOf<AssertionException>());
         }
     }
 }

@@ -28,7 +28,7 @@ public class LWGraphicsTests
         for (int i = 0; i < settings.WaitFrames; i++)
             yield return null;
 
-        ImageAssert.AreEqual(testCase.ReferenceImage, cameras.Where(x=>x != null), settings.ImageComparisonSettings);
+        ImageAssert.AreEqual(testCase.ReferenceImage, cameras.Where(x=>x != null), testCase.ReferenceImagePath, settings.ImageComparisonSettings);
     }
 
 #if UNITY_EDITOR

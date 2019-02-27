@@ -23,12 +23,12 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">The expected image that should be rendered by the camera.</param>
         /// <param name="camera">The camera to render from.</param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static void AreEqual(Texture2D expected, Camera camera, ImageComparisonSettings settings = null)
+        public static void AreEqual(Texture2D expected, Camera camera, string expectedImagePath, ImageComparisonSettings settings = null)
         {
             if (camera == null)
                 throw new ArgumentNullException(nameof(camera));
 
-            AreEqual(expected, new List<Camera>{camera}, settings);
+            AreEqual(expected, new List<Camera>{camera}, expectedImagePath, settings);
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">The expected image that should be rendered by the camera.</param>
         /// <param name="cameras">The cameras to render from.</param>
         /// <param name="settings">Optional settings that control how the image comparison is performed. Can be null, in which case the rendered image is required to be exactly identical to the reference.</param>
-        public static void AreEqual(Texture2D expected, IEnumerable<Camera> cameras, ImageComparisonSettings settings = null)
+        public static void AreEqual(Texture2D expected, IEnumerable<Camera> cameras, string expectedImagePath, ImageComparisonSettings settings = null)
         {
             if (cameras == null)
                 throw new ArgumentNullException(nameof(cameras));
@@ -78,7 +78,7 @@ namespace UnityEngine.TestTools.Graphics
 
 						actual.Apply();
 
-						AreEqual(expected, actual, settings);
+						AreEqual(expected, actual, expectedImagePath, settings);
 					}
                 }
 
@@ -97,7 +97,7 @@ namespace UnityEngine.TestTools.Graphics
         /// <param name="expected">What the image is supposed to look like.</param>
         /// <param name="actual">What the image actually looks like.</param>
         /// <param name="settings">Optional settings that control how the comparison is performed. Can be null, in which case the images are required to be exactly identical.</param>
-        public static void AreEqual(Texture2D expected, Texture2D actual, ImageComparisonSettings settings = null)
+        public static void AreEqual(Texture2D expected, Texture2D actual, string expectedImagePath, ImageComparisonSettings settings = null)
         {
             if (actual == null)
                 throw new ArgumentNullException("actual");
@@ -110,7 +110,7 @@ namespace UnityEngine.TestTools.Graphics
 
             try
             {
-                Assert.That(expected, Is.Not.Null, "No reference image was provided.");
+                Assert.That(expected, Is.Not.Null, "No reference image was provided. Expected at " + expectedImagePath);
 
                 Assert.That(actual.width, Is.EqualTo(expected.width),
                     "The expected image had width {0}px, but the actual image had width {1}px.", expected.width,
