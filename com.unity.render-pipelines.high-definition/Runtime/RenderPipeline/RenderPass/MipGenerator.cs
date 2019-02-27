@@ -133,7 +133,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_TempColorTargets[kernelIndex] = RTHandles.Alloc(
                     Vector2.one * 0.5f,
                     filterMode: FilterMode.Bilinear,
-                    colorFormat: GraphicsFormat.R16G16B16A16_SFloat,
+                    colorFormat: HDRenderPipeline.k_colorBufferFormat,
                     enableRandomWrite: true,
                     useMipMap: false,
                     enableMSAA: false,

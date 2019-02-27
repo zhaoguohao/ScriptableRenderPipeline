@@ -37,6 +37,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             "Forward Transparent"
         };
 
+        static public GraphicsFormat k_colorBufferFormat = GraphicsFormat.B10G11R11_UFloatPack32;
+
         readonly HDRenderPipelineAsset m_Asset;
         public HDRenderPipelineAsset asset { get { return m_Asset; } }
 
@@ -400,8 +402,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_SSSBufferManager.InitSSSBuffers(m_GbufferManager, m_Asset.currentPlatformRenderPipelineSettings);
             m_SharedRTManager.InitSharedBuffers(m_GbufferManager, m_Asset.currentPlatformRenderPipelineSettings, m_Asset.renderPipelineResources);
 
-            m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, useMipMap: false, xrInstancing: true, useDynamicScale: true, name: "CameraColor");
-            m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLighting");
+            m_CameraColorBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: HDRenderPipeline.k_colorBufferFormat, enableRandomWrite: true, useMipMap: false, xrInstancing: true, useDynamicScale: true, name: "CameraColor");
+            m_CameraSssDiffuseLightingBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: HDRenderPipeline.k_colorBufferFormat, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLighting");
 
             m_DistortionBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: Builtin.GetDistortionBufferFormat(), xrInstancing: true, useDynamicScale: true, name: "Distortion");
 
@@ -413,21 +415,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 // m_SsrDebugTexture    = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: RenderTextureFormat.ARGBFloat, sRGB: false, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Debug_Texture");
                 m_SsrHitPointTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16_UNorm, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Hit_Point_Texture");
-                m_SsrLightingTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Lighting_Texture");
+                m_SsrLightingTexture = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: HDRenderPipeline.k_colorBufferFormat, enableRandomWrite: true, xrInstancing: true, useDynamicScale: true, name: "SSR_Lighting_Texture");
             }
 
             if (Debug.isDebugBuild)
             {
                 m_DebugColorPickerBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugColorPicker");
-                m_DebugFullScreenTempBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, name: "DebugFullScreen");
-                m_IntermediateAfterPostProcessBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, useDynamicScale: true, xrInstancing: true, name: "AfterPostProcess"); // Needs to be FP16 because output target might be HDR
+                m_DebugFullScreenTempBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: HDRenderPipeline.k_colorBufferFormat, useDynamicScale: true, name: "DebugFullScreen");
+                m_IntermediateAfterPostProcessBuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: HDRenderPipeline.k_colorBufferFormat, useDynamicScale: true, xrInstancing: true, name: "AfterPostProcess"); // Needs to be FP16 because output target might be HDR
             }
 
             // Let's create the MSAA textures
             if (m_Asset.currentPlatformRenderPipelineSettings.supportMSAA)
             {
-                m_CameraColorMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.R16G16B16A16_SFloat, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraColorMSAA");
-                m_CameraSssDiffuseLightingMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: GraphicsFormat.B10G11R11_UFloatPack32, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLightingMSAA");
+                m_CameraColorMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: HDRenderPipeline.k_colorBufferFormat, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraColorMSAA");
+                m_CameraSssDiffuseLightingMSAABuffer = RTHandles.Alloc(Vector2.one, filterMode: FilterMode.Point, colorFormat: HDRenderPipeline.k_colorBufferFormat, bindTextureMS: true, enableMSAA: true, xrInstancing: true, useDynamicScale: true, name: "CameraSSSDiffuseLightingMSAA");
             }
         }
 
