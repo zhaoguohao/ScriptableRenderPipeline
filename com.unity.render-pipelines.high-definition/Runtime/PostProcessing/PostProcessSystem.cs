@@ -251,7 +251,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void Render(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle colorBuffer, RTHandle afterPostProcessTexture, RTHandle lightingBuffer, RenderTargetIdentifier finalRT, bool flipY)
         {
             var dynResHandler = HDDynamicResolutionHandler.instance;
-            m_Pool.SetHWDynamicResolutionState();
+            m_Pool.SetHWDynamicResolutionState(camera);
 
             void PoolSource(ref RTHandle src, RTHandle dst)
             {
@@ -1546,7 +1546,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 float sh = scaleH * p;
 
                 int pw, ph;
-                if(HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled())
+                if(HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled(camera.camera.allowDynamicResolution))
                 {
                     pw = Mathf.Max(1, Mathf.CeilToInt(sw * camera.actualWidth));
                     ph = Mathf.Max(1, Mathf.CeilToInt(sh * camera.actualHeight));
@@ -2118,7 +2118,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Final viewport is handled in the final blit in this case
             if (!HDUtils.PostProcessIsFinalPass())
             {
-                if(dynResHandler.HardwareDynamicResIsEnabled())
+                if(dynResHandler.HardwareDynamicResIsEnabled(camera.camera.allowDynamicResolution))
                 {
                     backBufferRect.width *= dynResHandler.GetCurrentScale();
                     backBufferRect.height *= dynResHandler.GetCurrentScale();
@@ -2176,9 +2176,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
 
 
-            public void SetHWDynamicResolutionState()
+            public void SetHWDynamicResolutionState(HDCamera camera)
             {
-                bool needsHW = HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled();
+                bool needsHW = HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled(camera.camera.allowDynamicResolution);
                 if(needsHW && !m_HasHWDynamicResolution)
                 {
                     // If any target has no dynamic resolution enabled, but we require it, we need to cleanup the pool.

@@ -95,6 +95,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void Update(GlobalDynamicResolutionSettings settings, Action OnResolutionChange = null)
         {
+            if (!m_Enabled) return;
+
             ProcessSettings(settings);
 
             if (!m_ForcingRes)
@@ -117,7 +119,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 m_PrevFraction = m_CurrentFraction;
                 hasSwitchedResolution = true;
 
-                if (HardwareDynamicResIsEnabled())
+                if (type == DynamicResolutionType.Hardware)
                 {
                     ScalableBufferManager.ResizeBuffers(m_CurrentFraction, m_CurrentFraction);
                 }
@@ -127,7 +129,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             else
             {
                 // Unity can change the scale factor by itself so we need to trigger the Action if that happens as well.
-                if (HardwareDynamicResIsEnabled()) 
+                if (type == DynamicResolutionType.Hardware) 
                 {
                     if(ScalableBufferManager.widthScaleFactor != m_PrevHWScaleWidth  ||
                         ScalableBufferManager.heightScaleFactor != m_PrevHWScaleHeight)
@@ -146,13 +148,14 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             return m_Enabled && m_CurrentFraction != 1.0f && type == DynamicResolutionType.Software;
         }
-        public bool HardwareDynamicResIsEnabled()
+        public bool HardwareDynamicResIsEnabled(bool cameraRequest)
         {
-            // This has lots of problems with platform. Momentarily disabling it until we solve the issues.
+            return cameraRequest && m_Enabled && type == DynamicResolutionType.Hardware;
+        }
 
-            // The platform support is temporary, we need something from engine side that is more concise.
-            bool platformSupports = (SystemInfo.deviceType == DeviceType.Console);
-            return platformSupports && m_Enabled && type == DynamicResolutionType.Hardware;
+        public bool RequestsHardwareDynamicResolution()
+        {
+            return type == DynamicResolutionType.Hardware;
         }
 
         public bool DynamicResolutionEnabled()
@@ -160,7 +163,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             return m_Enabled && m_CurrentFraction != 1.0f;
         }
 
-        public Vector2Int GetRTHandleScale(Vector2Int size)
+        public Vector2Int GetRTHandleScale(Vector2Int size, HDCamera camera)
         {
             cachedOriginalSize = size;
 
@@ -171,7 +174,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             float scaleFractionX = m_CurrentFraction;
             float scaleFractionY = m_CurrentFraction;
-            if(HardwareDynamicResIsEnabled())
+            if(type == DynamicResolutionType.Hardware)
             {
                 scaleFractionX = ScalableBufferManager.widthScaleFactor;
                 scaleFractionY = ScalableBufferManager.heightScaleFactor;

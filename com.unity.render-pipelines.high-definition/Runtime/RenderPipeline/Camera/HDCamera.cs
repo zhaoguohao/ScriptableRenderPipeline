@@ -83,7 +83,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector4 doubleBufferedViewportScale {
             get
             {
-                if (HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled())
+                if (HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled(camera.allowDynamicResolution))
                 {
                     return new Vector4(1.0f, 1.0f, 1.0f, 1.0f);
                 }
@@ -347,7 +347,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             Vector2Int nonScaledSize = new Vector2Int(m_ActualWidth, m_ActualHeight);
             if (isMainGameView)
             {
-                Vector2Int scaledSize = HDDynamicResolutionHandler.instance.GetRTHandleScale(new Vector2Int(camera.pixelWidth, camera.pixelHeight));
+                Vector2Int scaledSize = HDDynamicResolutionHandler.instance.GetRTHandleScale(new Vector2Int(camera.pixelWidth, camera.pixelHeight), this);
                 nonScaledSize = HDDynamicResolutionHandler.instance.cachedOriginalSize;
                 m_ActualWidth = scaledSize.x;
                 m_ActualHeight = scaledSize.y;
