@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor.AnimatedValues;
 using UnityEditorInternal;
 using UnityEngine;
@@ -83,12 +84,12 @@ namespace UnityEditor.Rendering.LWRP
         };
 
 
-        UnityEditorInternal.ReorderableList m_LayerList;
+        ReorderableList m_LayerList;
 
         public Camera camera { get { return target as Camera; } }
 
         static List<Camera> k_Cameras;
-
+        List<Camera> validCameras = new List<Camera>();
         // Animation Properties
         public bool isSameClearFlags { get { return !settings.clearFlags.hasMultipleDifferentValues; } }
         public bool isSameOrthographic { get { return !settings.orthographic.hasMultipleDifferentValues; } }
@@ -155,11 +156,7 @@ namespace UnityEditor.Rendering.LWRP
             {
                 m_AdditionalCameraData = camera.gameObject.AddComponent<LWRPAdditionalCameraData>();
             }
-            Camera cam = new Camera();
-            //m_AdditionalCameraData.AddCamera(cam);
             init(m_AdditionalCameraData);
-
-
 
             UpdateAnimationValues(true);
             UpdateCameraTypeIntPopupData();
@@ -168,21 +165,15 @@ namespace UnityEditor.Rendering.LWRP
 
         void UpdateCameras()
         {
+            var o = new PropertyFetcher<LWRPAdditionalCameraData>(m_AdditionalCameraDataSO);
+            m_AdditionalCameraDataCameras = o.Find(x => x.cameras);
+
             var camType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
             if (camType == LWRPCameraType.Game)
             {
                 m_LayerList = new ReorderableList(m_AdditionalCameraDataSO, m_AdditionalCameraDataCameras, true, true, true, true);
                 m_LayerList.drawHeaderCallback = rect => { EditorGUI.LabelField(rect, "Muppets"); };
-                m_LayerList.drawElementCallback = (rect, index, active, focused) =>
-                {
-                    var element = m_LayerList.serializedProperty.GetArrayElementAtIndex(index);
-                    rect.y += 2;
-                    rect.height = EditorGUIUtility.singleLineHeight;
-                    EditorGUI.PropertyField(
-                        rect,
-                        element,
-                        GUIContent.none);
-                };
+                m_LayerList.drawElementCallback += DrawElementCallback;
 
                 m_LayerList.onRemoveCallback = list =>
                 {
@@ -191,14 +182,56 @@ namespace UnityEditor.Rendering.LWRP
                     m_AdditionalCameraDataSO.ApplyModifiedProperties();
                 };
 
-                //m_LayerList.onAddCallback += AddCameraToCameraList;
+                m_LayerList.onAddDropdownCallback = (rect, list) => AddCameraToCameraList(rect, list);
             }
         }
 
-//        void AddCameraToCameraList(ReorderableList list)
-//        {
-//            Debug.Log(Selection.activeObject);
-//        }
+        private void DrawElementCallback(Rect rect, int index, bool isActive, bool isFocused)
+        {
+            rect.height = EditorGUIUtility.singleLineHeight;
+            rect.y += 1;
+
+            var element = m_AdditionalCameraDataCameras.GetArrayElementAtIndex(index);
+
+            var cam = element.objectReferenceValue as Camera;
+            if (cam != null)
+            {
+                var type = cam.gameObject.GetComponent<LWRPAdditionalCameraData>().cameraType;
+
+                EditorGUI.TextField(rect, cam.name, type.ToString());
+            }
+        }
+
+        void AddCameraToCameraList(Rect rect, ReorderableList list)
+        {
+            Camera[] allCameras = new Camera[Camera.allCamerasCount];
+            Camera.GetAllCameras(allCameras);
+            foreach (var camera in allCameras)
+            {
+                if (camera.gameObject.GetComponent<LWRPAdditionalCameraData>().cameraType == LWRPCameraType.Overlay)
+                {
+                    validCameras.Add(camera);
+                }
+            }
+
+            var names = new GUIContent[validCameras.Count];
+
+            for(int i = 0; i < validCameras.Count; ++i)
+            {
+                names[i] = new GUIContent( validCameras[i].name );
+            }
+
+            EditorUtility.DisplayCustomMenu(rect, names, -1, AddCameraToCameraListMenuSelected, null);
+        }
+
+        void AddCameraToCameraListMenuSelected(object userData, string[] options, int selected)
+        {
+            var length = m_AdditionalCameraDataCameras.arraySize;
+            ++m_AdditionalCameraDataCameras.arraySize;
+            m_AdditionalCameraDataCameras.serializedObject.ApplyModifiedProperties();
+            m_AdditionalCameraDataCameras.GetArrayElementAtIndex(length).objectReferenceValue = validCameras[selected];
+            m_AdditionalCameraDataCameras.serializedObject.ApplyModifiedProperties();
+        }
 
         void init(LWRPAdditionalCameraData additionalCameraData)
         {
@@ -209,7 +242,6 @@ namespace UnityEditor.Rendering.LWRP
             m_AdditionalCameraDataRendererProp = m_AdditionalCameraDataSO.FindProperty("m_RendererOverrideOption");
             m_AdditionalCameraDataRendererDataProp = m_AdditionalCameraDataSO.FindProperty("m_RendererData");
             m_AdditionalCameraDataCameraTypeProp = m_AdditionalCameraDataSO.FindProperty("m_CameraType");
-
 
             m_AdditionalCameraDataCameras = m_AdditionalCameraDataSO.FindProperty("m_Cameras");
         }
@@ -223,12 +255,8 @@ namespace UnityEditor.Rendering.LWRP
             m_LightweightRenderPipeline = null;
         }
 
-
         public override void OnInspectorGUI()
         {
-            //k_Cameras = LWRPAdditionalCameraData.getCameras;
-
-
             if (s_Styles == null)
                 s_Styles = new Styles();
 
@@ -258,8 +286,6 @@ namespace UnityEditor.Rendering.LWRP
 
                 settings.DrawDynamicResolution();
 
-                // Maybe this one needs to be split.
-                //DrawAdditionalData();
                 DrawRendererType();
                 DrawDepthTexture();
             }
@@ -267,6 +293,7 @@ namespace UnityEditor.Rendering.LWRP
             // Game Camera
             if (camType == LWRPCameraType.Game)
             {
+
                 m_LayerList.DoLayoutList();
                 m_AdditionalCameraDataSO.ApplyModifiedProperties();
 
@@ -346,6 +373,7 @@ namespace UnityEditor.Rendering.LWRP
             {
                 m_AdditionalCameraDataCameraTypeProp.intValue = selCameraType;
                 m_AdditionalCameraDataSO.ApplyModifiedProperties();
+                UpdateCameras();
             }
         }
 

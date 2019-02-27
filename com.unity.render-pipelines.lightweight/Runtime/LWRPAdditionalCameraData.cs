@@ -93,10 +93,10 @@ namespace UnityEngine.Rendering.LWRP
             set => m_CameraType = value;
         }
 
-//        public static List<Camera> getCameras
-//        {
-//            get => m_Cameras;
-//        }
+        public List<Camera> cameras
+        {
+            get => m_Cameras;
+        }
 
         public void AddCamera(Camera camera)
         {
@@ -166,29 +166,29 @@ namespace UnityEngine.Rendering.LWRP
 
         public void OnDrawGizmos()
         {
-            string gizmoName;
+            string gizmoName = "Packages/com.unity.render-pipelines.lightweight/Editor/Gizmos/";
             Color tint = Color.white;
             if (m_CameraType == LWRPCameraType.Game)
             {
-                gizmoName = "Camera_Base";
+                gizmoName += "Camera_Base.png";
             }
             else if (m_CameraType == LWRPCameraType.Overlay)
             {
-                gizmoName = "Camera_Overlay";
+                gizmoName += "Camera_Overlay.png";
             }
             else if (m_CameraType == LWRPCameraType.Offscreen)
             {
-                gizmoName = "Camera_Offscreen";
+                gizmoName += "Camera_Offscreen.png";
             }
             else
             {
-                gizmoName = "Camera_UI";
+                gizmoName += "Camera_UI.png";
             }
 
-            if (Selection.activeObject == this.gameObject)
+            if (Selection.activeObject == gameObject)
             {
-                tint = new Color(1f,0.5f,0,0.5f);
                 // Get the preferences selection color
+                tint = SceneView.selectedOutlineColor;
             }
             Gizmos.DrawIcon(transform.position, gizmoName, true, tint);
         }
