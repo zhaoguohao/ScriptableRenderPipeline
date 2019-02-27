@@ -2787,7 +2787,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         m_MRTTransparentMotionVec[1] = renderMotionVecForTransparent ? m_SharedRTManager.GetMotionVectorsBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA))
                             // It doesn't really matter what gets bound here since the color mask state set will prevent this from ever being written to. However, we still need to bind something
                             // to avoid warnings about unbound render targets. 
-                            : m_MRTTransparentVelocity[0];
+                            : m_MRTTransparentMotionVec[0];
                                                     
 
                         HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTTransparentMotionVec, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)));
