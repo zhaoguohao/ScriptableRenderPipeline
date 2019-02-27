@@ -33,7 +33,7 @@ testplatforms:
       only:
         - yamato-test
   artifacts:
-    logs.zip:
+    logs:
       paths:
         - "upm-ci~/test-results/**/*"
         
