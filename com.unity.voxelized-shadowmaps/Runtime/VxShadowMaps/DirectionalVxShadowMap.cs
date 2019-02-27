@@ -8,6 +8,9 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
         public float volumeScale = 10.0f;
         public VoxelResolution voxelResolution = VoxelResolution._4096;
         public int voxelResolutionInt => (int)voxelResolution;
+        public override VoxelResolution subtreeResolution =>
+            voxelResolutionInt < MaxSubtreeResolutionInt ? voxelResolution : MaxSubtreeResolution;
+
         public int voxelZBias = 2;
         public int voxelUpBias = 1;
         public ShadowsBlendMode shadowsBlendMode = ShadowsBlendMode.OnlyVxShadowMaps;
