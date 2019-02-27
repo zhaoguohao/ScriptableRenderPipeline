@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed diffusion profile upgrade breaking package when upgrading to a new version
 - Fixed decals cropped by gizmo not updating correctly if prefab
 - Fixed an issue when enabling SSR on multiple view
+- Fixed edition of the intensity's unit field while selecting multiple lights
+- Fixed wrong calculation in soft voxelization for density volume
+- Fixed gizmo not working correctly with pre-exposure
+- Fixed issue with setting a not available RT when disabling motion vectors
+- Fixed planar reflection when looking at mirror normal
+- Fixed mutiselection issue with HDLight Inspector
+- Fixed HDAdditionalCameraData data migration
+
+### Added
+- Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
+
+### Changed
+- When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
+
 
 ## [6.4.0-preview] - 2019-02-21
 
@@ -18,7 +32,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added an unit selection dropdown next to shutter speed (camera)
 - Added error helpbox when trying to use a sub volume component that require the current HDRenderPipelineAsset to support a feature that it is not supporting.
 - Add mesh for tube light when display emissive mesh is enabled
-- Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
+- Adding real time area light shadow support. 
 
 ### Fixed
 - Fixed Light explorer. The volume explorer used `profile` instead of `sharedProfile` which instantiate a custom volume profile instead of editing the asset itself.
@@ -31,7 +45,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Update UI for 32bit/16bit shadow precision settings in HDRP asset
 - Object motion vectors have been disabled in all but the game view. Camera motion vectors are still enabled everywhere, allowing TAA and Motion Blur to work on static objects.
-- When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
 
 ## [6.3.0-preview] - 2019-02-18
 
@@ -45,13 +58,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed decals in forward
 - Fixed issue with stencil not correctly setup for various master node and shader for the depth pass, motion vector pass and GBuffer/Forward pass
 - Fixed SRP batcher and metal
-
-### Fixed
 - Fixed culling and shadows for Pyramid, Box, Rectangle and Tube lights
 - Fixed an issue where scissor render state leaking from the editor code caused partially black rendering
 
 ### Changed
-- Diffusion profiles are now limited to one per asset and can be referenced in materials, shader graphs and vfx graphs. Materials will be upgraded automatically except if they are using a shader graph, in this case it will display an error message.
 - When a lit material has a clear coat mask that is not null, we now use the clear coat roughness to compute the screen space reflection.
 - Diffusion profiles are now limited to one per asset and can be referenced in materials, shader graphs and vfx graphs. Materials will be upgraded automatically except if they are using a shader graph, in this case it will display an error message.
 
