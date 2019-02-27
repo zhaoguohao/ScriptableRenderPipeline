@@ -32,6 +32,7 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
         public static VoxelResolution MaxSubtreeResolution => VoxelResolution._4096;
         public static int MaxSubtreeResolutionInt => (int)MaxSubtreeResolution;
 
+        public abstract int voxelResolutionInt { get; }
         public abstract VoxelResolution subtreeResolution { get; }
         public int subtreeResolutionInt { get { return (int)subtreeResolution; } }
     }
