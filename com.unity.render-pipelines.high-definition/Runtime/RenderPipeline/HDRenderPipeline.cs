@@ -4,6 +4,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using UnityEngine.Experimental.GlobalIllumination;
+using UnityEngine;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
@@ -1205,12 +1206,15 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         if (!visibleProbe.realtimeTexture.IsCreated())
                             visibleProbe.realtimeTexture.Create();
 
-                        visibleProbe.SetRenderData(ProbeSettings.Mode.Realtime, new HDProbe.RenderData
-                        {
-                            capturePosition = camera.transform.position,
-                            projectionMatrix = camera.projectionMatrix,
-                            worldToCameraRHS = camera.worldToCameraMatrix
-                        });
+                        visibleProbe.SetRenderData(
+                            ProbeSettings.Mode.Realtime,
+                            new HDProbe.RenderData(
+                                camera.worldToCameraMatrix,
+                                camera.projectionMatrix,
+                                camera.transform.position,
+                                camera.transform.rotation
+                            )
+                        );
 
                         // TODO: Assign the actual final target to render to.
                         //   Currently, we use a target for each probe, and then copy it into the cache before using it
@@ -1816,7 +1820,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 #if UNITY_EDITOR
                 // Render gizmos that should be affected by post processes
                 if (showGizmos)
+                {
+                    Gizmos.exposure = m_PostProcessSystem.GetExposureTexture(hdCamera).rt;
                     RenderGizmos(cmd, camera, renderContext, GizmoSubset.PreImageEffects);
+                }
 #endif
 
                 // Render All forward error
