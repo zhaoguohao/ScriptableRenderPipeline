@@ -217,7 +217,7 @@ void DEFERRED_VX_SHADOW_GENERIC(uint2 groupThreadId : SV_GroupThreadID, uint2 gr
         return;
 
     PositionInputs posInput = GetPositionInput_Stereo(pixelCoord.xy, _ScreenSize.zw, depth, UNITY_MATRIX_I_VP, UNITY_MATRIX_V, tileCoord, unity_StereoEyeIndex);
-    float3 positionWS = posInput.positionWS;
+    float3 positionWS = posInput.positionWS + _WorldSpaceCameraPos;
 
 #if 1 // no filter
     uint begin = 0;
@@ -247,7 +247,7 @@ void DEFERRED_VX_SHADOW_GENERIC(uint2 groupThreadId : SV_GroupThreadID, uint2 gr
     };
 
     positionWS.y += _VoxelUpBias;
-    float3 posNDC = mul(_WorldToShadowMatrix, float4(positionWS, 1.0)).xyz;
+    float3 posNDC = mul(worldToShadowMatrix, float4(positionWS, 1.0)).xyz;
     float3 posP = posNDC * (float)voxelResolution;
 
     uint3 posQ = (uint3)posP;
