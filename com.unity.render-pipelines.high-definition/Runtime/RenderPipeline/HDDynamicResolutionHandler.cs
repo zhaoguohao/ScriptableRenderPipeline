@@ -149,7 +149,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool HardwareDynamicResIsEnabled()
         {
             // This has lots of problems with platform. Momentarily disabling it until we solve the issues.
-            return m_Enabled && type == DynamicResolutionType.Hardware;
+
+            // The platform support is temporary, we need something from engine side that is more concise.
+            bool platformSupports = (SystemInfo.deviceType == DeviceType.Console);
+            return platformSupports && m_Enabled && type == DynamicResolutionType.Hardware;
         }
 
         public bool DynamicResolutionEnabled()

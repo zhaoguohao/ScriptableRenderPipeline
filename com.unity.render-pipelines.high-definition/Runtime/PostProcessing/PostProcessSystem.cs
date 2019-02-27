@@ -1544,8 +1544,19 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 float p = 1f / Mathf.Pow(2f, i + 1f);
                 float sw = scaleW * p;
                 float sh = scaleH * p;
-                int pw = Mathf.Max(1, Mathf.RoundToInt(sw * camera.actualWidth));
-                int ph = Mathf.Max(1, Mathf.RoundToInt(sh * camera.actualHeight));
+
+                int pw, ph;
+                if(HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled())
+                {
+                    pw = Mathf.Max(1, Mathf.CeilToInt(sw * camera.actualWidth));
+                    ph = Mathf.Max(1, Mathf.CeilToInt(sh * camera.actualHeight));
+                }
+                else
+                {
+                    pw = Mathf.Max(1, Mathf.RoundToInt(sw * camera.actualWidth));
+                    ph = Mathf.Max(1, Mathf.RoundToInt(sh * camera.actualHeight));
+                }
+
                 var scale = new Vector2(sw, sh);
                 var pixelSize = new Vector2Int(pw, ph);
 
