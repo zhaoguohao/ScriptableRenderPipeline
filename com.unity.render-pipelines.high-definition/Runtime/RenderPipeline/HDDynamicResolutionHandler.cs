@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -148,9 +148,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         }
         public bool HardwareDynamicResIsEnabled()
         {
-            return false;
             // This has lots of problems with platform. Momentarily disabling it until we solve the issues.
-            // return m_Enabled && type == DynamicResolutionType.Hardware;
+            return m_Enabled && type == DynamicResolutionType.Hardware;
+        }
+
+        public bool DynamicResolutionEnabled()
+        {
+            return m_Enabled && m_CurrentFraction != 1.0f;
         }
 
         public Vector2Int GetRTHandleScale(Vector2Int size)

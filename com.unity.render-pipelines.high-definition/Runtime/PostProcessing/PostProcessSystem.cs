@@ -251,12 +251,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public void Render(CommandBuffer cmd, HDCamera camera, BlueNoise blueNoise, RTHandle colorBuffer, RTHandle afterPostProcessTexture, RTHandle lightingBuffer, RenderTargetIdentifier finalRT, bool flipY)
         {
             var dynResHandler = HDDynamicResolutionHandler.instance;
-
-            // We cleanup the pool at the beginning of the render function as resource deletion is immediate while
-            // graphics command are deferred. If we delete at the end of the frame, the gfx commands will try to access
-            // dead resources.
-            if (dynResHandler.HardwareDynamicResIsEnabled() && dynResHandler.hasSwitchedResolution)
-                m_Pool.Cleanup();
+            m_Pool.SetHWDynamicResolutionState();
 
             void PoolSource(ref RTHandle src, RTHandle dst)
             {
@@ -269,7 +264,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             using (new ProfilingSample(cmd, "Post-processing", CustomSamplerId.PostProcessing.GetSampler()))
             {
                 var source = colorBuffer;
-
+                
                 if (m_PostProcessEnabled)
                 {
                     // Guard bands (also known as "horrible hack") to avoid bleeding previous RTHandle
@@ -309,7 +304,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         }
                     }
                 }
-
+                
                 // Dynamic exposure - will be applied in the next frame
                 // Not considered as a post-process so it's not affected by its enabled state
                 if (!IsExposureFixed() && camera.frameSettings.IsEnabled(FrameSettingsField.ExposureControl))
@@ -427,7 +422,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                     // TODO: User effects go here
 
-                    if (dynResHandler.SoftwareDynamicResIsEnabled() &&     // Dynamic resolution is on.
+                    if (dynResHandler.DynamicResolutionEnabled() &&     // Dynamic resolution is on.
                         camera.antialiasing == AntialiasingMode.FastApproximateAntialiasing)
                     {
                         using (new ProfilingSample(cmd, "FXAA", CustomSamplerId.FXAA.GetSampler()))
@@ -2035,7 +2030,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_FinalPassMaterial.SetTexture(HDShaderIDs._InputTexture, source);
 
             var dynResHandler = HDDynamicResolutionHandler.instance;
-            bool swDynamicResIsOn = camera.isMainGameView && dynResHandler.SoftwareDynamicResIsEnabled();
+            bool swDynamicResIsOn = camera.isMainGameView && dynResHandler.DynamicResolutionEnabled();
 
             if (swDynamicResIsOn)
             {
@@ -2112,6 +2107,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Final viewport is handled in the final blit in this case
             if (!HDUtils.PostProcessIsFinalPass())
             {
+                if(dynResHandler.HardwareDynamicResIsEnabled())
+                {
+                    backBufferRect.width *= dynResHandler.GetCurrentScale();
+                    backBufferRect.height *= dynResHandler.GetCurrentScale();
+                }
                 backBufferRect.x = backBufferRect.y = 0;
             }
 
@@ -2138,11 +2138,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             readonly Dictionary<int, Stack<RTHandle>> m_Targets;
             int m_Tracker;
+            bool m_HasHWDynamicResolution;
 
             public TargetPool()
             {
                 m_Targets = new Dictionary<int, Stack<RTHandle>>();
                 m_Tracker = 0;
+                m_HasHWDynamicResolution = false;
             }
 
             public void Cleanup()
@@ -2157,8 +2159,40 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     while (stack.Count > 0)
                         RTHandles.Release(stack.Pop());
                 }
+                m_Tracker = 0;
 
                 m_Targets.Clear();
+            }
+
+
+            public void SetHWDynamicResolutionState()
+            {
+                bool needsHW = HDDynamicResolutionHandler.instance.HardwareDynamicResIsEnabled();
+                if(needsHW && !m_HasHWDynamicResolution)
+                {
+                    // If any target has no dynamic resolution enabled, but we require it, we need to cleanup the pool.
+                    bool missDynamicScale = false;
+                    foreach (var kvp in m_Targets)
+                    {
+                        var stack = kvp.Value;
+
+                        if (stack == null)
+                            continue;
+
+                        // We found a RT with no dynamic scale
+                        if (stack.Count > 0 && !stack.Peek().rt.useDynamicScale)
+                        {
+                            missDynamicScale = true;
+                            break;
+                        }
+                    }
+
+                    if (missDynamicScale)
+                    {
+                        m_HasHWDynamicResolution = needsHW;
+                        Cleanup();
+                    }
+                }
             }
 
             public RTHandle Get(in Vector2 scaleFactor, GraphicsFormat format, bool mipmap = false)

@@ -6,7 +6,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     public enum DynamicResolutionType : byte
     {
         Software,
-        //Hardware,   // Has lots of problems on platform. Disabling this while we investigate.
+        Hardware,   // Has lots of problems on platform. Disabling this while we investigate.
         //Temporal    // Not yet supported
     }
 
