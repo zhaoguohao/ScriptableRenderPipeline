@@ -1842,7 +1842,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 // Render gizmos that should be affected by post processes
                 if (showGizmos)
                 {
-                    Gizmos.exposure = m_PostProcessSystem.GetExposureTexture(hdCamera).rt;
+                 //   Gizmos.exposure = m_PostProcessSystem.GetExposureTexture(hdCamera).rt;
                     RenderGizmos(cmd, camera, renderContext, GizmoSubset.PreImageEffects);
                 }
 #endif
