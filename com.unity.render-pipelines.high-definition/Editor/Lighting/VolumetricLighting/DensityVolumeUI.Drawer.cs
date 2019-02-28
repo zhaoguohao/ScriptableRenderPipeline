@@ -81,15 +81,56 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static void Drawer_VolumeContent(SerializedDensityVolume serialized, Editor owner)
         {
+            //keep previous data as value are stored in percent 
+            Vector3 previousSize = serialized.size.vector3Value;
+            float previousUniformFade = serialized.uniformFade.floatValue;
+            Vector3 previousPositiveFade = serialized.positiveFade.vector3Value;
+            Vector3 previousNegativeFade = serialized.negativeFade.vector3Value;
+
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(serialized.size, Styles.s_Size);
             if (EditorGUI.EndChangeCheck())
             {
-                Vector3 tmpClamp = serialized.size.vector3Value;
-                tmpClamp.x = Mathf.Max(0f, tmpClamp.x);
-                tmpClamp.y = Mathf.Max(0f, tmpClamp.y);
-                tmpClamp.z = Mathf.Max(0f, tmpClamp.z);
-                serialized.size.vector3Value = tmpClamp;
+                Vector3 newSize = serialized.size.vector3Value;
+                newSize.x = Mathf.Max(0f, newSize.x);
+                newSize.y = Mathf.Max(0f, newSize.y);
+                newSize.z = Mathf.Max(0f, newSize.z);
+                serialized.size.vector3Value = newSize;
+
+                //update blend to keep distances
+                Vector3 newPositiveFade = new Vector3(
+                    newSize.x < 0.00001 ? 0 : previousPositiveFade.x * previousSize.x / newSize.x,
+                    newSize.y < 0.00001 ? 0 : previousPositiveFade.y * previousSize.y / newSize.y,
+                    newSize.z < 0.00001 ? 0 : previousPositiveFade.z * previousSize.z / newSize.z
+                    );
+                Vector3 newNegativeFade = new Vector3(
+                    newSize.x < 0.00001 ? 0 : previousNegativeFade.x * previousSize.x / newSize.x,
+                    newSize.y < 0.00001 ? 0 : previousNegativeFade.y * previousSize.y / newSize.y,
+                    newSize.z < 0.00001 ? 0 : previousNegativeFade.z * previousSize.z / newSize.z
+                    );
+                for (int axeIndex = 0; axeIndex < 3; ++axeIndex)
+                {
+                    if (newPositiveFade[axeIndex] + newNegativeFade[axeIndex] > 1)
+                    {
+                        Debug.Log(newPositiveFade[axeIndex] + " + " + newNegativeFade[axeIndex] + " > " + newSize[axeIndex]);
+                        float overValue = (newPositiveFade[axeIndex] + newNegativeFade[axeIndex] - 1f) * 0.5f;
+                        newPositiveFade[axeIndex] -= overValue;
+                        newNegativeFade[axeIndex] -= overValue;
+
+                        if (newPositiveFade[axeIndex] < 0)
+                        {
+                            newNegativeFade[axeIndex] += newPositiveFade[axeIndex];
+                            newPositiveFade[axeIndex] = 0f;
+                        }
+                        if (newNegativeFade[axeIndex] < 0)
+                        {
+                            newPositiveFade[axeIndex] += newNegativeFade[axeIndex];
+                            newNegativeFade[axeIndex] = 0f;
+                        }
+                    }
+                }
+                serialized.positiveFade.vector3Value = newPositiveFade;
+                serialized.negativeFade.vector3Value = newNegativeFade;
             }
 
             Vector3 s = serialized.size.vector3Value;
