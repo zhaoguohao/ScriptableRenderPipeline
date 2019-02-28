@@ -139,8 +139,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         //contained must be initialized in all case
                         shapeBox.center = Quaternion.Inverse(densityVolume.transform.rotation) * densityVolume.transform.position;
                         shapeBox.size = densityVolume.parameters.size;
-
-                        shapeBox.monoHandle = !densityVolume.parameters.advancedFade;
                         EditorGUI.BeginChangeCheck();
                         shapeBox.DrawHandle();
                         if (EditorGUI.EndChangeCheck())
