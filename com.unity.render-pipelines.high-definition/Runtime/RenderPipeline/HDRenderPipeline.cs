@@ -1880,6 +1880,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Because of this, we need another blit here to the final render target at the right viewport.
             if (Debug.isDebugBuild)
             {
+                hdCamera.ExecuteCaptureActions(m_IntermediateAfterPostProcessBuffer, cmd);
+
                 StartStereoRendering(cmd, renderContext, camera);
 
                 RenderDebug(hdCamera, cmd, cullingResults);
@@ -1900,9 +1902,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 renderContext.StereoEndRender(camera);
             }
-
-            //hdCamera.ExecuteCaptureActions(m_IntermediateAfterPostProcessBuffer, cmd);
-            hdCamera.ExecuteCaptureActions(target.id, cmd);
 
             // Due to our RT handle system we don't write into the backbuffer depth buffer (as our depth buffer can be bigger than the one provided)
             // So we need to do a copy of the corresponding part of RT depth buffer in the target depth buffer in various situation:

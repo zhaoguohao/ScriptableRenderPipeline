@@ -954,10 +954,22 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_HistoryRTSystem.ReleaseAll();
         }
 
-        public void ExecuteCaptureActions(RenderTargetIdentifier id, CommandBuffer cmd)
+        public void ExecuteCaptureActions(RTHandleSystem.RTHandle input, CommandBuffer cmd)
         {
             if (captureActions == null)
                 return;
+
+            var id = Shader.PropertyToID("TempRecorder");
+            cmd.GetTemporaryRT(id, actualWidth, actualHeight, 0, FilterMode.Point, input.rt.graphicsFormat);
+
+            var blitMaterial = HDUtils.GetBlitMaterial(TextureDimension.Tex2D);
+            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
+
+            mpb.SetTexture(HDShaderIDs._BlitTexture, input);
+            mpb.SetVector(HDShaderIDs._BlitScaleBias, viewportScale);
+            mpb.SetFloat(HDShaderIDs._BlitMipLevel, 0);
+            cmd.SetRenderTarget(id);
+            cmd.DrawProcedural(Matrix4x4.identity, blitMaterial, 0, MeshTopology.Triangles, 3, 1, mpb);
 
             for (captureActions.Reset(); captureActions.MoveNext();)
                 captureActions.Current(id, cmd);
