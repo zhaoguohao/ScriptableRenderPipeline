@@ -99,6 +99,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         s_ShapeBox.center = Vector3.zero;
                         s_ShapeBox.size = densityVolume.parameters.size;
 
+                        Color baseColor = densityVolume.parameters.albedo;
+                        baseColor.a = 8 / 255f;
+                        s_BlendBox.baseColor = baseColor;
                         s_BlendBox.monoHandle = !densityVolume.parameters.advancedFade;
                         s_BlendBox.center = CenterBlendLocalPosition(densityVolume);
                         s_BlendBox.size = BlendSize(densityVolume);
