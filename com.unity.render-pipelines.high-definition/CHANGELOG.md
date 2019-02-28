@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Added depth-of-field support with stereo instancing
 - Added proper support for Recorder in HDRP
+- Adding real time area light shadow support
 
 ### Fixed
 - Fixed diffusion profile upgrade breaking package when upgrading to a new version
@@ -22,6 +23,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed mutiselection issue with HDLight Inspector
 - Fixed HDAdditionalCameraData data migration
 - Fixed failing builds when light explorer window is open
+- Fixed cascade shadows border sometime causing artefacts between cascades
+- Restored shadows in the Cascade Shadow debug visualization
+
+### Added
+- Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
+
+### Changed
+- When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
+
 
 ### Added
 - Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
@@ -37,7 +47,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added an unit selection dropdown next to shutter speed (camera)
 - Added error helpbox when trying to use a sub volume component that require the current HDRenderPipelineAsset to support a feature that it is not supporting.
 - Add mesh for tube light when display emissive mesh is enabled
-- Adding real time area light shadow support. 
 
 ### Fixed
 - Fixed Light explorer. The volume explorer used `profile` instead of `sharedProfile` which instantiate a custom volume profile instead of editing the asset itself.
