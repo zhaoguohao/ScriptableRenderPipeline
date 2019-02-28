@@ -198,7 +198,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             // Copy settings
             ComputeCameraSettingsFromProbeSettings(
                 settings, position,
-                out var cameraSettings, out var cameraPositionSettings
+                out var cameraSettings, out var cameraPositionSettings,
+                referenceFieldOfView
             );
 
             if (forceFlipY)

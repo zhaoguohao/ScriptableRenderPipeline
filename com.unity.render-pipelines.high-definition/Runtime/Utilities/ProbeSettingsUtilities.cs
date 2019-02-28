@@ -146,7 +146,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cameraSettings.frustum.fieldOfView = settings.frustum.fixedValue;
                     break;
                 case ProbeSettings.Frustum.FOVMode.Viewer:
-                    cameraSettings.frustum.fieldOfView = referenceFieldOfView;
+                    cameraSettings.frustum.fieldOfView = referenceFieldOfView * settings.frustum.viewerScale;
                     break;
 #if PLANAR_WITH_DYNAMIC_FOV
                 case ProbeSettings.Frustum.FOVMode.Automatic:

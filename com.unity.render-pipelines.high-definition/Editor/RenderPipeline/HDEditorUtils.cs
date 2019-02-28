@@ -84,7 +84,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         public static void PropertyFieldWithOptionalFlagToggle<TEnum>(
             TEnum v, SerializedProperty property, GUIContent label,
             SerializedProperty @override, bool showOverrideButton,
-            Action<SerializedProperty, GUIContent> drawer = null
+            Action<SerializedProperty, GUIContent> drawer = null, int indent = 0
         )
             where TEnum : struct, IConvertible // restrict to ~enum
         {
@@ -99,6 +99,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 GUI.enabled = GUI.enabled && FlagToggle(v, @override);
             else
                 ReserveAndGetFlagToggleRect();
+            EditorGUI.indentLevel = indent;
             (drawer ?? k_DefaultDrawer)(property, label);
 
             GUI.enabled = true;
@@ -112,7 +113,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             TEnum v, SerializedProperty property, GUIContent label,
             SerializedProperty @override,
             TEnum displayed, TEnum overrideable,
-            Action<SerializedProperty, GUIContent> drawer = null
+            Action<SerializedProperty, GUIContent> drawer = null,
+            int indent = 0
         )
             where TEnum : struct, IConvertible // restrict to ~enum
         {
@@ -122,7 +124,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 var intOverridable = (int)(object)overrideable;
                 var isOverrideable = (intOverridable & intV) == intV;
-                PropertyFieldWithOptionalFlagToggle(v, property, label, @override, isOverrideable, drawer);
+                PropertyFieldWithOptionalFlagToggle(v, property, label, @override, isOverrideable, drawer, indent);
             }
         }
 

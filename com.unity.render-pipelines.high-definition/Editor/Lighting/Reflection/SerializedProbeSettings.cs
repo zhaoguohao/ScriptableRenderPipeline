@@ -39,6 +39,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal SerializedProperty proxyMirrorRotationProxySpace;
         internal SerializedProperty frustumFieldOfViewMode;
         internal SerializedProperty frustumFixedValue;
+        internal SerializedProperty frustumViewerScale;
 #if PLANAR_WITH_DYNAMIC_FOV
         internal SerializedProperty frustumAutomaticScale;
 #endif
@@ -61,6 +62,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             proxyMirrorRotationProxySpace = root.FindPropertyRelative("proxySettings.mirrorRotationProxySpace");
             frustumFieldOfViewMode = root.FindPropertyRelative("frustum.fieldOfViewMode");
             frustumFixedValue = root.FindPropertyRelative("frustum.fixedValue");
+            frustumViewerScale = root.FindPropertyRelative("frustum.viewerScale");
 #if PLANAR_WITH_DYNAMIC_FOV
             frustumAutomaticScale = root.FindPropertyRelative("frustum.automaticScale");
 #endif

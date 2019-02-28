@@ -29,6 +29,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         TSerialized m_SerializedHDProbe;
         protected HDProbe[] m_TypedTargets;
 
+        protected bool showChromeGizmo { get; private set; }
+
         public override void OnInspectorGUI()
         {
             m_SerializedHDProbe.Update();
@@ -41,6 +43,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected virtual void OnEnable()
         {
             m_SerializedHDProbe = NewSerializedObject(serializedObject);
+            showChromeGizmo = true;
 
             m_TypedTargets = new HDProbe[targets.Length];
             for (var i = 0; i < m_TypedTargets.Length; i++)
@@ -64,6 +67,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         protected virtual void Draw(TSerialized serialized, Editor owner)
         {
             HDProbeUI.Drawer<TProvider>.DrawToolbars(serialized, owner);
+            EditorGUI.BeginChangeCheck();
+            showChromeGizmo = EditorGUILayout.Toggle(EditorGUIUtility.TrTextContent("Show Chrome Gizmo"), showChromeGizmo);
+            if (EditorGUI.EndChangeCheck())
+                SceneView.RepaintAll();
             HDProbeUI.Drawer<TProvider>.DrawPrimarySettings(serialized, owner);
 
             //note: cannot use 'using CED = something' due to templated type passed.

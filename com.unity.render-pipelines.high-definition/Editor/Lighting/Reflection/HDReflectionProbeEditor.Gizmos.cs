@@ -24,7 +24,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 InfluenceVolumeUI.HandleType.Base | InfluenceVolumeUI.HandleType.Influence
             );
 
-            Gizmos_CapturePoint(reflectionProbe);
+            if (e.showChromeGizmo)
+                Gizmos_CapturePoint(reflectionProbe);
         }
 
         static void Gizmos_CapturePoint(ReflectionProbe target)

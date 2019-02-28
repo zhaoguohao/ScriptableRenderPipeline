@@ -171,7 +171,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 InfluenceVolumeUI.HandleType.Base | InfluenceVolumeUI.HandleType.Influence
             );
 
-            DrawCapturePositionGizmo(probe);
+            if (e.showChromeGizmo)
+                DrawCapturePositionGizmo(probe);
         }
 
         static void DrawCapturePositionGizmo(PlanarReflectionProbe probe)
@@ -237,6 +238,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 #if PLANAR_WITH_DYNAMIC_FOV
                 | ProbeSettingsFields.frustumAutomaticScale
 #endif
+                | ProbeSettingsFields.frustumViewerScale
                 | ProbeSettingsFields.frustumFixedValue,
             camera = new CameraSettingsOverride
             {

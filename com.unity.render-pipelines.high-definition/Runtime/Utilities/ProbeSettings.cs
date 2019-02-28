@@ -18,7 +18,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         proxyMirrorRotationProxySpace = 1 << 9,
         frustumFieldOfViewMode = 1 << 10,
         frustumFixedValue = 1 << 11,
-        frustumAutomaticScale = 1 << 12
+#if PLANAR_WITH_DYNAMIC_FOV
+        frustumAutomaticScale = 1 << 12,
+#endif
+        frustumViewerScale = 1 << 13
     }
 
     [Serializable]
@@ -131,7 +134,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 fieldOfViewMode = FOVMode.Automatic,
                 fixedValue = 90,
-                automaticScale = 1.0f
+#if PLANAR_WITH_DYNAMIC_FOV
+                automaticScale = 1.0f,
+#endif
+                viewerScale = 1.0f
             };
 
             public enum FOVMode
@@ -157,8 +163,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             /// <summary>Value to use when FOV is fixed.</summary>
             [Range(0, 180)]
             public float fixedValue;
+#if PLANAR_WITH_DYNAMIC_FOV
             /// <summary>The automatic value of the FOV is multiplied by this factor at the end.</summary>
             public float automaticScale;
+#endif
+            /// <summary>The viewer's FOV is multiplied by this factor at the end.</summary>
+            public float viewerScale;
         }
 
         /// <summary>Default value.</summary>

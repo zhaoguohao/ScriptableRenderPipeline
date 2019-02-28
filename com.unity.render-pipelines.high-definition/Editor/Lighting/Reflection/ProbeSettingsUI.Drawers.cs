@@ -48,11 +48,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 switch ((ProbeSettings.Frustum.FOVMode)serialized.frustumFieldOfViewMode.enumValueIndex)
                 {
                     case ProbeSettings.Frustum.FOVMode.Fixed:
-                        PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.frustumFixedValue, serialized.frustumFixedValue, EditorGUIUtility.TrTextContent("Value"), @override.probe, displayedFields.probe, overridableFields.probe);
+                        PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.frustumFixedValue, serialized.frustumFixedValue, EditorGUIUtility.TrTextContent("Value"), @override.probe, displayedFields.probe, overridableFields.probe, indent: 1);
+                        break;
+                    case ProbeSettings.Frustum.FOVMode.Viewer:
+                        PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.frustumViewerScale, serialized.frustumViewerScale, EditorGUIUtility.TrTextContent("Scale"), @override.probe, displayedFields.probe, overridableFields.probe, indent: 1);
                         break;
 #if PLANAR_WITH_DYNAMIC_FOV
                     case ProbeSettings.Frustum.FOVMode.Automatic:
-                        PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.frustumAutomaticScale, serialized.frustumAutomaticScale, EditorGUIUtility.TrTextContent("Scale"), @override.probe, displayedFields.probe, overridableFields.probe);
+                        PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.frustumAutomaticScale, serialized.frustumAutomaticScale, EditorGUIUtility.TrTextContent("Scale"), @override.probe, displayedFields.probe, overridableFields.probe, indent: 1);
                         break;
 #endif
                 }
