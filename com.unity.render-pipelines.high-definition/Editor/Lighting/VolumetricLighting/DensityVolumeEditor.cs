@@ -136,6 +136,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         //contained must be initialized in all case
                         s_ShapeBox.center = Quaternion.Inverse(densityVolume.transform.rotation) * densityVolume.transform.position;
                         s_ShapeBox.size = densityVolume.parameters.size;
+
+                        Vector3 previousSize = densityVolume.parameters.size;
+                        Vector3 previousPositiveFade = densityVolume.parameters.positiveFade;
+                        Vector3 previousNegativeFade = densityVolume.parameters.negativeFade;
                         
                         EditorGUI.BeginChangeCheck();
                         s_ShapeBox.DrawHandle();
@@ -143,10 +147,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         {
                             Undo.RecordObjects(new Object[] { densityVolume, densityVolume.transform }, "ChangeDensity Volume Bounding Box");
 
+                            m_SerializedDensityVolume.size.vector3Value = s_ShapeBox.size;
+                            DensityVolumeUI.UpdateBlendToKeepDistances(previousSize, previousPositiveFade, previousNegativeFade, m_SerializedDensityVolume, this);
+
+
                             densityVolume.parameters.size = s_ShapeBox.size;
-                            
+
                             Vector3 delta = densityVolume.transform.rotation * s_ShapeBox.center - densityVolume.transform.position;
-                            densityVolume.transform.position += delta; ;
+                            densityVolume.transform.position += delta;
                         }
                     }
                     break;
