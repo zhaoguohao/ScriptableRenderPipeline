@@ -37,7 +37,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             var probePositionSettings = ProbeCapturePositionSettings.ComputeFrom(probe, null);
             HDRenderUtilities.ComputeCameraSettingsFromProbeSettings(
                 probe.settings, probePositionSettings,
-                out CameraSettings cameraSettings, out CameraPositionSettings cameraPositionSettings
+                out _, out var cameraPositionSettings
             );
             var capturePosition = cameraPositionSettings.position;
 

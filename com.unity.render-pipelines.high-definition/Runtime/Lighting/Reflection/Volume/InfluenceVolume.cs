@@ -225,10 +225,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             void GrowFOVToInclude(ref float fieldOfView, Vector3 positionWS)
             {
                 var halfFOV = Vector3.Angle(lookAtPositionWS - viewerPositionWS, positionWS - viewerPositionWS);
-                fieldOfView = Mathf.Max(halfFOV, fieldOfView);
+                fieldOfView = Mathf.Max(halfFOV * 2, fieldOfView);
             }
 
             float fov = 0;
+
 
             switch (envShape)
             {

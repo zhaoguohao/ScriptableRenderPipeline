@@ -126,6 +126,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     c.height = k_PreviewHeight;
                     Graphics.DrawTexture(c, p.texture, new Rect(0, 0, 1, 1), 0, 0, 0, 0, GUI.color, CameraEditorUtils.GUITextureBlit2SRGBMaterial);
 
+                    var fovRect = new Rect(c.x + 5, c.y + 2, c.width - 10, EditorGUIUtility.singleLineHeight);
+                    GUI.TextField(fovRect, $"FOV: {p.renderData.fieldOfView:F2}°");
+
                     c.x += c.width;
                 }
             }
@@ -229,7 +232,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedCaptureSettings => new ProbeSettingsOverride
         {
             probe = ProbeSettingsFields.proxyMirrorPositionProxySpace
-               | ProbeSettingsFields.proxyMirrorRotationProxySpace,
+                | ProbeSettingsFields.proxyMirrorRotationProxySpace
+                | ProbeSettingsFields.frustumFieldOfViewMode
+#if PLANAR_WITH_DYNAMIC_FOV
+                | ProbeSettingsFields.frustumAutomaticScale
+#endif
+                | ProbeSettingsFields.frustumFixedValue,
             camera = new CameraSettingsOverride
             {
                 camera = (CameraSettingsFields)(-1) & ~(
@@ -238,16 +246,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                    | CameraSettingsFields.cullingInvertFaceCulling
                    | CameraSettingsFields.frustumMode
                    | CameraSettingsFields.frustumProjectionMatrix
+                   | CameraSettingsFields.frustumFieldOfView
                )
             }
         };
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.overrideableCaptureSettings => new ProbeSettingsOverride
         {
             probe = ProbeSettingsFields.none,
-            camera = new CameraSettingsOverride
-            {
-                camera = CameraSettingsFields.frustumFieldOfView
-            }
+            camera = new CameraSettingsOverride()
         };
         ProbeSettingsOverride HDProbeUI.IProbeUISettingsProvider.displayedAdvancedSettings => new ProbeSettingsOverride
         {
