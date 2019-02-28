@@ -717,7 +717,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return rtHandleSystem.Alloc(
                     Vector2.one, depthBufferBits: DepthBits.None,
                     filterMode: FilterMode.Bilinear, colorFormat: k_ColorFormat,
-                    enableRandomWrite: true, xrInstancing: true, name: "TAA History"
+                    enableRandomWrite: true, useDynamicScale: true, xrInstancing: true, name: "TAA History"
                 );
             }
 
@@ -1262,7 +1262,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             {
                 return rtHandleSystem.Alloc(
                     Vector2.one, depthBufferBits: DepthBits.None, filterMode: FilterMode.Point,
-                    colorFormat: GraphicsFormat.R16_SFloat, enableRandomWrite: true, xrInstancing: true, name: "CoC History"
+                    colorFormat: GraphicsFormat.R16_SFloat, enableRandomWrite: true, useDynamicScale: true, xrInstancing: true, name: "CoC History"
                 );
             }
 
