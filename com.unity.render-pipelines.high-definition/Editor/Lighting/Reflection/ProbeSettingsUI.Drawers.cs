@@ -22,9 +22,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 | ProbeSettingsFields.proxyMirrorRotationProxySpace
                 | ProbeSettingsFields.proxyUseInfluenceVolumeAsProxyVolume;
             const ProbeSettingsFields frustum = ProbeSettingsFields.frustumFieldOfViewMode
-#if PLANAR_WITH_DYNAMIC_FOV
                 | ProbeSettingsFields.frustumAutomaticScale
-#endif
                 | ProbeSettingsFields.frustumFixedValue;
 
             if (!(RenderPipelineManager.currentPipeline is HDRenderPipeline hd))
@@ -53,12 +51,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     case ProbeSettings.Frustum.FOVMode.Viewer:
                         PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.frustumViewerScale, serialized.frustumViewerScale, EditorGUIUtility.TrTextContent("Scale"), @override.probe, displayedFields.probe, overridableFields.probe, indent: 1);
                         break;
-#if PLANAR_WITH_DYNAMIC_FOV
                     case ProbeSettings.Frustum.FOVMode.Automatic:
                         PropertyFieldWithFlagToggleIfDisplayed(ProbeSettingsFields.frustumAutomaticScale, serialized.frustumAutomaticScale, EditorGUIUtility.TrTextContent("Scale"), @override.probe, displayedFields.probe, overridableFields.probe, indent: 1);
                         break;
-#endif
                 }
+                EditorGUILayout.Space();
             }
 
             if ((displayedFields.probe & proxy) != 0)

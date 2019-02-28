@@ -214,7 +214,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             }
         }
 
-#if PLANAR_WITH_DYNAMIC_FOV
         /// <summary>
         /// Compute the minimal FOV required to see the full influence volume from <paramref name="viewerPositionWS"/>
         ///     while looking at <paramref name="lookAtPositionWS"/>.
@@ -244,12 +243,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-boxSize.x, +boxSize.y, +boxSize.z)));
                     break;
                 case EnvShapeType.Sphere:
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(+sphereRadius, 0, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-sphereRadius, 0, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, +sphereRadius, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, -sphereRadius, 0)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, 0, +sphereRadius)));
-                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, 0, -sphereRadius)));
+                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(+sphereRadius * 2, 0, 0)));
+                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(-sphereRadius * 2, 0, 0)));
+                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, +sphereRadius * 2, 0)));
+                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, -sphereRadius * 2, 0)));
+                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, 0, +sphereRadius * 2)));
+                    GrowFOVToInclude(ref fov, influenceToWorld.MultiplyPoint(new Vector3(0, 0, -sphereRadius * 2)));
                     break;
                 default:
                     fov = 90;
@@ -258,6 +257,5 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             return fov;
         }
-#endif
     }
 }

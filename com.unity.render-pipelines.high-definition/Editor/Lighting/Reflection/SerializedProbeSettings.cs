@@ -40,9 +40,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal SerializedProperty frustumFieldOfViewMode;
         internal SerializedProperty frustumFixedValue;
         internal SerializedProperty frustumViewerScale;
-#if PLANAR_WITH_DYNAMIC_FOV
         internal SerializedProperty frustumAutomaticScale;
-#endif
 
 
         internal SerializedProbeSettings(SerializedProperty root)
@@ -63,9 +61,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             frustumFieldOfViewMode = root.FindPropertyRelative("frustum.fieldOfViewMode");
             frustumFixedValue = root.FindPropertyRelative("frustum.fixedValue");
             frustumViewerScale = root.FindPropertyRelative("frustum.viewerScale");
-#if PLANAR_WITH_DYNAMIC_FOV
             frustumAutomaticScale = root.FindPropertyRelative("frustum.automaticScale");
-#endif
 
             cameraSettings = new SerializedCameraSettings(root.Find((ProbeSettings p) => p.camera));
             influence = new SerializedInfluenceVolume(root.Find((ProbeSettings p) => p.influence));

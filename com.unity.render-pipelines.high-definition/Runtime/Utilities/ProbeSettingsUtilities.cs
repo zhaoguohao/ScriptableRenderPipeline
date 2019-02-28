@@ -148,7 +148,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 case ProbeSettings.Frustum.FOVMode.Viewer:
                     cameraSettings.frustum.fieldOfView = referenceFieldOfView * settings.frustum.viewerScale;
                     break;
-#if PLANAR_WITH_DYNAMIC_FOV
                 case ProbeSettings.Frustum.FOVMode.Automatic:
                     // Dynamic FOV tries to adapt the FOV to have maximum usage of the target render texture
                     //     (A lot of pixel can be discarded in the render texture). This way we can have a greater
@@ -157,7 +156,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         probePosition.referencePosition, mirrorPosition, probePosition.influenceToWorld
                     ) * settings.frustum.automaticScale;
                     break;
-#endif
             }
         }
 
