@@ -127,6 +127,10 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 }
                 serialized.editorPositiveFade.vector3Value = newPositiveFade;
                 serialized.editorNegativeFade.vector3Value = newNegativeFade;
+
+
+                float max = Mathf.Min(newSize.x, newSize.y, newSize.z) * 0.5f;
+                serialized.editorUniformFade.floatValue = Mathf.Clamp(serialized.editorUniformFade.floatValue, 0f, max);
             }
 
             Vector3 serializedSize = serialized.size.vector3Value;
@@ -175,12 +179,11 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             else
             {
                 EditorGUI.BeginChangeCheck();
-                float distanceMax = Mathf.Min(s.x, s.y, s.z);
-                float uniformFadeDistance = serialized.uniformFade.floatValue * distanceMax;
-                uniformFadeDistance = EditorGUILayout.FloatField(Styles.s_BlendLabel, uniformFadeDistance);
+                EditorGUILayout.PropertyField(serialized.editorUniformFade, Styles.s_BlendLabel);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    serialized.uniformFade.floatValue = Mathf.Clamp(uniformFadeDistance / distanceMax, 0f, 0.5f);
+                    float max = Mathf.Min(serializedSize.x, serializedSize.y, serializedSize.z) * 0.5f;
+                    serialized.editorUniformFade.floatValue = Mathf.Clamp(serialized.editorUniformFade.floatValue, 0f, max);
                 }
             }
             if (EditorGUI.EndChangeCheck())
