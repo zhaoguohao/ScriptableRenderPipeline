@@ -150,20 +150,10 @@ namespace UnityEditor.ShaderGraph
         {
             if (subGraphData == null || hasError)
                 return;
-
-//            if (hasError)
-//            {
-//                foreach (var outSlot in subGraphData.outputs)
-//                {
-//                    visitor.AddShaderChunk(string.Format("{0} {1};\nZERO_INITIALIZE({0}, {1});", NodeUtils.ConvertConcreteSlotValueTypeToString(precision, outSlot.concreteValueType), GetVariableNameForSlot(outSlot.id)));
-//                }
-//
-//                return;
-//            }
             
             var sb = new ShaderStringBuilder();
-            
-            var inputVariableName = $"bindings_{subGraphData.hlslName}_{subGraphData.assetGuid}";
+
+            var inputVariableName = GetVariableNameForNode();
             
             GraphUtil.GenerateSurfaceInputTransferCode(sb, subGraphData.requirements, subGraphData.inputStructName, inputVariableName);
             
