@@ -81,16 +81,9 @@ namespace UnityEditor.ShaderGraph
                 var helper = new SubGraphHelper();
                 EditorJsonUtility.FromJsonOverwrite(m_SerializedSubGraph, helper);
                 m_SubGraph = helper.subGraph;
-                foreach (var subGraphData in SubGraphDatabase.instance.subGraphs)
-                {
-                    if (subGraphData.assetGuid == subGraphGuid)
-                    {
-                        m_SubGraphData = subGraphData;
-                        break;
-                    }
-                }
-
                 name = subGraphAsset.name;
+                var index = SubGraphDatabase.instance.subGraphGuids.BinarySearch(subGraphGuid);
+                m_SubGraphData = index < 0 ? null : SubGraphDatabase.instance.subGraphs[index];
             }
         }
 

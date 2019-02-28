@@ -75,7 +75,11 @@ namespace UnityEditor.ShaderGraph
                 }
             }
 
-            database.subGraphs = subGraphMap.Values.ToList();
+            database.subGraphs.Clear();
+            database.subGraphs.AddRange(subGraphMap.Values);
+            database.subGraphs.Sort((s1, s2) => s1.assetGuid.CompareTo(s2.assetGuid));
+            database.subGraphGuids.Clear();
+            database.subGraphGuids.AddRange(database.subGraphs.Select(x => x.assetGuid));
 
             var permanentMarks = new HashSet<string>();
             var stack = new Stack<string>(allSubGraphGuids.Count);

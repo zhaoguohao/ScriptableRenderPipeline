@@ -29,6 +29,8 @@ namespace UnityEditor.ShaderGraph
         static SubGraphDatabase s_Instance;
         
         public List<SubGraphData> subGraphs = new List<SubGraphData>();
+
+        public List<string> subGraphGuids = new List<string>();
         
         public List<string> functionNames = new List<string>();
         
