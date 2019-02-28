@@ -79,6 +79,10 @@ namespace UnityEditor.ShaderGraph.Drawing
             {
                 var asset = AssetDatabase.LoadAssetAtPath<SubGraphAsset>(AssetDatabase.GUIDToAssetPath(guid));
                 var node = new SubGraphNode { subGraphAsset = asset };
+                if (node.subGraphData.descendents.Contains(m_Graph.assetGuid) || node.subGraphData.assetGuid == m_Graph.assetGuid)
+                {
+                    continue;
+                }
 
                 if (string.IsNullOrEmpty(node.subGraphData.path))
                 {
