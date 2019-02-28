@@ -12,6 +12,9 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
     public class VxShadowMapsManager
     {
         private RenderPipelineType           _renderPipelineType   = RenderPipelineType.Custom;
+
+        private ComputeBuffer                _nullVxShadowMapsBuffer = null;
+
         private List<DirectionalVxShadowMap> _dirVxShadowMapList   = new List<DirectionalVxShadowMap>();
         private List<PointVxShadowMap>       _pointVxShadowMapList = new List<PointVxShadowMap>();
         private List<SpotVxShadowMap>        _spotVxShadowMapList  = new List<SpotVxShadowMap>();
@@ -19,6 +22,22 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
         public VxShadowMapsManager(RenderPipelineType renderPipelineType)
         {
             _renderPipelineType = renderPipelineType;
+
+            uint[] nullData = new uint[]
+            {
+                // resolution, maxScale
+                0, 0,
+                // matrix
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                // data
+                0,
+            };
+
+            _nullVxShadowMapsBuffer = new ComputeBuffer(19, 4);
+            _nullVxShadowMapsBuffer.SetData(nullData);
 
             var dirVxShadowMaps   = Object.FindObjectsOfType<DirectionalVxShadowMap>();
             var pointVxShadowMaps = Object.FindObjectsOfType<PointVxShadowMap>();
@@ -34,6 +53,8 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
 
         public void Cleanup()
         {
+            _nullVxShadowMapsBuffer.Release();
+
             _dirVxShadowMapList.Clear();
             _pointVxShadowMapList.Clear();
             _spotVxShadowMapList.Clear();
@@ -48,6 +69,14 @@ namespace UnityEngine.Experimental.VoxelizedShadowMaps
                     return null;
 
                 return _dirVxShadowMapList[0];
+            }
+        }
+
+        public ComputeBuffer NullVxShadowMapsBuffer
+        {
+            get
+            {
+                return _nullVxShadowMapsBuffer;
             }
         }
     }

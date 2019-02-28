@@ -1803,7 +1803,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // Render the volumetric lighting.
                 // The pass requires the volume properties, the light list and the shadows, and can run async.
-                m_VolumetricLightingSystem.VolumetricLightingPass(hdCamera, cmd, m_FrameCount);
+                m_VolumetricLightingSystem.VolumetricLightingPass(hdCamera, cmd, m_VxShadowMapsManager, m_FrameCount); //seongdae;vxsm
 
                 SetMicroShadowingSettings(cmd);
 

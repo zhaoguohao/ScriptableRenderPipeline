@@ -117,6 +117,29 @@ float EvaluateRuntimeSunShadow(LightLoopContext lightLoopContext, PositionInputs
     }
 }
 
+//seongdae;vxsm
+float EvaluateRuntimeSunVxShadow(PositionInputs posInput, DirectionalLightData light)
+{
+#ifdef SUPPORT_VX_SHADOWING
+    if ((light.lightDimmer > 0) && (light.shadowDimmer > 0))
+    {
+        float3 positionWS = posInput.positionWS + _WorldSpaceCameraPos;
+
+        uint begin = 0;
+        float attenuation = PointSampleVxShadowing(begin, positionWS);
+
+        return attenuation;
+    }
+    else
+    {
+        return 1;
+    }
+#else
+    return 1;
+#endif
+}
+//seongdae;vxsm
+
 // None of the outputs are premultiplied.
 void EvaluateLight_Directional(LightLoopContext lightLoopContext, PositionInputs posInput,
                                DirectionalLightData light, BuiltinData builtinData,

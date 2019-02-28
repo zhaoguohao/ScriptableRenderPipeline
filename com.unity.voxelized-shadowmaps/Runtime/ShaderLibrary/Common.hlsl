@@ -126,4 +126,48 @@ float PointSampleShadowBitmask(uint2 bitmask2, uint3 posQ, uint2 offset)
 }
 
 
+float PointSampleVxShadowing(uint begin, float3 positionWS)
+{
+    uint voxelResolution = _VxShadowMapsBuffer[begin];
+    float4x4 worldToShadowMatrix =
+    {
+        asfloat(_VxShadowMapsBuffer[begin + 2]),
+        asfloat(_VxShadowMapsBuffer[begin + 3]),
+        asfloat(_VxShadowMapsBuffer[begin + 4]),
+        asfloat(_VxShadowMapsBuffer[begin + 5]),
+
+        asfloat(_VxShadowMapsBuffer[begin + 6]),
+        asfloat(_VxShadowMapsBuffer[begin + 7]),
+        asfloat(_VxShadowMapsBuffer[begin + 8]),
+        asfloat(_VxShadowMapsBuffer[begin + 9]),
+
+        asfloat(_VxShadowMapsBuffer[begin + 10]),
+        asfloat(_VxShadowMapsBuffer[begin + 11]),
+        asfloat(_VxShadowMapsBuffer[begin + 12]),
+        asfloat(_VxShadowMapsBuffer[begin + 13]),
+
+        asfloat(_VxShadowMapsBuffer[begin + 14]),
+        asfloat(_VxShadowMapsBuffer[begin + 15]),
+        asfloat(_VxShadowMapsBuffer[begin + 16]),
+        asfloat(_VxShadowMapsBuffer[begin + 17]),
+    };
+
+    float3 posNDC = mul(worldToShadowMatrix, float4(positionWS, 1.0)).xyz;
+    float3 posP = posNDC * (float)voxelResolution;
+    uint3  posQ = (uint3)posP;
+
+    if (any(posQ >= (voxelResolution.xxx - 1)))
+        return 1;
+
+    uint4 result = TraverseVxShadowMapPosQ(begin, posQ);
+    if (result.w == 0)
+        return result.y ? 1 : 0;
+
+    uint2 bitmask2 = TraverseVxShadowMapLeaf(begin, posQ.z, result);
+    float attenuation = PointSampleShadowBitmask(bitmask2, posQ);
+
+    return attenuation;
+}
+
+
 #endif // UNITY_VX_SHADOWMAPS_COMMON_INCLUDED
