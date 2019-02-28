@@ -130,7 +130,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             public static readonly Frustum @default = new Frustum
             {
-                fieldOfViewMode = FOVMode.Automatic,
+                fieldOfViewMode = FOVMode.Viewer,
                 fixedValue = 90,
                 automaticScale = 1.0f,
                 viewerScale = 1.0f

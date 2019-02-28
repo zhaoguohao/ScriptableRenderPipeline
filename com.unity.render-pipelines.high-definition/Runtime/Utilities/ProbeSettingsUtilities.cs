@@ -137,6 +137,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             float referenceFieldOfView
         )
         {
+            const float k_MaxFieldOfView = 170;
+
             var proxyMatrix = Matrix4x4.TRS(probePosition.proxyPosition, probePosition.proxyRotation, Vector3.one);
             var mirrorPosition = proxyMatrix.MultiplyPoint(settings.proxySettings.mirrorPositionProxySpace);
 
@@ -146,15 +148,21 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     cameraSettings.frustum.fieldOfView = settings.frustum.fixedValue;
                     break;
                 case ProbeSettings.Frustum.FOVMode.Viewer:
-                    cameraSettings.frustum.fieldOfView = referenceFieldOfView * settings.frustum.viewerScale;
+                    cameraSettings.frustum.fieldOfView = Mathf.Min(
+                        referenceFieldOfView * settings.frustum.viewerScale,
+                        k_MaxFieldOfView
+                    );
                     break;
                 case ProbeSettings.Frustum.FOVMode.Automatic:
                     // Dynamic FOV tries to adapt the FOV to have maximum usage of the target render texture
                     //     (A lot of pixel can be discarded in the render texture). This way we can have a greater
                     //     resolution for the planar with the same cost.
-                    cameraSettings.frustum.fieldOfView = settings.influence.ComputeFOVAt(
-                        probePosition.referencePosition, mirrorPosition, probePosition.influenceToWorld
-                    ) * settings.frustum.automaticScale;
+                    cameraSettings.frustum.fieldOfView = Mathf.Min(
+                            settings.influence.ComputeFOVAt(
+                            probePosition.referencePosition, mirrorPosition, probePosition.influenceToWorld
+                        ) * settings.frustum.automaticScale,
+                            k_MaxFieldOfView
+                    );
                     break;
             }
         }
