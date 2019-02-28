@@ -52,7 +52,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         Vector4[] worldSpaceCameraPosStereoEyeOffset;
         Vector4[] prevWorldSpaceCameraPosStereo;
 
-        IEnumerator<Action<RenderTargetIdentifier, CommandBuffer>> captureActions;
+        // Recorder specific
+        IEnumerator<Action<RenderTargetIdentifier, CommandBuffer>> m_RecorderCaptureActions;
+        int m_RecorderTempRT = Shader.PropertyToID("TempRecorder");
+        MaterialPropertyBlock m_RecorderPropertyBlock = new MaterialPropertyBlock();
 
         // Non oblique projection matrix (RHS)
         public Matrix4x4 nonObliqueProjMatrix
@@ -591,7 +594,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             UpdateVolumeParameters();
 
-            captureActions = CameraCaptureBridge.GetCaptureActions(camera);
+            m_RecorderCaptureActions = CameraCaptureBridge.GetCaptureActions(camera);
         }
 
         void UpdateVolumeParameters()
@@ -956,23 +959,23 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ExecuteCaptureActions(RTHandleSystem.RTHandle input, CommandBuffer cmd)
         {
-            if (captureActions == null)
+            if (m_RecorderCaptureActions == null)
                 return;
 
-            var id = Shader.PropertyToID("TempRecorder");
-            cmd.GetTemporaryRT(id, actualWidth, actualHeight, 0, FilterMode.Point, input.rt.graphicsFormat);
+            // We need to blit to an intermediate texture because input resolution can be bigger than the camera resolution
+            // Since recorder does not know about this, we need to send a texture of the right size.
+            cmd.GetTemporaryRT(m_RecorderTempRT, actualWidth, actualHeight, 0, FilterMode.Point, input.rt.graphicsFormat);
 
             var blitMaterial = HDUtils.GetBlitMaterial(TextureDimension.Tex2D);
-            MaterialPropertyBlock mpb = new MaterialPropertyBlock();
 
-            mpb.SetTexture(HDShaderIDs._BlitTexture, input);
-            mpb.SetVector(HDShaderIDs._BlitScaleBias, viewportScale);
-            mpb.SetFloat(HDShaderIDs._BlitMipLevel, 0);
-            cmd.SetRenderTarget(id);
-            cmd.DrawProcedural(Matrix4x4.identity, blitMaterial, 0, MeshTopology.Triangles, 3, 1, mpb);
+            m_RecorderPropertyBlock.SetTexture(HDShaderIDs._BlitTexture, input);
+            m_RecorderPropertyBlock.SetVector(HDShaderIDs._BlitScaleBias, viewportScale);
+            m_RecorderPropertyBlock.SetFloat(HDShaderIDs._BlitMipLevel, 0);
+            cmd.SetRenderTarget(m_RecorderTempRT);
+            cmd.DrawProcedural(Matrix4x4.identity, blitMaterial, 0, MeshTopology.Triangles, 3, 1, m_RecorderPropertyBlock);
 
-            for (captureActions.Reset(); captureActions.MoveNext();)
-                captureActions.Current(id, cmd);
+            for (m_RecorderCaptureActions.Reset(); m_RecorderCaptureActions.MoveNext();)
+                m_RecorderCaptureActions.Current(m_RecorderTempRT, cmd);
         }
     }
 }
