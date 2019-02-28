@@ -102,7 +102,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         Color baseColor = densityVolume.parameters.albedo;
                         baseColor.a = 8 / 255f;
                         s_BlendBox.baseColor = baseColor;
-                        s_BlendBox.monoHandle = !densityVolume.parameters.advancedFade;
+                        s_BlendBox.monoHandle = !m_SerializedDensityVolume.editorAdvancedFade.boolValue;
                         s_BlendBox.center = CenterBlendLocalPosition(densityVolume);
                         s_BlendBox.size = BlendSize(densityVolume);
                         EditorGUI.BeginChangeCheck();

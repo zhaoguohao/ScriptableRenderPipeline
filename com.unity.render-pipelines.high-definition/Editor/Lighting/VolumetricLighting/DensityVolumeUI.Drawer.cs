@@ -25,16 +25,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 ),
             CED.space,
             CED.FoldoutGroup(
-                Styles.k_VolumeHeader,
-                Expandable.Volume,
-                k_ExpandedState,
+                Styles.k_VolumeHeader, Expandable.Volume, k_ExpandedState,
                 Drawer_AdvancedSwitch,
                 Drawer_VolumeContent
                 ),
             CED.FoldoutGroup(
-                Styles.k_DensityMaskTextureHeader,
-                Expandable.DensityMaskTexture,
-                k_ExpandedState,
+                Styles.k_DensityMaskTextureHeader, Expandable.DensityMaskTexture, k_ExpandedState,
                 Drawer_DensityMaskTextureContent
                 )
             );
@@ -69,12 +65,12 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             {
                 GUILayout.FlexibleSpace();
 
-                bool advanced = serialized.advancedFade.boolValue;
+                bool advanced = serialized.editorAdvancedFade.boolValue;
                 advanced = GUILayout.Toggle(advanced, Styles.s_AdvancedModeContent, EditorStyles.miniButton, GUILayout.Width(60f), GUILayout.ExpandWidth(false));
                 DensityVolumeEditor.s_BlendBox.monoHandle = !advanced;
-                if (serialized.advancedFade.boolValue ^ advanced)
+                if (serialized.editorAdvancedFade.boolValue ^ advanced)
                 {
-                    serialized.advancedFade.boolValue = advanced;
+                    serialized.editorAdvancedFade.boolValue = advanced;
                 }
             }
         }
@@ -83,9 +79,9 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             //keep previous data as value are stored in percent 
             Vector3 previousSize = serialized.size.vector3Value;
-            float previousUniformFade = serialized.uniformFade.floatValue;
-            Vector3 previousPositiveFade = serialized.positiveFade.vector3Value;
-            Vector3 previousNegativeFade = serialized.negativeFade.vector3Value;
+            float previousUniformFade = serialized.editorUniformFade.floatValue;
+            Vector3 previousPositiveFade = serialized.editorPositiveFade.vector3Value;
+            Vector3 previousNegativeFade = serialized.editorNegativeFade.vector3Value;
 
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.PropertyField(serialized.size, Styles.s_Size);
@@ -129,39 +125,39 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         }
                     }
                 }
-                serialized.positiveFade.vector3Value = newPositiveFade;
-                serialized.negativeFade.vector3Value = newNegativeFade;
+                serialized.editorPositiveFade.vector3Value = newPositiveFade;
+                serialized.editorNegativeFade.vector3Value = newNegativeFade;
             }
 
-            Vector3 s = serialized.size.vector3Value;
+            Vector3 serializedSize = serialized.size.vector3Value;
             EditorGUI.BeginChangeCheck();
-            if (serialized.advancedFade.boolValue)
+            if (serialized.editorAdvancedFade.boolValue)
             {
-                Vector3 positive = serialized.positiveFade.vector3Value;
-                positive.x *= s.x;
-                positive.y *= s.y;
-                positive.z *= s.z;
-                Vector3 negative = serialized.negativeFade.vector3Value;
-                negative.x *= s.x;
-                negative.y *= s.y;
-                negative.z *= s.z;
+                Vector3 positive = serialized.editorPositiveFade.vector3Value;
+                positive.x *= serializedSize.x;
+                positive.y *= serializedSize.y;
+                positive.z *= serializedSize.z;
+                Vector3 negative = serialized.editorNegativeFade.vector3Value;
+                negative.x *= serializedSize.x;
+                negative.y *= serializedSize.y;
+                negative.z *= serializedSize.z;
                 EditorGUI.BeginChangeCheck();
-                CoreEditorUtils.DrawVector6(Styles.s_BlendLabel, ref positive, ref negative, Vector3.zero, s, InfluenceVolumeUI.k_HandlesColor);
+                CoreEditorUtils.DrawVector6(Styles.s_BlendLabel, ref positive, ref negative, Vector3.zero, serializedSize, InfluenceVolumeUI.k_HandlesColor);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    positive.x /= s.x;
-                    positive.y /= s.y;
-                    positive.z /= s.z;
-                    negative.x /= s.x;
-                    negative.y /= s.y;
-                    negative.z /= s.z;
+                    positive.x /= serializedSize.x;
+                    positive.y /= serializedSize.y;
+                    positive.z /= serializedSize.z;
+                    negative.x /= serializedSize.x;
+                    negative.y /= serializedSize.y;
+                    negative.z /= serializedSize.z;
 
                     //forbid positive/negative box that doesn't intersect in inspector too
                     for (int axis = 0; axis < 3; ++axis)
                     {
                         if (positive[axis] > 1f - negative[axis])
                         {
-                            if (positive == serialized.positiveFade.vector3Value)
+                            if (positive == serialized.editorPositiveFade.vector3Value)
                             {
                                 negative[axis] = 1f - positive[axis];
                             }
@@ -172,8 +168,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         }
                     }
 
-                    serialized.positiveFade.vector3Value = positive;
-                    serialized.negativeFade.vector3Value = negative;
+                    serialized.editorPositiveFade.vector3Value = positive;
+                    serialized.editorNegativeFade.vector3Value = negative;
                 }
             }
             else
@@ -190,17 +186,17 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (EditorGUI.EndChangeCheck())
             {
                 Vector3 posFade = new Vector3();
-                posFade.x = Mathf.Clamp01(serialized.positiveFade.vector3Value.x);
-                posFade.y = Mathf.Clamp01(serialized.positiveFade.vector3Value.y);
-                posFade.z = Mathf.Clamp01(serialized.positiveFade.vector3Value.z);
+                posFade.x = Mathf.Clamp01(serialized.editorPositiveFade.vector3Value.x);
+                posFade.y = Mathf.Clamp01(serialized.editorPositiveFade.vector3Value.y);
+                posFade.z = Mathf.Clamp01(serialized.editorPositiveFade.vector3Value.z);
 
                 Vector3 negFade = new Vector3();
-                negFade.x = Mathf.Clamp01(serialized.negativeFade.vector3Value.x);
-                negFade.y = Mathf.Clamp01(serialized.negativeFade.vector3Value.y);
-                negFade.z = Mathf.Clamp01(serialized.negativeFade.vector3Value.z);
+                negFade.x = Mathf.Clamp01(serialized.editorNegativeFade.vector3Value.x);
+                negFade.y = Mathf.Clamp01(serialized.editorNegativeFade.vector3Value.y);
+                negFade.z = Mathf.Clamp01(serialized.editorNegativeFade.vector3Value.z);
 
-                serialized.positiveFade.vector3Value = posFade;
-                serialized.negativeFade.vector3Value = negFade;
+                serialized.editorPositiveFade.vector3Value = posFade;
+                serialized.editorNegativeFade.vector3Value = negFade;
             }
 
             EditorGUILayout.PropertyField(serialized.invertFade, Styles.s_InvertFadeLabel);
