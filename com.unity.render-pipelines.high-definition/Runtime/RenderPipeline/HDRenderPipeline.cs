@@ -809,7 +809,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 // Off screen rendering is disabled for most of the frame by default.
                 cmd.SetGlobalInt(HDShaderIDs._OffScreenRendering, 0);
-                cmd.SetGlobalInt(HDShaderIDs._EnableSpecularLighting, hdCamera.frameSettings.IsEnabled(FrameSettingsField.SpecularLighting) ? 0 : 1);
+                cmd.SetGlobalInt(HDShaderIDs._EnableSpecularLighting, hdCamera.frameSettings.IsEnabled(FrameSettingsField.SpecularLighting) ? 1 : 0);
             }
         }
 
@@ -2786,8 +2786,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         m_MRTTransparentMotionVec[0] = hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA) ? m_CameraColorMSAABuffer : m_CameraColorBuffer;
                         m_MRTTransparentMotionVec[1] = renderMotionVecForTransparent ? m_SharedRTManager.GetMotionVectorsBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA))
                             // It doesn't really matter what gets bound here since the color mask state set will prevent this from ever being written to. However, we still need to bind something
+                            // to avoid warnings about unbound render targets. The following rendertarget could really be anything if renderVelocitiesForTransparent, here the normal buffer 
+                            // as it is guaranteed to exist and to have the same size.
                             // to avoid warnings about unbound render targets. 
-                            : m_MRTTransparentMotionVec[0];
+                            : m_SharedRTManager.GetNormalBuffer();
                                                     
 
                         HDUtils.SetRenderTarget(cmd, hdCamera, m_MRTTransparentMotionVec, m_SharedRTManager.GetDepthStencilBuffer(hdCamera.frameSettings.IsEnabled(FrameSettingsField.MSAA)));

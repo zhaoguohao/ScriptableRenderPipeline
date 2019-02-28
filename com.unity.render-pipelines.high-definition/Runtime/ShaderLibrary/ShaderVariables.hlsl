@@ -86,7 +86,7 @@ CBUFFER_START(UnityPerDraw)
     // This contain occlusion factor from 0 to 1 for dynamic objects (no SH here)
     float4 unity_ProbesOcclusion;
 
-    // Motion vectors
+    // Velocity
     float4x4 unity_MatrixPreviousM;
     float4x4 unity_MatrixPreviousMI;
     //X : Use last frame positions (right now skinned meshes are the only objects that use this
@@ -433,7 +433,7 @@ bool ReplaceDiffuseForReflectionPass(float3 fresnel0)
 {
     // we want to use Fresnel0 instead diffuse when doing reflection (reflection probe, planar reflection,
     // DXR reflection). Dieletric are suppose to have a fresnel of around 0.04. Let's consider anything above 0.3 as metal.
-    return (_EnableSpecularLighting.x > 0) && Max3(fresnel0.r, fresnel0.g, fresnel0.b) > 0.3;
+    return (_EnableSpecularLighting.x == 0) && Max3(fresnel0.r, fresnel0.g, fresnel0.b) > 0.3;
 }
 
 // Define Model Matrix Macro

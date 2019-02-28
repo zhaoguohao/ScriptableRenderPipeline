@@ -963,6 +963,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             lightData.rayTracedAreaShadowIndex = -1;
 #endif
 
+
             if (lightComponent != null && lightComponent.cookie != null)
             {
                 lightData.tileCookie = lightComponent.cookie.wrapMode == TextureWrapMode.Repeat ? 1 : 0;
@@ -1018,6 +1019,8 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.angleOffset = -cosConeOuterHalfAngle * lightData.angleScale;
 
             }
+
+            lightData.contactShadowIndex = -1;
 
             // Fallback to the first non shadow casting directional light.
             m_CurrentSunLight = m_CurrentSunLight == null ? lightComponent : m_CurrentSunLight;
@@ -1191,8 +1194,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             lightData.specularDimmer        = lightDistanceFade * (additionalLightData.affectSpecular ? additionalLightData.lightDimmer * m_FrameSettings.specularGlobalDimmer : 0);
             lightData.volumetricLightDimmer = lightDistanceFade * (additionalLightData.volumetricDimmer);
 
+            lightData.contactShadowIndex = -1;
             lightData.cookieIndex = -1;
             lightData.shadowIndex = -1;
+#if ENABLE_RAYTRACING
+            lightData.rayTracedAreaShadowIndex = -1;
+#endif
 
             if (lightComponent != null && lightComponent.cookie != null)
             {
@@ -1264,7 +1271,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 lightData.nonLightMappedOnly = 0;
             }
 
-            lightData.contactShadowIndex = -1;
 
             m_lightList.lights.Add(lightData);
 
