@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Added depth-of-field support with stereo instancing
+- Added proper support for Recorder in HDRP
 
 ### Fixed
 - Fixed diffusion profile upgrade breaking package when upgrading to a new version
