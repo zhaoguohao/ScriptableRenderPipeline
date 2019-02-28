@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Added depth-of-field support with stereo instancing
+- `Fixed`, `Viewer`, and `Automatic` modes to compute the FOV used when rendering a `PlanarReflectionProbe`
+- A checkbox to toggle the chrome gizmo of `ReflectionProbe`and `PlanarReflectionProbe`
 
 ### Fixed
 - Fixed diffusion profile upgrade breaking package when upgrading to a new version
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed mutiselection issue with HDLight Inspector
 - Fixed HDAdditionalCameraData data migration
 - Fixed failing builds when light explorer window is open
+- The correct preview is displayed when selecting multiple `PlanarReflectionProbe`s
 
 ## [6.4.0-preview] - 2019-02-21
 
