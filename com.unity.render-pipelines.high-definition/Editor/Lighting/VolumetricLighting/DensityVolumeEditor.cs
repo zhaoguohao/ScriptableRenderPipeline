@@ -43,27 +43,37 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
         static Vector3 CenterBlendLocalPosition(DensityVolume densityVolume)
         {
-            Vector3 size = densityVolume.parameters.size;
-            Vector3 posBlend = densityVolume.parameters.positiveFade;
-            posBlend.x *= size.x;
-            posBlend.y *= size.y;
-            posBlend.z *= size.z;
-            Vector3 negBlend = densityVolume.parameters.negativeFade;
-            negBlend.x *= size.x;
-            negBlend.y *= size.y;
-            negBlend.z *= size.z;
-            Vector3 localPosition = (negBlend - posBlend) * 0.5f;
-            return localPosition;
+            if (densityVolume.parameters.editorAdvancedFade)
+            {
+                Vector3 size = densityVolume.parameters.size;
+                Vector3 posBlend = densityVolume.parameters.editorPositiveFade;
+                posBlend.x *= size.x;
+                posBlend.y *= size.y;
+                posBlend.z *= size.z;
+                Vector3 negBlend = densityVolume.parameters.editorNegativeFade;
+                negBlend.x *= size.x;
+                negBlend.y *= size.y;
+                negBlend.z *= size.z;
+                Vector3 localPosition = (negBlend - posBlend) * 0.5f;
+                return localPosition;
+            }
+            else
+                return Vector3.zero;
         }
 
         static Vector3 BlendSize(DensityVolume densityVolume)
         {
             Vector3 size = densityVolume.parameters.size;
-            Vector3 blendSize = (Vector3.one - densityVolume.parameters.positiveFade - densityVolume.parameters.negativeFade);
-            blendSize.x *= size.x;
-            blendSize.y *= size.y;
-            blendSize.z *= size.z;
-            return blendSize;
+            if (densityVolume.parameters.editorAdvancedFade)
+            {
+                Vector3 blendSize = (Vector3.one - densityVolume.parameters.editorPositiveFade - densityVolume.parameters.editorNegativeFade);
+                blendSize.x *= size.x;
+                blendSize.y *= size.y;
+                blendSize.z *= size.z;
+                return blendSize;
+            }
+            else
+                return size - densityVolume.parameters.editorUniformFade * 2f * Vector3.one;
         }
         
         [DrawGizmo(GizmoType.Selected|GizmoType.Active)]
@@ -111,20 +121,32 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         {
                             Undo.RecordObject(densityVolume, "Change Density Volume Blend");
 
-                            //work in local space to compute the change on positiveFade and negativeFade
-                            Vector3 newCenterBlendLocalPosition = s_BlendBox.center;
-                            Vector3 halfSize = s_BlendBox.size * 0.5f;
-                            Vector3 size = densityVolume.parameters.size;
-                            Vector3 posFade = newCenterBlendLocalPosition + halfSize;
-                            posFade.x = 0.5f - posFade.x / size.x;
-                            posFade.y = 0.5f - posFade.y / size.y;
-                            posFade.z = 0.5f - posFade.z / size.z;
-                            Vector3 negFade = newCenterBlendLocalPosition - halfSize;
-                            negFade.x = 0.5f + negFade.x / size.x;
-                            negFade.y = 0.5f + negFade.y / size.y;
-                            negFade.z = 0.5f + negFade.z / size.z;
-                            densityVolume.parameters.positiveFade = posFade;
-                            densityVolume.parameters.negativeFade = negFade;
+                            if (m_SerializedDensityVolume.editorAdvancedFade.boolValue)
+                            {
+                                //work in local space to compute the change on positiveFade and negativeFade
+                                Vector3 newCenterBlendLocalPosition = s_BlendBox.center;
+                                Vector3 halfSize = s_BlendBox.size * 0.5f;
+                                Vector3 size = densityVolume.parameters.size;
+                                Vector3 posFade = newCenterBlendLocalPosition + halfSize;
+                                posFade.x = 0.5f - posFade.x / size.x;
+                                posFade.y = 0.5f - posFade.y / size.y;
+                                posFade.z = 0.5f - posFade.z / size.z;
+                                Vector3 negFade = newCenterBlendLocalPosition - halfSize;
+                                negFade.x = 0.5f + negFade.x / size.x;
+                                negFade.y = 0.5f + negFade.y / size.y;
+                                negFade.z = 0.5f + negFade.z / size.z;
+                                m_SerializedDensityVolume.editorPositiveFade.vector3Value = posFade;
+                                m_SerializedDensityVolume.editorNegativeFade.vector3Value = negFade;
+                            }
+                            else
+                            {
+                                float uniformDistance = (s_ShapeBox.size.x - s_BlendBox.size.x) * 0.5f;
+                                float max = Mathf.Min(s_ShapeBox.size.x, s_ShapeBox.size.y, s_ShapeBox.size.z) * 0.5f;
+                                m_SerializedDensityVolume.editorUniformFade.floatValue = Mathf.Clamp(uniformDistance, 0f, max);
+                            }
+                            m_SerializedDensityVolume.Apply();
+                            //densityVolume.parameters.positiveFade = posFade;
+                            //densityVolume.parameters.negativeFade = negFade;
                         }
                     }
                     break;
@@ -138,8 +160,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                         s_ShapeBox.size = densityVolume.parameters.size;
 
                         Vector3 previousSize = densityVolume.parameters.size;
-                        Vector3 previousPositiveFade = densityVolume.parameters.positiveFade;
-                        Vector3 previousNegativeFade = densityVolume.parameters.negativeFade;
+                        Vector3 previousPositiveFade = densityVolume.parameters.editorPositiveFade;
+                        Vector3 previousNegativeFade = densityVolume.parameters.editorNegativeFade;
                         
                         EditorGUI.BeginChangeCheck();
                         s_ShapeBox.DrawHandle();
@@ -149,9 +171,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                             m_SerializedDensityVolume.size.vector3Value = s_ShapeBox.size;
                             DensityVolumeUI.UpdateBlendToKeepDistances(previousSize, previousPositiveFade, previousNegativeFade, m_SerializedDensityVolume, this);
-
-
-                            densityVolume.parameters.size = s_ShapeBox.size;
+                            m_SerializedDensityVolume.Apply();
 
                             Vector3 delta = densityVolume.transform.rotation * s_ShapeBox.center - densityVolume.transform.position;
                             densityVolume.transform.position += delta;

@@ -38,6 +38,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public  int      textureIndex; // This shouldn't be public... Internal, maybe?
         private Vector3  volumeScrollingAmount;
 
+        internal float editorUniformFade => m_EditorUniformFade;
+        internal Vector3 editorPositiveFade => m_EditorPositiveFade;
+        internal Vector3 editorNegativeFade => m_EditorNegativeFade;
+        internal bool editorAdvancedFade => m_EditorAdvancedFade;
+
         public DensityVolumeArtistParameters(Color color, float _meanFreePath, float _asymmetry)
         {
             albedo                = color;
