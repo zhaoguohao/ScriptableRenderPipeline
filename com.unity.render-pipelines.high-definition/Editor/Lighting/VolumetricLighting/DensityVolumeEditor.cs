@@ -12,9 +12,8 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         internal const EditMode.SceneViewEditMode k_EditShape = EditMode.SceneViewEditMode.ReflectionProbeBox;
         internal const EditMode.SceneViewEditMode k_EditBlend = EditMode.SceneViewEditMode.GridBox;
 
-        const int k_MaxDisplayedBox = 10;
-        static Dictionary<DensityVolume, HierarchicalBox> shapeBoxes = new Dictionary<DensityVolume, HierarchicalBox>();
-        internal static Dictionary<DensityVolume, HierarchicalBox> blendBoxes = new Dictionary<DensityVolume, HierarchicalBox>();
+        static HierarchicalBox s_ShapeBox;
+        internal static HierarchicalBox s_BlendBox;
 
         SerializedDensityVolume m_SerializedDensityVolume;
         
@@ -22,15 +21,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
         {
             m_SerializedDensityVolume = new SerializedDensityVolume(serializedObject);
 
-            shapeBoxes.Clear();
-            blendBoxes.Clear();
-            int max = Mathf.Min(targets.Length, k_MaxDisplayedBox);
-            for (int i = 0; i < max; ++i)
+            if (s_ShapeBox == null || s_ShapeBox.Equals(null))
             {
-                var shapeBox = shapeBoxes[targets[i] as DensityVolume] = new HierarchicalBox(DensityVolumeUI.Styles.k_GizmoColorBase, DensityVolumeUI.Styles.k_BaseHandlesColor);
-                shapeBox.monoHandle = false;
-                blendBoxes[targets[i] as DensityVolume] = new HierarchicalBox(DensityVolumeUI.Styles.k_GizmoColorBase, InfluenceVolumeUI.k_HandlesColor, parent: shapeBox);
-
+                s_ShapeBox = new HierarchicalBox(DensityVolumeUI.Styles.k_GizmoColorBase, DensityVolumeUI.Styles.k_BaseHandlesColor);
+                s_ShapeBox.monoHandle = false;
+            }
+            if (s_BlendBox == null || s_BlendBox.Equals(null))
+            {
+                s_BlendBox = new HierarchicalBox(DensityVolumeUI.Styles.k_GizmoColorBase, InfluenceVolumeUI.k_HandlesColor, parent: s_ShapeBox);
             }
         }
 
@@ -74,27 +72,23 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             using (new Handles.DrawingScope(Matrix4x4.TRS(densityVolume.transform.position, densityVolume.transform.rotation, Vector3.one)))
             {
                 // Blend box
-                HierarchicalBox blendBox = blendBoxes[densityVolume];
-                blendBox.center = CenterBlendLocalPosition(densityVolume);
-                blendBox.size = BlendSize(densityVolume);
+                s_BlendBox.center = CenterBlendLocalPosition(densityVolume);
+                s_BlendBox.size = BlendSize(densityVolume);
                 Color baseColor = densityVolume.parameters.albedo;
                 baseColor.a = 8/255f;
-                blendBox.baseColor = baseColor;
-                blendBox.DrawHull(EditMode.editMode == k_EditBlend);
+                s_BlendBox.baseColor = baseColor;
+                s_BlendBox.DrawHull(EditMode.editMode == k_EditBlend);
                 
                 // Bounding box.
-                HierarchicalBox shapeBox = shapeBoxes[densityVolume];
-                shapeBox.center = Vector3.zero;
-                shapeBox.size = densityVolume.parameters.size;
-                shapeBox.DrawHull(EditMode.editMode == k_EditShape);
+                s_ShapeBox.center = Vector3.zero;
+                s_ShapeBox.size = densityVolume.parameters.size;
+                s_ShapeBox.DrawHull(EditMode.editMode == k_EditShape);
             }
         }
 
         void OnSceneGUI()
         {
             DensityVolume densityVolume = target as DensityVolume;
-            HierarchicalBox shapeBox = shapeBoxes[densityVolume];
-            HierarchicalBox blendBox = blendBoxes[densityVolume];
 
             switch (EditMode.editMode)
             {
@@ -102,21 +96,21 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     using (new Handles.DrawingScope(Matrix4x4.TRS(densityVolume.transform.position, densityVolume.transform.rotation, Vector3.one)))
                     {
                         //contained must be initialized in all case
-                        shapeBox.center = Vector3.zero;
-                        shapeBox.size = densityVolume.parameters.size;
+                        s_ShapeBox.center = Vector3.zero;
+                        s_ShapeBox.size = densityVolume.parameters.size;
 
-                        blendBox.monoHandle = !densityVolume.parameters.advancedFade;
-                        blendBox.center = CenterBlendLocalPosition(densityVolume);
-                        blendBox.size = BlendSize(densityVolume);
+                        s_BlendBox.monoHandle = !densityVolume.parameters.advancedFade;
+                        s_BlendBox.center = CenterBlendLocalPosition(densityVolume);
+                        s_BlendBox.size = BlendSize(densityVolume);
                         EditorGUI.BeginChangeCheck();
-                        blendBox.DrawHandle();
+                        s_BlendBox.DrawHandle();
                         if (EditorGUI.EndChangeCheck())
                         {
                             Undo.RecordObject(densityVolume, "Change Density Volume Blend");
 
                             //work in local space to compute the change on positiveFade and negativeFade
-                            Vector3 newCenterBlendLocalPosition = blendBox.center;
-                            Vector3 halfSize = blendBox.size * 0.5f;
+                            Vector3 newCenterBlendLocalPosition = s_BlendBox.center;
+                            Vector3 halfSize = s_BlendBox.size * 0.5f;
                             Vector3 size = densityVolume.parameters.size;
                             Vector3 posFade = newCenterBlendLocalPosition + halfSize;
                             posFade.x = 0.5f - posFade.x / size.x;
@@ -137,17 +131,18 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     using (new Handles.DrawingScope(Matrix4x4.TRS(Vector3.zero, densityVolume.transform.rotation, Vector3.one)))
                     {
                         //contained must be initialized in all case
-                        shapeBox.center = Quaternion.Inverse(densityVolume.transform.rotation) * densityVolume.transform.position;
-                        shapeBox.size = densityVolume.parameters.size;
+                        s_ShapeBox.center = Quaternion.Inverse(densityVolume.transform.rotation) * densityVolume.transform.position;
+                        s_ShapeBox.size = densityVolume.parameters.size;
+                        
                         EditorGUI.BeginChangeCheck();
-                        shapeBox.DrawHandle();
+                        s_ShapeBox.DrawHandle();
                         if (EditorGUI.EndChangeCheck())
                         {
                             Undo.RecordObjects(new Object[] { densityVolume, densityVolume.transform }, "ChangeDensity Volume Bounding Box");
 
-                            densityVolume.parameters.size = shapeBox.size;
+                            densityVolume.parameters.size = s_ShapeBox.size;
                             
-                            Vector3 delta = densityVolume.transform.rotation * shapeBox.center - densityVolume.transform.position;
+                            Vector3 delta = densityVolume.transform.rotation * s_ShapeBox.center - densityVolume.transform.position;
                             densityVolume.transform.position += delta; ;
                         }
                     }

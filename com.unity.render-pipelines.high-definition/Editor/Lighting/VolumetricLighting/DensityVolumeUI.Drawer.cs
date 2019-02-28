@@ -71,10 +71,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
 
                 bool advanced = serialized.advancedFade.boolValue;
                 advanced = GUILayout.Toggle(advanced, Styles.s_AdvancedModeContent, EditorStyles.miniButton, GUILayout.Width(60f), GUILayout.ExpandWidth(false));
-                foreach (var containedBox in DensityVolumeEditor.blendBoxes.Values)
-                {
-                    containedBox.monoHandle = !advanced;
-                }
+                DensityVolumeEditor.s_BlendBox.monoHandle = !advanced;
                 if (serialized.advancedFade.boolValue ^ advanced)
                 {
                     serialized.advancedFade.boolValue = advanced;
