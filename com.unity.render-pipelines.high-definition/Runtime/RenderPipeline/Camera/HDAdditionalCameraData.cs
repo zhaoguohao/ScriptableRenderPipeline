@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine.Serialization;
 using UnityEngine.Rendering;
 
@@ -153,6 +154,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public FrameSettings renderingPathCustomFrameSettings = FrameSettings.defaultCamera;
         public FrameSettingsOverrideMask renderingPathCustomFrameSettingsOverrideMask;
         public FrameSettingsRenderType defaultFrameSettings;
+
+        FramePassDataCollection m_FramePassDataCollection = new FramePassDataCollection(null);
+
+        public void SetFramePasses(FramePassDataCollection framePasses)
+            => m_FramePassDataCollection = framePasses;
+
+        public IEnumerable<FramePassData> framePasses => m_FramePassDataCollection;
 
         // Use for debug windows
         // When camera name change we need to update the name in DebugWindows.

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.Rendering;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
@@ -199,6 +200,11 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public bool stopNaNs => m_AdditionalCameraData != null && m_AdditionalCameraData.stopNaNs;
 
         public HDPhysicalCamera physicalParameters => m_AdditionalCameraData?.physicalParameters;
+
+        public IEnumerable<FramePassData> framePasses =>
+            m_AdditionalCameraData != null && !m_AdditionalCameraData.Equals(null)
+                ? m_AdditionalCameraData.framePasses
+                : Enumerable.Empty<FramePassData>();
 
         public bool invertFaceCulling
             => m_AdditionalCameraData != null ? m_AdditionalCameraData.invertFaceCulling : false;
