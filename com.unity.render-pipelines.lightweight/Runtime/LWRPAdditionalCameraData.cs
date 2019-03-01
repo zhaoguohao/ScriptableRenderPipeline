@@ -185,12 +185,16 @@ namespace UnityEngine.Rendering.LWRP
                 gizmoName += "Camera_UI.png";
             }
 
+#if UNITY_2019_2_OR_NEWER
             if (Selection.activeObject == gameObject)
             {
                 // Get the preferences selection color
                 tint = SceneView.selectedOutlineColor;
             }
             Gizmos.DrawIcon(transform.position, gizmoName, true, tint);
+#else
+            Gizmos.DrawIcon(transform.position, gizmoName);
+#endif
         }
     }
 }

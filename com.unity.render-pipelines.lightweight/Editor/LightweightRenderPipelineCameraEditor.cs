@@ -89,7 +89,13 @@ namespace UnityEditor.Rendering.LWRP
         public Camera camera { get { return target as Camera; } }
 
         static List<Camera> k_Cameras;
+
         List<Camera> validCameras = new List<Camera>();
+        // This is the valid list of types, so if we need to add more types we just add it here.
+        List<LWRPCameraType> validCameraTypes = new List<LWRPCameraType>{LWRPCameraType.Overlay};
+        List<Camera> errorCameras = new List<Camera>();
+        //bool showWarning = false;
+
         // Animation Properties
         public bool isSameClearFlags { get { return !settings.clearFlags.hasMultipleDifferentValues; } }
         public bool isSameOrthographic { get { return !settings.orthographic.hasMultipleDifferentValues; } }
@@ -147,6 +153,8 @@ namespace UnityEditor.Rendering.LWRP
 
         public new void OnEnable()
         {
+            validCameras.Clear();
+            errorCameras.Clear();
             m_LightweightRenderPipeline = GraphicsSettings.renderPipelineAsset as LightweightRenderPipelineAsset;
             settings.OnEnable();
 
@@ -172,9 +180,9 @@ namespace UnityEditor.Rendering.LWRP
             if (camType == LWRPCameraType.Game)
             {
                 m_LayerList = new ReorderableList(m_AdditionalCameraDataSO, m_AdditionalCameraDataCameras, true, true, true, true);
-                m_LayerList.drawHeaderCallback = rect => { EditorGUI.LabelField(rect, "Muppets"); };
+                m_LayerList.drawHeaderCallback = rect => { EditorGUI.LabelField(rect, "Cameras"); };
                 m_LayerList.drawElementCallback += DrawElementCallback;
-
+                m_LayerList.onSelectCallback += SelectElement;
                 m_LayerList.onRemoveCallback = list =>
                 {
                     m_AdditionalCameraDataCameras.DeleteArrayElementAtIndex(list.index);
@@ -186,7 +194,19 @@ namespace UnityEditor.Rendering.LWRP
             }
         }
 
-        private void DrawElementCallback(Rect rect, int index, bool isActive, bool isFocused)
+        void SelectElement(ReorderableList list)
+        {
+            var element = m_AdditionalCameraDataCameras.GetArrayElementAtIndex(list.index);
+            var cam = element.objectReferenceValue as Camera;
+            if (Event.current.clickCount == 2)
+            {
+                Selection.activeObject = cam;
+            }
+
+            EditorGUIUtility.PingObject(cam);
+        }
+
+        void DrawElementCallback(Rect rect, int index, bool isActive, bool isFocused)
         {
             rect.height = EditorGUIUtility.singleLineHeight;
             rect.y += 1;
@@ -196,9 +216,30 @@ namespace UnityEditor.Rendering.LWRP
             var cam = element.objectReferenceValue as Camera;
             if (cam != null)
             {
+                string extraInfo = "";
                 var type = cam.gameObject.GetComponent<LWRPAdditionalCameraData>().cameraType;
+                if (!validCameraTypes.Contains(type))
+                {
+                    extraInfo += " (Not a supported type)";
+                    if (!errorCameras.Contains(cam))
+                    {
+                        errorCameras.Add(cam);
+                    }
+                }
+                else if (errorCameras.Contains(cam))
+                {
+                    errorCameras.Remove(cam);
+                }
+                EditorGUI.TextField(rect, cam.name+extraInfo, type.ToString());
+            }
+            else
+            {
+                // Automagicaly deletes the entry if a user has removed a camera from the scene
+                m_AdditionalCameraDataCameras.DeleteArrayElementAtIndex(index);
+                m_AdditionalCameraDataSO.ApplyModifiedProperties();
 
-                EditorGUI.TextField(rect, cam.name, type.ToString());
+                // Need to clean out the errorCamera list here.
+                errorCameras.Clear();
             }
         }
 
@@ -208,7 +249,7 @@ namespace UnityEditor.Rendering.LWRP
             Camera.GetAllCameras(allCameras);
             foreach (var camera in allCameras)
             {
-                if (camera.gameObject.GetComponent<LWRPAdditionalCameraData>().cameraType == LWRPCameraType.Overlay)
+                if (validCameraTypes.Contains(camera.gameObject.GetComponent<LWRPAdditionalCameraData>().cameraType))
                 {
                     validCameras.Add(camera);
                 }
@@ -293,9 +334,25 @@ namespace UnityEditor.Rendering.LWRP
             // Game Camera
             if (camType == LWRPCameraType.Game)
             {
-
                 m_LayerList.DoLayoutList();
                 m_AdditionalCameraDataSO.ApplyModifiedProperties();
+
+                if (errorCameras.Any())
+                {
+                    string errorString = "These cameras are not of a valid type:\n";
+                    string validCameras = "";
+                    foreach (var errorCamera in errorCameras)
+                    {
+                        errorString += errorCamera.name + "\n";
+                    }
+
+                    foreach (var validCameraType in validCameraTypes)
+                    {
+                        validCameras += validCameraType.ToString() + " ";
+                    }
+                    errorString += "Valid types are " + validCameras;
+                    EditorGUILayout.HelpBox( errorString, MessageType.Warning);
+                }
 
                 DrawClearFlags();
                 using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
