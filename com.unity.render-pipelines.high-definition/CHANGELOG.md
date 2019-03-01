@@ -25,10 +25,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed failing builds when light explorer window is open
 - Fixed cascade shadows border sometime causing artefacts between cascades
 - Restored shadows in the Cascade Shadow debug visualization
-- `camera.RenderToCubemap` use proper face culling
+- `camera.RenderToCubemap` use proper face culling 
 
 ### Changed
 - When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
+- World space in Shader Graph shaders is now camera relative for HDRP
 
 ## [6.4.0-preview] - 2019-02-21
 
