@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Restored shadows in the Cascade Shadow debug visualization
 - Fixed multi-selection handles color for DensityVolume
 - Fixed multi-edition inspector's blend distances for HDReflectionProbe, PlanarReflectionProbe and DensityVolume
-- Fixed metric distance that changed along size and transform scale in DensityVolume
+- Fixed metric distance that changed along size in DensityVolume
 - Fixed DensityVolume shape handles that have not same behaviour in advance and normal edition mode
 
 ### Added
