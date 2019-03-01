@@ -329,7 +329,7 @@ namespace UnityEditor.ShaderGraph
                 hasError = true;
                 owner.AddValidationError(tempId, "Sub Graph failed to load");
             }
-            else if (subGraphData.isRecursive)
+            else if (subGraphData.isRecursive || owner.isSubGraph && subGraphData.descendents.Contains(owner.assetGuid))
             {
                 hasError = true;
                 owner.AddValidationError(tempId, "Recursive Sub Graphs are not allowed");
@@ -338,11 +338,6 @@ namespace UnityEditor.ShaderGraph
             {
                 hasError = true;
                 owner.AddValidationError(tempId, "Sub Graph failed to import");
-            }
-            else if (owner.isSubGraph && subGraphData.descendents.Contains(owner.assetGuid))
-            {
-                hasError = true;
-                owner.AddValidationError(tempId, "Recursive Sub Graphs are not allowed");
             }
 
             ValidateShaderStage();
@@ -355,7 +350,7 @@ namespace UnityEditor.ShaderGraph
             if (subGraphData == null)
                 return;
 
-            foreach (var property in subGraphData.properties)
+            foreach (var property in subGraphData.nodeProperties)
             {
                 visitor.AddShaderProperty(property);
             }
@@ -368,7 +363,7 @@ namespace UnityEditor.ShaderGraph
             if (subGraphData == null)
                 return;
 
-            foreach (var property in subGraphData.properties)
+            foreach (var property in subGraphData.nodeProperties)
             {
                 properties.Add(property.GetPreviewMaterialProperty());
             }

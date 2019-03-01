@@ -35,7 +35,7 @@ namespace UnityEditor.ShaderGraph
         List<SerializationHelper.JSONSerializedElement> m_SerializedInputs = new List<SerializationHelper.JSONSerializedElement>();
         
         [NonSerialized]
-        public List<AbstractShaderProperty> properties = new List<AbstractShaderProperty>();
+        public List<AbstractShaderProperty> nodeProperties = new List<AbstractShaderProperty>();
         
         [SerializeField]
         List<SerializationHelper.JSONSerializedElement> m_SerializedProperties = new List<SerializationHelper.JSONSerializedElement>();
@@ -68,7 +68,7 @@ namespace UnityEditor.ShaderGraph
             functionNames.Clear();
             inputs.Clear();
             m_SerializedInputs.Clear();
-            properties.Clear();
+            nodeProperties.Clear();
             m_SerializedProperties.Clear();
             outputs.Clear();
             m_SerializedOutputs.Clear();
@@ -81,7 +81,7 @@ namespace UnityEditor.ShaderGraph
         public void OnBeforeSerialize()
         {
             m_SerializedInputs = SerializationHelper.Serialize<AbstractShaderProperty>(inputs);
-            m_SerializedProperties = SerializationHelper.Serialize<AbstractShaderProperty>(properties);
+            m_SerializedProperties = SerializationHelper.Serialize<AbstractShaderProperty>(nodeProperties);
             m_SerializedOutputs = SerializationHelper.Serialize<MaterialSlot>(outputs);
         }
 
@@ -89,7 +89,7 @@ namespace UnityEditor.ShaderGraph
         {
             var typeSerializationInfos = GraphUtil.GetLegacyTypeRemapping();
             inputs = SerializationHelper.Deserialize<AbstractShaderProperty>(m_SerializedInputs, typeSerializationInfos);
-            properties = SerializationHelper.Deserialize<AbstractShaderProperty>(m_SerializedProperties, typeSerializationInfos);
+            nodeProperties = SerializationHelper.Deserialize<AbstractShaderProperty>(m_SerializedProperties, typeSerializationInfos);
             outputs = SerializationHelper.Deserialize<MaterialSlot>(m_SerializedOutputs, typeSerializationInfos);
         }
     }

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace UnityEditor.ShaderGraph
 {
-    class SubGraphAsset : ScriptableObject//, ISerializationCallbackReceiver
+    class SubGraphAsset : ScriptableObject
     {
         public long importedAt;
     }

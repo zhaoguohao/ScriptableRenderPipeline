@@ -218,7 +218,7 @@ namespace UnityEditor.ShaderGraph
         {
             registry.names.Clear();
             subGraphData.functionNames.Clear();
-            subGraphData.properties.Clear();
+            subGraphData.nodeProperties.Clear();
             subGraphData.isValid = true;
             
             graph.OnEnable();
@@ -325,7 +325,7 @@ namespace UnityEditor.ShaderGraph
             subGraphData.functionNames.AddRange(registry.names.Distinct());
 
             var collector = new PropertyCollector();
-            subGraphData.properties = collector.properties;
+            subGraphData.nodeProperties = collector.properties;
             foreach (var node in nodes)
             {
                 node.CollectShaderProperties(collector, GenerationMode.ForReals);
