@@ -15,12 +15,12 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         SpecularOnlyDirectional = 1 << 2,
         SpecularOnlyIndirect = 1 << 3
     }
-    
+
     public enum DebugFullScreen
     {
         None,
         Depth,
-        ScreanSpaceAmbientOcclusion,
+        ScreenSpaceAmbientOcclusion,
         MotionVectors
     }
 
@@ -28,44 +28,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
     {
         public static FramePassSettings @default = new FramePassSettings
         {
-            materialProperty = MaterialSharedProperty.None,
-            lightingProperty = LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect,
-            debugFullScreen = DebugFullScreen.None
+            m_MaterialProperty = MaterialSharedProperty.None,
+            m_LightingProperty = LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect,
+            m_DebugFullScreen = DebugFullScreen.None
         };
 
-        MaterialSharedProperty materialProperty;
-        LightingProperty lightingProperty;
-        DebugFullScreen debugFullScreen;
+        MaterialSharedProperty m_MaterialProperty;
+        LightingProperty m_LightingProperty;
+        DebugFullScreen m_DebugFullScreen;
 
-        public FramePassSettings(FramePassSettings other)
-        {
-            materialProperty = other.materialProperty;
-            lightingProperty = other.lightingProperty;
-            debugFullScreen = other.debugFullScreen;
-        }
-
-        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
-        public ref FramePassSettings SetFullscreenOutput(MaterialSharedProperty materialProperty)
-        {
-            this.materialProperty = materialProperty;
-            return ref *ThisPtr;
-        }
-
-        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
-        public ref FramePassSettings SetFullscreenOutput(LightingProperty lightingProperty)
-        {
-            this.lightingProperty = lightingProperty;
-            return ref *ThisPtr;
-        }
-
-        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
-        public ref FramePassSettings SetFullscreenOutput(DebugFullScreen debugFullScreen)
-        {
-            this.debugFullScreen = debugFullScreen;
-            return ref *ThisPtr;
-        }
-
-        FramePassSettings* ThisPtr
+        FramePassSettings* thisPtr
         {
             get
             {
@@ -73,26 +45,57 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     return pThis;
             }
         }
-        
-        // to development only [TODO: remove this]
-        public void TEST(DebugDisplaySettings.DebugData data) => FillDebugData(data);
+
+        public FramePassSettings(FramePassSettings other)
+        {
+            m_MaterialProperty = other.m_MaterialProperty;
+            m_LightingProperty = other.m_LightingProperty;
+            m_DebugFullScreen = other.m_DebugFullScreen;
+        }
+
+        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
+        public ref FramePassSettings SetFullscreenOutput(MaterialSharedProperty materialProperty)
+        {
+            m_MaterialProperty = materialProperty;
+            return ref *thisPtr;
+        }
+
+        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
+        public ref FramePassSettings SetFullscreenOutput(LightingProperty lightingProperty)
+        {
+            m_LightingProperty = lightingProperty;
+            return ref *thisPtr;
+        }
+
+        /// <summary>State the property to render. In case of several SetFullscreenOutput chained call, only last will be used.</summary>
+        public ref FramePassSettings SetFullscreenOutput(DebugFullScreen debugFullScreen)
+        {
+            m_DebugFullScreen = debugFullScreen;
+            return ref *thisPtr;
+        }
 
         // Usage example:
         // (new FramePassSettings(FramePassSettings.@default)).SetFullscreenOutput(prop).FillDebugData((RenderPipelineManager.currentPipeline as HDRenderPipeline).debugDisplaySettings.data);
-        internal void FillDebugData(DebugDisplaySettings.DebugData data)
+        public void FillDebugData(DebugDisplaySettings.DebugData data)
         {
-            data.materialDebugSettings.SetDebugViewCommonMaterialProperty(materialProperty);
+            data.materialDebugSettings.SetDebugViewCommonMaterialProperty(m_MaterialProperty);
 
-            if (lightingProperty == (LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect))
-                data.lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
-            else if (lightingProperty == (LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect))
-                data.lightingDebugSettings.debugLightingMode = DebugLightingMode.DiffuseLighting;
-            else if (lightingProperty == (LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect))
-                data.lightingDebugSettings.debugLightingMode = DebugLightingMode.SpecularLighting;
-            else
-                throw new NotImplementedException();
+            switch (m_LightingProperty)
+            {
+                case LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect | LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect:
+                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.None;
+                    break;
+                case LightingProperty.DiffuseOnlyDirectional | LightingProperty.DiffuseOnlyIndirect:
+                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.DiffuseLighting;
+                    break;
+                case LightingProperty.SpecularOnlyDirectional | LightingProperty.SpecularOnlyIndirect:
+                    data.lightingDebugSettings.debugLightingMode = DebugLightingMode.SpecularLighting;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
 
-            switch (debugFullScreen)
+            switch (m_DebugFullScreen)
             {
                 case DebugFullScreen.None:
                     data.fullScreenDebugMode = FullScreenDebugMode.None;
@@ -100,7 +103,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 case DebugFullScreen.Depth:
                     data.fullScreenDebugMode = FullScreenDebugMode.DepthPyramid;
                     break;
-                case DebugFullScreen.ScreanSpaceAmbientOcclusion:
+                case DebugFullScreen.ScreenSpaceAmbientOcclusion:
                     data.fullScreenDebugMode = FullScreenDebugMode.SSAO;
                     break;
                 case DebugFullScreen.MotionVectors:
