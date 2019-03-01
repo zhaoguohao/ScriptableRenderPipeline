@@ -65,6 +65,9 @@ Shader "HDRP/Unlit"
         // Motion vector pass
         [HideInInspector] _StencilRefMV("_StencilRefMV", Int) = 128 // StencilMask.ObjectsVelocity
         [HideInInspector] _StencilWriteMaskMV("_StencilWriteMaskMV", Int) = 128 // StencilMask.ObjectsVelocity
+        // Distortion vector pass
+        [HideInInspector] _StencilRefDistortionVec("_StencilRefDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
+        [HideInInspector] _StencilWriteMaskDistortionVec("_StencilWriteMaskDistortionVec", Int) = 64 // StencilBitMask.DistortionVectors
 
         // Caution: C# code in BaseLitUI.cs call LightmapEmissionFlagsProperty() which assume that there is an existing "_EmissionColor"
         // value that exist to identify if the GI emission need to be enabled.
@@ -320,8 +323,8 @@ Shader "HDRP/Unlit"
 
             Stencil
             {
-                WriteMask 64    // StencilBitMask.DistortionVectors 
-                Ref 64          // StencilBitMask.DistortionVectors
+                WriteMask [_StencilRefDistortionVec]
+                Ref [_StencilRefDistortionVec]
                 Comp Always
                 Pass Replace
             }

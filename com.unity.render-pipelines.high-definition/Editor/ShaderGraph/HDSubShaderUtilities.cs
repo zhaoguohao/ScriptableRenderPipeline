@@ -1088,20 +1088,5 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 "}"
             };
         }
-
-        public static void GetStencilStateForDistortion(ref Pass pass)
-        {
-            pass.StencilOverride = new List<string>()
-            {
-                "// Stencil setup",
-                "Stencil",
-                "{",
-                string.Format("   WriteMask {0}", (int) HDRenderPipeline.StencilBitMask.DistortionVectors),
-                string.Format("   Ref  {0}", (int)HDRenderPipeline.StencilBitMask.DistortionVectors),
-                "   Comp Always",
-                "   Pass Replace",
-                "}"
-            };
-        }
     }
 }
