@@ -959,7 +959,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public void ExecuteCaptureActions(RTHandleSystem.RTHandle input, CommandBuffer cmd)
         {
-            if (m_RecorderCaptureActions == null)
+            if (m_RecorderCaptureActions == null || !m_RecorderCaptureActions.MoveNext())
                 return;
 
             // We need to blit to an intermediate texture because input resolution can be bigger than the camera resolution
