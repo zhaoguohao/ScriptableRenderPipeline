@@ -4,8 +4,8 @@ __Subsurface Scattering__ handles light that penetrates and moves within the are
 
 Subsurface scattering also handles the light that penetrates GameObjects from behind and makes those GameObjects look transparent. For certain types of objects, the screen-space blur effect may not make a large visual difference. Therefore, HDRP implements two material types: 
 
-- __Subsurface Scattering__ material type implements both the screen-space blur effect and transmission (you can disable the latter)
-- __Translucent__ material type only models transmission.
+* __Subsurface Scattering__ implements both the screen-space blur effect and transmission (you can disable the latter)
+* __Translucent__ only models transmission.
 
 ## Enabling Subsurface Scattering
 
