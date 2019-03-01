@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [6.5.0] - 2019-XX-XX
 ### Added
-- You can now use sub graphs in other sub graphs.
+- You can now use Sub Graphs in other Sub Graphs.
 
 ## [6.4.0] - 2019-02-21
 ### Fixed
