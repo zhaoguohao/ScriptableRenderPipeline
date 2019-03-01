@@ -79,10 +79,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         int m_SsrTracingKernel      = -1;
         int m_SsrReprojectionKernel = -1;
 
-        ComputeShader m_applyDistortionCS { get { return m_Asset.renderPipelineResources.shaders.applyDistortionCS; } }
-        int m_applyDistortionKernel;
-
-        Material m_ApplyDistortion;
+        Material m_ApplyDistortionMaterial;
 
         Material m_CameraMotionVectorsMaterial;
         Material m_DecalNormalBufferMaterial;
@@ -301,7 +298,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             m_AmbientOcclusionSystem = new AmbientOcclusionSystem(asset);
 
             // Initialize various compute shader resources
-            m_applyDistortionKernel = m_applyDistortionCS.FindKernel("KMain");
             m_SsrTracingKernel      = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsTracing");
             m_SsrReprojectionKernel = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsReprojection");
 
@@ -314,7 +310,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_CopyDepth = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.copyDepthBufferPS);
 
-            m_ApplyDistortion = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.applyDistortionPS);
+            m_ApplyDistortionMaterial = CoreUtils.CreateEngineMaterial(asset.renderPipelineResources.shaders.applyDistortionPS);
 
             InitializeDebugMaterials();
 
@@ -2379,24 +2375,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 HDUtils.SetRenderTarget(cmd, hdCamera, m_CameraColorBuffer);
                 // TODO: Set stencil stuff via parameters rather than hardcoding it in shader.
-                m_ApplyDistortion.SetTexture(HDShaderIDs._DistortionTexture, m_DistortionBuffer);
-                m_ApplyDistortion.SetTexture(HDShaderIDs._ColorPyramidTexture, currentColorPyramid);
+                m_ApplyDistortionMaterial.SetTexture(HDShaderIDs._DistortionTexture, m_DistortionBuffer);
+                m_ApplyDistortionMaterial.SetTexture(HDShaderIDs._ColorPyramidTexture, currentColorPyramid);
 
                 var size = new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, 1f / hdCamera.actualWidth, 1f / hdCamera.actualHeight);
-                m_ApplyDistortion.SetVector(HDShaderIDs._Size, size);
+                m_ApplyDistortionMaterial.SetVector(HDShaderIDs._Size, size);
 
-                HDUtils.DrawFullScreen(cmd, hdCamera, m_ApplyDistortion, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(), null, 0);
-
-
-                //var size = new Vector4(hdCamera.actualWidth, hdCamera.actualHeight, 1f / hdCamera.actualWidth, 1f / hdCamera.actualHeight);
-                //uint x, y, z;
-                //m_applyDistortionCS.GetKernelThreadGroupSizes(m_applyDistortionKernel, out x, out y, out z);
-                //cmd.SetComputeTextureParam(m_applyDistortionCS, m_applyDistortionKernel, HDShaderIDs._DistortionTexture, m_DistortionBuffer);
-                //cmd.SetComputeTextureParam(m_applyDistortionCS, m_applyDistortionKernel, HDShaderIDs._ColorPyramidTexture, currentColorPyramid);
-                //cmd.SetComputeTextureParam(m_applyDistortionCS, m_applyDistortionKernel, HDShaderIDs._Destination, m_CameraColorBuffer);
-                //cmd.SetComputeVectorParam(m_applyDistortionCS, HDShaderIDs._Size, size);
-
-                //cmd.DispatchCompute(m_applyDistortionCS, m_applyDistortionKernel, Mathf.CeilToInt(size.x / x), Mathf.CeilToInt(size.y / y), XRGraphics.computePassCount);
+                HDUtils.DrawFullScreen(cmd, hdCamera, m_ApplyDistortionMaterial, m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(), null, 0);
             }
         }
 
