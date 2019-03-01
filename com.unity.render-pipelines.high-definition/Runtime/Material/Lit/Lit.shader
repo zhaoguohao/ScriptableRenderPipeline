@@ -571,6 +571,14 @@ Shader "HDRP/Lit"
             Name "DistortionVectors"
             Tags { "LightMode" = "DistortionVectors" } // This will be only for transparent object based on the RenderQueue index
 
+            Stencil
+            {
+                WriteMask 64    // StencilBitMask.DistortionVectors 
+                Ref 64          // StencilBitMask.DistortionVectors
+                Comp Always
+                Pass Replace
+            }
+
             Blend [_DistortionSrcBlend] [_DistortionDstBlend], [_DistortionBlurSrcBlend] [_DistortionBlurDstBlend]
             BlendOp Add, [_DistortionBlurBlendOp]
             ZTest [_ZTestModeDistortion]
