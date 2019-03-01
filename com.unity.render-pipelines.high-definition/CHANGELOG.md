@@ -24,20 +24,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed failing builds when light explorer window is open
 - Fixed cascade shadows border sometime causing artefacts between cascades
 - Restored shadows in the Cascade Shadow debug visualization
+- Fixed multi-selection handles color for DensityVolume
+- Fixed multi-edition inspector's blend distances for HDReflectionProbe, PlanarReflectionProbe and DensityVolume
+- Fixed metric distance that changed along size and transform scale in DensityVolume
+- Fixed DensityVolume shape handles that have not same behaviour in advance and normal edition mode
 
 ### Added
 - Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
 
 ### Changed
 - When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
-
-
-### Added
-- Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
-
-### Changed
-- When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
-
+- DensityVolume scripting API will no longuer allow to change between advance and normal edition mode
 
 ## [6.4.0-preview] - 2019-02-21
 
