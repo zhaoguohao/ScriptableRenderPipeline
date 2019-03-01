@@ -1898,6 +1898,9 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         CoreUtils.DrawFullScreen(cmd, m_CopyDepth, m_CopyDepthPropertyBlock);
                     }
                 }
+                framePass.PushCameraTexture(cmd, Buffers.DepthStencil, hdCamera, m_SharedRTManager.GetDepthStencilBuffer(), framePassTextures);
+                framePass.PushCameraTexture(cmd, Buffers.MotionVectors, hdCamera, m_SharedRTManager.GetVelocityBuffer(), framePassTextures);
+                framePass.PushCameraTexture(cmd, Buffers.Normals, hdCamera, m_SharedRTManager.GetNormalBuffer(), framePassTextures);
 
     #if UNITY_EDITOR
                 // We need to make sure the viewport is correctly set for the editor rendering. It might have been changed by debug overlay rendering just before.
