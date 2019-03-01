@@ -75,48 +75,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             }
         }
 
-        internal static void UpdateBlendToKeepDistances(Vector3 previousSize, Vector3 previousPositiveFade, Vector3 previousNegativeFade, SerializedDensityVolume serialized, Editor owner)
-        {
-            //update advanced mode blend
-            Vector3 newSize = serialized.size.vector3Value;
-            Vector3 newPositiveFade = new Vector3(
-                newSize.x < 0.00001 ? 0 : previousPositiveFade.x * previousSize.x / newSize.x,
-                newSize.y < 0.00001 ? 0 : previousPositiveFade.y * previousSize.y / newSize.y,
-                newSize.z < 0.00001 ? 0 : previousPositiveFade.z * previousSize.z / newSize.z
-                );
-            Vector3 newNegativeFade = new Vector3(
-                newSize.x < 0.00001 ? 0 : previousNegativeFade.x * previousSize.x / newSize.x,
-                newSize.y < 0.00001 ? 0 : previousNegativeFade.y * previousSize.y / newSize.y,
-                newSize.z < 0.00001 ? 0 : previousNegativeFade.z * previousSize.z / newSize.z
-                );
-            for (int axeIndex = 0; axeIndex < 3; ++axeIndex)
-            {
-                if (newPositiveFade[axeIndex] + newNegativeFade[axeIndex] > 1)
-                {
-                    float overValue = (newPositiveFade[axeIndex] + newNegativeFade[axeIndex] - 1f) * 0.5f;
-                    newPositiveFade[axeIndex] -= overValue;
-                    newNegativeFade[axeIndex] -= overValue;
-
-                    if (newPositiveFade[axeIndex] < 0)
-                    {
-                        newNegativeFade[axeIndex] += newPositiveFade[axeIndex];
-                        newPositiveFade[axeIndex] = 0f;
-                    }
-                    if (newNegativeFade[axeIndex] < 0)
-                    {
-                        newPositiveFade[axeIndex] += newNegativeFade[axeIndex];
-                        newNegativeFade[axeIndex] = 0f;
-                    }
-                }
-            }
-            serialized.editorPositiveFade.vector3Value = newPositiveFade;
-            serialized.editorNegativeFade.vector3Value = newNegativeFade;
-
-            //update normal mode blend
-            float max = Mathf.Min(newSize.x, newSize.y, newSize.z) * 0.5f;
-            serialized.editorUniformFade.floatValue = Mathf.Clamp(serialized.editorUniformFade.floatValue, 0f, max);
-        }
-
         static void Drawer_VolumeContent(SerializedDensityVolume serialized, Editor owner)
         {
             //keep previous data as value are stored in percent 
@@ -134,34 +92,62 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                 newSize.y = Mathf.Max(0f, newSize.y);
                 newSize.z = Mathf.Max(0f, newSize.z);
                 serialized.size.vector3Value = newSize;
+                
+                //update advanced mode blend
+                Vector3 newPositiveFade = new Vector3(
+                    newSize.x < 0.00001 ? 0 : previousPositiveFade.x * previousSize.x / newSize.x,
+                    newSize.y < 0.00001 ? 0 : previousPositiveFade.y * previousSize.y / newSize.y,
+                    newSize.z < 0.00001 ? 0 : previousPositiveFade.z * previousSize.z / newSize.z
+                    );
+                Vector3 newNegativeFade = new Vector3(
+                    newSize.x < 0.00001 ? 0 : previousNegativeFade.x * previousSize.x / newSize.x,
+                    newSize.y < 0.00001 ? 0 : previousNegativeFade.y * previousSize.y / newSize.y,
+                    newSize.z < 0.00001 ? 0 : previousNegativeFade.z * previousSize.z / newSize.z
+                    );
+                for (int axeIndex = 0; axeIndex < 3; ++axeIndex)
+                {
+                    if (newPositiveFade[axeIndex] + newNegativeFade[axeIndex] > 1)
+                    {
+                        float overValue = (newPositiveFade[axeIndex] + newNegativeFade[axeIndex] - 1f) * 0.5f;
+                        newPositiveFade[axeIndex] -= overValue;
+                        newNegativeFade[axeIndex] -= overValue;
 
-                UpdateBlendToKeepDistances(previousSize, previousPositiveFade, previousNegativeFade, serialized, owner);
+                        if (newPositiveFade[axeIndex] < 0)
+                        {
+                            newNegativeFade[axeIndex] += newPositiveFade[axeIndex];
+                            newPositiveFade[axeIndex] = 0f;
+                        }
+                        if (newNegativeFade[axeIndex] < 0)
+                        {
+                            newPositiveFade[axeIndex] += newNegativeFade[axeIndex];
+                            newNegativeFade[axeIndex] = 0f;
+                        }
+                    }
+                }
+                serialized.editorPositiveFade.vector3Value = newPositiveFade;
+                serialized.editorNegativeFade.vector3Value = newNegativeFade;
+
+                //update normal mode blend
+                float max = Mathf.Min(newSize.x, newSize.y, newSize.z) * 0.5f;
+                serialized.editorUniformFade.floatValue = Mathf.Clamp(serialized.editorUniformFade.floatValue, 0f, max);
             }
 
             Vector3 serializedSize = serialized.size.vector3Value;
             EditorGUI.BeginChangeCheck();
-            if (serialized.editorAdvancedFade.boolValue)
+            if (serialized.editorAdvancedFade.hasMultipleDifferentValues)
             {
-                Vector3 positive = serialized.editorPositiveFade.vector3Value;
-                positive.x *= serializedSize.x;
-                positive.y *= serializedSize.y;
-                positive.z *= serializedSize.z;
-                Vector3 negative = serialized.editorNegativeFade.vector3Value;
-                negative.x *= serializedSize.x;
-                negative.y *= serializedSize.y;
-                negative.z *= serializedSize.z;
+                using (new EditorGUI.DisabledScope(true))
+                    EditorGUILayout.LabelField(Styles.s_BlendLabel, EditorGUIUtility.TrTextContent("Multiple values for Advanced mode"));
+            }
+            else if (serialized.editorAdvancedFade.boolValue)
+            {
                 EditorGUI.BeginChangeCheck();
-                CoreEditorUtils.DrawVector6(Styles.s_BlendLabel, ref positive, ref negative, Vector3.zero, serializedSize, InfluenceVolumeUI.k_HandlesColor);
+                CoreEditorUtils.DrawVector6(Styles.s_BlendLabel, serialized.editorPositiveFade, serialized.editorNegativeFade, Vector3.zero, serializedSize, InfluenceVolumeUI.k_HandlesColor, serialized.size);
                 if (EditorGUI.EndChangeCheck())
                 {
-                    positive.x /= serializedSize.x;
-                    positive.y /= serializedSize.y;
-                    positive.z /= serializedSize.z;
-                    negative.x /= serializedSize.x;
-                    negative.y /= serializedSize.y;
-                    negative.z /= serializedSize.z;
-
                     //forbid positive/negative box that doesn't intersect in inspector too
+                    Vector3 positive = serialized.editorPositiveFade.vector3Value;
+                    Vector3 negative = serialized.editorNegativeFade.vector3Value;
                     for (int axis = 0; axis < 3; ++axis)
                     {
                         if (positive[axis] > 1f - negative[axis])
@@ -176,7 +162,6 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                             }
                         }
                     }
-
                     serialized.editorPositiveFade.vector3Value = positive;
                     serialized.editorNegativeFade.vector3Value = negative;
                 }

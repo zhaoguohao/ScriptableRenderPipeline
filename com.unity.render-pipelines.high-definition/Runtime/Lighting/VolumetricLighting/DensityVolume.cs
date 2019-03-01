@@ -4,6 +4,8 @@ using UnityEngine.Serialization;
 
 namespace UnityEngine.Experimental.Rendering.HDPipeline
 {
+
+
     [Serializable]
     public partial struct DensityVolumeArtistParameters
     {
@@ -21,13 +23,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         public Vector3  negativeFade;
 
         [SerializeField, FormerlySerializedAs("m_UniformFade")]
-        private float    m_EditorUniformFade;
+        internal float    m_EditorUniformFade;
         [SerializeField]
-        private Vector3  m_EditorPositiveFade;
+        internal Vector3  m_EditorPositiveFade;
         [SerializeField]
-        private Vector3  m_EditorNegativeFade;
+        internal Vector3  m_EditorNegativeFade;
         [SerializeField, FormerlySerializedAs("advancedFade"), FormerlySerializedAs("m_AdvancedFade")]
-        private bool     m_EditorAdvancedFade;
+        internal bool     m_EditorAdvancedFade;
 
         public Vector3   size;
         public bool      invertFade;
@@ -37,11 +39,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public  int      textureIndex; // This shouldn't be public... Internal, maybe?
         private Vector3  volumeScrollingAmount;
-
-        internal float editorUniformFade => m_EditorUniformFade;
-        internal Vector3 editorPositiveFade => m_EditorPositiveFade;
-        internal Vector3 editorNegativeFade => m_EditorNegativeFade;
-        internal bool editorAdvancedFade => m_EditorAdvancedFade;
 
         public DensityVolumeArtistParameters(Color color, float _meanFreePath, float _asymmetry)
         {
@@ -66,7 +63,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_EditorPositiveFade = Vector3.zero;
             m_EditorNegativeFade = Vector3.zero;
-            m_EditorUniformFade = 0;
+            m_EditorUniformFade  = 0;
             m_EditorAdvancedFade = false;
         }
 
