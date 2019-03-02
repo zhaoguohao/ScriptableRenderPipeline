@@ -26,9 +26,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed cascade shadows border sometime causing artefacts between cascades
 - Restored shadows in the Cascade Shadow debug visualization
 - `camera.RenderToCubemap` use proper face culling
+- Fixed normal map blending in TerrainLit by only blending the derivatives.
 
 ### Changed
 - When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
+- TerrainLit shaders and includes are reorganized and made simpler.
+- TerrainLit shader GUI now allows custom properties to be displayed in the Terrain fold-out section.
 
 ## [6.4.0-preview] - 2019-02-21
 
