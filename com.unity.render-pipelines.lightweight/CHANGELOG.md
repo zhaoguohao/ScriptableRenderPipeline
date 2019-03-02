@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [6.5.0] - 2019-XX-XX
+### Fixed
+- Fixed warnings when creating new Unlit Shader Graphs using Lightweight Render Pipeline.
 
 ## [6.4.0] - 2019-02-21
 
