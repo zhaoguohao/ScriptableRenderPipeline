@@ -208,7 +208,14 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             using (new EditorGUI.DisabledScope(!HDUtils.hdrpSettings.supportLightLayers))
             {
                 var renderingLayerMask = serialized.serializedLightData.renderingLayerMask.intValue;
-                var lightLayer = HDAdditionalLightData.RenderingLayerMaskToLightLayer(renderingLayerMask);
+                int lightLayer;
+                if (serialized.serializedLightData.renderingLayerMask.hasMultipleDifferentValues)
+                {
+                    EditorGUI.showMixedValue = true;
+                    lightLayer = 0;
+                }
+                else
+                    lightLayer = HDAdditionalLightData.RenderingLayerMaskToLightLayer(renderingLayerMask);
                 EditorGUI.BeginChangeCheck();
                 lightLayer = Convert.ToInt32(EditorGUILayout.EnumFlagsField(s_Styles.lightLayer, (LightLayerEnum)lightLayer));
                 if (EditorGUI.EndChangeCheck())
@@ -217,6 +224,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
                     lightLayer = HDAdditionalLightData.LightLayerToRenderingLayerMask(lightLayer, renderingLayerMask);
                     serialized.serializedLightData.renderingLayerMask.intValue = lightLayer;
                 }
+                EditorGUI.showMixedValue = false;
             }
         }
 
