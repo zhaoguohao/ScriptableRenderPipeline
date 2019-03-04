@@ -23,6 +23,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         DBufferRender,
         DBufferPrepareDrawData,
         DBufferNormal,
+        DecalsForwardEmissive,
         DisplayDebugDecalsAtlas,
         DisplayDebugViewMaterial,
         DebugViewMaterialGBuffer,
@@ -62,8 +63,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         RaytracingIntegrateReflection,
         RaytracingFilterReflection,
         RaytracingAmbientOcclusion,
+        RaytracingFilterAO,
         RaytracingShadowIntegration,
         RaytracingShadowCombination,
+        RaytracingDebug,
 
         // Profile sampler for tile pass
         TPPrepareLightsForGPU,
@@ -80,6 +83,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         VolumeUpdate,
 
         // Post-processing
+        StopNaNs,
         Exposure,
         TemporalAntialiasing,
         DepthOfField,
@@ -94,6 +98,10 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         DepthOfFieldPreCombine,
         DepthOfFieldCombine,
         MotionBlur,
+        MotionBlurVelocityPrep,
+        MotionBlurTileMinMax,
+        MotionBlurTileNeighbourhood,
+        MotionBlurKernel,
         PaniniProjection,
         Bloom,
         ColorGradingLUTBuilder,
