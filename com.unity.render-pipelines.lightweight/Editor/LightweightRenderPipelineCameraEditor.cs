@@ -38,7 +38,7 @@ namespace UnityEditor.Rendering.LWRP
             public static GUIContent requireOpaqueTexture = EditorGUIUtility.TrTextContent("Opaque Texture", "On makes this camera create a _CameraOpaqueTexture, which is a copy of the rendered view.\nOff makes the camera does not create an opaque texture.\nUse Pipeline Settings applies settings from the Render Pipeline Asset.");
             public static GUIContent allowMSAA = EditorGUIUtility.TrTextContent("MSAA", "Use Multi Sample Anti-Aliasing to reduce aliasing.");
             public static GUIContent allowHDR = EditorGUIUtility.TrTextContent("HDR", "High Dynamic Range gives you a wider range of light intensities, so your lighting looks more realistic. With it, you can still see details and experience less saturation even with bright light.", (Texture) null);
-            public static GUIContent priority = EditorGUIUtility.TrTextContent("Priority", "muppets");
+            public static GUIContent priority = EditorGUIUtility.TrTextContent("Priority", "A camera with a higher priority is drawn on top of a camera with a lower priority [ -100, 100 ].");
 
             public static GUIContent rendererType = EditorGUIUtility.TrTextContent("Renderer Type", "Controls which renderer this camera uses.");
             public static GUIContent rendererData = EditorGUIUtility.TrTextContent("Renderer Data", "Required by a custom Renderer. If none is assigned this camera uses the one assigned in the Pipeline Settings.");
@@ -299,9 +299,13 @@ namespace UnityEditor.Rendering.LWRP
             Camera.GetAllCameras(allCameras);
             foreach (var camera in allCameras)
             {
-                if (validCameraTypes.Contains(camera.gameObject.GetComponent<LWRPAdditionalCameraData>().cameraType))
+                var component = camera.gameObject.GetComponent<LWRPAdditionalCameraData>();
+                if (component != null)
                 {
-                    validCameras.Add(camera);
+                    if (validCameraTypes.Contains(component.cameraType))
+                    {
+                        validCameras.Add(camera);
+                    }
                 }
             }
 
@@ -346,6 +350,21 @@ namespace UnityEditor.Rendering.LWRP
             m_LightweightRenderPipeline = null;
         }
 
+        BackgroundType GetBackgroundType(CameraClearFlags clearFlags)
+        {
+            switch (clearFlags)
+            {
+                case CameraClearFlags.Skybox:
+                    return BackgroundType.Skybox;
+                case CameraClearFlags.Nothing:
+                    return BackgroundType.DontCare;
+
+                // DepthOnly is not supported by design in LWRP. We upgrade it to SolidColor
+                default:
+                    return BackgroundType.SolidColor;
+            }
+        }
+
         public override void OnInspectorGUI()
         {
             if (s_Styles == null)
@@ -357,7 +376,9 @@ namespace UnityEditor.Rendering.LWRP
             DrawCameraType();
             EditorGUILayout.Space();
 
+            // Get the type of Camera we are using
             var camType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
+
             // Offscreen Camera
             if (camType == LWRPCameraType.Offscreen)
             {
@@ -374,9 +395,7 @@ namespace UnityEditor.Rendering.LWRP
                 DrawRenderingSettings();
                 DrawEnvironmentSettings();
                 DrawOutputSettings();
-
                 DrawStackSettings();
-
                 DrawVRSettings();
             }
 
@@ -384,9 +403,9 @@ namespace UnityEditor.Rendering.LWRP
             if (camType == LWRPCameraType.Overlay)
             {
                 DrawCommonSettings();
-
                 DrawRenderingSettings();
             }
+
             // UI Camera
             if (camType == LWRPCameraType.ScreenSpaceUI)
             {
@@ -394,21 +413,6 @@ namespace UnityEditor.Rendering.LWRP
             }
 
         settings.ApplyModifiedProperties();
-        }
-
-        BackgroundType GetBackgroundType(CameraClearFlags clearFlags)
-        {
-            switch (clearFlags)
-            {
-                case CameraClearFlags.Skybox:
-                    return BackgroundType.Skybox;
-                case CameraClearFlags.Nothing:
-                    return BackgroundType.DontCare;
-
-                // DepthOnly is not supported by design in LWRP. We upgrade it to SolidColor
-                default:
-                    return BackgroundType.SolidColor;
-            }
         }
 
         void DrawCommonSettings()
@@ -469,7 +473,6 @@ namespace UnityEditor.Rendering.LWRP
                         EditorGUI.indentLevel--;
                     }
                 }
-
                 EditorGUILayout.Space();
                 EditorGUILayout.Space();
             }
@@ -497,7 +500,6 @@ namespace UnityEditor.Rendering.LWRP
                     DrawOpaqueTexture();
                     DrawDepthTexture();
                     DrawRenderShadows();
-
                     DrawPriority();
                 }
                 EditorGUILayout.Space();
@@ -572,7 +574,6 @@ namespace UnityEditor.Rendering.LWRP
                         selectedClearFlags = CameraClearFlags.SolidColor;
                         break;
                 }
-
                 settings.clearFlags.intValue = (int) selectedClearFlags;
             }
         }
