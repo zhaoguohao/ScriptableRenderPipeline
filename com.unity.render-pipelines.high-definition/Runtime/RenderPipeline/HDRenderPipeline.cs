@@ -37,8 +37,6 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             "Forward Transparent"
         };
 
-        public static readonly GraphicsFormat s_ColorBufferFormat = GraphicsFormat.B10G11R11_UFloatPack32;
-
         readonly HDRenderPipelineAsset m_Asset;
         public HDRenderPipelineAsset asset { get { return m_Asset; } }
 
