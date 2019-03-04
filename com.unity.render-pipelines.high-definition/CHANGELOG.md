@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Restored shadows in the Cascade Shadow debug visualization
 - Fixed an issue with layered lit shader and height based blend where inactive layers would still have influence over the result.
 - Fixed multi-edition light handles and inspector shapes
+- Fixed light's LightLayer field when multi-editing
 
 ### Added
 - Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
