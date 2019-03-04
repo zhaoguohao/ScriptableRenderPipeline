@@ -67,7 +67,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         static int[] s_CameraNamesValues = null;
 
         static bool needsRefreshingCameraFreezeList = true;
-        
+
         public class DebugData
         {
             public float debugOverlayRatio = 0.33f;
@@ -115,7 +115,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public DebugData data { get => m_Data; }
 
-        public static GUIContent[] renderingFullScreenDebugStrings => s_RenderingFullScreenDebugStrings; 
+        public static GUIContent[] renderingFullScreenDebugStrings => s_RenderingFullScreenDebugStrings;
         public static int[] renderingFullScreenDebugValues => s_RenderingFullScreenDebugValues;
 
         public DebugDisplaySettings()
@@ -134,12 +134,17 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
             m_Data = new DebugData();
         }
-        
+
         Action IDebugData.GetReset() => () => m_Data = new DebugData();
-        
+
         public float[] GetDebugMaterialIndexes()
         {
             return data.materialDebugSettings.GetDebugMaterialIndexes();
+        }
+
+        public DebugLightFilterMode GetDebugLightFilterMode()
+        {
+            return data.lightingDebugSettings.debugLightFilterMode;
         }
 
         public DebugLightingMode GetDebugLightingMode()
@@ -259,7 +264,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
         {
             if (data.lightingDebugSettings.shadowDebugMode == ShadowMapDebugMode.SingleShadow)
                 value = 0;
-            
+
             data.fullScreenDebugMode = value;
         }
 
@@ -269,6 +274,16 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             if (value == ShadowMapDebugMode.SingleShadow)
                 data.fullScreenDebugMode = 0;
             data.lightingDebugSettings.shadowDebugMode = value;
+        }
+
+        public void SetDebugLightFilterMode(DebugLightFilterMode value)
+        {
+            if (value != 0)
+            {
+                data.materialDebugSettings.DisableMaterialDebug();
+                data.mipMapDebugSettings.debugMipMapMode = DebugMipMapMode.None;
+            }
+            data.lightingDebugSettings.debugLightFilterMode = value;
         }
 
         public void SetDebugLightingMode(DebugLightingMode value)
@@ -449,6 +464,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
             list.Add(new DebugUI.FloatField { displayName = "Shadow Range Max Value", getter = () => data.lightingDebugSettings.shadowMaxValue, setter = value => data.lightingDebugSettings.shadowMaxValue = value });
 
             list.Add(new DebugUI.EnumField { displayName = "Lighting Debug Mode", getter = () => (int)data.lightingDebugSettings.debugLightingMode, setter = value => SetDebugLightingMode((DebugLightingMode)value), autoEnum = typeof(DebugLightingMode), onValueChanged = RefreshLightingDebug, getIndex = () => data.lightingDebugModeEnumIndex, setIndex = value => data.lightingDebugModeEnumIndex = value });
+            list.Add(new DebugUI.BitField { displayName = "Light Hierarchy Debug Mode", getter = () => data.lightingDebugSettings.debugLightFilterMode, setter = value => SetDebugLightFilterMode((DebugLightFilterMode)value), enumType = typeof(DebugLightFilterMode), onValueChanged = RefreshLightingDebug, });
             list.Add(new DebugUI.EnumField { displayName = "Fullscreen Debug Mode", getter = () => (int)data.fullScreenDebugMode, setter = value => SetFullScreenDebugMode((FullScreenDebugMode)value), enumNames = s_LightingFullScreenDebugStrings, enumValues = s_LightingFullScreenDebugValues, onValueChanged = RefreshLightingDebug, getIndex = () => data.lightingFulscreenDebugModeEnumIndex, setIndex = value => data.lightingFulscreenDebugModeEnumIndex = value });
             switch (data.fullScreenDebugMode)
             {
@@ -655,13 +671,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     }
                 }
             });
-            
+
             widgetList.Add(new DebugUI.BoolField  { displayName = "False Color Mode", getter = () => data.falseColorDebugSettings.falseColor, setter = value => data.falseColorDebugSettings.falseColor = value, onValueChanged = RefreshRenderingDebug });
             if (data.falseColorDebugSettings.falseColor)
             {
                 widgetList.Add(new DebugUI.Container{
                     flags = DebugUI.Flags.EditorOnly,
-                    children = 
+                    children =
                     {
                         new DebugUI.FloatField { displayName = "Range Threshold 0", getter = () => data.falseColorDebugSettings.colorThreshold0, setter = value => data.falseColorDebugSettings.colorThreshold0 = Mathf.Min(value, data.falseColorDebugSettings.colorThreshold1) },
                         new DebugUI.FloatField { displayName = "Range Threshold 1", getter = () => data.falseColorDebugSettings.colorThreshold1, setter = value => data.falseColorDebugSettings.colorThreshold1 = Mathf.Clamp(value, data.falseColorDebugSettings.colorThreshold0, data.falseColorDebugSettings.colorThreshold2) },
@@ -754,7 +770,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 s_CameraNames.Add(new GUIContent(name));
                 needsRefreshingCameraFreezeList = true;
             }
-            
+
             var history = FrameSettingsHistory.RegisterDebug(camera, additionalData);
             DebugManager.instance.RegisterData(history);
         }

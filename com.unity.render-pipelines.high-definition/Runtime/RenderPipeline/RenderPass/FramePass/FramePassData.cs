@@ -85,7 +85,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 return;
 
             debugDisplaySettings = new DebugDisplaySettings();
-            m_Settings.FillDebugData(debugDisplaySettings.data);
+            m_Settings.FillDebugData(debugDisplaySettings);
         }
     }
 }

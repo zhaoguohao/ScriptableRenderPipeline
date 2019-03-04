@@ -173,6 +173,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public static readonly int _DebugViewMaterial = Shader.PropertyToID("_DebugViewMaterialArray");
         public static readonly int _DebugLightingMode = Shader.PropertyToID("_DebugLightingMode");
+        public static readonly int _DebugLightHierarchyMode = Shader.PropertyToID("_DebugLightHierarchyMode");
         public static readonly int _DebugShadowMapMode = Shader.PropertyToID("_DebugShadowMapMode");
         public static readonly int _DebugLightingAlbedo = Shader.PropertyToID("_DebugLightingAlbedo");
         public static readonly int _DebugLightingSmoothness = Shader.PropertyToID("_DebugLightingSmoothness");

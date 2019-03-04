@@ -217,13 +217,13 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
         public bool showCascade
         {
-            get => m_DebugDisplaySettings.GetDebugLightingMode() == DebugLightingMode.VisualizeCascade;
+            get => m_CurrentDebugDisplaySettings.GetDebugLightingMode() == DebugLightingMode.VisualizeCascade;
             set
             {
                 if (value)
-                    m_DebugDisplaySettings.SetDebugLightingMode(DebugLightingMode.VisualizeCascade);
+                    m_CurrentDebugDisplaySettings.SetDebugLightingMode(DebugLightingMode.VisualizeCascade);
                 else
-                    m_DebugDisplaySettings.SetDebugLightingMode(DebugLightingMode.None);
+                    m_CurrentDebugDisplaySettings.SetDebugLightingMode(DebugLightingMode.None);
             }
         }
 
@@ -1491,7 +1491,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 bool enableBakeShadowMask;
                 using (new ProfilingSample(cmd, "TP_PrepareLightsForGPU", CustomSamplerId.TPPrepareLightsForGPU.GetSampler()))
                 {
-                    enableBakeShadowMask = m_LightLoop.PrepareLightsForGPU(cmd, hdCamera, cullingResults, hdProbeCullingResults, densityVolumes, m_DebugDisplaySettings);
+                    enableBakeShadowMask = m_LightLoop.PrepareLightsForGPU(cmd, hdCamera, cullingResults, hdProbeCullingResults, densityVolumes, m_CurrentDebugDisplaySettings);
                 }
                 // Configure all the keywords
                 ConfigureKeywords(enableBakeShadowMask, hdCamera, cmd);
@@ -3038,6 +3038,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
 
                 cmd.SetGlobalFloatArray(HDShaderIDs._DebugViewMaterial, m_CurrentDebugDisplaySettings.GetDebugMaterialIndexes());
                 cmd.SetGlobalInt(HDShaderIDs._DebugLightingMode, (int)m_CurrentDebugDisplaySettings.GetDebugLightingMode());
+                cmd.SetGlobalInt(HDShaderIDs._DebugLightHierarchyMode, (int)m_CurrentDebugDisplaySettings.GetDebugLightFilterMode());
                 cmd.SetGlobalInt(HDShaderIDs._DebugShadowMapMode, (int)m_CurrentDebugDisplaySettings.GetDebugShadowMapMode());
                 cmd.SetGlobalInt(HDShaderIDs._DebugMipMapMode, (int)m_CurrentDebugDisplaySettings.GetDebugMipMapMode());
                 cmd.SetGlobalInt(HDShaderIDs._DebugMipMapModeTerrainTexture, (int)m_CurrentDebugDisplaySettings.GetDebugMipMapModeTerrainTexture());
@@ -3218,7 +3219,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                 {
                     if (hdCamera.clearColorMode == HDAdditionalCameraData.ClearColorMode.Color ||
                         // If the luxmeter is enabled, the sky isn't rendered so we clear the background color
-                        m_DebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuxMeter ||
+                        m_CurrentDebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuxMeter ||
                         // If we want the sky but the sky don't exist, still clear with background color
                         (hdCamera.clearColorMode == HDAdditionalCameraData.ClearColorMode.Sky && !m_SkyManager.IsVisualSkyValid()) ||
                         // Special handling for Preview we force to clear with background color (i.e black)
@@ -3229,7 +3230,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                         Color clearColor = hdCamera.backgroundColorHDR;
 
                         // We set the background color to black when the luxmeter is enabled to avoid picking the sky color
-                        if (m_DebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuxMeter)
+                        if (m_CurrentDebugDisplaySettings.data.lightingDebugSettings.debugLightingMode == DebugLightingMode.LuxMeter)
                             clearColor = Color.black;
 
                         HDUtils.SetRenderTarget(cmd, hdCamera, msaa ? m_CameraColorMSAABuffer : m_CameraColorBuffer, m_SharedRTManager.GetDepthStencilBuffer(msaa), ClearFlag.Color, clearColor);
