@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [6.5.0] - 2019-XX-XX
+### Fixed
+- You can now Undo edits to Vector port default input fields.
+- You can now Undo edits to Gradient port default input fields.
+- Boolean port input fields will now display correct values when you Undo changes.
+- Vector type properties now act as expected when you Undo changes.
 
 ## [6.4.0] - 2019-02-21
 ### Fixed
