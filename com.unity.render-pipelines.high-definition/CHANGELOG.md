@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Adding real time area light shadow support
 - Added depth offset input in shader graph master nodes
 - Added a Parallax Occlusion Mapping node
+- Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
 
 ### Fixed
 - Fixed diffusion profile upgrade breaking package when upgrading to a new version
@@ -32,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed multi-edition inspector's blend distances for HDReflectionProbe, PlanarReflectionProbe and DensityVolume
 - Fixed metric distance that changed along size in DensityVolume
 - Fixed DensityVolume shape handles that have not same behaviour in advance and normal edition mode
+- `camera.RenderToCubemap` use proper face culling
 
 ### Added
 - Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
