@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine.Experimental.Rendering.LWRP;
 using UnityEngine.Serialization;
@@ -21,11 +23,20 @@ namespace UnityEngine.Rendering.LWRP
     public enum LWRPCameraType
     {
         Offscreen,
-        Game,
+        Base,
         Overlay,
-        UI,
+        ScreenSpaceUI,
     }
 
+    static class LWRPCameraTypeUtility
+    {
+        static string[] s_LWRPCameraTypeNames = Enum.GetNames(typeof(LWRPCameraType)).ToArray();
+
+        public static string GetName(this LWRPCameraType type)
+        {
+            return s_LWRPCameraTypeNames[(int)type];
+        }
+    }
 
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Camera))]
@@ -53,7 +64,7 @@ namespace UnityEngine.Rendering.LWRP
         IRendererSetup m_RendererSetup = null;
 
         [SerializeField]
-        LWRPCameraType m_CameraType = LWRPCameraType.Game;
+        LWRPCameraType m_CameraType = LWRPCameraType.Base;
 
         [SerializeField]
         List<Camera> m_Cameras = new List<Camera>();
@@ -168,7 +179,7 @@ namespace UnityEngine.Rendering.LWRP
         {
             string gizmoName = "Packages/com.unity.render-pipelines.lightweight/Editor/Gizmos/";
             Color tint = Color.white;
-            if (m_CameraType == LWRPCameraType.Game)
+            if (m_CameraType == LWRPCameraType.Base)
             {
                 gizmoName += "Camera_Base.png";
             }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.AnimatedValues;
+using UnityEditor.Experimental.Rendering;
 using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -23,13 +24,21 @@ namespace UnityEditor.Rendering.LWRP
 
         internal class Styles
         {
+            // Groups
+            public static GUIContent commonCameraSettingsText = EditorGUIUtility.TrTextContent("Projection");
+            public static GUIContent environmentSettingsText = EditorGUIUtility.TrTextContent("Environment");
+            public static GUIContent outputSettingsText = EditorGUIUtility.TrTextContent("Output");
+            public static GUIContent renderingSettingsText = EditorGUIUtility.TrTextContent("Rendering");
+            public static GUIContent stackSettingsText = EditorGUIUtility.TrTextContent("Stack");
+
             public static GUIContent backgroundType = EditorGUIUtility.TrTextContent("Background Type", "Controls how to initialize the Camera's background.\n\nSkybox initializes camera with Skybox, defaulting to a background color if no skybox is found.\n\nSolid Color initializes background with the background color.\n\nDon't care have undefined values for camera background. Use this only if you are rendering all pixels in the Camera's view.");
-            public static GUIContent cameraType = EditorGUIUtility.TrTextContent("Camera Type", "Controls which type of camera this is.");
+            public static GUIContent cameraType = EditorGUIUtility.TrTextContent("Render Mode", "Controls which type of camera this is.");
             public static GUIContent renderingShadows = EditorGUIUtility.TrTextContent("Render Shadows", "Enable this to make this camera render shadows.");
             public static GUIContent requireDepthTexture = EditorGUIUtility.TrTextContent("Depth Texture", "On makes this camera create a _CameraDepthTexture, which is a copy of the rendered depth values.\nOff makes the camera not create a depth texture.\nUse Pipeline Settings applies settings from the Render Pipeline Asset.");
             public static GUIContent requireOpaqueTexture = EditorGUIUtility.TrTextContent("Opaque Texture", "On makes this camera create a _CameraOpaqueTexture, which is a copy of the rendered view.\nOff makes the camera does not create an opaque texture.\nUse Pipeline Settings applies settings from the Render Pipeline Asset.");
             public static GUIContent allowMSAA = EditorGUIUtility.TrTextContent("MSAA", "Use Multi Sample Anti-Aliasing to reduce aliasing.");
             public static GUIContent allowHDR = EditorGUIUtility.TrTextContent("HDR", "High Dynamic Range gives you a wider range of light intensities, so your lighting looks more realistic. With it, you can still see details and experience less saturation even with bright light.", (Texture) null);
+            public static GUIContent priority = EditorGUIUtility.TrTextContent("Priority", "muppets");
 
             public static GUIContent rendererType = EditorGUIUtility.TrTextContent("Renderer Type", "Controls which renderer this camera uses.");
             public static GUIContent rendererData = EditorGUIUtility.TrTextContent("Renderer Data", "Required by a custom Renderer. If none is assigned this camera uses the one assigned in the Pipeline Settings.");
@@ -49,7 +58,7 @@ namespace UnityEditor.Rendering.LWRP
             {
                 new GUIContent("Skybox"),
                 new GUIContent("Solid Color"),
-                new GUIContent("Don't Care"),
+                new GUIContent("Uninitialized"),
             };
 
             public static int[] cameraBackgroundValues = { 0, 1, 2};
@@ -94,7 +103,14 @@ namespace UnityEditor.Rendering.LWRP
         // This is the valid list of types, so if we need to add more types we just add it here.
         List<LWRPCameraType> validCameraTypes = new List<LWRPCameraType>{LWRPCameraType.Overlay};
         List<Camera> errorCameras = new List<Camera>();
-        //bool showWarning = false;
+        Texture2D m_ErrorIcon;
+
+        // Temporary saved bools for foldout header
+        SavedBool m_CommonCameraSettingsFoldout;
+        SavedBool m_EnvironmentSettingsFoldout;
+        SavedBool m_OutputSettingsFoldout;
+        SavedBool m_RenderingSettingsFoldout;
+        SavedBool m_StackSettingsFoldout;
 
         // Animation Properties
         public bool isSameClearFlags { get { return !settings.clearFlags.hasMultipleDifferentValues; } }
@@ -134,7 +150,7 @@ namespace UnityEditor.Rendering.LWRP
 
         void UpdateAnimationValues(bool initialize)
         {
-            SetAnimationTarget(m_ShowBGColorAnim, initialize, isSameClearFlags && (camera.clearFlags == CameraClearFlags.SolidColor || camera.clearFlags == CameraClearFlags.Skybox));
+            SetAnimationTarget(m_ShowBGColorAnim, initialize, isSameClearFlags && (camera.clearFlags == CameraClearFlags.SolidColor));
             SetAnimationTarget(m_ShowOrthoAnim, initialize, isSameOrthographic && camera.orthographic);
             SetAnimationTarget(m_ShowTargetEyeAnim, initialize, settings.targetEye.intValue != (int)StereoTargetEyeMask.Both || PlayerSettings.virtualRealitySupported);
         }
@@ -153,6 +169,13 @@ namespace UnityEditor.Rendering.LWRP
 
         public new void OnEnable()
         {
+            m_CommonCameraSettingsFoldout = new SavedBool($"{target.GetType()}.CommonCameraSettingsFoldout", false);
+            m_EnvironmentSettingsFoldout = new SavedBool($"{target.GetType()}.EnvironmentSettingsFoldout", false);
+            m_OutputSettingsFoldout = new SavedBool($"{target.GetType()}.OutputSettingsFoldout", false);
+            m_RenderingSettingsFoldout = new SavedBool($"{target.GetType()}.RenderingSettingsFoldout", false);
+            m_StackSettingsFoldout = new SavedBool($"{target.GetType()}.StackSettingsFoldout", false);
+
+            m_ErrorIcon = EditorGUIUtility.Load("icons/console.erroricon.sml.png") as Texture2D;
             validCameras.Clear();
             errorCameras.Clear();
             m_LightweightRenderPipeline = GraphicsSettings.renderPipelineAsset as LightweightRenderPipelineAsset;
@@ -177,10 +200,10 @@ namespace UnityEditor.Rendering.LWRP
             m_AdditionalCameraDataCameras = o.Find(x => x.cameras);
 
             var camType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
-            if (camType == LWRPCameraType.Game)
+            if (camType == LWRPCameraType.Base)
             {
-                m_LayerList = new ReorderableList(m_AdditionalCameraDataSO, m_AdditionalCameraDataCameras, true, true, true, true);
-                m_LayerList.drawHeaderCallback = rect => { EditorGUI.LabelField(rect, "Cameras"); };
+                m_LayerList = new ReorderableList(m_AdditionalCameraDataSO, m_AdditionalCameraDataCameras, true, false, true, true);
+                //m_LayerList.drawHeaderCallback = rect => { EditorGUI.LabelField(rect, "Stack"); };
                 m_LayerList.drawElementCallback += DrawElementCallback;
                 m_LayerList.onSelectCallback += SelectElement;
                 m_LayerList.onRemoveCallback = list =>
@@ -206,6 +229,17 @@ namespace UnityEditor.Rendering.LWRP
             EditorGUIUtility.PingObject(cam);
         }
 
+        static GUIContent s_TextImage = new GUIContent();
+        static GUIContent TempContent(string text, string tooltip, Texture i)
+        {
+            s_TextImage.image = i;
+            s_TextImage.text = text;
+            s_TextImage.tooltip = tooltip;
+            return s_TextImage;
+        }
+
+        GUIContent m_NameContent = new GUIContent();
+
         void DrawElementCallback(Rect rect, int index, bool isActive, bool isFocused)
         {
             rect.height = EditorGUIUtility.singleLineHeight;
@@ -216,11 +250,13 @@ namespace UnityEditor.Rendering.LWRP
             var cam = element.objectReferenceValue as Camera;
             if (cam != null)
             {
-                string extraInfo = "";
+                bool warning = false;
+                string warningInfo = "";
                 var type = cam.gameObject.GetComponent<LWRPAdditionalCameraData>().cameraType;
                 if (!validCameraTypes.Contains(type))
                 {
-                    extraInfo += " (Not a supported type)";
+                    warning = true;
+                    warningInfo += "Not a supported type";
                     if (!errorCameras.Contains(cam))
                     {
                         errorCameras.Add(cam);
@@ -230,7 +266,21 @@ namespace UnityEditor.Rendering.LWRP
                 {
                     errorCameras.Remove(cam);
                 }
-                EditorGUI.TextField(rect, cam.name+extraInfo, type.ToString());
+
+                var labelWidth = EditorGUIUtility.labelWidth;
+                EditorGUIUtility.labelWidth -= 20f;
+                if (warning)
+                {
+                    GUIStyle errorStyle = new GUIStyle(EditorStyles.label) {padding = new RectOffset{left = -16} };
+                    m_NameContent.text = cam.name;
+                    EditorGUI.LabelField(rect, m_NameContent, TempContent(type.GetName(), warningInfo, m_ErrorIcon), errorStyle);
+                }
+                else
+                {
+                    EditorGUI.LabelField(rect, cam.name, type.ToString());
+                }
+
+                EditorGUIUtility.labelWidth = labelWidth;
             }
             else
             {
@@ -311,94 +361,36 @@ namespace UnityEditor.Rendering.LWRP
             // Offscreen Camera
             if (camType == LWRPCameraType.Offscreen)
             {
-                DrawClearFlags();
-                // Will split this and make a small warning that you do not have a sky box material assigned
-                using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
-                    if (group.visible)
-                        settings.DrawBackgroundColor();
-
-                settings.DrawCullingMask();
-
-                settings.DrawProjection();
-                settings.DrawClippingPlanes();
-
-                DrawTargetTexture();
-                settings.DrawOcclusionCulling();
-
-                settings.DrawDynamicResolution();
-
-                DrawRendererType();
-                DrawDepthTexture();
+                DrawCommonSettings();
+                DrawRenderingSettings();
+                DrawEnvironmentSettings();
+                DrawOutputSettings();
             }
 
             // Game Camera
-            if (camType == LWRPCameraType.Game)
+            if (camType == LWRPCameraType.Base)
             {
-                m_LayerList.DoLayoutList();
-                m_AdditionalCameraDataSO.ApplyModifiedProperties();
+                DrawCommonSettings();
+                DrawRenderingSettings();
+                DrawEnvironmentSettings();
+                DrawOutputSettings();
 
-                if (errorCameras.Any())
-                {
-                    string errorString = "These cameras are not of a valid type:\n";
-                    string validCameras = "";
-                    foreach (var errorCamera in errorCameras)
-                    {
-                        errorString += errorCamera.name + "\n";
-                    }
-
-                    foreach (var validCameraType in validCameraTypes)
-                    {
-                        validCameras += validCameraType.ToString() + " ";
-                    }
-                    errorString += "Valid types are " + validCameras;
-                    EditorGUILayout.HelpBox( errorString, MessageType.Warning);
-                }
-
-                DrawClearFlags();
-                using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
-                    if (group.visible)
-                        settings.DrawBackgroundColor();
-                settings.DrawCullingMask();
-
-                settings.DrawProjection();
-                settings.DrawClippingPlanes();
-
-                settings.DrawNormalizedViewPort();
-                settings.DrawDepth();
-
-                settings.DrawOcclusionCulling();
-                DrawHDR();
-                DrawMSAA();
-
-                settings.DrawDynamicResolution();
-
-                // Maybe this one needs to be split.
-                DrawRendererType();
-                DrawDepthTexture();
-                DrawOpaqueTexture();
-                DrawRenderShadows();
+                DrawStackSettings();
 
                 DrawVRSettings();
-
-                settings.DrawMultiDisplay();
             }
 
             // Overlay Camera
             if (camType == LWRPCameraType.Overlay)
             {
-                settings.DrawCullingMask();
+                DrawCommonSettings();
 
-                settings.DrawProjection();
-                settings.DrawClippingPlanes();
-
-                settings.DrawOcclusionCulling();
+                DrawRenderingSettings();
             }
             // UI Camera
-            if (camType == LWRPCameraType.UI)
+            if (camType == LWRPCameraType.ScreenSpaceUI)
             {
-                settings.DrawCullingMask();
-                settings.DrawProjection();
-                settings.DrawClippingPlanes();
+                DrawCommonSettings();
             }
 
         settings.ApplyModifiedProperties();
@@ -417,6 +409,126 @@ namespace UnityEditor.Rendering.LWRP
                 default:
                     return BackgroundType.SolidColor;
             }
+        }
+
+        void DrawCommonSettings()
+        {
+            m_CommonCameraSettingsFoldout.value = EditorGUILayout.BeginFoldoutHeaderGroup(m_CommonCameraSettingsFoldout.value, Styles.commonCameraSettingsText);
+            if (m_CommonCameraSettingsFoldout.value)
+            {
+                settings.DrawProjection();
+                settings.DrawClippingPlanes();
+                EditorGUILayout.Space();
+                EditorGUILayout.Space();
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+        }
+
+        void DrawStackSettings()
+        {
+            m_StackSettingsFoldout.value = EditorGUILayout.BeginFoldoutHeaderGroup(m_StackSettingsFoldout.value, Styles.stackSettingsText);
+            if (m_StackSettingsFoldout.value)
+            {
+                m_LayerList.DoLayoutList();
+                m_AdditionalCameraDataSO.ApplyModifiedProperties();
+
+                if (errorCameras.Any())
+                {
+                    string errorString = "These cameras are not of a valid type:\n";
+                    string validCameras = "";
+                    foreach (var errorCamera in errorCameras)
+                    {
+                        errorString += errorCamera.name + "\n";
+                    }
+
+                    foreach (var validCameraType in validCameraTypes)
+                    {
+                        validCameras += validCameraType + "  ";
+                    }
+                    errorString += "Valid types are " + validCameras;
+                    EditorGUILayout.HelpBox( errorString, MessageType.Warning);
+                }
+                EditorGUILayout.Space();
+                EditorGUILayout.Space();
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+        }
+
+        void DrawEnvironmentSettings()
+        {
+            m_EnvironmentSettingsFoldout.value = EditorGUILayout.BeginFoldoutHeaderGroup(m_EnvironmentSettingsFoldout.value, Styles.environmentSettingsText);
+            if (m_EnvironmentSettingsFoldout.value)
+            {
+                DrawClearFlags();
+                using (var group = new EditorGUILayout.FadeGroupScope(m_ShowBGColorAnim.faded))
+                {
+                    if (group.visible)
+                    {
+                        EditorGUI.indentLevel++;
+                        settings.DrawBackgroundColor();
+                        EditorGUI.indentLevel--;
+                    }
+                }
+
+                EditorGUILayout.Space();
+                EditorGUILayout.Space();
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+        }
+
+        void DrawRenderingSettings()
+        {
+            m_RenderingSettingsFoldout.value = EditorGUILayout.BeginFoldoutHeaderGroup(m_RenderingSettingsFoldout.value, Styles.renderingSettingsText);
+            if (m_RenderingSettingsFoldout.value)
+            {
+                var selectedCameraType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
+
+                if (selectedCameraType == LWRPCameraType.Overlay)
+                {
+                    settings.DrawCullingMask();
+                    settings.DrawOcclusionCulling();
+                }
+                else
+                {
+                    settings.DrawCullingMask();
+                    settings.DrawOcclusionCulling();
+
+                    DrawRendererType();
+                    DrawOpaqueTexture();
+                    DrawDepthTexture();
+                    DrawRenderShadows();
+
+                    DrawPriority();
+                }
+                EditorGUILayout.Space();
+                EditorGUILayout.Space();
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+        }
+
+        void DrawOutputSettings()
+        {
+            m_OutputSettingsFoldout.value = EditorGUILayout.BeginFoldoutHeaderGroup(m_OutputSettingsFoldout.value, Styles.outputSettingsText);
+            if (m_OutputSettingsFoldout.value)
+            {
+                var selectedCameraType = (LWRPCameraType)m_AdditionalCameraDataCameraTypeProp.intValue;
+
+                if (selectedCameraType == LWRPCameraType.Base)
+                {
+                    DrawHDR();
+                    DrawMSAA();
+                    settings.DrawNormalizedViewPort();
+                    settings.DrawDynamicResolution();
+                    settings.DrawMultiDisplay();
+                }
+                else if (selectedCameraType == LWRPCameraType.Offscreen)
+                {
+                    DrawTargetTexture();
+                }
+                EditorGUILayout.Space();
+                EditorGUILayout.Space();
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
         }
 
         void DrawCameraType()
@@ -463,6 +575,12 @@ namespace UnityEditor.Rendering.LWRP
 
                 settings.clearFlags.intValue = (int) selectedClearFlags;
             }
+        }
+
+        void DrawPriority()
+        {
+            Rect controlRect = EditorGUILayout.GetControlRect(true);
+            EditorGUI.PropertyField(controlRect, settings.depth, Styles.priority);
         }
 
         void DrawHDR()
