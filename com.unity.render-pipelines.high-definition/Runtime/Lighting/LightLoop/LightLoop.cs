@@ -2038,7 +2038,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                     var enableReflectionProbes = !hasDebugLightFilter ||
                                                  debugLightFilter.IsEnabledFor(ProbeSettings.ProbeType.ReflectionProbe);
                     var enablePlanarProbes = !hasDebugLightFilter ||
-                                                 debugLightFilter.IsEnabledFor(ProbeSettings.ProbeType.ReflectionProbe);
+                                                 debugLightFilter.IsEnabledFor(ProbeSettings.ProbeType.PlanarProbe);
                     for (int probeIndex = 0, numProbes = totalProbes; (probeIndex < numProbes) && (sortCount < probeCount); probeIndex++)
                     {
                         if (probeIndex < cullResults.visibleReflectionProbes.Length)
@@ -2047,7 +2047,7 @@ namespace UnityEngine.Experimental.Rendering.HDPipeline
                             {
                                 // Skip directly to planar probes
                                 probeIndex = cullResults.visibleReflectionProbes.Length - 1;
-                                break;
+                                continue;
                             }
 
                             var probe = cullResults.visibleReflectionProbes[probeIndex];
