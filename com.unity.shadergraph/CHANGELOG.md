@@ -6,10 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [6.5.0] - 2019-XX-XX
 ### Fixed
-- You can now Undo edits to Vector port default input fields.
-- You can now Undo edits to Gradient port default input fields.
-- Boolean port input fields will now display correct values when you Undo changes.
-- Vector type properties now act as expected when you Undo changes.
+- You can now undo edits to Vector port default input fields.
+- You can now undo edits to Gradient port default input fields.
+- Boolean port input fields now display correct values when you undo changes.
+- Vector type properties now behave as expected when you undo changes.
 
 ## [6.4.0] - 2019-02-21
 ### Fixed
