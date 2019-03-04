@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [6.5.0-preview] - 2019-XX-XX
 
+### Added
+- Added depth-of-field support with stereo instancing
+- Added proper support for Recorder in HDRP
+- Adding real time area light shadow support
+- Added depth offset input in shader graph master nodes
+- Added a Parallax Occlusion Mapping node
+
 ### Fixed
 - Fixed diffusion profile upgrade breaking package when upgrading to a new version
 - Fixed decals cropped by gizmo not updating correctly if prefab
@@ -17,6 +24,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Fixed planar reflection when looking at mirror normal
 - Fixed mutiselection issue with HDLight Inspector
 - Fixed HDAdditionalCameraData data migration
+- Fixed failing builds when light explorer window is open
+- Fixed cascade shadows border sometime causing artefacts between cascades
+- Restored shadows in the Cascade Shadow debug visualization
+- Fixed an issue with layered lit shader and height based blend where inactive layers would still have influence over the result.
+
+### Added
+- Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
+
+### Changed
+- When rendering reflection probe disable all specular lighting and for metals use fresnelF0 as diffuse color for bake lighting.
+
 
 ### Added
 - Added a new FrameSettings: Specular Lighting to toggle the specular during the rendering
@@ -32,7 +50,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added an unit selection dropdown next to shutter speed (camera)
 - Added error helpbox when trying to use a sub volume component that require the current HDRenderPipelineAsset to support a feature that it is not supporting.
 - Add mesh for tube light when display emissive mesh is enabled
-- Adding real time area light shadow support. 
 
 ### Fixed
 - Fixed Light explorer. The volume explorer used `profile` instead of `sharedProfile` which instantiate a custom volume profile instead of editing the asset itself.
