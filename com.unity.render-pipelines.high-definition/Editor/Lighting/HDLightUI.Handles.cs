@@ -7,7 +7,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
     {
         public static void DrawHandles(HDAdditionalLightData additionalData, Editor owner)
         {
-            Light light = additionalData.light;
+            Light light = additionalData.legacyLight;
 
             Color wireframeColorAbove = (owner as HDLightEditor).legacyLightColor;
             Color handleColorAbove = CoreLightEditorUtilities.GetLightHandleColor(wireframeColorAbove);
@@ -161,7 +161,7 @@ namespace UnityEditor.Experimental.Rendering.HDPipeline
             if (!(UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset is HDRenderPipelineAsset))
                 return;
 
-            var light = src.light;
+            var light = src.legacyLight;
 
             if (light.type != LightType.Directional)
             {
