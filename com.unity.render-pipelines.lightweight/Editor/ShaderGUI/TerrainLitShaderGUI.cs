@@ -115,9 +115,9 @@ namespace UnityEditor.Rendering.LWRP
 
             bool enablePerPixelNormalChanged = false;
             
-            // NB RenderQueue editor is not shown on purpose: we want to override it based on blend mode
-            materialEditorIn.EnableInstancingField();
-            if (materialEditorIn.IsInstancingEnabled() && enableInstancedPerPixelNormal != null)
+            // Since Instanced Per-pixel normal is actually dependent on instancing enabled or not, it is not
+            // important to check it in the GUI.  The shader will make sure it is enabled/disabled properly.s
+            if (enableInstancedPerPixelNormal != null)
             {
                 EditorGUI.indentLevel++;
                 EditorGUI.BeginChangeCheck();
